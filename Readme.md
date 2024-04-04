@@ -1,74 +1,54 @@
-# XOAPModuleTemplateDSC
+# Introduction
 
-This repository is a template that can be used as a starting point for creating new DSC modules and resources.
+This repository hosts scripts for the Scripted Actions area, which is part of the [XOAP platform](https://xoap.io). They are provided as-is and are not officially supported by XOAP. Use them at your own risk. Always test them in a non-production environment before using them in production.
 
 ## Code of Conduct
 
 This project has adopted this [Code of Conduct](CODE_OF_CONDUCT.md).
 
-## Contributing
-
-Please check out common DSC Community [contributing guidelines](https://dsccommunity.org/guidelines/contributing).
-
 ## Change log
 
-A full list of changes in each version can be found in the  [Releases](https://github.com/xoap-io/XOAPModuleTemplateDSC/releases).
+A full list of changes in each version can be found in the  [Releases](https://github.com/xoap-io/scripted-actions/releases).
 
 ## Documentation
 
-This script is used to easily create new DSC modules and resources.
+### Azure CLI & Bicep
+
+Most of the available scripts are built to use a local Azure CLI configuration file. Find more information here: [Azure CLI Configuration](https://docs.microsoft.com/en-us/cli/azure/azure-cli-configuration).
+
+### Azure PowerShell
+
+For Azure PowerShell-related scripts we suggest to use the noninteractive authentication with a service principal: [Sign in to Azure PowerShell with a service principal](https://learn.microsoft.com/en-us/powershell/azure/authenticate-noninteractive?view=azps-11.4.0).
+
+### AWS CLI
+
+For AWS CLI-related scripts we suggest using the AWS CLI configuration file: [Configuration and credential file settings](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html).
 
 ## Prerequisites
 
-Be sure that the following DSC modules are installed on your system:
+Depending on which scripts you want to use, you need to have the following prerequisites installed:
 
-- ModuleName (x.x.x)
+### Azure CLI
 
-## DSC Resources and syntax
+- [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli)
 
-### XOAP_AddServerToCollection
+### Azure PowerShell
 
-```PowerShell
-XOAP_DSCResource [String] #ResourceName
-    {
-        [DependsOn = [String[]]]
-        [PsDscRunAsCredential = [PSCredential]]
-    }
-```
+- [Azure PowerShell](https://docs.microsoft.com/en-us/powershell/azure/install-az-ps)
 
-## Configuration examples for each resource
+### AWS CLI
 
-You can review the [Examples](/Examples/Resources) directory in the **XOAPModuleTemplateDSC** module
-for some general usage scenarios for all the resources that are in the module.
+- [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
 
-To implement the Module Template DSC module, add the following resources to your DSC configuration and adjust the parameters accordingly:
+### Bicep
 
-### Add server to a collection
+- [Bicep](https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/install#azure-cli)
 
-```PowerShell
-configuration 'XOAP_DSCResource'
-{
-    Import-DscResource -ModuleName 'XOAPModuleTemplateDSC' -Name 'XOAP_DSCResource' -ModuleVersion '0.0.1'
-    
-    XOAP_DSCResource 'Example'
-    {
-          DependsOn = @('[String[]]')
-          PsDscRunAsCredential = [PSCredential]
-    }
-}
-XOAP_DSCResource 
-```
+### ARM Templates
 
-## Create new DSC resource
+See Azure CLI & Azure PowerShell.
 
-DSC resources can easily be deployed via the invocation of
+## Templates
 
-```powershell
-.\New-CompositeResource.ps1
-```
+You can use the provided templates to create your scripts. The templates are located in the `templates` folder.
 
-with parameters
-
-```powershell
-.\New-CompositeResource.ps1 -Module 'XOAPModuleTemplateDSC' -Version '0.0.1' -Resource 'DSCResource'
-```

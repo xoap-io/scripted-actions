@@ -1,0 +1,45 @@
+<#
+.SYNOPSIS
+    Delete tags from an AWS Workspace.
+
+.DESCRIPTION
+    This script deletes tags from an AWS Workspace.
+    The script uses the AWS CLI to delete the specified tags from the AWS Workspace.
+    The script uses the following AWS CLI command:
+    aws workspaces delete-tags --resource-id $AwsWorkspaceId --tag-keys $AwsTagKeys
+    The script sets the ErrorActionPreference to SilentlyContinue to suppress error messages.
+    It does not return any output.
+
+.NOTES
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no liability for the function,
+    the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+.COMPONENT
+    AWS CLI
+
+.LINK
+    https://github.com/xoap-io/scripted-actions
+
+.PARAMETER AwsWorkspaceId
+    Defines the ID of the AWS Workspace.
+
+.PARAMETER AwsTagKeys
+    Defines the keys of the tags to be deleted.
+
+#>
+[CmdletBinding()]
+param(
+    [Parameter(Mandatory)]
+    [string]$AwsWorkspaceId
+)
+
+#Set Error Action to Silently Continue
+$ErrorActionPreference = "SilentlyContinue"
+
+aws workspaces delete-tags `
+    --resource-id $AwsWorkspaceId `
+    --tag-keys $AwsTagKeys
