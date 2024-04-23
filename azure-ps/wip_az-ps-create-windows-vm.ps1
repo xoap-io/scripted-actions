@@ -55,7 +55,25 @@ param(
     [Parameter(Mandatory)]
     [string]$AzVmName = "myVm",
     [Parameter(Mandatory)]
-    [ValidateSet('eastus', 'eastus2', 'germany', 'northeurope', 'germanywestcentral', 'westcentralus', 'southcentralus', 'southcentralus', 'centralus', 'northcentralus', 'eastus2euap', 'westus3', 'southeastasia', 'eastasia', 'japaneast', 'japanwest', 'australiaeast', 'australiasoutheast', 'australiacentral', 'australiacentral2', 'centralindia', 'southindia', 'westindia', 'canadacentral', 'canadaeast', 'uksouth', 'ukwest', 'francecentral', 'francesouth', 'norwayeast', 'norwaywest', 'switzerlandnorth', 'switzerlandwest', 'germanynorth', 'germanywestcentral', 'uaenorth', 'uaecentral', 'southafricanorth', 'southafricawest', 'brazilsouth', 'brazilus', 'koreacentral', 'koreasouth', 'koreasouth', 'australiacentral', 'australiacentral2', 'australiaeast', 'australiasoutheast', 'canadacentral', 'canadaeast', 'centralindia', 'eastasia', 'eastus', 'eastus2', 'eastus2euap', 'francecentral', 'francesouth', 'germanywestcentral', 'japaneast', 'japanwest', 'northcentralus', 'northeurope', 'southafricanorth', 'southcentralus', 'southeastasia', 'switzerlandnorth', 'switzerlandwest', 'uksouth', 'ukwest', 'westcentralus', 'westeurope', 'westindia', 'westus', 'westus2')]
+    [ValidateSet(
+        'eastus', 'eastus2', 'southcentralus', 'westus2',
+        'westus3', 'australiaeast', 'southeastasia', 'northeurope',
+        'swedencentral', 'uksouth', 'westeurope', 'centralus',
+        'southafricanorth', 'centralindia', 'eastasia', 'japaneast',
+        'koreacentral', 'canadacentral', 'francecentral', 'germanywestcentral',
+        'italynorth', 'norwayeast', 'polandcentral', 'switzerlandnorth',
+        'uaenorth', 'brazilsouth', 'israelcentral', 'qatarcentral',
+        'asia', 'asiapacific', 'australia', 'brazil',
+        'canada', 'europe', 'france', 'germany',
+        'global', 'india', 'japan', 'korea',
+        'norway', 'singapore', 'southafrica', 'sweden',
+        'switzerland', 'unitedstates', 'northcentralus', 'westus',
+        'japanwest', 'centraluseuap', 'eastus2euap', 'westcentralus',
+        'southafricawest', 'australiacentral', 'australiacentral2', 'australiasoutheast',
+        'koreasouth', 'southindia', 'westindia', 'canadaeast',
+        'francesouth', 'germanynorth', 'norwaywest', 'switzerlandwest',
+        'ukwest', 'uaecentral', 'brazilsoutheast'
+    )]
     [string]$AzLocation,
     [Parameter(Mandatory)]
     [string]$AzImageName = "myImageName",
@@ -75,7 +93,7 @@ param(
 #Set Error Action to Silently Continue
 $ErrorActionPreference =  "Stop"
 
-New-AzResourceGroup -Name $AzResourceGroupName -Location eastus
+New-AzResourceGroup -Name $AzResourceGroupName -Location $AzLocation
 
 $User = $AzVmUserName
 $Password = ConvertTo-SecureString -String $AzVmUserPassword -AsPlainText -Force
@@ -84,7 +102,7 @@ $Credential = New-Object -TypeName System.Management.Automation.PSCredential -Ar
 
 $vmParams = @{
     ResourceGroupName = $AzResourceGroupName
-    Name = $AzVmNameName
+    Name = $AzVmName
     Location = $AzLocation
     ImageName = $AzImageName
     PublicIpAddressName = $AzPublicIpAddressName
@@ -99,6 +117,6 @@ New-AzVM @vmParams
 
 # Get the public IP of the VM
 
-$publicIp = Get-AzPublicIpAddress -Name $AzPublicIpAddressName -ResourceGroupName AzResourceGroupName
+$publicIp = Get-AzPublicIpAddress -Name $AzPublicIpAddressName -ResourceGroupName $AzResourceGroupName
 
 $publicIp | Select-Object -Property Name, IpAddress, @{label='FQDN';expression={$_.DnsSettings.Fqdn}}

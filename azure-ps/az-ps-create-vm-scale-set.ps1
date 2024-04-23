@@ -60,12 +60,40 @@ param(
     [ValidateSet('Uniform', 'Flexible')]
     [string]$AzOrchestrationMode,
     [Parameter(Mandatory)]
-    [ValidateSet('Standard_A0', 'Standard_A1', 'Standard_A2', 'Standard_A3', 'Standard_A4', 'Standard_A5', 'Standard_A6', 'Standard_A7', 'Standard_A8', 'Standard_A9', 'Standard_A10', 'Standard_A11', 'Standard_A1_v2', 'Standard_A2_v2', 'Standard_A4_v2', 'Standard_A8_v2', 'Standard_A2m_v2', 'Standard_A4m_v2', 'Standard_A8m_v2', 'Standard_B1s', 'Standard_B1ms', 'Standard_B2s', 'Standard_B2ms', 'Standard_B4ms', 'Standard_B8ms', 'Standard_B12ms', 'Standard_B16ms', 'Standard_B20ms', 'Standard_B24ms', 'Standard_B1ls', 'Standard_B1s', 'Standard_B2s', 'Standard_B4s', 'Standard_B8s', 'Standard_B12s', 'Standard_B16s', 'Standard_B20s', 'Standard_B24s', 'Standard_D1', 'Standard_D2', 'Standard_D3', 'Standard_D4', 'Standard_D11', 'Standard_D12', 'Standard_D13', 'Standard_D14', 'Standard_D1_v2', 'Standard_D2_v2', 'Standard_D3_v2', 'Standard_D4_v2', 'Standard_D5_v2', 'Standard_D11_v2', 'Standard_D12_v2', 'Standard_D13_v2', 'Standard_D14_v2', 'Standard_D15_v2', 'Standard_D2_v3', 'Standard_D4_v3', 'Standard_D8_v3', 'Standard_D16_v3', 'Standard_D32_v3', 'Standard_D48_v3', 'Standard_D64_v3', 'Standard_D2s_v3', 'Standard_D4s_v3', 'Standard_D8s_v3', 'Standard_D16s_v3', 'Standard_D32s_v3', 'Standard_D48s_v3', 'Standard_D64s_v3', 'Standard_D2_v4', 'Standard_D4_v4', 'Standard_D8_v4', 'Standard_D16_v4', 'Standard_D32_v4', 'Standard_D48_v4', 'Standard_D64_v4', 'Standard_D2s_v4')]
+    [ValidateSet(
+        'eastus', 'eastus2', 'southcentralus', 'westus2',
+        'westus3', 'australiaeast', 'southeastasia', 'northeurope',
+        'swedencentral', 'uksouth', 'westeurope', 'centralus',
+        'southafricanorth', 'centralindia', 'eastasia', 'japaneast',
+        'koreacentral', 'canadacentral', 'francecentral', 'germanywestcentral',
+        'italynorth', 'norwayeast', 'polandcentral', 'switzerlandnorth',
+        'uaenorth', 'brazilsouth', 'israelcentral', 'qatarcentral',
+        'asia', 'asiapacific', 'australia', 'brazil',
+        'canada', 'europe', 'france', 'germany',
+        'global', 'india', 'japan', 'korea',
+        'norway', 'singapore', 'southafrica', 'sweden',
+        'switzerland', 'unitedstates', 'northcentralus', 'westus',
+        'japanwest', 'centraluseuap', 'eastus2euap', 'westcentralus',
+        'southafricawest', 'australiacentral', 'australiacentral2', 'australiasoutheast',
+        'koreasouth', 'southindia', 'westindia', 'canadaeast',
+        'francesouth', 'germanynorth', 'norwaywest', 'switzerlandwest',
+        'ukwest', 'uaecentral', 'brazilsoutheast'
+    )]
     [string]$AzLocation,
     [Parameter(Mandatory)]
     [int]$AzInstanceCount = 2,
     [Parameter(Mandatory)]
+<<<<<<< HEAD
     [string]$AzImageName = "myImageName"
+=======
+    [ValidateSet(
+        'Win2022AzureEdition', 'Win2022AzureEditionCore', 'Win2019Datacenter', 'Win2016Datacenter', 
+        'Win2012R2Datacenter', 'Win2012Datacenter', 'UbuntuLTS', 'Ubuntu2204', 
+        'CentOS85Gen2', 'Debian11', 'OpenSuseLeap154Gen2', 'RHELRaw8LVMGen2', 
+        'SuseSles15SP3', 'FlatcarLinuxFreeGen2'
+    )]
+    [string]$AzImageName
+>>>>>>> d27ed172490c2a99af476a122f8fcfd7a8ae8575
 
 )
 
