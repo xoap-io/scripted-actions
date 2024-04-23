@@ -38,11 +38,11 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string]$AzResourceGroupName,
+    [string]$AzResourceGroupName = "myResourceGroup",
     [Parameter(Mandatory)]
-    [string]$AzWorkspaceName,
+    [string]$AzWorkspaceName = "myWorkspace",
     [Parameter(Mandatory)]
-    [string]$AzWorkspaceFrindlyName
+    [string]$AzWorkspaceFrindlyName = "myFriendlyName"
 )
 
 #Set Error Action to Silently Continue

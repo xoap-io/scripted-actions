@@ -36,11 +36,11 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string]$AwsWorkspaceBundleIdBundleId,
+    [string]$AwsWorkspaceBundleIdBundleId = "myBundleId",
     [Parameter(Mandatory)]
-    [string]$AwsWorkspaceDirectoryId,
+    [string]$AwsWorkspaceDirectoryId = "myDirectoryId",
     [Parameter(Mandatory)]
-    [string]$AwsWorkspaceUserName
+    [string]$AwsWorkspaceUserName = "myUserName"
 )
 
 #Set Error Action to Silently Continue

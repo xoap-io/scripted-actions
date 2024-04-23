@@ -32,7 +32,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string]$AwsKeyPairName
+    [string]$AwsKeyPairName = "myKeyPair"
 )
 
 #Set Error Action to Silently Continue

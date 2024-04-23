@@ -53,15 +53,15 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string]$AzResourceGroupName,
+    [string]$AzResourceGroupName = "myResourceGroup",
     [Parameter(Mandatory)]
-    [string]$AzGalleryName,
+    [string]$AzGalleryName = "myGallery",
     [Parameter(Mandatory)]
-    [string]$AzImageDefinition,
+    [string]$AzImageDefinition = "myImageDefinition",
     [Parameter(Mandatory)]
     [string]$AzImagePublisher = "MicrosoftWindowsDesktop",
     [Parameter(Mandatory)]
-    [string]$AzImageOffer,
+    [string]$AzImageOffer = "Windows-11",
     [Parameter(Mandatory)]
     [string]$AzImageSku = 'win11-23h2-entn',
     [Parameter(Mandatory)]

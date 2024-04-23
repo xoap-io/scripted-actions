@@ -35,7 +35,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string]$AzResourceGroupName,
+    [string]$AzResourceGroupName = "myResourceGroup",
     [Parameter(Mandatory)]
     [ValidateSet('eastus', 'eastus2', 'germany', 'northeurope', 'germanywestcentral')]
     [string]$AzLocation

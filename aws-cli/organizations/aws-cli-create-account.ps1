@@ -34,9 +34,9 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string]$AwsAccountEmail,
+    [string]$AwsAccountEmail = "myEmail",
     [Parameter(Mandatory)]
-    [string]$AwsAccountName
+    [string]$AwsAccountName = "myAccountName"
 )
 
 #Set Error Action to Silently Continue

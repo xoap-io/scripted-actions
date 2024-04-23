@@ -33,9 +33,9 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string]$AzResourceGroupName,
+    [string]$AzResourceGroupName = "myResourceGroup",
     [Parameter(Mandatory)]
-    [string]$AzImageTemplateName
+    [string]$AzImageTemplateName = "myImageTemplate"
 )
 
 #Set Error Action to Silently Continue

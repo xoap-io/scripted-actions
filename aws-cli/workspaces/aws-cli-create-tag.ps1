@@ -33,7 +33,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string]$AwsWorkspaceId
+    [string]$AwsWorkspaceId = "myWorkspaceId"
 )
 
 #Set Error Action to Silently Continue

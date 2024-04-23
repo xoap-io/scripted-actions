@@ -36,7 +36,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string]$AwsSecurityGroupId
+    [string]$AwsSecurityGroupId = "mySecurityGroupId"
 )
 
 #Set Error Action to Silently Continue

@@ -14,7 +14,7 @@
     PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
 
 .COMPONENT
-
+    Azure CLI
 
 .LINK
     https://github.com/scriptrunner/ActionPacks/tree/master/ActiveDirectory/Users

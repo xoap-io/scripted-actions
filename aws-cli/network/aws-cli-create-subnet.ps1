@@ -40,13 +40,13 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string]$AwsVpcId,
+    [string]$AwsVpcId = "myVpcId",
     [Parameter(Mandatory)]
-    [string]$AwsCidrBlock,
+    [string]$AwsCidrBlock = "myCidrBlock",
     [Parameter(Mandatory)]
-    [string]$AwsIpv6CidrBlock,
+    [string]$AwsIpv6CidrBlock = "myIpv6CidrBlock",
     [Parameter(Mandatory)]
-    [string]$AwsTagSpecifications
+    [string]$AwsTagSpecifications = "myTagSpecifications"
 )
 
 #Set Error Action to Silently Continue

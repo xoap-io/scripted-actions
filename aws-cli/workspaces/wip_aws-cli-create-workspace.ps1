@@ -26,12 +26,12 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string]$AzResourceGroupName
+    [string]$AzResourceGroupName = 'myResourceGroup'
 )
 
 #Set Error Action to Silently Continue
 $ErrorActionPreference =  "Stop"
 
 aws workspaces create-workspaces `
-    --workspaces DirectoryId=string,UserName=string,BundleId=string,VolumeEncryptionKey=string,UserVolumeEncryptionEnabled=boolean,RootVolumeEncryptionEnabled=boolean,WorkspaceProperties={RunningMode=string,RunningModeAutoStopTimeoutInMinutes=integer,RootVolumeSizeGib=integer,UserVolumeSizeGib=integer,ComputeTypeName=string,Protocols=[string,string],OperatingSystemName=string},Tags=[{Key=string,Value=string},{Key=string,Value=string}],WorkspaceName=string
+    --workspaces "DirectoryId=string,UserName=string,BundleId=string,VolumeEncryptionKey=string,UserVolumeEncryptionEnabled=boolean,RootVolumeEncryptionEnabled=boolean,WorkspaceProperties={RunningMode=string,RunningModeAutoStopTimeoutInMinutes=integer,RootVolumeSizeGib=integer,UserVolumeSizeGib=integer,ComputeTypeName=string,Protocols=[string,string],OperatingSystemName=string},Tags=[{Key=string,Value=string},{Key=string,Value=string}],WorkspaceName=string"
     

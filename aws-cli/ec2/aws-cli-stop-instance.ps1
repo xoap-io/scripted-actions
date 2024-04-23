@@ -31,7 +31,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string]$AwsInstanceId
+    [string]$AwsInstanceId = "myInstanceId"
 )
 
 #Set Error Action to Silently Continue

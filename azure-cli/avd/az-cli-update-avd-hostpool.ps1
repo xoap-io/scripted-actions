@@ -38,11 +38,11 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string]$AzResourceGroupName,
+    [string]$AzResourceGroupName = "myResourceGroup",
     [Parameter(Mandatory)]
-    [string]$AzHostPoolName,
+    [string]$AzHostPoolName = "myHostPool",
     [Parameter(Mandatory)]
-    [string]$AzTags
+    [string]$AzTags = "myTags"
 )
 
 #Set Error Action to Silently Continue

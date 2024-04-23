@@ -40,7 +40,8 @@ $ErrorActionPreference =  "Stop"
 az resource delete `
     --resource-group $sigResourceGroup `
     --resource-type Microsoft.VirtualMachineImages/imageTemplates `
-    -n helloImageTemplateforSIG01
+    --name helloImageTemplateforSIG01 `
+    --no-wait
 
 az role assignment delete `
     --assignee $imgBuilderCliId `

@@ -33,9 +33,9 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string]$AwsInstanceId,
+    [string]$AwsInstanceId = "myInstanceId",
     [Parameter(Mandatory)]
-    [string]$AwsElasticIpId
+    [string]$AwsElasticIpId = "myElasticIpId"
 )
 
 #Set Error Action to Silently Continue

@@ -40,12 +40,13 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string]$AzResourceGroupName,
+    [string]$AzResourceGroupName = "myResourceGroup",
     [Parameter(Mandatory)]
-    [string]$AzApplicationGroupName,
+    [string]$AzApplicationGroupName = "myApplicationGroup",
     [Parameter(Mandatory)]
-    [string]$AzHostPoolArmPath,
+    [string]$AzHostPoolArmPath = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.DesktopVirtualization/hostPools/myHostPool",
     [Parameter(Mandatory)]
+    [ValidateSet('Desktop', 'RemoteApp')]
     [string]$AzHostPoolType
 )
 

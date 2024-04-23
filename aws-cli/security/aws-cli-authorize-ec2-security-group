@@ -40,13 +40,13 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string]$AwsSecurityGroupId,
+    [string]$AwsSecurityGroupId = "sg-1234567890abcdef0",
     [Parameter(Mandatory)]
-    [string]$AwsSecurityGroupProtocol,
+    [string]$AwsSecurityGroupProtocol = "tcp",
     [Parameter(Mandatory)]
-    [string]$AwsSecurityGroupPort,
+    [string]$AwsSecurityGroupPort = "80",
     [Parameter(Mandatory)]
-    [string]$AwsSecurityGroupCidr
+    [string]$AwsSecurityGroupCidr = "10.0.0.0/16"
     
     )
 

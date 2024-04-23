@@ -37,11 +37,11 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string]$AzResourceGroupName,
+    [string]$AzResourceGroupName = "myResourceGroup",
     [Parameter(Mandatory)]
-    [string]$BicepTemplateFile,
+    [string]$BicepTemplateFile = "myBicepTemplate.bicep",
     [Parameter(Mandatory)]
-    [string]$BicepTemplateParameterFile
+    [string]$BicepTemplateParameterFile = "myBicepTemplateParameters.json"
 )
 
 #Set Error Action to Silently Continue

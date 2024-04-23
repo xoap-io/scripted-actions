@@ -31,7 +31,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string]$AwsDirectoryId
+    [string]$AwsDirectoryId = "myDirectoryId"
 )
 
 #Set Error Action to Silently Continue
