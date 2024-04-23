@@ -47,15 +47,15 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string]$AzResourceGroupName,
+    [string]$AzResourceGroupName = "myResourceGroup",
     [Parameter(Mandatory)]
-    [string]$AzGalleryName,
+    [string]$AzGalleryName = "myGallery",
     [Parameter(Mandatory)]
-    [string]$EmailAddress
+    [string]$EmailAddress = "hello@xoap.io"
 )
 
 #Set Error Action to Silently Continue
-$ErrorActionPreference = "SilentlyContinue"
+$ErrorActionPreference =  "Stop"
 
 $GalleryId = az sig show `
    --resource-group $AzResourceGroupName `

@@ -55,22 +55,22 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string]$AzResourceGroupName,
+    [string]$AzResourceGroupName = 'myResourceGroup',
     [Parameter(Mandatory)]
-    [string]$AzScaleSetName,
+    [string]$AzScaleSetName = 'myScaleSet',
     [Parameter(Mandatory)]
     [ValidateSet("Flexible", "Uniform")]
     [string]$AzOrchestrationMode = 'Flexible',
     [Parameter(Mandatory)]
-    [string]$AzSkuImage,
+    [string]$AzSkuImage = 'UbuntuLTS',
     [Parameter(Mandatory)]
     [string]$AzScaleSetInstanceCount = 2,
     [Parameter(Mandatory)]
-    [string]$AzAdminUserName
+    [string]$AzAdminUserName = 'azureuser'
     )
 
 # Set Error Action to Silently Continue
-$ErrorActionPreference = "SilentlyContinue"
+$ErrorActionPreference =  "Stop"
 
 az vmss create `
   --resource-group $AzResourceGroupName `

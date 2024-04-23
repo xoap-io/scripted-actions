@@ -37,15 +37,15 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string]$AwsSecurityGroupName,
+    [string]$AwsSecurityGroupName = "mySecurityGroup",
     [Parameter(Mandatory)]
-    [string]$AwsSecurityGroupDescription,
+    [string]$AwsSecurityGroupDescription = "MySecurityGroupDescription",
     [Parameter(Mandatory)]
-    [string]$AwsVpcId
+    [string]$AwsVpcId = "myVpcId"
 )
 
 #Set Error Action to Silently Continue
-$ErrorActionPreference = "SilentlyContinue"
+$ErrorActionPreference =  "Stop"
 
 aws ec2 create-security-group `
     --group-name $AwsSecurityGroupName `

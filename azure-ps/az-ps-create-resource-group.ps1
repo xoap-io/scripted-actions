@@ -35,7 +35,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string]$AzResourceGroupName,
+    [string]$AzResourceGroupName = "myResourceGroup",
     [Parameter(Mandatory)]
     [ValidateSet(
         'eastus', 'eastus2', 'southcentralus', 'westus2',
@@ -60,7 +60,7 @@ param(
 )
 
 #Set Error Action to Silently Continue
-$ErrorActionPreference = "SilentlyContinue"
+$ErrorActionPreference =  "Stop"
 
 New-AzResourceGroup `
 	-Name $AzResourceGroupName `

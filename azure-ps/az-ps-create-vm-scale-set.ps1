@@ -53,9 +53,9 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string]$AzResourceGroupName,
+    [string]$AzResourceGroupName = "myResourceGroup",
     [Parameter(Mandatory)]
-    [string]$AzScaleSetName,
+    [string]$AzScaleSetName = "myScaleSet",
     [Parameter(Mandatory)]
     [ValidateSet('Uniform', 'Flexible')]
     [string]$AzOrchestrationMode,
@@ -81,8 +81,11 @@ param(
     )]
     [string]$AzLocation,
     [Parameter(Mandatory)]
-    [int]$AzInstanceCount,
+    [int]$AzInstanceCount = 2,
     [Parameter(Mandatory)]
+<<<<<<< HEAD
+    [string]$AzImageName = "myImageName"
+=======
     [ValidateSet(
         'Win2022AzureEdition', 'Win2022AzureEditionCore', 'Win2019Datacenter', 'Win2016Datacenter', 
         'Win2012R2Datacenter', 'Win2012Datacenter', 'UbuntuLTS', 'Ubuntu2204', 
@@ -90,11 +93,12 @@ param(
         'SuseSles15SP3', 'FlatcarLinuxFreeGen2'
     )]
     [string]$AzImageName
+>>>>>>> d27ed172490c2a99af476a122f8fcfd7a8ae8575
 
 )
 
 #Set Error Action to Silently Continue
-$ErrorActionPreference = "SilentlyContinue"
+$ErrorActionPreference =  "Stop"
 
 New-AzVmss `
     -ResourceGroup $AzResourceGroupName `

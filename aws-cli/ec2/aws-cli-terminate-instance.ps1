@@ -19,7 +19,7 @@
     PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
 
 .COMPONENT
-
+    AWS CLI
 
 .LINK
     https://github.com/xoap-io/scripted-actions
@@ -31,11 +31,11 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string]$AwsInstanceId
+    [string]$AwsInstanceId = "myInstanceId"
 )
 
 #Set Error Action to Silently Continue
-$ErrorActionPreference = "SilentlyContinue"
+$ErrorActionPreference =  "Stop"
 
 aws ec2 terminate-instances `
     --instance-ids $AwsInstanceId

@@ -31,11 +31,11 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string]$AwsWorkspaceId
+    [string]$AwsWorkspaceId = "myWorkspaceId"
 )
 
 #Set Error Action to Silently Continue
-$ErrorActionPreference = "SilentlyContinue"
+$ErrorActionPreference =  "Stop"
 
 aws workspaces rebuild-workspaces `
     --rebuild-workspace-requests $AwsWorkspaceId

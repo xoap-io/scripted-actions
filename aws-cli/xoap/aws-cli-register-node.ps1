@@ -43,21 +43,21 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string]$AwsInstanceId,
+    [string]$AwsInstanceId = "myInstanceId",
     [Parameter(Mandatory)]
-    [string]$AwsSsmDocumentName,
+    [string]$AwsSsmDocumentName = "myDocumentName",
     [Parameter(Mandatory)]
-    [string]$AwsSsmDocumentComment,
+    [string]$AwsSsmDocumentComment = "myDocumentComment",
     [Parameter(Mandatory)]
-    [string]$XOAPWorkspaceId,
+    [string]$XOAPWorkspaceId = "myWorkspaceId",
     [Parameter(Mandatory)]
-    [string]$XOAPGroupName
+    [string]$XOAPGroupName = "XOAP unassigned"
 )
 
 #Set Error Action to Silently Continue
-$ErrorActionPreference = "SilentlyContinue"
+$ErrorActionPreference =  "Stop"
 
-$runPSCommand = Send-SSMCommand `
+Send-SSMCommand `
     -InstanceIds @($AwsInstanceId) `
     -DocumentName $AwsSsmDocumentName `
     -Comment $AwsSsmDocumentComment `

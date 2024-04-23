@@ -36,14 +36,14 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string]$AwsWorkspaceBundleIdBundleId,
+    [string]$AwsWorkspaceBundleIdBundleId = "myBundleId",
     [Parameter(Mandatory)]
-    [string]$AwsWorkspaceDirectoryId,
+    [string]$AwsWorkspaceDirectoryId = "myDirectoryId",
     [Parameter(Mandatory)]
-    [string]$AwsWorkspaceUserName
+    [string]$AwsWorkspaceUserName = "myUserName"
 )
 
 #Set Error Action to Silently Continue
-$ErrorActionPreference = "SilentlyContinue"
+$ErrorActionPreference =  "Stop"
 
 New-WKSWorkspace -Workspace @{"BundleID" = $AwsWorkspaceBundleIdBundleId; "DirectoryId" = $AwsWorkspaceDirectoryId; "UserName" = $AwsWorkspaceUserName}

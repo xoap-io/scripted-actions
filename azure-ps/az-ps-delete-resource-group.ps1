@@ -29,12 +29,11 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string]$AzResourceGroupName
+    [string]$AzResourceGroupName = "myResourceGroup"
 )
 
 #Set Error Action to Silently Continue
-$ErrorActionPreference = "SilentlyContinue"
+$ErrorActionPreference =  "Stop"
 
 Remove-AzResourceGroup `
-    -Name $AzResourceGroupName `
-    -Force
+    -Name $AzResourceGroupName -Force

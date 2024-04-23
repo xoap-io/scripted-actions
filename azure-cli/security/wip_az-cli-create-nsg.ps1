@@ -14,7 +14,7 @@
     PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
 
 .COMPONENT
-
+    Azure CLI
 
 .LINK
     https://github.com/xoap-io/scripted-actions
@@ -31,7 +31,7 @@ param(
 )
 
 #Set Error Action to Silently Continue
-$ErrorActionPreference = "SilentlyContinue"
+$ErrorActionPreference =  "Stop"
 
 az network nsg rule create `
     --resource-group $AzResourceGroupName `

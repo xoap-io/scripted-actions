@@ -41,18 +41,19 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string]$AzResourceGroupName,
+    [string]$AzResourceGroupName = "myResourceGroup",
     [Parameter(Mandatory)]
+    [ValidateSet('eastus', 'eastus2', 'germany', 'northeurope', 'germanywestcentral', 'westcentralus', 'southcentralus', 'southcentralus', 'centralus', 'northcentralus', 'eastus2euap', 'westus3', 'southeastasia', 'eastasia', 'japaneast', 'japanwest', 'australiaeast', 'australiasoutheast', 'australiacentral', 'australiacentral2', 'centralindia', 'southindia', 'westindia', 'canadacentral', 'canadaeast', 'uksouth', 'ukwest', 'francecentral', 'francesouth', 'norwayeast', 'norwaywest', 'switzerlandnorth', 'switzerlandwest', 'germanynorth', 'germanywestcentral', 'uaenorth', 'uaecentral', 'southafricanorth', 'southafricawest', 'brazilsouth', 'brazilus', 'koreacentral', 'koreasouth', 'koreasouth', 'australiacentral', 'australiacentral2', 'australiaeast', 'australiasoutheast', 'canadacentral', 'canadaeast', 'centralindia', 'eastasia', 'eastus', 'eastus2', 'eastus2euap', 'francecentral', 'francesouth', 'germanywestcentral', 'japaneast', 'japanwest', 'northcentralus', 'northeurope', 'southafricanorth', 'southcentralus', 'southeastasia', 'switzerlandnorth', 'switzerlandwest', 'uksouth', 'ukwest', 'westcentralus', 'westeurope', 'westindia', 'westus', 'westus2')]
     [string]$AzLocation,
     [Parameter(Mandatory)]
-    [string]$AzStorageAccountName,
+    [string]$AzStorageAccountName = "myStorageAccount",
     [Parameter(Mandatory)]
     [ValidateSet('Premium_LRS', 'Premium_ZRS', 'Standard_GRS', 'Standard_GZRS', 'Standard_LRS', 'Standard_RAGRS', 'Standard_RAGZRS', 'Standard_ZRS')]
     [string]$AzStorageSku
 )
 
 #Set Error Action to Silently Continue
-$ErrorActionPreference = "SilentlyContinue"
+$ErrorActionPreference =  "Stop"
 
 az storage account create `
     --name $AzStorageAccountName `

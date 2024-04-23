@@ -31,11 +31,11 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string]$AzResourceGroupName
+    [string]$AzResourceGroupName = "myResourceGroupName"
 )
 
 #Set Error Action to Silently Continue
-$ErrorActionPreference = "SilentlyContinue"
+$ErrorActionPreference =  "Stop"
 
 aws workspaces stop-workspaces `
     --stop-workspace-requests WorkspaceId=$AwsWorkspaceId

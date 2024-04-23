@@ -47,13 +47,13 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string]$AzResourceGroupName,
+    [string]$AzResourceGroupName = "myResourceGroup",
     [Parameter(Mandatory)]
-    [string]$AzVmName,
+    [string]$AzVmName = "myVmName",
     [Parameter(Mandatory)]
-    [string]$XOAPWorkspaceId,
+    [string]$XOAPWorkspaceId = "myWorkspaceId",
 	[Parameter(Mandatory)]
-	[string]$XOAPGroupName
+	[string]$XOAPGroupName = "XOAP unassigned"
 )
 
 # Register VM in XOAP

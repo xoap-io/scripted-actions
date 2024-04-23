@@ -34,13 +34,13 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string]$AzResourceGroupName,
+    [string]$AzResourceGroupName = "myResourceGroup",
     [Parameter(Mandatory)]
-    [string]$AzVmName
+    [string]$AzVmName = "myVm"
 )
 
 #Set Error Action to Silently Continue
-$ErrorActionPreference = "SilentlyContinue"
+$ErrorActionPreference =  "Stop"
 
 Invoke-AzVMRunCommand `
    -ResourceGroupName $AzResourceGroupName `

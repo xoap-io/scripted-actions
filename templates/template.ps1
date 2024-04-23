@@ -14,7 +14,7 @@
     PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
 
 .COMPONENT
-
+    PowerShell, Azure CLI, AWS Cli, Azure PowerShell
 
 .LINK
     https://github.com/xoap-io/scripted-actions
@@ -25,11 +25,44 @@
 #>
 [CmdletBinding()]
 param(
+    [string]$AzResourceGroupName = "myResourceGroup",
     [Parameter(Mandatory)]
-    [string]$AzResourceGroupName
+    [ValidateRange(1024,49151)]
+    [string]$AZOpenPorts = '3389',
+    [Parameter(Mandatory)]
+    [ValidateNotNullOrEmpty()]
+    [string]$AzVmSize,
+    [Parameter(Mandatory)]
+    [ValidateNotNullOrWhiteSpace()]
+    [string]$AzVmUserName,
+    [Parameter(Mandatory)]
+    [securestring]$AzVmUserPassword,
+    [Parameter(Mandatory)]
+    [ValidateSet("Flexible", "Uniform")]
+    [string]$AzOrchestrationMode = 'Flexible',
+    [ValidateSet('Premium_LRS', 'Premium_ZRS', 'Standard_GRS', 'Standard_GZRS', 'Standard_LRS', 'Standard_RAGRS', 'Standard_RAGZRS', 'Standard_ZRS')]
+    [string]$AzStorageSku,
+    [Parameter(Mandatory)]
+    [int]$AzVmCount = 1,
+    [Parameter(Mandatory)]
+    [datetime]$AzVmExpirationDate,
+    [Parameter(Mandatory)]
+    [ValidateNotNullOrEmpty]
+    [switch]$AzVmAutoShutdown,
+    [Parameter(Mandatory=$False)]
+    [bool]$BooleanParameter=$False,
+    [Parameter(Mandatory)]
+    [ValidateNotNull()]
+    [int]$AzSubnetCount,
+    [parameter(Position = 0, Mandatory)]
+    [ValidateNotNullOrEmpty()]
+    [ValidateScript({ Test-Path $_ })]
+    [string]$Path,
+    [Parameter(Mandatory=$false)]
+    [hashtable]$hashTableParam
 )
 
 #Set Error Action to Silently Continue
-$ErrorActionPreference = "SilentlyContinue"
+$ErrorActionPreference =  "Stop"
 
 # Add your code here...

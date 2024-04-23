@@ -31,11 +31,11 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string]$AwsInstanceId
+    [string]$AwsInstanceId = "myInstanceId"
 )
 
 #Set Error Action to Silently Continue
-$ErrorActionPreference = "SilentlyContinue"
+$ErrorActionPreference =  "Stop"
 
 aws ec2 stop-instances `
     --instance-ids $AwsInstanceId

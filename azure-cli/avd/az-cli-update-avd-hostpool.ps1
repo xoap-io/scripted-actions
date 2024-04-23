@@ -38,15 +38,15 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string]$AzResourceGroupName,
+    [string]$AzResourceGroupName = "myResourceGroup",
     [Parameter(Mandatory)]
-    [string]$AzHostPoolName,
+    [string]$AzHostPoolName = "myHostPool",
     [Parameter(Mandatory)]
-    [string]$AzTags
+    [string]$AzTags = "myTags"
 )
 
 #Set Error Action to Silently Continue
-$ErrorActionPreference = "SilentlyContinue"
+$ErrorActionPreference =  "Stop"
 
 az desktopvirtualization hostpool update `
     --resource-group $AzResourceGroupName `

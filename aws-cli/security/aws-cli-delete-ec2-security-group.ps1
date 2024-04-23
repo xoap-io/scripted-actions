@@ -36,11 +36,11 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string]$AwsSecurityGroupId
+    [string]$AwsSecurityGroupId = "mySecurityGroupId"
 )
 
 #Set Error Action to Silently Continue
-$ErrorActionPreference = "SilentlyContinue"
+$ErrorActionPreference =  "Stop"
 
 aws ec2 delete-security-group `
     --group-id $AwsSecurityGroupId

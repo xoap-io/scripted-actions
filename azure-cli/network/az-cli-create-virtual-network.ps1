@@ -44,19 +44,19 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string]$AzVnetName,
+    [string]$AzVnetName = "myVnet",
     [Parameter(Mandatory)]
-    [string]$AzResourceGroupName,
+    [string]$AzResourceGroupName = "myResourceGroup",
     [Parameter(Mandatory)]
-    [string]$AzVnetAddressPrefix,
+    [string]$AzVnetAddressPrefix ="10.0.0.0/16",
     [Parameter(Mandatory)]
-    [string]$AzSubnetName,
+    [string]$AzSubnetName = "mySubnet",
     [Parameter(Mandatory)]
-    [string]$AzSsubnetAddressPrefix
+    [string]$AzSsubnetAddressPrefix = "10.0.0.0/24"
 )
 
 #Set Error Action to Silently Continue
-$ErrorActionPreference = "SilentlyContinue"
+$ErrorActionPreference =  "Stop"
 
 # Create a virtual network and subnet
 az network vnet create `

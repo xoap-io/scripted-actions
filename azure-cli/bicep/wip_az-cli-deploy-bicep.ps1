@@ -26,7 +26,7 @@
     PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
 
 .COMPONENT
-
+    Azure CLI
 
 .LINK
     https://github.com/xoap-io/scripted-actions
@@ -44,15 +44,15 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string]$AzResourceGroupName,
+    [string]$AzResourceGroupName = "myResourceGroup",
     [Parameter(Mandatory)]
-    [string]$BicepTemplateFile,
+    [string]$BicepTemplateFile = "myBicepTemplate.bicep",
     [Parameter(Mandatory)]
-    [string]$BicepTemplateParametersFile
+    [string]$BicepTemplateParametersFile = "myBicepTemplateParameters.json"
 )
 
 #Set Error Action to Silently Continue
-$ErrorActionPreference = "SilentlyContinue"
+$ErrorActionPreference =  "Stop"
 
 az deployment group create `
 	--resource-group $AzResourceGroupName `

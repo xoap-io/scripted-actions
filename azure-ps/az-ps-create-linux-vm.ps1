@@ -53,10 +53,11 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string]$AzResourceGroupName,
+    [string]$AzResourceGroupName = 'myResourceGroup',
     [Parameter(Mandatory)]
-    [string]$AzVmName,
+    [string]$AzVmName = 'myVmName',
     [Parameter(Mandatory)]
+
     [ValidateSet(
         'eastus', 'eastus2', 'southcentralus', 'westus2',
         'westus3', 'australiaeast', 'southeastasia', 'northeurope',
@@ -78,20 +79,20 @@ param(
     )]
     [string]$AzLocation,
     [Parameter(Mandatory)]
-    [string]$AzImageName,
+    [string]$AzImageName = 'myImageName',
     [Parameter(Mandatory)]
-    [string]$AzPublicIpAddressName,
+    [string]$AzPublicIpAddressName = 'myPublicIpAddressName',
     [Parameter(Mandatory)]
-    [Securestring]$AZOpenPorts,
+    [int]$AZOpenPorts = 22,
     [Parameter(Mandatory)]
-    [string]$AzVmSize,
+    [string]$AzVmSize = 'Standard_B1s',
     [Parameter(Mandatory)]
     [string]$AzSshKeyName
 
 )
 
 #Set Error Action to Silently Continue
-$ErrorActionPreference = "SilentlyContinue"
+$ErrorActionPreference =  "Stop"
 
 New-AzVm `
     -ResourceGroupName $AzResourceGroupName `

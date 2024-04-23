@@ -28,50 +28,52 @@
 .PARAMETER AzResourceGroupName
     Defines the name of the Azure Resource Group.
 
-.PARAMETER AzLocation
-    Defines the location of the Azure Resource Group.
+.PARAMETER AzGalleryName
+    Defines the name of the Azure Gallery.
 
-.PARAMETER AzVmName
-    Defines the name of the Azure VM.
+.PARAMETER AzImageDefinition
+    Defines the name of the Azure Image Definition.
 
-.PARAMETER AzImageName
-    Defines the name of the Azure Image.
+.PARAMETER AzImagePublisher
+    Defines the name of the Azure Image Publisher.
 
-.PARAMETER AzPublicIpAddressName
-    Defines the name of the Azure Public IP Address.
+.PARAMETER AzImageOffer
+    Defines the name of the Azure Image Offer.
 
-.PARAMETER AzVmCredential
-    Defines the credentials of the Azure VM.
+.PARAMETER AzImageSku
+    Defines the name of the Azure Image SKU.
 
-.PARAMETER AzOpenPorts
-    Defines the open ports of the Azure VM.
+.PARAMETER AzImageType
+    Defines the type of the Azure Image.
 
-.PARAMETER AzVmSize
-    Defines the size of the Azure VM.
+.PARAMETER AzOsState
+    Defines the state of the Azure OS.
 
 #>
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string]$AzResourceGroupName,
+    [string]$AzResourceGroupName = "myResourceGroup",
     [Parameter(Mandatory)]
-    [string]$AzGalleryName,
+    [string]$AzGalleryName = "myGallery",
     [Parameter(Mandatory)]
-    [string]$AzImageDefinition,
+    [string]$AzImageDefinition = "myImageDefinition",
     [Parameter(Mandatory)]
-    [string]$AzImagePublisher,
+    [string]$AzImagePublisher = "MicrosoftWindowsDesktop",
     [Parameter(Mandatory)]
-    [string]$AzImageOffer,
+    [string]$AzImageOffer = "Windows-11",
     [Parameter(Mandatory)]
-    [string]$AzImageSku,
+    [string]$AzImageSku = 'win11-23h2-entn',
     [Parameter(Mandatory)]
+    [ValidateSet("Windows", "Linux")]
     [string]$AzImageType,
     [Parameter(Mandatory)]
+    [ValidateSet("Generalized", "Specialized")]
     [string]$AzOsState
 )
 
 #Set Error Action to Silently Continue
-$ErrorActionPreference = "SilentlyContinue"
+$ErrorActionPreference =  "Stop"
 
 az sig image-definition create `
    --resource-group $AzResourceGroupName `
