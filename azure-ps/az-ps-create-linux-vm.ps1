@@ -57,6 +57,7 @@ param(
     [Parameter(Mandatory)]
     [string]$AzVmName,
     [Parameter(Mandatory)]
+    [ValidateSet('eastus', 'eastus2', 'germany', 'northeurope', 'germanywestcentral')]
     [string]$AzLocation,
     [Parameter(Mandatory)]
     [string]$AzImageName,
@@ -72,7 +73,7 @@ param(
 )
 
 #Set Error Action to Silently Continue
-$ErrorActionPreference = "SilentlyContinue"
+$ErrorActionPreference =  "Stop"
 
 New-AzVm `
     -ResourceGroupName $AzResourceGroupName `

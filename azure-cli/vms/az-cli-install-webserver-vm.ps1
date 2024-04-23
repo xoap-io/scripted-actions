@@ -51,9 +51,9 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string]$AzResourceGroupName,
+    [string]$AzResourceGroupName = "myResourceGroup",
     [Parameter(Mandatory)]
-    [string]$AzVmName,
+    [string]$AzVmName = "myVmName",
     [Parameter(Mandatory)]
     [string]$Script = "Install-WindowsFeature -name Web-Server -IncludeManagementTools",
     [Parameter(Mandatory)]
@@ -61,7 +61,7 @@ param(
 )
 
 #Set Error Action to Silently Continue
-$ErrorActionPreference = "SilentlyContinue"
+$ErrorActionPreference =  "Stop"
 
 az vm run-command invoke `
     --resource-group $AzResourceGroupName `

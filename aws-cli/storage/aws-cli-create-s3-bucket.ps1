@@ -40,7 +40,7 @@ param(
 )
 
 #Set Error Action to Silently Continue
-$ErrorActionPreference = "SilentlyContinue"
+$ErrorActionPreference =  "Stop"
 
 aws s3api create-bucket `
     --bucket $AwsBucketName `

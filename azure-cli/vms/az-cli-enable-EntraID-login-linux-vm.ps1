@@ -42,18 +42,18 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string]$AzResourceGroupName,
+    [string]$AzResourceGroupName = "myResourceGroup",
     [Parameter(Mandatory)]
-    [string]$AzExtensionName,
+    [string]$AzExtensionName = "Microsoft.Azure.ActiveDirectory",
     [Parameter(Mandatory)]
-    [string]$AzVmName
+    [string]$AzVmName = "myVmName"
 )
 
 #Set Error Action to Silently Continue
-$ErrorActionPreference = "SilentlyContinue"
+$ErrorActionPreference =  "Stop"
 
 az vm extension set `
-    --publisher Microsoft.Azure.ActiveDirectory `
+    --publisher $AzExtensionName `
     --name $AzExtensionName `
     --resource-group $AzResourceGroupName `
     --vm-name $AzVmName

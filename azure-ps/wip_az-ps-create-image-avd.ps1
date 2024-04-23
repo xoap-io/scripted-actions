@@ -34,7 +34,7 @@ param(
 )
 
 #Set Error Action to Silently Continue
-$ErrorActionPreference = "SilentlyContinue"
+$ErrorActionPreference =  "Stop"
 
 # Prerequisites
 # Check to ensure that you're registered for the providers and RegistrationState is set to 'Registered'

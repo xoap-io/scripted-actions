@@ -38,7 +38,7 @@ param(
 )
 
 #Set Error Action to Silently Continue
-$ErrorActionPreference = "SilentlyContinue"
+$ErrorActionPreference =  "Stop"
 
 aws workspaces restore-workspace `
     --workspace-id $AwsWorkspaceId

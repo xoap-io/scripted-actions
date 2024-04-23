@@ -38,7 +38,7 @@ param(
 )
 
 #Set Error Action to Silently Continue
-$ErrorActionPreference = "SilentlyContinue"
+$ErrorActionPreference =  "Stop"
 
 aws workspaces delete-tags `
     --resource-id $AwsWorkspaceId `

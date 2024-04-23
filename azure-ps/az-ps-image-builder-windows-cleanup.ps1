@@ -39,7 +39,7 @@ param(
 )
 
 #Set Error Action to Silently Continue
-$ErrorActionPreference = "SilentlyContinue"
+$ErrorActionPreference =  "Stop"
 
 Remove-AzImageBuilderTemplate `
     -ResourceGroupName $AzResourceGroupName `

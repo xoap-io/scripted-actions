@@ -52,7 +52,7 @@ param(
 )
 
 #Set Error Action to Silently Continue
-$ErrorActionPreference = "SilentlyContinue"
+$ErrorActionPreference =  "Stop"
 
 az deployment group create `
 	--resource-group $AzResourceGroupName `

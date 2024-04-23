@@ -56,7 +56,7 @@ param(
 )
 
 #Set Error Action to Silently Continue
-$ErrorActionPreference = "SilentlyContinue"
+$ErrorActionPreference =  "Stop"
 
 # Create a virtual network and subnet
 az network vnet create `

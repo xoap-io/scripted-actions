@@ -34,7 +34,7 @@ param(
 )
 
 #Set Error Action to Silently Continue
-$ErrorActionPreference = "SilentlyContinue"
+$ErrorActionPreference =  "Stop"
 
 aws workspaces register-workspace-directory `
     --directory-id $AwsDirectoryId `

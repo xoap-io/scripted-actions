@@ -51,7 +51,7 @@ param(
     )
 
 #Set Error Action to Silently Continue
-$ErrorActionPreference = "SilentlyContinue"
+$ErrorActionPreference =  "Stop"
 
 aws ec2 authorize-security-group-ingress `
     --group-id $AwsSecurityGroupId `

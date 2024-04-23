@@ -37,11 +37,12 @@ param(
     [Parameter(Mandatory)]
     [string]$AzResourceGroupName,
     [Parameter(Mandatory)]
+    [ValidateSet('eastus', 'eastus2', 'germany', 'northeurope', 'germanywestcentral')]
     [string]$AzLocation
 )
 
 #Set Error Action to Silently Continue
-$ErrorActionPreference = "SilentlyContinue"
+$ErrorActionPreference =  "Stop"
 
 New-AzResourceGroup `
 	-Name $AzResourceGroupName `

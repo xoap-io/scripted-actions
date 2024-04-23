@@ -59,6 +59,7 @@ param(
     [Parameter(Mandatory)]
     [string]$AzOrchestrationMode,
     [Parameter(Mandatory)]
+    [ValidateSet('eastus', 'eastus2', 'germany', 'northeurope', 'germanywestcentral')]
     [string]$AzLocation,
     [Parameter(Mandatory)]
     [int]$AzInstanceCount,
@@ -68,7 +69,7 @@ param(
 )
 
 #Set Error Action to Silently Continue
-$ErrorActionPreference = "SilentlyContinue"
+$ErrorActionPreference =  "Stop"
 
 New-AzVmss `
     -ResourceGroup $AzResourceGroupName `

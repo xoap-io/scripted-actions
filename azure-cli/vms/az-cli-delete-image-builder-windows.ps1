@@ -65,21 +65,21 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string]$AzResourceGroupName,
+    [string]$AzResourceGroupName = "MyResourceGroup",
     [Parameter(Mandatory)]
-    [string]$AzImageBuildName,
+    [string]$AzImageBuildName = "MyImageBuild",
     [Parameter(Mandatory)]
-    [string]$AzAssignee,
+    [string]$AzAssignee = "MyAssignee",
     [Parameter(Mandatory)]
-    [string]$AzRoleDefinitionName,
+    [string]$AzRoleDefinitionName = "MyRoleDefinition",
     [Parameter(Mandatory)]
-    [string]$AzSubscriptionID,
+    [string]$AzSubscriptionID = "00000000-0000-0000-0000-000000000000",
     [Parameter(Mandatory)]
-    [string]$AzResourceId
+    [string]$AzResourceId = "00000000-0000-0000-0000-000000000000"
 )
 
 #Set Error Action to Silently Continue
-$ErrorActionPreference = "SilentlyContinue"
+$ErrorActionPreference =  "Stop"
 
 az resource delete `
     --resource-group $AzResourceGroupName `

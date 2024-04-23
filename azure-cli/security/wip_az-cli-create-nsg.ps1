@@ -31,7 +31,7 @@ param(
 )
 
 #Set Error Action to Silently Continue
-$ErrorActionPreference = "SilentlyContinue"
+$ErrorActionPreference =  "Stop"
 
 az network nsg rule create `
     --resource-group $AzResourceGroupName `

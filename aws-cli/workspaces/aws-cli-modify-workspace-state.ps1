@@ -40,7 +40,7 @@ param(
 )
 
 #Set Error Action to Silently Continue
-$ErrorActionPreference = "SilentlyContinue"
+$ErrorActionPreference =  "Stop"
 
 aws workspaces modify-workspace-state `
     --workspace-id $AwsWorkspaceId `

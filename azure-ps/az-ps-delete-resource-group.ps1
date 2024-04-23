@@ -33,7 +33,7 @@ param(
 )
 
 #Set Error Action to Silently Continue
-$ErrorActionPreference = "SilentlyContinue"
+$ErrorActionPreference =  "Stop"
 
 Remove-AzResourceGroup `
-    -Name $AzResourceGroupName
+    -Name $AzResourceGroupName -Force

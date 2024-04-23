@@ -45,7 +45,7 @@ param(
 )
 
 #Set Error Action to Silently Continue
-$ErrorActionPreference = "SilentlyContinue"
+$ErrorActionPreference =  "Stop"
 
 New-AzResourceGroupDeployment `
 	-ResourceGroupName $AzResourceGroupName `

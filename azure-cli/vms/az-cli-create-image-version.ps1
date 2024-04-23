@@ -52,25 +52,25 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string]$AzResourceGroupName,
+    [string]$AzResourceGroupName = "MyResourceGroup",
     [Parameter(Mandatory)]
-    [string]$AzGallery,
+    [string]$AzGallery = "MyGallery",
     [Parameter(Mandatory)]
-    [string]$AzImageDefinition,
+    [string]$AzImageDefinition = "MyImageDefinition",
     [Parameter(Mandatory)]
-    [string]$AzGalleryImageVersion,
+    [string]$AzGalleryImageVersion = "1.0.0",
     [Parameter(Mandatory)]
-    [string]$AzTargetRegions,
+    [string]$AzTargetRegions = "westus",
     [Parameter(Mandatory)]
-    [string]$AzReplicaCount,
+    [string]$AzReplicaCount = 1,
     [Parameter(Mandatory)]
-    [string]$AzSubscriptionId,
+    [string]$AzSubscriptionId = "00000000-0000-0000-0000-000000000000",
     [Parameter(Mandatory)]
-    [string]$AzVmName
+    [string]$AzVmName = "MyVm"
 )
 
 #Set Error Action to Silently Continue
-$ErrorActionPreference = "SilentlyContinue"
+$ErrorActionPreference =  "Stop"
 
 az sig image-version create `
     --resource-group $AzResourceGroupName `

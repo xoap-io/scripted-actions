@@ -50,7 +50,7 @@ param(
 )
 
 #Set Error Action to Silently Continue
-$ErrorActionPreference = "SilentlyContinue"
+$ErrorActionPreference =  "Stop"
 
 aws ec2 create-subnet `
     --vpc-id $AwsVpcId `

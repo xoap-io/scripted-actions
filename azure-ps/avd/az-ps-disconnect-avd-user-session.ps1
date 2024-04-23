@@ -44,17 +44,17 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string]$AzResourceGroupName,
+    [string]$AzResourceGroupName = 'myResourceGroup',
     [Parameter(Mandatory)]
-    [string]$AzHostPoolName,
+    [string]$AzHostPoolName = 'myHostPool',
     [Parameter(Mandatory)]
-    [string]$AzSessionHostName,
+    [string]$AzSessionHostName = 'mySessionHostName',
     [Parameter(Mandatory)]
-    [string]$AzSessionId
+    [string]$AzSessionId = 'mySessionId'
 )
 
 #Set Error Action to Silently Continue
-$ErrorActionPreference = "SilentlyContinue"
+$ErrorActionPreference =  "Stop"
 
 Disconnect-AzWvdUserSession `
     -ResourceGroupName $AzResourceGroupName `

@@ -51,21 +51,22 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string]$AzResourceGroupName,
+    [string]$AzResourceGroupName = 'myResourceGroup',
     [Parameter(Mandatory)]
-    [string]$AzWorkspaceName,
+    [string]$AzWorkspaceName = 'myWorkspace',
     [Parameter(Mandatory)]
+    [ValidateSet('eastus', 'eastus2', 'germany', 'northeurope', 'germanywestcentral')]
     [string]$AzLocation,
     [Parameter(Mandatory)]
-    [string]$AzFriendlyName,
+    [string]$AzFriendlyName = 'myFriendlyName',
     [Parameter(Mandatory)]
-    [string]$AzApplicationGroupName,
+    [string]$AzApplicationGroupName = 'myApplicationGroup',
     [Parameter(Mandatory)]
-    [string]$AzDescription
+    [string]$AzDescription = 'MyDescription'
 )
 
 #Set Error Action to Silently Continue
-$ErrorActionPreference = "SilentlyContinue"
+$ErrorActionPreference =  "Stop"
 
 New-AzWvdWorkspace -ResourceGroupName $AzResourceGroupName `
     -Name $AzWorkspaceName `

@@ -44,6 +44,6 @@ param(
 )
 
 #Set Error Action to Silently Continue
-$ErrorActionPreference = "SilentlyContinue"
+$ErrorActionPreference =  "Stop"
 
 New-WKSWorkspace -Workspace @{"BundleID" = $AwsWorkspaceBundleIdBundleId; "DirectoryId" = $AwsWorkspaceDirectoryId; "UserName" = $AwsWorkspaceUserName}
