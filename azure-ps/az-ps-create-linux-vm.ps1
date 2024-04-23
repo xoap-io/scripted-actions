@@ -53,13 +53,11 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string]$AzResourceGroupName,
+    [string]$AzResourceGroupName = 'myResourceGroup',
     [Parameter(Mandatory)]
-    [string]$AzVmName,
+    [string]$AzVmName = 'myVmName',
     [Parameter(Mandatory)]
-<<<<<<< HEAD
-    [ValidateSet('eastus', 'eastus2', 'germany', 'northeurope', 'germanywestcentral')]
-=======
+
     [ValidateSet(
         'eastus', 'eastus2', 'southcentralus', 'westus2',
         'westus3', 'australiaeast', 'southeastasia', 'northeurope',
@@ -79,16 +77,15 @@ param(
         'francesouth', 'germanynorth', 'norwaywest', 'switzerlandwest',
         'ukwest', 'uaecentral', 'brazilsoutheast'
     )]
->>>>>>> d27ed172490c2a99af476a122f8fcfd7a8ae8575
     [string]$AzLocation,
     [Parameter(Mandatory)]
-    [string]$AzImageName,
+    [string]$AzImageName = 'myImageName',
     [Parameter(Mandatory)]
-    [string]$AzPublicIpAddressName,
+    [string]$AzPublicIpAddressName = 'myPublicIpAddressName',
     [Parameter(Mandatory)]
-    [Securestring]$AZOpenPorts,
+    [int]$AZOpenPorts = 22,
     [Parameter(Mandatory)]
-    [string]$AzVmSize,
+    [string]$AzVmSize = 'Standard_B1s',
     [Parameter(Mandatory)]
     [string]$AzSshKeyName
 
