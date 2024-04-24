@@ -29,7 +29,7 @@
     Azure PowerShell
 
 .LINK
-    https://github.com/scriptrunner/ActionPacks/tree/master/ActiveDirectory/Users
+    https://github.com/xoap-io/scripted-actions
 
 .PARAMETER AzResourceGroupName
     Defines the name of the Azure Resource Group.
