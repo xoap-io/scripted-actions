@@ -44,11 +44,11 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string]$AzResourceGroupName,
+    [string]$AzResourceGroupName = "myResourceGroup",
     [Parameter(Mandatory)]
-    [string]$ArmTemplateFile,
+    [string]$ArmTemplateFile = "myArmTemplate.json",
     [Parameter(Mandatory)]
-    [string]$ArmTemplateParametersFile
+    [string]$ArmTemplateParametersFile = "myArmTemplateParameters.json"
 )
 
 #Set Error Action to Silently Continue

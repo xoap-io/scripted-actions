@@ -34,7 +34,7 @@ param(
     [string]$AwsWorkspaceId = "myWorkspaceId"
 )
 
-#Set Error Action to Silently Continue
+#Set Error Action to Stop
 $ErrorActionPreference =  "Stop"
 
 Restart-WKSWorkspace -WorkspaceId $AwsWorkspaceId
