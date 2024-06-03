@@ -42,7 +42,10 @@ param(
     [Parameter(Mandatory)]
     [string]$AzHostPoolName = "myHostPool",
     [Parameter(Mandatory)]
-    [string]$AzTags = "myTags"
+    [string]$AzTags = "myTags",
+    [Parameter(Mandatory)]
+    [ValidateSet('Desktop', 'None', 'RailApplications')]
+    [string]$AzPreferredAppGroupType = "Desktop"
 )
 
 #Set Error Action to Silently Continue
@@ -51,4 +54,5 @@ $ErrorActionPreference =  "Stop"
 az desktopvirtualization hostpool update `
     --resource-group $AzResourceGroupName `
     --name $AzHostPoolName `
-    --tags $AzTags
+    --tags $AzTags `
+    --preferred-app-group-type  $AzPreferredAppGroupType
