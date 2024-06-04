@@ -34,6 +34,9 @@
 .PARAMETER AzTags
     Defines the tags for the Azure Virtual Desktop Host Pool.
 
+.PARAMETER AzPreferredAppGroupType
+    Defines the preferred app group type for Azure Virtual Desktop Pool.
+
 #>
 [CmdletBinding()]
 param(
