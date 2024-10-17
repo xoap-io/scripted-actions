@@ -6,32 +6,7 @@
     This script creates an Azure Virtual Machine Scale Set.
     The script uses the Azure CLI to create the specified Azure Virtual Machine Scale Set.
     The script uses the following Azure CLI command:
-    az vmss create `
-      --resource-group $AzResourceGroupName `
-      --name $AzScaleSetName `
-      --orchestration-mode $AzOrchestrationMode `
-      --image $AzSkuImage `
-      --instance-count $AzScaleSetInstanceCount `
-      --admin-username $AzAdminUserName `
-      --generate-ssh-keys
-
-    The script sets the ErrorActionPreference to SilentlyContinue to suppress error messages.
-    
-    It does not return any output.
-
-.NOTES
-    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
-    The use of the scripts does not require XOAP, but it will make your life easier.
-    You are allowed to pull the script from the repository and use it with XOAP or other solutions
-    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no liability for the function,
-    the use and the consequences of the use of this freely available script.
-    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
-
-.COMPONENT
-    Azure CLI
-
-.LINK
-    https://github.com/xoap-io/scripted-actions
+    az vmss create --resource-group $AzResourceGroupName --name $AzScaleSetName --orchestration-mode $AzOrchestrationMode --image $AzSkuImage --instance-count $AzScaleSetInstanceCount --admin-username $AzAdminUserName --generate-ssh-keys
 
 .PARAMETER AzResourceGroupName
     Defines the name of the Azure Resource Group.
@@ -50,33 +25,124 @@
 
 .PARAMETER AzAdminUserName
     Defines the admin username of the Azure Scale Set.
-    
+
+.PARAMETER AzSubscription
+    Name or ID of subscription.
+
+.PARAMETER AzDebug
+    Increase logging verbosity to show all debug logs.
+
+.PARAMETER AzOnlyShowErrors
+    Only show errors, suppressing warnings.
+
+.PARAMETER AzOutput
+    Output format.
+
+.PARAMETER AzQuery
+    JMESPath query string.
+
+.PARAMETER AzVerbose
+    Increase logging verbosity.
+
+.PARAMETER WhatIf
+    Shows what would happen if the cmdlet runs. The cmdlet is not run.
+
+.PARAMETER Confirm
+    Prompts you for confirmation before running the cmdlet.
+
+.EXAMPLE
+    .\az-cli-create-vm-scale-set.ps1 -AzResourceGroupName "MyResourceGroup" -AzScaleSetName "MyScaleSet" -AzOrchestrationMode "Flexible" -AzSkuImage "UbuntuLTS" -AzScaleSetInstanceCount 2 -AzAdminUserName "azureuser"
+
+.NOTES
+    Author: Your Name
+    Date:   2024-09-03
+    Version: 1.1
+    Requires: Azure CLI
+
+.LINK
+    https://learn.microsoft.com/en-us/cli/azure/vmss
 #>
+
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory)]
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
     [string]$AzResourceGroupName = 'myResourceGroup',
-    [Parameter(Mandatory)]
+
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
     [string]$AzScaleSetName = 'myScaleSet',
-    [Parameter(Mandatory)]
+
+    [Parameter(Mandatory=$true)]
     [ValidateSet("Flexible", "Uniform")]
     [string]$AzOrchestrationMode = 'Flexible',
-    [Parameter(Mandatory)]
+
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
     [string]$AzSkuImage = 'UbuntuLTS',
-    [Parameter(Mandatory)]
-    [string]$AzScaleSetInstanceCount = 2,
-    [Parameter(Mandatory)]
-    [string]$AzAdminUserName = 'azureuser'
-    )
 
-# Set Error Action to Silently Continue
-$ErrorActionPreference =  "Stop"
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
+    [int]$AzScaleSetInstanceCount = 2,
 
-az vmss create `
-  --resource-group $AzResourceGroupName `
-  --name $AzScaleSetName `
-  --orchestration-mode $AzOrchestrationMode `
-  --image $AzSkuImage `
-  --instance-count $AzScaleSetInstanceCount `
-  --admin-username $AzAdminUserName `
-  --generate-ssh-keys
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
+    [string]$AzAdminUserName = 'azureuser',
+
+    [Parameter(Mandatory=$false)]
+    [string]$AzSubscription,
+
+    [Parameter(Mandatory=$false)]
+    [switch]$AzDebug,
+
+    [Parameter(Mandatory=$false)]
+    [switch]$AzOnlyShowErrors,
+
+    [Parameter(Mandatory=$false)]
+    [string]$AzOutput,
+
+    [Parameter(Mandatory=$false)]
+    [string]$AzQuery,
+
+    [Parameter(Mandatory=$false)]
+    [switch]$AzVerbose,
+
+
+)
+
+# Splatting parameters for better readability
+$parameters = @{
+    resource_group        = $AzResourceGroupName
+    name                  = $AzScaleSetName
+    orchestration_mode    = $AzOrchestrationMode
+    image                 = $AzSkuImage
+    instance_count        = $AzScaleSetInstanceCount
+    admin_username        = $AzAdminUserName
+    subscription          = $AzSubscription
+    debug                 = $AzDebug
+    only_show_errors      = $AzOnlyShowErrors
+    output                = $AzOutput
+    query                 = $AzQuery
+    verbose               = $AzVerbose
+}
+
+# Set Error Action to Stop
+$ErrorActionPreference = "Stop"
+
+try {
+    # Create an Azure Virtual Machine Scale Set
+    az vmss create @parameters
+
+    # Output the result
+    Write-Output "Azure Virtual Machine Scale Set created successfully."
+} catch {
+    # Log the error to the console
+
+Write-Output "Error message $errorMessage"
+
+
+    Write-Error "Failed to create the Azure Virtual Machine Scale Set: $($_.Exception.Message)"
+} finally {
+    # Cleanup code if needed
+    Write-Output "Script execution completed."
+}

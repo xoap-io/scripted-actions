@@ -6,23 +6,7 @@
     This script installs Nginx on an Azure Linux VM with Azure PowerShell. The script uses the Azure PowerShell to run a shell script on the specified Azure VM.
     The script uses the following Azure PowerShell command:
     Invoke-AzVMRunCommand -ResourceGroupName $AzResourceGroupName -Name $AzVmName -CommandId 'RunShellScript' -ScriptString 'sudo apt-get update && sudo apt-get install -y nginx'
-    The script sets the ErrorActionPreference to SilentlyContinue to suppress error messages.
-    
-    It does not return any output.
-
-.NOTES
-    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
-    The use of the scripts does not require XOAP, but it will make your life easier.
-    You are allowed to pull the script from the repository and use it with XOAP or other solutions
-    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no liability for the function,
-    the use and the consequences of the use of this freely available script.
-    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
-
-.COMPONENT
-    Azure PowerShell
-
-.LINK
-    https://github.com/xoap-io/scripted-actions
+    The script sets the ErrorActionPreference to Stop to handle errors properly.
 
 .PARAMETER AzResourceGroupName
     Defines the name of the Azure Resource Group.
@@ -30,20 +14,97 @@
 .PARAMETER AzVmName
     Defines the name of the Azure VM.
 
+.PARAMETER AzDebug
+    Increase logging verbosity to show all debug logs.
+
+.PARAMETER AzOnlyShowErrors
+    Only show errors, suppressing warnings.
+
+.PARAMETER AzOutput
+    Output format.
+
+.PARAMETER AzQuery
+    JMESPath query string.
+
+.PARAMETER AzVerbose
+    Increase logging verbosity.
+
+.PARAMETER WhatIf
+    Shows what would happen if the cmdlet runs. The cmdlet is not run.
+
+.PARAMETER Confirm
+    Prompts you for confirmation before running the cmdlet.
+
+.EXAMPLE
+    .\az-ps-install-nginx-linux-vm.ps1 -AzResourceGroupName "myResourceGroup" -AzVmName "myVm"
+
+.NOTES
+    Ensure that Azure PowerShell is installed and authenticated before running the script.
+    Author: Your Name
+    Date:   2024-09-03
+    Version: 1.1
+    Requires: Azure PowerShell
+
+.LINK
+    https://github.com/xoap-io/scripted-actions
 #>
+
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory)]
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
     [string]$AzResourceGroupName = "myResourceGroup",
-    [Parameter(Mandatory)]
-    [string]$AzVmName = "myVm"
+
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
+    [string]$AzVmName = "myVm",
+
+    [Parameter(Mandatory=$false)]
+    [switch]$AzDebug,
+
+    [Parameter(Mandatory=$false)]
+    [switch]$AzOnlyShowErrors,
+
+    [Parameter(Mandatory=$false)]
+    [string]$AzOutput,
+
+    [Parameter(Mandatory=$false)]
+    [string]$AzQuery,
+
+    [Parameter(Mandatory=$false)]
+    [switch]$AzVerbose,
+
+
 )
 
-#Set Error Action to Silently Continue
-$ErrorActionPreference =  "Stop"
+# Splatting parameters for better readability
+$parameters = @{
+    ResourceGroupName    = $AzResourceGroupName
+    Name                 = $AzVmName
+    Debug                = $AzDebug
+    OnlyShowErrors       = $AzOnlyShowErrors
+    Output               = $AzOutput
+    Query                = $AzQuery
+    Verbose              = $AzVerbose
+}
 
-Invoke-AzVMRunCommand `
-   -ResourceGroupName $AzResourceGroupName `
-   -Name $AzVmName `
-   -CommandId 'RunShellScript' `
-   -ScriptString 'sudo apt-get update && sudo apt-get install -y nginx'
+# Set Error Action to Stop
+$ErrorActionPreference = "Stop"
+
+try {
+    # Install Nginx on the VM
+    Invoke-AzVMRunCommand @parameters -CommandId 'RunShellScript' -ScriptString 'sudo apt-get update && sudo apt-get install -y nginx'
+
+    # Output the result
+    Write-Output "Nginx installed successfully on Azure VM '$($AzVmName)'."
+} catch {
+    # Log the error to the console
+
+Write-Output "Error message $errorMessage"
+
+
+    Write-Error "Failed to install Nginx on Azure VM: $($_.Exception.Message)"
+} finally {
+    # Cleanup code if needed
+    Write-Output "Script execution completed."
+}

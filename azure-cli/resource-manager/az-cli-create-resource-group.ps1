@@ -7,44 +7,102 @@
     The script uses the following Azure CLI command:
     az group create --name $AzResourceGroupName --location $AzLocation
 
-    The script sets the ErrorActionPreference to SilentlyContinue to suppress error messages.
-    
-    It does not return any output.
+.PARAMETER ResourceGroup
+    Defines the name of the Azure Resource Group.
 
-.NOTES
-    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
-    The use of the scripts does not require XOAP, but it will make your life easier.
-    You are allowed to pull the script from the repository and use it with XOAP or other solutions
-    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no liability for the function,
-    the use and the consequences of the use of this freely available script.
-    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+.PARAMETER Location
+    Defines the location of the Azure Resource Group.
 
-.COMPONENT
-    Azure CLI
+.PARAMETER ManagedBy
+    Defines the managed by value of the Azure Resource Group.
+
+.PARAMETER Tags
+    Defines the tags for the Azure Resource Group.
+
+.EXAMPLE
+    .\az-cli-create-resource-group.ps1 -AzResourceGroupName "MyResourceGroup" -AzLocation "eastus"
+
+.LINK
+    https://learn.microsoft.com/en-us/cli/azure/group
+
+.LINK
+    https://learn.microsoft.com/en-us/cli/azure/group?view=azure-cli-latest
 
 .LINK
     https://github.com/xoap-io/scripted-actions
 
-.PARAMETER AzResourceGroupName
-    Defines the name of the Azure Resource Group.
-
-.PARAMETER AzLocation
-    Defines the location of the Azure Resource Group.
-
+.COMPONENT
+    Azure CLI
 #>
+
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory)]
-    [string]$AzResourceGroupName = "myResourceGroup",
-    [Parameter(Mandatory)]
-    [ValidateSet('eastus', 'eastus2', 'germany', 'northeurope', 'germanywestcentral', 'westcentralus', 'southcentralus', 'southcentralus', 'centralus', 'northcentralus', 'eastus2euap', 'westus3', 'southeastasia', 'eastasia', 'japaneast', 'japanwest', 'australiaeast', 'australiasoutheast', 'australiacentral', 'australiacentral2', 'centralindia', 'southindia', 'westindia', 'canadacentral', 'canadaeast', 'uksouth', 'ukwest', 'francecentral', 'francesouth', 'norwayeast', 'norwaywest', 'switzerlandnorth', 'switzerlandwest', 'germanynorth', 'germanywestcentral', 'uaenorth', 'uaecentral', 'southafricanorth', 'southafricawest', 'brazilsouth', 'brazilus', 'koreacentral', 'koreasouth', 'koreasouth', 'australiacentral', 'australiacentral2', 'australiaeast', 'australiasoutheast', 'canadacentral', 'canadaeast', 'centralindia', 'eastasia', 'eastus', 'eastus2', 'eastus2euap', 'francecentral', 'francesouth', 'germanywestcentral', 'japaneast', 'japanwest', 'northcentralus', 'northeurope', 'southafricanorth', 'southcentralus', 'southeastasia', 'switzerlandnorth', 'switzerlandwest', 'uksouth', 'ukwest', 'westcentralus', 'westeurope', 'westindia', 'westus', 'westus2')]
-    [string]$AzLocation
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
+    [string]$ResourceGroup,
+
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
+    [ValidateSet(
+        'eastus', 'eastus2', 'southcentralus', 'westus2',
+        'westus3', 'australiaeast', 'southeastasia', 'northeurope',
+        'swedencentral', 'uksouth', 'westeurope', 'centralus',
+        'southafricanorth', 'centralindia', 'eastasia', 'japaneast',
+        'koreacentral', 'canadacentral', 'francecentral', 'germanywestcentral',
+        'italynorth', 'norwayeast', 'polandcentral', 'switzerlandnorth',
+        'uaenorth', 'brazilsouth', 'israelcentral', 'qatarcentral',
+        'asia', 'asiapacific', 'australia', 'brazil',
+        'canada', 'europe', 'france',
+        'global', 'india', 'japan', 'korea',
+        'norway', 'singapore', 'southafrica', 'sweden',
+        'switzerland', 'unitedstates', 'northcentralus', 'westus',
+        'japanwest', 'centraluseuap', 'eastus2euap', 'westcentralus',
+        'southafricawest', 'australiacentral', 'australiacentral2', 'australiasoutheast',
+        'koreasouth', 'southindia', 'westindia', 'canadaeast',
+        'francesouth', 'germanynorth', 'norwaywest', 'switzerlandwest',
+        'ukwest', 'uaecentral', 'brazilsoutheast'
+    )]
+    [string]$Location,
+
+    [Parameter(Mandatory=$false)]
+    [ValidateNotNullOrEmpty()]
+    [string]$ManagedBy,
+
+    [Parameter(Mandatory=$false)]
+    [ValidateNotNullOrEmpty()]
+    [string]$Tags
 )
 
-#Set Error Action to Silently Continue
-$ErrorActionPreference =  "Stop"
+# Splatting parameters for better readability
+$parameters = `
+    '--location', $Location ,`
+    '--resource-group', $ResourceGroup
 
-# Create a new Azure Resource Group
-az group create `
-    --name $AzResourceGroupName `
-	--location $AzLocation
+if ($ManagedBy) {
+    $parameters += '--managed-by', $ManagedBy
+}
+
+if ($Tags) {
+    $parameters += '--tags', $Tags
+}
+
+# Set Error Action to Stop
+$ErrorActionPreference = "Stop"
+
+try {
+    # Create a new Azure Resource Group
+    az group create @parameters
+
+    # Output the result
+    Write-Output "Azure Resource Group created successfully."
+
+} catch {
+    # Log the error to the console
+
+    Write-Output "Error message $errorMessage"
+    Write-Error "Failed to create the Azure Resource Group: $($_.Exception.Message)"
+
+} finally {
+    # Cleanup code if needed
+    Write-Output "Script execution completed."
+}

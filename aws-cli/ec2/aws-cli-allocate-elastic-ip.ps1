@@ -17,25 +17,25 @@
     the use and the consequences of the use of this freely available script.
     PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
 
-.COMPONENT
-    AWS CLI
-
-.LINK
-    https://github.com/xoap-io/scripted-actions
-
 .PARAMETER AwsInstanceId
     Defines the ID of the AWS EC2 instance.
 
 .PARAMETER AwsElasticIpId
     Defines the ID of the AWS Elastic IP.
 
+.LINK
+    https://github.com/xoap-io/scripted-actions
+
+.COMPONENT
+    AWS CLI
 #>
+
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string]$AwsInstanceId = "myInstanceId",
+    [string]$AwsInstanceId,
     [Parameter(Mandatory)]
-    [string]$AwsElasticIpId = "myElasticIpId"
+    [string]$AwsElasticIpId
 )
 
 #Set Error Action to Silently Continue

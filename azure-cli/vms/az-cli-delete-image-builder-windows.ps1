@@ -6,42 +6,11 @@
     This script deletes an Azure Image Builder Windows VM.
     The script uses the Azure CLI to delete the specified Azure Image Builder Windows VM.
     The script uses the following Azure CLI commands:
-    az resource delete `
-        --resource-group $AzResourceGroupName `
-        --resource-type Microsoft.VirtualMachineImages/imageTemplates `
-        --name $AzImageBuildName
-
-    az role assignment delete `
-        --assignee $AzAssignee `
-        --role $AzRoleDefinitionName `
-        --scope /subscriptions/$AzSubscriptionID/resourceGroups/$AzResourceGroupName
-
-    az role definition delete `
-        --name $AzRoleDefinitionName
-
-    az identity delete `
-        --ids $AzResourceId
-
-    az group delete `
-        --resource-group $AzResourceGroupName
-
-    The script sets the ErrorActionPreference to SilentlyContinue to suppress error messages.
-    
-    It does not return any output.
-
-.NOTES
-    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
-    The use of the scripts does not require XOAP, but it will make your life easier.
-    You are allowed to pull the script from the repository and use it with XOAP or other solutions
-    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no liability for the function,
-    the use and the consequences of the use of this freely available script.
-    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
-
-.COMPONENT
-    Azure CLI
-
-.LINK
-    https://github.com/xoap-io/scripted-actions
+    az resource delete --resource-group $AzResourceGroupName --resource-type Microsoft.VirtualMachineImages/imageTemplates --name $AzImageBuildName
+    az role assignment delete --assignee $AzAssignee --role $AzRoleDefinitionName --scope /subscriptions/$AzSubscriptionID/resourceGroups/$AzResourceGroupName
+    az role definition delete --name $AzRoleDefinitionName
+    az identity delete --ids $AzResourceId
+    az group delete --resource-group $AzResourceGroupName
 
 .PARAMETER AzResourceGroupName
     Defines the name of the Azure Resource Group.
@@ -61,41 +30,130 @@
 .PARAMETER AzResourceId
     Defines the ID of the Azure Resource.
 
+.PARAMETER AzDebug
+    Increase logging verbosity to show all debug logs.
+
+.PARAMETER AzOnlyShowErrors
+    Only show errors, suppressing warnings.
+
+.PARAMETER AzOutput
+    Output format.
+
+.PARAMETER AzQuery
+    JMESPath query string.
+
+.PARAMETER AzVerbose
+    Increase logging verbosity.
+
+.PARAMETER WhatIf
+    Shows what would happen if the cmdlet runs. The cmdlet is not run.
+
+.PARAMETER Confirm
+    Prompts you for confirmation before running the cmdlet.
+
+.EXAMPLE
+    .\az-cli-delete-image-builder-windows.ps1 -AzResourceGroupName "MyResourceGroup" -AzImageBuildName "MyImageBuild" -AzAssignee "MyAssignee" -AzRoleDefinitionName "MyRoleDefinition" -AzSubscriptionID "00000000-0000-0000-0000-000000000000" -AzResourceId "00000000-0000-0000-0000-000000000000"
+
+.NOTES
+    Author: Your Name
+    Date:   2024-09-03
+    Version: 1.1
+    Requires: Azure CLI
+
+.LINK
+    https://learn.microsoft.com/en-us/cli/azure/vm
 #>
+
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory)]
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
     [string]$AzResourceGroupName = "MyResourceGroup",
-    [Parameter(Mandatory)]
+
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
     [string]$AzImageBuildName = "MyImageBuild",
-    [Parameter(Mandatory)]
+
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
     [string]$AzAssignee = "MyAssignee",
-    [Parameter(Mandatory)]
+
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
     [string]$AzRoleDefinitionName = "MyRoleDefinition",
-    [Parameter(Mandatory)]
+
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
     [string]$AzSubscriptionID = "00000000-0000-0000-0000-000000000000",
-    [Parameter(Mandatory)]
-    [string]$AzResourceId = "00000000-0000-0000-0000-000000000000"
+
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
+    [string]$AzResourceId = "00000000-0000-0000-0000-000000000000",
+
+    [Parameter(Mandatory=$false)]
+    [switch]$AzDebug,
+
+    [Parameter(Mandatory=$false)]
+    [switch]$AzOnlyShowErrors,
+
+    [Parameter(Mandatory=$false)]
+    [string]$AzOutput,
+
+    [Parameter(Mandatory=$false)]
+    [string]$AzQuery,
+
+    [Parameter(Mandatory=$false)]
+    [switch]$AzVerbose,
+
+
 )
 
-#Set Error Action to Silently Continue
-$ErrorActionPreference =  "Stop"
+# Splatting parameters for better readability
+$parameters = @{
+    resource_group        = $AzResourceGroupName
+    resource_type         = "Microsoft.VirtualMachineImages/imageTemplates"
+    name                  = $AzImageBuildName
+    assignee              = $AzAssignee
+    role                  = $AzRoleDefinitionName
+    scope                 = "/subscriptions/$AzSubscriptionID/resourceGroups/$AzResourceGroupName"
+    ids                   = $AzResourceId
+    subscription          = $AzSubscriptionID
+    debug                 = $AzDebug
+    only_show_errors      = $AzOnlyShowErrors
+    output                = $AzOutput
+    query                 = $AzQuery
+    verbose               = $AzVerbose
+}
 
-az resource delete `
-    --resource-group $AzResourceGroupName `
-    --resource-type Microsoft.VirtualMachineImages/imageTemplates `
-    --name $AzImageBuildName
+# Set Error Action to Stop
+$ErrorActionPreference = "Stop"
 
-az role assignment delete `
-    --assignee $AzAssignee `
-    --role $AzRoleDefinitionName `
-    --scope /subscriptions/$AzSubscriptionID/resourceGroups/$AzResourceGroupName
+try {
+    # Delete the Azure Image Builder
+    az resource delete @parameters
 
-az role definition delete `
-    --name $AzRoleDefinitionName
+    # Delete the role assignment
+    az role assignment delete @parameters
 
-az identity delete `
-    --ids $AzResourceId
+    # Delete the role definition
+    az role definition delete @parameters
 
-az group delete `
-    --resource-group $AzResourceGroupName
+    # Delete the managed identity
+    az identity delete @parameters
+
+    # Delete the resource group
+    az group delete @parameters
+
+    # Output the result
+    Write-Output "Azure Image Builder Windows VM deleted successfully."
+} catch {
+    # Log the error to the console
+
+Write-Output "Error message $errorMessage"
+
+
+    Write-Error "Failed to delete the Azure Image Builder Windows VM: $($_.Exception.Message)"
+} finally {
+    # Cleanup code if needed
+    Write-Output "Script execution completed."
+}

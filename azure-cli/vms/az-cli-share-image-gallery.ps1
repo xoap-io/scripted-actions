@@ -16,24 +16,6 @@
         --assignee $EmailAddress `
         --scope $GalleryId
 
-    The script sets the ErrorActionPreference to SilentlyContinue to suppress error messages.
-    
-    It does not return any output.
-
-.NOTES
-    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
-    The use of the scripts does not require XOAP, but it will make your life easier.
-    You are allowed to pull the script from the repository and use it with XOAP or other solutions
-    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no liability for the function,
-    the use and the consequences of the use of this freely available script.
-    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
-
-.COMPONENT
-    Azure CLI
-
-.LINK
-    azure-cli/bicep/az-cli-deploy-bicep.ps1
-
 .PARAMETER AzResourceGroupName
     Defines the name of the Azure Resource Group.
 
@@ -43,26 +25,110 @@
 .PARAMETER EmailAddress
     Defines the email address of the user to assign the Reader role to the Image Gallery.
 
+.PARAMETER AzDebug
+    Increase logging verbosity to show all debug logs.
+
+.PARAMETER AzOnlyShowErrors
+    Only show errors, suppressing warnings.
+
+.PARAMETER AzOutput
+    Output format.
+
+.PARAMETER AzQuery
+    JMESPath query string.
+
+.PARAMETER AzVerbose
+    Increase logging verbosity.
+
+.PARAMETER WhatIf
+    Shows what would happen if the cmdlet runs. The cmdlet is not run.
+
+.PARAMETER Confirm
+    Prompts you for confirmation before running the cmdlet.
+
+.EXAMPLE
+    .\az-cli-share-image-gallery.ps1 -AzResourceGroupName "MyResourceGroup" -AzGalleryName "MyGallery" -EmailAddress "user@example.com"
+
+.NOTES
+    Author: Your Name
+    Date:   2024-09-03
+    Version: 1.1
+    Requires: Azure CLI
+
+.LINK
+    https://learn.microsoft.com/en-us/cli/azure/vm
 #>
+
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory)]
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
     [string]$AzResourceGroupName = "myResourceGroup",
-    [Parameter(Mandatory)]
+
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
     [string]$AzGalleryName = "myGallery",
-    [Parameter(Mandatory)]
-    [string]$EmailAddress = "hello@xoap.io"
+
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
+    [string]$EmailAddress = "hello@xoap.io",
+
+    [Parameter(Mandatory=$false)]
+    [switch]$AzDebug,
+
+    [Parameter(Mandatory=$false)]
+    [switch]$AzOnlyShowErrors,
+
+    [Parameter(Mandatory=$false)]
+    [string]$AzOutput,
+
+    [Parameter(Mandatory=$false)]
+    [string]$AzQuery,
+
+    [Parameter(Mandatory=$false)]
+    [switch]$AzVerbose,
+
+
 )
 
-#Set Error Action to Silently Continue
-$ErrorActionPreference =  "Stop"
+# Splatting parameters for better readability
+$parameters = @{
+    resource_group   = $AzResourceGroupName
+    gallery_name     = $AzGalleryName
+    query            = "id"
+    role             = "Reader"
+    assignee         = $EmailAddress
+    scope            = ""
+    debug            = $AzDebug
+    only_show_errors = $AzOnlyShowErrors
+    output           = $AzOutput
+    query            = $AzQuery
+    verbose          = $AzVerbose
+}
 
-$GalleryId = az sig show `
-   --resource-group $AzResourceGroupName `
-   --gallery-name $AzGalleryName `
-   --query id
+# Set Error Action to Stop
+$ErrorActionPreference = "Stop"
 
-az role assignment create `
-   --role "Reader" `
-   --assignee $EmailAddress `
-   --scope $GalleryId
+try {
+    # Get the Gallery ID
+    $GalleryId = az sig show @parameters
+
+    # Update the scope with the Gallery ID
+    $parameters.scope = $GalleryId
+
+    # Assign the Reader role to the user
+    az role assignment create @parameters
+
+    # Output the result
+    Write-Output "Azure Image Gallery shared successfully."
+} catch {
+    # Log the error to the console
+
+Write-Output "Error message $errorMessage"
+
+
+    Write-Error "Failed to share the Azure Image Gallery: $($_.Exception.Message)"
+} finally {
+    # Cleanup code if needed
+    Write-Output "Script execution completed."
+}

@@ -17,59 +17,122 @@
         --resource-group $AzResourceGroupName `
         --vm-name $VmName
 
-    The script sets the ErrorActionPreference to SilentlyContinue to suppress error messages.
-    
-    It does not return any output.
-
-.NOTES
-    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
-    The use of the scripts does not require XOAP, but it will make your life easier.
-    You are allowed to pull the script from the repository and use it with XOAP or other solutions
-    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no liability for the function,
-    the use and the consequences of the use of this freely available script.
-    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
-
-.COMPONENT
-    Azure CLI
-
-.LINK
-    https://github.com/xoap-io/scripted-actions
-
 .PARAMETER AzResourceGroupName
     Defines the name of the Azure Resource Group.
 
-.PARAMETER VmName
+.PARAMETER AzVmName
     Defines the name of the Azure Virtual Machine.
 
 .PARAMETER Script
     Defines the PowerShell command to run on the Azure Virtual Machine.
 
-.PARAMETER AZOpenPorts
+.PARAMETER AzOpenPorts
     Defines the ports to open on the Azure Virtual Machine.
 
+.PARAMETER AzDebug
+    Increase logging verbosity to show all debug logs.
+
+.PARAMETER AzOnlyShowErrors
+    Only show errors, suppressing warnings.
+
+.PARAMETER AzOutput
+    Output format.
+
+.PARAMETER AzQuery
+    JMESPath query string.
+
+.PARAMETER AzVerbose
+    Increase logging verbosity.
+
+.PARAMETER WhatIf
+    Shows what would happen if the cmdlet runs. The cmdlet is not run.
+
+.PARAMETER Confirm
+    Prompts you for confirmation before running the cmdlet.
+
+.EXAMPLE
+    .\az-cli-install-webserver-vm.ps1 -AzResourceGroupName "MyResourceGroup" -AzVmName "MyVmName" -Script "Install-WindowsFeature -name Web-Server -IncludeManagementTools" -AzOpenPorts "80"
+
+.NOTES
+    Author: Your Name
+    Date:   2024-09-03
+    Version: 1.1
+    Requires: Azure CLI
+
+.LINK
+    https://learn.microsoft.com/en-us/cli/azure/vm
 #>
+
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory)]
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
     [string]$AzResourceGroupName = "myResourceGroup",
-    [Parameter(Mandatory)]
+
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
     [string]$AzVmName = "myVmName",
-    [Parameter(Mandatory)]
+
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
     [string]$Script = "Install-WindowsFeature -name Web-Server -IncludeManagementTools",
-    [Parameter(Mandatory)]
-    [string]$AzOpenPorts = '80'
+
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
+    [string]$AzOpenPorts = '80',
+
+    [Parameter(Mandatory=$false)]
+    [switch]$AzDebug,
+
+    [Parameter(Mandatory=$false)]
+    [switch]$AzOnlyShowErrors,
+
+    [Parameter(Mandatory=$false)]
+    [string]$AzOutput,
+
+    [Parameter(Mandatory=$false)]
+    [string]$AzQuery,
+
+    [Parameter(Mandatory=$false)]
+    [switch]$AzVerbose,
+
+
 )
 
-#Set Error Action to Silently Continue
-$ErrorActionPreference =  "Stop"
+# Splatting parameters for better readability
+$parameters = @{
+    resource_group   = $AzResourceGroupName
+    vm_name          = $AzVmName
+    command_id       = "RunPowerShellScript"
+    scripts          = $Script
+    port             = $AzOpenPorts
+    debug            = $AzDebug
+    only_show_errors = $AzOnlyShowErrors
+    output           = $AzOutput
+    query            = $AzQuery
+    verbose          = $AzVerbose
+}
 
-az vm run-command invoke `
-    --resource-group $AzResourceGroupName `
-    --vm-name $AzVmName `
-    --command-id RunPowerShellScript `
-    --scripts $Script
+# Set Error Action to Stop
+$ErrorActionPreference = "Stop"
 
-az vm open-port `
-    --port $AzOpenPorts `
-	--resource-group $AzResourceGroupName `
-	--vm-name $AzVmName
+try {
+    # Install web server on the Azure VM
+    az vm run-command invoke @parameters
+
+    # Open the specified ports on the Azure VM
+    az vm open-port @parameters
+
+    # Output the result
+    Write-Output "Web server installed and ports opened successfully on the Azure VM."
+} catch {
+    # Log the error to the console
+
+Write-Output "Error message $errorMessage"
+
+
+    Write-Error "Failed to install web server or open ports on the Azure VM: $($_.Exception.Message)"
+} finally {
+    # Cleanup code if needed
+    Write-Output "Script execution completed."
+}

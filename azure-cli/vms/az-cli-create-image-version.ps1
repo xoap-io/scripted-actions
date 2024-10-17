@@ -1,29 +1,11 @@
 <#
 .SYNOPSIS
-    Create a new Azure VM with the Azure PowerShell.
+    Creates a new version of an Azure Gallery Image.
 
 .DESCRIPTION
-    This script creates a new Azure VM with the Azure PowerShell.
-    The script uses the Azure PowerShell to create the specified Azure VM.
-    The script uses the following Azure PowerShell command:
-    New-AzVM -ResourceGroupName $AzResourceGroupName -Name $AzVmName -Location $AzLocation -Image $AzImageName -PublicIpAddressName $AzPublicIpAddressName -Credential $AzVmCred -OpenPorts $AzOpenPorts -Size $AzVmSize
-    The script sets the ErrorActionPreference to SilentlyContinue to suppress error messages.
-    
-    It does not return any output.
-
-.NOTES
-    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
-    The use of the scripts does not require XOAP, but it will make your life easier.
-    You are allowed to pull the script from the repository and use it with XOAP or other solutions
-    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no liability for the function,
-    the use and the consequences of the use of this freely available script.
-    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
-
-.COMPONENT
-    Azure CLI
-
-.LINK
-    https://github.com/xoap-io/scripted-actions
+    This script creates a new version of an Azure Gallery Image with the Azure CLI.
+    The script uses the following Azure CLI command:
+    az sig image-version create --resource-group $AzResourceGroupName --gallery-name $AzGallery --gallery-image-definition $AzImageDefinition --gallery-image-version $AzGalleryImageVersion --target-regions $AzTargetRegions --replica-count $AzReplicaCount --managed-image /subscriptions/$AzSubscriptionId/resourceGroups/$AzResourceGroupName/providers/Microsoft.Compute/virtualMachines/$AzVmName
 
 .PARAMETER AzResourceGroupName
     Defines the name of the Azure Resource Group.
@@ -38,7 +20,7 @@
     Defines the version of the Azure Gallery Image.
 
 .PARAMETER AzTargetRegions
-    Defines the target regions of the Azure Gallery Image.
+    Defines the target regions for the Azure Gallery Image.
 
 .PARAMETER AzReplicaCount
     Defines the replica count of the Azure Gallery Image.
@@ -48,35 +30,162 @@
 
 .PARAMETER AzVmName
     Defines the name of the Azure VM.
+
+.PARAMETER AzLocation
+    Defines the location of the Azure Gallery Image Version.
+
+.PARAMETER AzExcludeFromLatest
+    Excludes the image version from the latest version.
+
+.PARAMETER AzEndOfLifeDate
+    Defines the end of life date for the image version.
+
+.PARAMETER AzStorageAccountType
+    Defines the storage account type for the image version.
+
+.PARAMETER AzTags
+    Defines the tags for the image version.
+
+.PARAMETER AzDebug
+    Increase logging verbosity to show all debug logs.
+
+.PARAMETER AzOnlyShowErrors
+    Only show errors, suppressing warnings.
+
+.PARAMETER AzOutput
+    Output format.
+
+.PARAMETER AzQuery
+    JMESPath query string.
+
+.PARAMETER AzVerbose
+    Increase logging verbosity.
+
+.PARAMETER WhatIf
+    Shows what would happen if the cmdlet runs. The cmdlet is not run.
+
+.PARAMETER Confirm
+    Prompts you for confirmation before running the cmdlet.
+
+.EXAMPLE
+    .\az-cli-create-image-version.ps1 -AzResourceGroupName "MyResourceGroup" -AzGallery "MyGallery" -AzImageDefinition "MyImageDefinition" -AzGalleryImageVersion "1.0.0" -AzTargetRegions "westus" -AzReplicaCount 1 -AzSubscriptionId "00000000-0000-0000-0000-000000000000" -AzVmName "MyVm"
+
+.NOTES
+    Author: Your Name
+    Date:   2024-09-03
+    Version: 1.1
+    Requires: Azure CLI
+
+.LINK
+    https://learn.microsoft.com/en-us/cli/azure/sig/image-version
 #>
+
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory)]
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
     [string]$AzResourceGroupName = "MyResourceGroup",
-    [Parameter(Mandatory)]
+
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
     [string]$AzGallery = "MyGallery",
-    [Parameter(Mandatory)]
+
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
     [string]$AzImageDefinition = "MyImageDefinition",
-    [Parameter(Mandatory)]
+
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
     [string]$AzGalleryImageVersion = "1.0.0",
-    [Parameter(Mandatory)]
+
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
     [string]$AzTargetRegions = "westus",
-    [Parameter(Mandatory)]
-    [string]$AzReplicaCount = 1,
-    [Parameter(Mandatory)]
+
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
+    [int]$AzReplicaCount = 1,
+
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
     [string]$AzSubscriptionId = "00000000-0000-0000-0000-000000000000",
-    [Parameter(Mandatory)]
-    [string]$AzVmName = "MyVm"
+
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
+    [string]$AzVmName = "MyVm",
+
+    [Parameter(Mandatory=$false)]
+    [string]$AzLocation = "westus",
+
+    [Parameter(Mandatory=$false)]
+    [switch]$AzExcludeFromLatest,
+
+    [Parameter(Mandatory=$false)]
+    [datetime]$AzEndOfLifeDate,
+
+    [Parameter(Mandatory=$false)]
+    [string]$AzStorageAccountType = "Standard_LRS",
+
+    [Parameter(Mandatory=$false)]
+    [hashtable]$AzTags,
+
+    [Parameter(Mandatory=$false)]
+    [switch]$AzDebug,
+
+    [Parameter(Mandatory=$false)]
+    [switch]$AzOnlyShowErrors,
+
+    [Parameter(Mandatory=$false)]
+    [string]$AzOutput,
+
+    [Parameter(Mandatory=$false)]
+    [string]$AzQuery,
+
+    [Parameter(Mandatory=$false)]
+    [switch]$AzVerbose,
+
+
 )
 
-#Set Error Action to Silently Continue
-$ErrorActionPreference =  "Stop"
+# Splatting parameters for better readability
+$parameters = @{
+    resource_group            = $AzResourceGroupName
+    gallery_name              = $AzGallery
+    gallery_image_definition  = $AzImageDefinition
+    gallery_image_version     = $AzGalleryImageVersion
+    target_regions            = $AzTargetRegions
+    replica_count             = $AzReplicaCount
+    managed_image             = "/subscriptions/$AzSubscriptionId/resourceGroups/$AzResourceGroupName/providers/Microsoft.Compute/virtualMachines/$AzVmName"
+    location                  = $AzLocation
+    exclude_from_latest       = $AzExcludeFromLatest
+    end_of_life_date          = $AzEndOfLifeDate
+    storage_account_type      = $AzStorageAccountType
+    tags                      = $AzTags
+    subscription              = $AzSubscriptionId
+    debug                     = $AzDebug
+    only_show_errors          = $AzOnlyShowErrors
+    output                    = $AzOutput
+    query                     = $AzQuery
+    verbose                   = $AzVerbose
+}
 
-az sig image-version create `
-    --resource-group $AzResourceGroupName `
-    --gallery-name $AzGallery `
-    --gallery-image-definition $AzImageDefinition `
-    --gallery-image-version $AzGalleryImageVersion `
-    --target-regions $AzTargetRegions `
-    --replica-count $AzReplicaCount `
-    --managed-image "/subscriptions/$AzSubscriptionId/resourceGroups/MyResourceGroup/providers/Microsoft.Compute/virtualMachines/$AzVmName"
+# Set Error Action to Stop
+$ErrorActionPreference = "Stop"
+
+try {
+    # Create a new version of an Azure Gallery Image
+    az sig image-version create @parameters
+
+    # Output the result
+    Write-Output "Azure Gallery Image version created successfully."
+} catch {
+    # Log the error to the console
+
+Write-Output "Error message $errorMessage"
+
+
+    Write-Error "Failed to create the Azure Gallery Image version: $($_.Exception.Message)"
+} finally {
+    # Cleanup code if needed
+    Write-Output "Script execution completed."
+}
