@@ -168,43 +168,43 @@ $parameters = @{
 }
 
 if ($DnsServer) {
-    $parameters['DnsServer', $DnsServer
+    $parameters['DnsServer'], $DnsServer
 }
 
 if ($FlowTimeout) {
-    $parameters['FlowTimeout', $FlowTimeout
+    $parameters['FlowTimeout'], $FlowTimeout
 }
 
 if ($BgpCommunity) {
-    $parameters['BgpCommunity', $BgpCommunity
+    $parameters['BgpCommunity'], $BgpCommunity
 }
 
 if ($EnableEncryption) {
-    $parameters['EnableEncryption', $EnableEncryption
+    $parameters['EnableEncryption'], $EnableEncryption
 }
 
 if ($EncryptionEnforcementPolicy) {
-    $parameters['EncryptionEnforcementPolicy', $EncryptionEnforcementPolicy
+    $parameters['EncryptionEnforcementPolicy'], $EncryptionEnforcementPolicy
 }
 
 if ($Tags) {
-    $parameters['Tag', $Tags
+    $parameters['Tag'], $Tags
 }
 
 if ($EnableDdosProtection) {
-    $parameters['EnableDdosProtection', $EnableDdosProtection
+    $parameters['EnableDdosProtection'], $EnableDdosProtection
 }
 
 if ($DdosProtectionPlanId) {
-    $parameters['DdosProtectionPlanId', $DdosProtectionPlanId
+    $parameters['DdosProtectionPlanId'], $DdosProtectionPlanId
 }
 
 #if ($IpAllocation) {
-#    $parameters['IpAllocation', $IpAllocation
+#    $parameters['IpAllocation'], $IpAllocation
 #}
 
 if ($EdgeZone) {
-    $parameters['EdgeZone', $EdgeZone
+    $parameters['EdgeZone'], $EdgeZone
 }
 
 # Set Error Action to Stop

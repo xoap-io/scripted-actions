@@ -83,7 +83,7 @@ if ($FriendlyName) {
 }
 
 if ($Tags) {
-    $parameters['Tag', $Tags
+    $parameters['Tag'], $Tags
 }
 
 # Set Error Action to Stop

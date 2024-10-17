@@ -75,15 +75,15 @@ $parameters = @{
 }
 
 if ($AllowNewSession) {
-    $parameters['AllowNewSession', $AllowNewSession
+    $parameters['AllowNewSession'], $AllowNewSession
 }
 
 if ($AssignedUser) {
-    $parameters['AssignedUser', $AssignedUser
+    $parameters['AssignedUser'], $AssignedUser
 }
 
 if ($FriendlyName) {
-    $parameters['FriendlyName', $FriendlyName
+    $parameters['FriendlyName'], $FriendlyName
 }
 
 # Set Error Action to Stop

@@ -160,23 +160,23 @@ param (
     [ValidateSet(
         'Pooled', 'Personal'
     )]
-    [HostPoolType]$HostPoolType,
+    [string]$HostPoolType,
 
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
     [ValidateSet(
         'DepthFirst', 'BreadthFirst', 'Persistent'
     )]
-    [LoadBalancerType]$LoadBalancerType,
+    [string]$LoadBalancerType,
 
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
     [ValidateSet(
         'Desktop', 'None','RailApplications'
     )]
-    [PreferredAppGroupType]$PreferredAppGroupType,
+    [string]$PreferredAppGroupType,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
     [ValidateSet(
         'eastus', 'eastus2', 'southcentralus', 'westus2',
@@ -242,14 +242,14 @@ param (
     [ValidateNotNullOrEmpty()]
     [string]$FriendlyName,
 
-    # type currently not supported in scripted actions
-    #[Parameter(Mandatory=$false)]
-    #[ValidateNotNullOrEmpty()]
-    #[ResourceIdentityType]$IdentityType,
 
-    #[Parameter(Mandatory=$false)]
-    #[ValidateNotNullOrEmpty()]
-    #[string]$Kind = "DesktopVirtualizationHostPools",
+    [Parameter(Mandatory=$false)]
+    [ValidateNotNullOrEmpty()]
+    [string]$IdentityType,
+
+    [Parameter(Mandatory=$false)]
+    [ValidateNotNullOrEmpty()]
+    [string]$Kind = "DesktopVirtualizationHostPools",
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
@@ -259,13 +259,14 @@ param (
     [ValidateNotNullOrEmpty()]
     [int]$MaxSessionLimit = 10,
 
-    # type currently not supported in scripted actions
-    #[Parameter(Mandatory=$false)]
-    #[ValidateNotNullOrEmpty()]
-    #[ValidateSet(
-    #    'Direct', 'Automatic'
-    #)]
-    #[PersonalDesktopAssignmentType]$PersonalDesktopAssignmentType = "Direct",
+
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
+    [ValidateSet(
+        'Direct', 
+        'Automatic'
+    )]
+    [string]$PersonalDesktopAssignmentType,
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
@@ -287,25 +288,23 @@ param (
     [ValidateNotNullOrEmpty()]
     [string]$PlanVersion,
 
-    # type currently not supported in scripted actions 
-    #[Parameter(Mandatory=$false)]
-    #[ValidateNotNullOrEmpty()]
-    #[ValidateSet(
-    #    'Disabled', 'Enabled', 'EnabledForClientsOnly', 'EnabledForSessionHostsOnly'
-    #)]
-    #[HostpoolPublicNetworkAccess]$PublicNetworkAccess,
+    [Parameter(Mandatory=$false)]
+    [ValidateNotNullOrEmpty()]
+    [ValidateSet(
+        'Disabled', 'Enabled', 'EnabledForClientsOnly', 'EnabledForSessionHostsOnly'
+    )]
+    [string]$PublicNetworkAccess,
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
     [string]$RegistrationInfoToken,
 
-    # type currently not supported in scripted actions
-    #[Parameter(Mandatory=$false)]
-    #[ValidateNotNullOrEmpty()]
-    #[ValidateSet(
-    #    'Delete', 'None', 'Update'
-    #)]
-    #[RegistrationTokenOperation]$RegistrationTokenOperation,
+    [Parameter(Mandatory=$false)]
+    [ValidateNotNullOrEmpty()]
+    [ValidateSet(
+        'Delete', 'None', 'Update'
+    )]
+    [string]$RegistrationTokenOperation,
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
@@ -329,7 +328,7 @@ param (
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
-    [SkuTier]$SkuTier,
+    [string]$SkuTier,
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
@@ -339,10 +338,9 @@ param (
     [ValidateNotNullOrEmpty()]
     [string]$SsoClientSecretKeyVaultPath,
 
-    # type currently not supported in scripted actions
-    #[Parameter(Mandatory=$false)]
-    #[ValidateNotNullOrEmpty()]
-    #[SsoSecretType]$SsoSecretType = "SharedKey",
+    [Parameter(Mandatory=$false)]
+    [ValidateNotNullOrEmpty()]
+    [string]$SsoSecretType,
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
@@ -375,158 +373,155 @@ $parameters = @{
     HostPoolType          = $HostPoolType
     LoadBalancerType      = $LoadBalancerType
     PreferredAppGroupType = $PreferredAppGroupType
-}
-
-if ($Location) {
-    $parameters['Location', $Location
+    Location              = $Location
 }
 
 if ($DesktopAppGroupName) {
-    $parameters['DesktopAppGroupName', $DesktopAppGroupName
+    $parameters['DesktopAppGroupName'], $DesktopAppGroupName
 }
 
 if ($WorkspaceName) {
-    $parameters['WorkspaceName', $WorkspaceName
+    $parameters['WorkspaceName'], $WorkspaceName
 }
 
-#if ($AgentUpdateMaintenanceWindow) {
-#    $parameters['AgentUpdateMaintenanceWindow', $AgentUpdateMaintenanceWindow
-#}
+if ($AgentUpdateMaintenanceWindow) {
+    $parameters['AgentUpdateMaintenanceWindow'], $AgentUpdateMaintenanceWindow
+}
 
 if ($AgentUpdateMaintenanceWindowTimeZone) {
-    $parameters['AgentUpdateMaintenanceWindowTimeZone', $AgentUpdateMaintenanceWindowTimeZone
+    $parameters['AgentUpdateMaintenanceWindowTimeZone'], $AgentUpdateMaintenanceWindowTimeZone
 }
 
-#if ($AgentUpdateType) {
-#    $parameters['AgentUpdateType', $AgentUpdateType
-#}
+if ($AgentUpdateType) {
+    $parameters['AgentUpdateType'], $AgentUpdateType
+}
 
 if ($AgentUpdateUseSessionHostLocalTime) {
-    $parameters['AgentUpdateUseSessionHostLocalTime', $AgentUpdateUseSessionHostLocalTime
+    $parameters['AgentUpdateUseSessionHostLocalTime'], $AgentUpdateUseSessionHostLocalTime
 }
 
 if ($CustomRdpProperty) {
-    $parameters['CustomRdpProperty', $CustomRdpProperty
+    $parameters['CustomRdpProperty'], $CustomRdpProperty
 }
 
 if ($Description) {
-    $parameters['Description', $Description
+    $parameters['Description'], $Description
 }
 
 if ($ExpirationTime) {
-    $parameters['ExpirationTime', $ExpirationTime
+    $parameters['ExpirationTime'], $ExpirationTime
 }
 
 if ($FriendlyName) {
-    $parameters['FriendlyName', $FriendlyName
+    $parameters['FriendlyName'], $FriendlyName
 }
 
-#if ($IdentityType) {
-#    $parameters['IdentityType', $IdentityType
-#}
+if ($IdentityType) {
+    $parameters['IdentityType'], $IdentityType
+}
 
-#if ($Kind) {
-#    $parameters['Kind', $Kind
-#}
+if ($Kind) {
+    $parameters['Kind'], $Kind
+}
 
 if ($ManagedBy) {
-    $parameters['ManagedBy', $ManagedBy
+    $parameters['ManagedBy'], $ManagedBy
 }
 
 if ($MaxSessionLimit) {
-    $parameters['MaxSessionLimit', $MaxSessionLimit
+    $parameters['MaxSessionLimit'], $MaxSessionLimit
 }
 
-#if ($PersonalDesktopAssignmentType) {
-#    $parameters['PersonalDesktopAssignmentType', $PersonalDesktopAssignmentType
-#}
+if ($PersonalDesktopAssignmentType) {
+    $parameters['PersonalDesktopAssignmentType'], $PersonalDesktopAssignmentType
+}
 
 if ($PlanName) {
-    $parameters['PlanName', $PlanName
+    $parameters['PlanName'], $PlanName
 }
 
 if ($PlanProduct) {
-    $parameters['PlanProduct', $PlanProduct
+    $parameters['PlanProduct'], $PlanProduct
 }
 
 if ($PlanPromotionCode) {
-    $parameters['PlanPromotionCode', $PlanPromotionCode
+    $parameters['PlanPromotionCode'], $PlanPromotionCode
 }
 
 if ($PlanPublisher) {
-    $parameters['PlanPublisher', $PlanPublisher
+    $parameters['PlanPublisher'], $PlanPublisher
 }
 
 if ($PlanVersion) {
-    $parameters['PlanVersion', $PlanVersion
+    $parameters['PlanVersion'], $PlanVersion
 }
 
-#if ($PublicNetworkAccess) {
-#    $parameters['PublicNetworkAccess', $PublicNetworkAccess
-#}
+if ($PublicNetworkAccess) {
+    $parameters['PublicNetworkAccess'], $PublicNetworkAccess
+}
 
-#if ($RegistrationInfoToken) {
-#    $parameters['RegistrationInfoToken', $RegistrationInfoToken
-#}
+if ($RegistrationInfoToken) {
+    $parameters['RegistrationInfoToken'], $RegistrationInfoToken
+}
 
 if ($RegistrationTokenOperation) {
-    $parameters['RegistrationTokenOperation', $RegistrationTokenOperation
+    $parameters['RegistrationTokenOperation'], $RegistrationTokenOperation
 }
 
 if ($Ring) {
-    $parameters['Ring', $Ring
+    $parameters['Ring'], $Ring
 }
 
 if ($SkuCapacity) {
-    $parameters['SkuCapacity', $SkuCapacity
+    $parameters['SkuCapacity'], $SkuCapacity
 }
 
 if ($SkuFamily) {
-    $parameters['SkuFamily', $SkuFamily
+    $parameters['SkuFamily'], $SkuFamily
 }
 
 if ($SkuName) {
-    $parameters['SkuName', $SkuName
+    $parameters['SkuName'], $SkuName
 }
 
 if ($SkuSize) {
-    $parameters['SkuSize', $SkuSize
+    $parameters['SkuSize'], $SkuSize
 }
 
 if ($SkuTier) {
-    $parameters['SkuTier', $SkuTier
+    $parameters['SkuTier'], $SkuTier
 }
 
 if ($SsoClientId) {
-    $parameters['SsoClientId', $SsoClientId
+    $parameters['SsoClientId'], $SsoClientId
 }
 
 if ($SsoClientSecretKeyVaultPath) {
-    $parameters['SsoClientSecretKeyVaultPath', $SsoClientSecretKeyVaultPath
+    $parameters['SsoClientSecretKeyVaultPath'], $SsoClientSecretKeyVaultPath
 }
 
-#if ($SsoSecretType) {
-#    $parameters['SsoSecretType', $SsoSecretType
-#}
+if ($SsoSecretType) {
+    $parameters['SsoSecretType'], $SsoSecretType
+}
 
 if ($SsoadfsAuthority) {
-    $parameters['SsoadfsAuthority', $SsoadfsAuthority
+    $parameters['SsoadfsAuthority'], $SsoadfsAuthority
 }
 
 if ($StartVMOnConnect) {
-    $parameters['StartVMOnConnect', $StartVMOnConnect
+    $parameters['StartVMOnConnect'], $StartVMOnConnect
 }
 
 if ($Tags) {
-    $parameters['Tag', $Tags
+    $parameters['Tag'], $Tags
 }
 
 if ($VMTemplate) {
-    $parameters['VMTemplate', $VMTemplate
+    $parameters['VMTemplate'], $VMTemplate
 }
 
 if ($ValidationEnvironment) {
-    $parameters['ValidationEnvironment', $ValidationEnvironment
+    $parameters['ValidationEnvironment'], $ValidationEnvironment
 }
 
 # Set Error Action to Stop

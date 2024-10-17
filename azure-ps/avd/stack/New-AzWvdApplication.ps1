@@ -149,15 +149,15 @@ $parameters = @{
 }
 
 if ($Description) {
-    $parameters['Description', $BgpCommunity
+    $parameters['Description'], $BgpCommunity
 }
 
 if ($FriendlyName) {
-    $parameters['FriendlyName', $BgpCommunity
+    $parameters['FriendlyName'], $BgpCommunity
 }
 
 if ($ShowInPortal) {
-    $parameters['ShowInPortal', $BgpCommunity
+    $parameters['ShowInPortal'], $BgpCommunity
 }
 
 #if ($ApplicationType) {
@@ -165,27 +165,27 @@ if ($ShowInPortal) {
 #}
 
 if ($CommandLineArgument) {
-    $parameters['CommandLineArgument', $BgpCommunity
+    $parameters['CommandLineArgument'], $BgpCommunity
 }
 
 if ($FilePath) {
-    $parameters['FilePath', $BgpCommunity
+    $parameters['FilePath'], $BgpCommunity
 }
 
 if ($IconIndex) {
-    $parameters['IconIndex', $BgpCommunity
+    $parameters['IconIndex'], $BgpCommunity
 }
 
 if ($IconPath) {
-    $parameters['IconPath', $BgpCommunity
+    $parameters['IconPath'], $BgpCommunity
 }
 
 if ($MsixPackageApplicationId) {
-    $parameters['MsixPackageApplicationId', $BgpCommunity
+    $parameters['MsixPackageApplicationId'], $BgpCommunity
 }
 
 if ($MsixPackageFamilyName) {
-    $parameters['MsixPackageFamilyName', $BgpCommunity
+    $parameters['MsixPackageFamilyName'], $BgpCommunity
 }
 
 # Set Error Action to Stop

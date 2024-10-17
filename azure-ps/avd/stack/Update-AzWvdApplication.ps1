@@ -147,51 +147,51 @@ $parameters = @{
 }
 
 if ($ApplicationType) {
-    $parameters['ApplicationType', $ApplicationType
+    $parameters['ApplicationType'], $ApplicationType
 }
 
 if ($CommandLineArgument) {
-    $parameters['CommandLineArgument', $CommandLineArgument
+    $parameters['CommandLineArgument'], $CommandLineArgument
 }
 
 if ($CommandLineSetting) {
-    $parameters['CommandLineSetting', $CommandLineSetting
+    $parameters['CommandLineSetting'], $CommandLineSetting
 }
 
 if ($Description) {
-    $parameters['Description', $Description
+    $parameters['Description'], $Description
 }
 
 if ($FilePath) {
-    $parameters['FilePath', $FilePath
+    $parameters['FilePath'], $FilePath
 }
 
 if ($FriendlyName) {
-    $parameters['FriendlyName', $FriendlyName
+    $parameters['FriendlyName'], $FriendlyName
 }
 
 if ($IconIndex) {
-    $parameters['IconIndex', $IconIndex
+    $parameters['IconIndex'], $IconIndex
 }
 
 if ($IconPath) {
-    $parameters['IconPath', $IconPath
+    $parameters['IconPath'], $IconPath
 }
 
 if ($MsixPackageApplicationId) {
-    $parameters['MsixPackageApplicationId', $MsixPackageApplicationId
+    $parameters['MsixPackageApplicationId'], $MsixPackageApplicationId
 }
 
 if ($MsixPackageFamilyName) {
-    $parameters['MsixPackageFamilyName', $MsixPackageFamilyName
+    $parameters['MsixPackageFamilyName'], $MsixPackageFamilyName
 }
 
 if ($ShowInPortal) {
-    $parameters['ShowInPortal', $ShowInPortal
+    $parameters['ShowInPortal'], $ShowInPortal
 }
 
 if ($Tags) {
-    $parameters['Tag', $Tags
+    $parameters['Tag'], $Tags
 }
 
 # Set Error Action to Stop

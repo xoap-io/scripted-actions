@@ -137,47 +137,47 @@ $parameters = @{
 }
 
 if ($DisplayName) {
-    $parameters['DisplayName', $DisplayName
+    $parameters['DisplayName'], $DisplayName
 }
 
 if ($ImagePath) {
-    $parameters['ImagePath', $ImagePath
+    $parameters['ImagePath'], $ImagePath
 }
 
 if ($IsActive) {
-    $parameters['IsActive', $IsActive
+    $parameters['IsActive'], $IsActive
 }
 
 if ($IsRegularRegistration) {
-    $parameters['IsRegularRegistration', $IsRegularRegistration
+    $parameters['IsRegularRegistration'], $IsRegularRegistration
 }
 
 if ($LastUpdated) {
-    $parameters['LastUpdated', $LastUpdated
+    $parameters['LastUpdated'], $LastUpdated
 }
 
 #if ($PackageApplication) {
-#    $parameters['PackageApplication', $PackageApplication
+#    $parameters['PackageApplication'], $PackageApplication
 #}
 
 #if ($PackageDependency) {
-#    $parameters['PackageDependency', $PackageDependency
+#    $parameters['PackageDependency'], $PackageDependency
 #}
 
 if ($PackageFamilyName) {
-    $parameters['PackageFamilyName', $PackageFamilyName
+    $parameters['PackageFamilyName'], $PackageFamilyName
 }
 
 if ($PackageName) {
-    $parameters['PackageName', $PackageName
+    $parameters['PackageName'], $PackageName
 }
 
 if ($PackageRelativePath) {
-    $parameters['PackageRelativePath', $PackageRelativePath
+    $parameters['PackageRelativePath'], $PackageRelativePath
 }
 
 if ($Version) {
-    $parameters['Version', $Version
+    $parameters['Version'], $Version
 }
 
 # Set Error Action to Stop

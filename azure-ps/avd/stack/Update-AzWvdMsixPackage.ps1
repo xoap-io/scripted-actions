@@ -78,15 +78,15 @@ $parameters = @{
 }
 
 if ($DisplayName) {
-    $parameters['DisplayName', $DisplayName
+    $parameters['DisplayName'], $DisplayName
 }
 
 if ($IsActive) {
-    $parameters['IsActive', $IsActive
+    $parameters['IsActive'], $IsActive
 }
 
 if ($IsRegularRegistration) {
-    $parameters['IsRegularRegistration', $IsRegularRegistration
+    $parameters['IsRegularRegistration'], $IsRegularRegistration
 }
 
 try {    

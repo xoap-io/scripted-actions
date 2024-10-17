@@ -114,13 +114,13 @@ param (
     [ValidateNotNullOrEmpty()]
     [string]$FriendlyName,
 
-    #[Parameter(Mandatory=$false)]
-    #[ValidateNotNullOrEmpty()]
-    #[ResourceIdentityType]$IdentityType,
+    [Parameter(Mandatory=$false)]
+    [ValidateNotNullOrEmpty()]
+    [string]$IdentityType,
 
-    #[Parameter(Mandatory=$false)]
-    #[ValidateNotNullOrEmpty()]
-    #[string]$Kind,
+    [Parameter(Mandatory=$false)]
+    [ValidateNotNullOrEmpty()]
+    [string]$Kind,
 
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
@@ -204,83 +204,79 @@ $parameters = @{
     ResourceGroupName    = $ResourceGroupName
     ApplicationGroupType = $ApplicationGroupType
     HostPoolArmPath      = $HostPoolArmPath
+    Location             = $Location
 }
 
 if ($SubscriptionId) {
-    $parameters['SubscriptionId', $BgpCommunity
+    $parameters['SubscriptionId'], $BgpCommunity
 }
 
 if ($Description) {
-    $parameters['Description', $Description
+    $parameters['Description'], $Description
 }
 
 if ($FriendlyName) {
-    $parameters['FriendlyName', $FriendlyName
+    $parameters['FriendlyName'], $FriendlyName
 }
 
 if ($IdentityType) {
-    $parameters['IdentityType', $IdentityType
+    $parameters['IdentityType'], $IdentityType
 }
 
-#if ($Kind) {
-#    $parameters['Kind', $Kind
-#}
-
-if ($Location) {
-    $parameters['Location', $Location
+if ($Kind) {
+    $parameters['Kind'], $Kind
 }
 
 if ($ManagedBy) {
-    $parameters['ManagedBy', $ManagedBy
+    $parameters['ManagedBy'], $ManagedBy
 }
 
 if ($PlanName) {
-    $parameters['PlanName', $PlanName
+    $parameters['PlanName'], $PlanName
 }
 
 if ($PlanProduct) {
-    $parameters['PlanProduct', $PlanProduct
+    $parameters['PlanProduct'], $PlanProduct
 }
 
 if ($PlanPromotionCode) {
-    $parameters['PlanPromotionCode', $PlanPromotionCode
+    $parameters['PlanPromotionCode'], $PlanPromotionCode
 }
 
 if ($PlanPublisher) {
-    $parameters['PlanPublisher', $PlanPublisher
+    $parameters['PlanPublisher'], $PlanPublisher
 }
 
 if ($PlanVersion) {
-    $parameters['PlanVersion', $PlanVersion
+    $parameters['PlanVersion'], $PlanVersion
 }
 
 if ($ShowInFeed) {
-    $parameters['ShowInFeed', $ShowInFeed
+    $parameters['ShowInFeed'], $ShowInFeed
 }
 
 if ($SkuCapacity) {
-    $parameters['SkuCapacity', $SkuCapacity
+    $parameters['SkuCapacity'], $SkuCapacity
 }
 
 if ($SkuFamily) {
-    $parameters['SkuFamily', $SkuFamily
+    $parameters['SkuFamily'], $SkuFamily
 }
 
 if ($SkuName) {
-    $parameters['SkuName', $SkuName
+    $parameters['SkuName'], $SkuName
 }
 
 if ($SkuSize) {
-    $parameters['SkuSize', $SkuSize
+    $parameters['SkuSize'], $SkuSize
 }
 
 if ($SkuTier) {
-    $parameters['SkuTier', $SkuTier
+    $parameters['SkuTier'], $SkuTier
 }
 
 if ($Tags) {
-    $Tag = $AzTags.GetEnumerator() | ForEach-Object { "$($_.Key)=$($_.Value)" } -join '-'
-    $parameters['Tag', $Tag
+    $parameters['Tag'], $Tags
 }
 
 # Set Error Action to Stop

@@ -85,23 +85,23 @@ $parameters = @{
 }
 
 if ($ApplicationGroupReference) {
-    $parameters['ApplicationGroupReference', $ApplicationGroupReference
+    $parameters['ApplicationGroupReference'], $ApplicationGroupReference
 }
 
 if ($Description) {
-    $parameters['Description', $Description
+    $parameters['Description'], $Description
 }
 
 if ($FriendlyName) {
-    $parameters['FriendlyName', $FriendlyName
+    $parameters['FriendlyName'], $FriendlyName
 }
 
 if ($PublicNetworkAccess) {
-    $parameters['PublicNetworkAccess', $PublicNetworkAccess
+    $parameters['PublicNetworkAccess'], $PublicNetworkAccess
 }
 
 if ($Tags) {
-    $parameters['Tag', $Tags
+    $parameters['Tag'], $Tags
 }
 
 # Set Error Action to Stop

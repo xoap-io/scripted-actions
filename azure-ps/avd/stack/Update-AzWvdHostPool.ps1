@@ -242,95 +242,95 @@ $parameters = @{
 }
 
 if ($AgentUpdateMaintenanceWindow) {
-    $parameters['AgentUpdateMaintenanceWindow', $AgentUpdateMaintenanceWindow
+    $parameters['AgentUpdateMaintenanceWindow'], $AgentUpdateMaintenanceWindow
 }
 
 if ($AgentUpdateMaintenanceWindowTimeZone) {
-    $parameters['AgentUpdateMaintenanceWindowTimeZone', $AgentUpdateMaintenanceWindowTimeZone
+    $parameters['AgentUpdateMaintenanceWindowTimeZone'], $AgentUpdateMaintenanceWindowTimeZone
 }
 
 if ($AgentUpdateType) {
-    $parameters['AgentUpdateType', $AgentUpdateType
+    $parameters['AgentUpdateType'], $AgentUpdateType
 }
 
 if ($AgentUpdateUseSessionHostLocalTime) {
-    $parameters['AgentUpdateUseSessionHostLocalTime', $AgentUpdateUseSessionHostLocalTime
+    $parameters['AgentUpdateUseSessionHostLocalTime'], $AgentUpdateUseSessionHostLocalTime
 }
 
 if ($CustomRdpProperty) {
-    $parameters['CustomRdpProperty', $CustomRdpProperty
+    $parameters['CustomRdpProperty'], $CustomRdpProperty
 }
 
 if ($Description) {
-    $parameters['Description', $Description
+    $parameters['Description'], $Description
 }
 
 if ($FriendlyName) {
-    $parameters['FriendlyName', $FriendlyName
+    $parameters['FriendlyName'], $FriendlyName
 }
 
 if ($LoadBalancerType) {
-    $parameters['LoadBalancerType', $LoadBalancerType
+    $parameters['LoadBalancerType'], $LoadBalancerType
 }
 
 if ($MaxSessionLimit) {
-    $parameters['MaxSessionLimit', $MaxSessionLimit
+    $parameters['MaxSessionLimit'], $MaxSessionLimit
 }
 
 if ($PersonalDesktopAssignmentType) {
-    $parameters['PersonalDesktopAssignmentType', $PersonalDesktopAssignmentType
+    $parameters['PersonalDesktopAssignmentType'], $PersonalDesktopAssignmentType
 }
 
 if ($PreferredAppGroupType) {
-    $parameters['PreferredAppGroupType', $PreferredAppGroupType
+    $parameters['PreferredAppGroupType'], $PreferredAppGroupType
 }
 
 if ($PublicNetworkAccess) {
-    $parameters['PublicNetworkAccess', $PublicNetworkAccess
+    $parameters['PublicNetworkAccess'], $PublicNetworkAccess
 }
 
 if ($RegistrationInfoExpirationTime) {
-    $parameters['RegistrationInfoExpirationTime', $RegistrationInfoExpirationTime
+    $parameters['RegistrationInfoExpirationTime'], $RegistrationInfoExpirationTime
 }
 
 if ($RegistrationInfoRegistrationTokenOperation) {
-    $parameters['RegistrationInfoRegistrationTokenOperation', $RegistrationInfoRegistrationTokenOperation
+    $parameters['RegistrationInfoRegistrationTokenOperation'], $RegistrationInfoRegistrationTokenOperation
 }
 
 if ($Ring) {
-    $parameters['Ring', $Ring
+    $parameters['Ring'], $Ring
 }
 
 if ($SsoClientId) {
-    $parameters['SsoClientId', $SsoClientId
+    $parameters['SsoClientId'], $SsoClientId
 }
 
 if ($SsoClientSecretKeyVaultPath) {
-    $parameters['SsoClientSecretKeyVaultPath', $SsoClientSecretKeyVaultPath
+    $parameters['SsoClientSecretKeyVaultPath'], $SsoClientSecretKeyVaultPath
 }
 
 if ($SsoSecretType) {
-    $parameters['SsoSecretType', $SsoSecretType
+    $parameters['SsoSecretType'], $SsoSecretType
 }
 
 if ($SsoadfsAuthority) {
-    $parameters['SsoadfsAuthority', $SsoadfsAuthority
+    $parameters['SsoadfsAuthority'], $SsoadfsAuthority
 }
 
 if ($StartVMOnConnect) {
-    $parameters['StartVMOnConnect', $StartVMOnConnect
+    $parameters['StartVMOnConnect'], $StartVMOnConnect
 }
 
 if ($Tags) {
-    $parameters['Tag', $Tags
+    $parameters['Tag'], $Tags
 }
 
 if ($VMTemplate) {
-    $parameters['VMTemplate', $VMTemplate
+    $parameters['VMTemplate'], $VMTemplate
 }
 
 if ($ValidationEnvironment) {
-    $parameters['ValidationEnvironment', $ValidationEnvironment
+    $parameters['ValidationEnvironment'], $ValidationEnvironment
 }
 
 # Set Error Action to Stop

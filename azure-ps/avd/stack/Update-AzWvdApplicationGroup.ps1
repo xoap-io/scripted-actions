@@ -74,19 +74,19 @@ $parameters = @{
 }
 
 if ($Description) {
-    $parameters['Description', $Description
+    $parameters['Description'], $Description
 }
 
 if ($FriendlyName) {
-    $parameters['FriendlyName', $FriendlyName
+    $parameters['FriendlyName'], $FriendlyName
 }
 
 if ($ShowInFeed) {
-    $parameters['ShowInFeed', $ShowInFeed
+    $parameters['ShowInFeed'], $ShowInFeed
 }
 
 if ($Tags) {
-    $parameters['Tag', $Tags
+    $parameters['Tag'], $Tags
 }
 
 # Set Error Action to Stop

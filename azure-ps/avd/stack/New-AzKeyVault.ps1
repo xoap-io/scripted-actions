@@ -154,43 +154,43 @@ try {
     }
 
         if ($EnabledForDeployment) {
-        $params['EnabledForDeployment', $true
+        $params['EnabledForDeployment'], $true
     }
 
     if ($EnabledForTemplateDeployment) {
-        $params['EnabledForTemplateDeployment', $true
+        $params['EnabledForTemplateDeployment'], $true
     }
 
     if ($EnabledForDiskEncryption) {
-        $params['EnabledForDiskEncryption', $true
+        $params['EnabledForDiskEncryption'], $true
     }
 
     if ($EnablePurgeProtection) {
-        $params['EnablePurgeProtection', $true
+        $params['EnablePurgeProtection'], $true
     }
 
     if ($DisableRbacAuthorization) {
-        $params['DisableRbacAuthorization', $true
+        $params['DisableRbacAuthorization'], $true
     }
 
     if ($Sku) {
-        $params['Sku', $Sku
+        $params['Sku'], $Sku
     }
 
     if ($SoftDeleteRetentionInDays) {
-        $params['SoftDeleteRetentionInDays', $SoftDeleteRetentionInDays
+        $params['SoftDeleteRetentionInDays'], $SoftDeleteRetentionInDays
     }
 
     if ($PublicNetworkAccess) {
-        $params['PublicNetworkAccess', $PublicNetworkAccess
+        $params['PublicNetworkAccess'], $PublicNetworkAccess
     }
 
     if ($Tag) {
-        $params['Tag', $Tag
+        $params['Tag'], $Tag
     }
 
     if ($NetworkRuleSet) {
-        $params['NetworkRuleSet', $NetworkRuleSet
+        $params['NetworkRuleSet'], $NetworkRuleSet
     }
 
     # Create the Key Vault

@@ -264,9 +264,10 @@ param(
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
     [ValidateSet(
+        'None',
         'SystemAssigned', 
         'UserAssigned', 
-        'SystemAssigned, UserAssigned'
+        'SystemAssigned,UserAssigned'
     )]
     [string]$IdentityType,
 
@@ -450,167 +451,167 @@ $parameters = @{
 }
 
 if ($CustomDomainName) {
-    $parameters['CustomDomainName', $CustomDomainName
+    $parameters['CustomDomainName'], $CustomDomainName
 }
 
 if ($UseSubDomain) {
-    $parameters['UseSubDomain', $UseSubDomain
+    $parameters['UseSubDomain'], $UseSubDomain
 }
 
 if ($Tags) {
-    $parameters['Tag', $Tags
+    $parameters['Tag'], $Tags
 }
 
 if ($EnableHttpsTrafficOnly) {
-    $parameters['EnableHttpsTrafficOnly', $EnableHttpsTrafficOnly
+    $parameters['EnableHttpsTrafficOnly'], $EnableHttpsTrafficOnly
 }
 
 if ($AssignIdentity) {
-    $parameters['AssignIdentity', $AssignIdentity
+    $parameters['AssignIdentity'], $AssignIdentity
 }
 
 if ($UserAssignedIdentityId) {
-    $parameters['UserAssignedIdentityId', $UserAssignedIdentityId
+    $parameters['UserAssignedIdentityId'], $UserAssignedIdentityId
 }
 
 if ($IdentityType) {
-    $parameters['IdentityType', $IdentityType
+    $parameters['IdentityType'], $IdentityType
 }
 
 if ($KeyVaultUserAssignedIdentityId) {
-    $parameters['KeyVaultUserAssignedIdentityId', $KeyVaultUserAssignedIdentityId
+    $parameters['KeyVaultUserAssignedIdentityId'], $KeyVaultUserAssignedIdentityId
 }
 
 if ($KeyVaultFederatedClientId) {
-    $parameters['KeyVaultFederatedClientId', $KeyVaultFederatedClientId
+    $parameters['KeyVaultFederatedClientId'], $KeyVaultFederatedClientId
 }
 
 if ($KeyName) {
-    $parameters['KeyName', $KeyName
+    $parameters['KeyName'], $KeyName
 }
 
 if ($KeyVersion) {
-    $parameters['KeyVersion', $KeyVersion
+    $parameters['KeyVersion'], $KeyVersion
 }
 
 if ($KeyVaultUri) {
-    $parameters['KeyVaultUri', $KeyVaultUri
+    $parameters['KeyVaultUri'], $KeyVaultUri
 }
 
 #if ($NetworkRuleSet) {
-#    $parameters['NetworkRuleSet', $NetworkRuleSet
+#    $parameters['NetworkRuleSet'], $NetworkRuleSet
 #}
 
 if ($EnableSftp) {
-    $parameters['EnableSftp', $EnableSftp
+    $parameters['EnableSftp'], $EnableSftp
 }
 
 if ($EnableLocalUser) {
-    $parameters['EnableLocalUser', $EnableLocalUser
+    $parameters['EnableLocalUser'], $EnableLocalUser
 }
 
 if ($EnableHierarchicalNamespace) {
-    $parameters['EnableHierarchicalNamespace', $EnableHierarchicalNamespace
+    $parameters['EnableHierarchicalNamespace'], $EnableHierarchicalNamespace
 }
 
 if ($EnableLargeFileShare) {
-    $parameters['EnableLargeFileShare', $EnableLargeFileShare
+    $parameters['EnableLargeFileShare'], $EnableLargeFileShare
 }
 
 if ($PublishMicrosoftEndpoint) {
-    $parameters['PublishMicrosoftEndpoint', $PublishMicrosoftEndpoint
+    $parameters['PublishMicrosoftEndpoint'], $PublishMicrosoftEndpoint
 }
 
 if ($PublishInternetEndpoint) {
-    $parameters['PublishInternetEndpoint', $PublishInternetEndpoint
+    $parameters['PublishInternetEndpoint'], $PublishInternetEndpoint
 }
 
 if ($EnableureActiveDirectoryDomainServicesForFile) {
-    $parameters['EnableActiveDirectoryDomainServicesForFile', $EnableureActiveDirectoryDomainServicesForFile
+    $parameters['EnableActiveDirectoryDomainServicesForFile'], $EnableureActiveDirectoryDomainServicesForFile
 }
 
 if ($ActiveDirectoryDomainName) {
-    $parameters['ActiveDirectoryDomainName', $ActiveDirectoryDomainName
+    $parameters['ActiveDirectoryDomainName'], $ActiveDirectoryDomainName
 }
 
 if ($ActiveDirectoryDomainGuid) {
-    $parameters['ActiveDirectoryDomainGuid', $ActiveDirectoryDomainGuid
+    $parameters['ActiveDirectoryDomainGuid'], $ActiveDirectoryDomainGuid
 }
 
 if ($EncryptionKeyTypeForTable) {
-    $parameters['EncryptionKeyTypeForTable', $EncryptionKeyTypeForTable
+    $parameters['EncryptionKeyTypeForTable'], $EncryptionKeyTypeForTable
 }
 
 if ($EncryptionKeyTypeForQueue) {
-    $parameters['EncryptionKeyTypeForQueue', $EncryptionKeyTypeForQueue
+    $parameters['EncryptionKeyTypeForQueue'], $EncryptionKeyTypeForQueue
 }
 
 if ($RequireInfrastructureEncryption) {
-    $parameters['RequireInfrastructureEncryption', $RequireInfrastructureEncryption
+    $parameters['RequireInfrastructureEncryption'], $RequireInfrastructureEncryption
 }
 
 #if ($SasExpirationPeriod) {
-#    $parameters['SasExpirationPeriod', $SasExpirationPeriod
+#    $parameters['SasExpirationPeriod'], $SasExpirationPeriod
 #}
 
 if ($KeyExpirationPeriodInDay) {
-    $parameters['KeyExpirationPeriodInDay', $KeyExpirationPeriodInDay
+    $parameters['KeyExpirationPeriodInDay'], $KeyExpirationPeriodInDay
 }
 
 if ($AllowBlobPublicAccess) {
-    $parameters['AllowBlobPublicAccess', $AllowBlobPublicAccess
+    $parameters['AllowBlobPublicAccess'], $AllowBlobPublicAccess
 }
 
 if ($MinimumTlsVersion) {
-    $parameters['MinimumTlsVersion', $MinimumTlsVersion
+    $parameters['MinimumTlsVersion'], $MinimumTlsVersion
 }
 
 if ($AllowSharedKeyAccess) {
-    $parameters['AllowSharedKeyAccess', $AllowSharedKeyAccess
+    $parameters['AllowSharedKeyAccess'], $AllowSharedKeyAccess
 }
 
 if ($EnableNfsV3) {
-    $parameters['EnableNfsV3', $EnableNfsV3
+    $parameters['EnableNfsV3'], $EnableNfsV3
 }
 
 if ($AllowCrossTenantReplication) {
-    $parameters['AllowCrossTenantReplication', $AllowCrossTenantReplication
+    $parameters['AllowCrossTenantReplication'], $AllowCrossTenantReplication
 }
 
 if ($DefaultSharePermission) {
-    $parameters['DefaultSharePermission', $DefaultSharePermission
+    $parameters['DefaultSharePermission'], $DefaultSharePermission
 }
 
 if ($EdgeZone) {
-    $parameters['EdgeZone', $EdgeZone
+    $parameters['EdgeZone'], $EdgeZone
 }
 
 if ($PublicNetworkAccess) {
-    $parameters['PublicNetworkAccess', $PublicNetworkAccess
+    $parameters['PublicNetworkAccess'], $PublicNetworkAccess
 }
 
 if ($EnableAccountLevelImmutability) {
-    $parameters['EnableAccountLevelImmutability', $EnableAccountLevelImmutability
+    $parameters['EnableAccountLevelImmutability'], $EnableAccountLevelImmutability
 }
 
 if ($ImmutabilityPeriod) {
-    $parameters['ImmutabilityPeriod', $ImmutabilityPeriod
+    $parameters['ImmutabilityPeriod'], $ImmutabilityPeriod
 }
 
 if ($ImmutabilityPolicyState) {
-    $parameters['ImmutabilityPolicyState', $ImmutabilityPolicyState
+    $parameters['ImmutabilityPolicyState'], $ImmutabilityPolicyState
 }
 
 if ($AllowedCopyScope) {
-    $parameters['AllowedCopyScope', $AllowedCopyScope
+    $parameters['AllowedCopyScope'], $AllowedCopyScope
 }
 
 if ($DnsEndpointType) {
-    $parameters['DnsEndpointType', $DnsEndpointType
+    $parameters['DnsEndpointType'], $DnsEndpointType
 }
 
 if ($RoutingChoice) {
-    $parameters['RoutingChoice', $RoutingChoice
+    $parameters['RoutingChoice'], $RoutingChoice
 }
 
 # Set Error Action to Silently Continue

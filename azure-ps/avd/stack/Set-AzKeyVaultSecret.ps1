@@ -96,23 +96,23 @@ try {
     }
 
     if ($Disable) {
-        $params['Disable', $true
+        $params['Disable'], $true
     }
 
     if ($Expires) {
-        $params['Expires', $Expires
+        $params['Expires'], $Expires
     }
 
     if ($NotBefore) {
-        $params['NotBefore', $NotBefore
+        $params['NotBefore'], $NotBefore
     }
 
     if ($ContentType) {
-        $params['ContentType', $ContentType
+        $params['ContentType'], $ContentType
     }
 
     if ($Tags) {
-        $params['Tag', $Tags
+        $params['Tag'], $Tags
     }
 
     # Set the secret in the Key Vault

@@ -198,78 +198,75 @@ param (
 $parameters = @{
     Name              = $Name
     ResourceGroupName = $ResourceGroupName
+    Location          = $Location
 }
 
 if ($ApplicationGroupReference) {
-    $parameters['ApplicationGroupReference', $ApplicationGroupReference
+    $parameters['ApplicationGroupReference'], $ApplicationGroupReference
 }
 
 if ($Description) {
-    $parameters['Description', $Description
+    $parameters['Description'], $Description
 }
 
 if ($FriendlyName) {
-    $parameters['FriendlyName', $FriendlyName
+    $parameters['FriendlyName'], $FriendlyName
 }
 
 if ($IdentityType) {
-    $parameters['IdentityType', $IdentityType
-}
-
-if ($Location) {
-    $parameters['Location', $Location
+    $parameters['IdentityType'], $IdentityType
 }
 
 if ($ManagedBy) {
-    $parameters['ManagedBy', $ManagedBy
+    $parameters['ManagedBy'], $ManagedBy
 }
 
 if ($PlanName) {
-    $parameters['PlanName', $PlanName
+    $parameters['PlanName'], $PlanName
 }
 
 if ($PlanProduct) {
-    $parameters['PlanProduct', $PlanProduct
+    $parameters['PlanProduct'], $PlanProduct
 }
 
 if ($PlanPromotionCode) {
-    $parameters['PlanPromotionCode', $PlanPromotionCode
+    $parameters['PlanPromotionCode'], $PlanPromotionCode
 }
 
 if ($PlanPublisher) {
-    $parameters['PlanPublisher', $PlanPublisher
+    $parameters['PlanPublisher'], $PlanPublisher
 }
 
 if ($PlanVersion) {
-    $parameters['PlanVersion', $PlanVersion
+    $parameters['PlanVersion'], $PlanVersion
 }
 
 if ($PublicNetworkAccess) {
-    $parameters['PublicNetworkAccess', $PublicNetworkAccess
+    $parameters['PublicNetworkAccess'], $PublicNetworkAccess
 }
 
 if ($SkuCapacity) {
-    $parameters['SkuCapacity', $SkuCapacity
+    $parameters['SkuCapacity'], $SkuCapacity
 }
 
 if ($SkuFamily) {
-    $parameters['SkuFamily', $SkuFamily
+    $parameters['SkuFamily'], $SkuFamily
 }
 
 if ($SkuName) {
-    $parameters['SkuName', $SkuName
+    $parameters['SkuName'], $SkuName
 }
 
 if ($SkuSize) {
-    $parameters['SkuSize', $SkuSize
+    $parameters['SkuSize'], $SkuSize
 }
 
 if ($SkuTier) {
-    $parameters['SkuTier', $SkuTier
+    $parameters['SkuTier'], $SkuTier
 }
 
 if ($Tags) {
-    $parameters['Tag', $Tags
+    $parameters['Tag'], $Tags
 }
 
 # Set Error Action to Stop
