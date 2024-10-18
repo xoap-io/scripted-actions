@@ -5,7 +5,7 @@
 .DESCRIPTION
     This script updates an Azure Virtual Desktop Host Pool with the Azure CLI.
     The script uses the following Azure CLI command:
-    az desktopvirtualization hostpool update --name $AzHostPoolName --resource-group $AzResourceGroupName
+    az desktopvirtualization hostpool update --name $AzHostPoolName --resource-group $AzResourceGroup
 
 .PARAMETER Add
     Add an object to a list of objects by specifying a path and key value pairs.
@@ -251,32 +251,31 @@ param(
 )
 
 # Splatting parameters for better readability
-$parameters = @{
-    '--add' = $Add
-    '--custom-rdp-property' = $CustomRdpProperty
-    '--description' = $Description
-    '--force-string' = $ForceString
-    '--friendly-name' = $FriendlyName
-    '--ids' = $Ids
-    '--load-balancer-type' = $LoadBalancerType
-    '--max-session-limit' = $MaxSessionLimit
-    '--name' = $Name
-    '--personal-desktop-assignment-type' = $PersonalDesktopAssignmentType
-    '--preferred-app-group-type' = $PreferredAppGroupType
-    '--registration-info' = $RegistrationInfo
-    '--remove' = $Remove
-    '--resource-group' = $ResourceGroup
-    '--ring' = $Ring
-    '--set' = $Set
-    '--sso-client-id' = $SsoClientId
-    '--sso-client-secret-key-vault-path' = $SsoClientSecretKeyVaultPath
-    '--sso-secret-type' = $SsoSecretType
-    '--ssoadfs-authority' = $SsoadfsAuthority
-    '--start-vm-on-connect' = $StartVmOnConnect
-    '--tags' = $Tags
-    '--validation-environment' = $ValidationEnvironment
-    '--vm-template' = $VmTemplate
-}
+$parameters = `
+    '--add', $Add
+    '--custom-rdp-property', $CustomRdpProperty
+    '--description', $Description
+    '--force-string', $ForceString
+    '--friendly-name', $FriendlyName
+    '--ids', $Ids
+    '--load-balancer-type', $LoadBalancerType
+    '--max-session-limit', $MaxSessionLimit
+    '--name', $Name
+    '--personal-desktop-assignment-type', $PersonalDesktopAssignmentType
+    '--preferred-app-group-type', $PreferredAppGroupType
+    '--registration-info', $RegistrationInfo
+    '--remove', $Remove
+    '--resource-group', $ResourceGroup
+    '--ring', $Ring
+    '--set', $Set
+    '--sso-client-id', $SsoClientId
+    '--sso-client-secret-key-vault-path', $SsoClientSecretKeyVaultPath
+    '--sso-secret-type', $SsoSecretType
+    '--ssoadfs-authority', $SsoadfsAuthority
+    '--start-vm-on-connect', $StartVmOnConnect
+    '--tags', $Tags
+    '--validation-environment', $ValidationEnvironment
+    '--vm-template', $VmTemplate
 
 # Set Error Action to Stop
 $ErrorActionPreference = "Stop"
@@ -290,10 +289,7 @@ try {
 
 } catch {
     # Log the error to the console
-
     Write-Output "Error message $errorMessage"
-
-
     Write-Error "Failed to update the Azure Virtual Desktop Host Pool: $($_.Exception.Message)"
 
 } finally {

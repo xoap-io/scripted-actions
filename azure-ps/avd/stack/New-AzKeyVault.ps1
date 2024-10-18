@@ -8,7 +8,7 @@
 .PARAMETER Name
     The name of the Key Vault.
 
-.PARAMETER ResourceGroupName
+.PARAMETER ResourceGroup
     The name of the Azure Resource Group.
 
 .PARAMETER Location
@@ -45,7 +45,7 @@
     The network rule set for the Key Vault.
 
 .EXAMPLE
-    .\New-AzKeyVault.ps1 -Name "MyKeyVault" -ResourceGroupName "MyResourceGroup" -Location "eastus" -Sku "Standard"
+    .\New-AzKeyVault.ps1 -Name "MyKeyVault" -ResourceGroup "MyResourceGroup" -Location "eastus" -Sku "Standard"
 
 .LINK
     https://learn.microsoft.com/en-us/powershell/module/az.keyvault
@@ -68,7 +68,7 @@ param (
 
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
-    [string]$ResourceGroupName,
+    [string]$ResourceGroup,
 
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
@@ -149,7 +149,7 @@ try {
     # Splatting parameters
     $params = @{
         Name                        = $Name
-        ResourceGroupName           = $ResourceGroupName
+        ResourceGroup           = $ResourceGroup
         Location                    = $Location
     }
 
@@ -195,7 +195,7 @@ try {
 
     # Create the Key Vault
     New-AzKeyVault @params
-    Write-Output "Key Vault '$Name' created successfully in resource group '$ResourceGroupName' at location '$Location'."
+    Write-Output "Key Vault '$Name' created successfully in resource group '$ResourceGroup' at location '$Location'."
 }
 catch {
     Write-Error "An error occurred while creating the Key Vault: $_"

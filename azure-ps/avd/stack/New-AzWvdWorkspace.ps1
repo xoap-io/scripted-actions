@@ -8,7 +8,7 @@
 .PARAMETER Name
     The name of the workspace.
 
-.PARAMETER ResourceGroupName
+.PARAMETER ResourceGroup
     The name of the resource group.
 
 .PARAMETER ApplicationGroupReference
@@ -69,7 +69,7 @@ T   he SKU name of the workspace.
     The tags for the workspace.
 
 .EXAMPLE
-    PS C:\> .\New-AzWvdWorkspace.ps1 -Name "MyWorkspace" -ResourceGroupName "MyResourceGroup" -Location "East US"
+    PS C:\> .\New-AzWvdWorkspace.ps1 -Name "MyWorkspace" -ResourceGroup "MyResourceGroup" -Location "East US"
 
 .LINK
     https://learn.microsoft.com/en-us/powershell/module/az.DesktopVirtualization
@@ -93,7 +93,7 @@ param (
 
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
-    [string]$ResourceGroupName,
+    [string]$ResourceGroup,
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
@@ -197,7 +197,7 @@ param (
 # Splatting parameters for better readability
 $parameters = @{
     Name              = $Name
-    ResourceGroupName = $ResourceGroupName
+    ResourceGroup = $ResourceGroup
     Location          = $Location
 }
 

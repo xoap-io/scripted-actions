@@ -5,9 +5,9 @@
 .DESCRIPTION
     This script creates an Azure Virtual Machine with the Azure CLI.
     The script uses the following Azure CLI command:
-    az vm create --resource-group $AzResourceGroupName --name $AzVMName --image $AzImageName
+    az vm create --resource-group $AzResourceGroup --name $AzVMName --image $AzImageName
 
-.PARAMETER AzResourceGroupName
+.PARAMETER AzResourceGroup
     Defines the name of the Azure Resource Group.
 
 .PARAMETER AzVMName
@@ -44,7 +44,7 @@
     Prompts you for confirmation before running the cmdlet.
 
 .EXAMPLE
-    .\az-cli-vm-create.ps1 -AzResourceGroupName "MyResourceGroup" -AzVMName "MyVM" -AzImageName "UbuntuLTS"
+    .\az-cli-vm-create.ps1 -AzResourceGroup "MyResourceGroup" -AzVMName "MyVM" -AzImageName "UbuntuLTS"
 
 .NOTES
     Author: Your Name
@@ -60,7 +60,7 @@
 param(
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
-    [string]$AzResourceGroupName = "myResourceGroup",
+    [string]$AzResourceGroup = "myResourceGroup",
 
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
@@ -83,26 +83,19 @@ param(
     [string]$AzAdminUsername = "azureuser",
 
     [Parameter(Mandatory=$false)]
-    [bool]$AzGenerateSSHKeys = $true,
-
-    [Parameter(Mandatory=$false)]
-    [string]$AzSubscription,
-
-
+    [bool]$AzGenerateSSHKeys = $true
 )
 
 # Splatting parameters for better readability
-$parameters = @{
-    resource_group              = $AzResourceGroupName
-    name                        = $AzVMName
-    image                       = $AzImageName
-    ephemeral_os_disk           = $AzEphemeralOSDisk
-    ephemeral_os_disk_placement = $AzEphemeralOSDiskPlacement
-    os_disk_caching             = $AzOSDiskCaching
-    admin_username              = $AzAdminUsername
-    generate_ssh_keys           = $AzGenerateSSHKeys
-    subscription                = $AzSubscription
-}
+$parameters = `
+    'resource-group', $AzResourceGroup
+    'name', $AzVMName
+    'image', $AzImageName
+    'ephemeral-os-disk', $AzEphemeralOSDisk
+    'ephemeral-os-disk-placement', $AzEphemeralOSDiskPlacement
+    'os-disk-caching', $AzOSDiskCaching
+    'admin-username', $AzAdminUsername
+    'generate-ssh-keys', $AzGenerateSSHKeys
 
 # Set Error Action to Stop
 $ErrorActionPreference = "Stop"
@@ -113,13 +106,12 @@ try {
 
     # Output the result
     Write-Output "Azure Virtual Machine created successfully."
+
 } catch {
     # Log the error to the console
-
-Write-Output "Error message $errorMessage"
-
-
+    Write-Output "Error message $errorMessage"
     Write-Error "Failed to create the Azure Virtual Machine: $($_.Exception.Message)"
+
 } finally {
     # Cleanup code if needed
     Write-Output "Script execution completed."

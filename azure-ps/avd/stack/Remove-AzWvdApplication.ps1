@@ -11,11 +11,11 @@
 .PARAMETER Name
     The name of the application.
 
-.PARAMETER ResourceGroupName
+.PARAMETER ResourceGroup
     The name of the resource group.
 
 .EXAMPLE
-    PS C:\> .\Remove-AzWvdApplication.ps1 -GroupName "MyAppGroup" -Name "MyApp" -ResourceGroupName "MyResourceGroup"
+    PS C:\> .\Remove-AzWvdApplication.ps1 -GroupName "MyAppGroup" -Name "MyApp" -ResourceGroup "MyResourceGroup"
 
 .LINK
     https://learn.microsoft.com/en-us/powershell/module/az.DesktopVirtualization
@@ -43,14 +43,14 @@ param (
 
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
-    [string]$ResourceGroupName
+    [string]$ResourceGroup
 )
 
 # Splatting parameters for better readability
 $parameters = @{
     GroupName         = $GroupName
     Name              = $Name
-    ResourceGroupName = $ResourceGroupName
+    ResourceGroup = $ResourceGroup
 }
 
 # Set Error Action to Stop

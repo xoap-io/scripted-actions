@@ -6,9 +6,9 @@
     This script creates an Azure Virtual Machine Scale Set.
     The script uses the Azure CLI to create the specified Azure Virtual Machine Scale Set.
     The script uses the following Azure CLI command:
-    az vmss create --resource-group $AzResourceGroupName --name $AzScaleSetName --orchestration-mode $AzOrchestrationMode --image $AzSkuImage --instance-count $AzScaleSetInstanceCount --admin-username $AzAdminUserName --generate-ssh-keys
+    az vmss create --resource-group $AzResourceGroup --name $AzScaleSetName --orchestration-mode $AzOrchestrationMode --image $AzSkuImage --instance-count $AzScaleSetInstanceCount --admin-username $AzAdminUserName --generate-ssh-keys
 
-.PARAMETER AzResourceGroupName
+.PARAMETER AzResourceGroup
     Defines the name of the Azure Resource Group.
 
 .PARAMETER AzScaleSetName
@@ -51,7 +51,7 @@
     Prompts you for confirmation before running the cmdlet.
 
 .EXAMPLE
-    .\az-cli-create-vm-scale-set.ps1 -AzResourceGroupName "MyResourceGroup" -AzScaleSetName "MyScaleSet" -AzOrchestrationMode "Flexible" -AzSkuImage "UbuntuLTS" -AzScaleSetInstanceCount 2 -AzAdminUserName "azureuser"
+    .\az-cli-create-vm-scale-set.ps1 -AzResourceGroup "MyResourceGroup" -AzScaleSetName "MyScaleSet" -AzOrchestrationMode "Flexible" -AzSkuImage "UbuntuLTS" -AzScaleSetInstanceCount 2 -AzAdminUserName "azureuser"
 
 .NOTES
     Author: Your Name
@@ -67,7 +67,7 @@
 param(
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
-    [string]$AzResourceGroupName = 'myResourceGroup',
+    [string]$AzResourceGroup = 'myResourceGroup',
 
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
@@ -112,7 +112,7 @@ param(
 
 # Splatting parameters for better readability
 $parameters = @{
-    resource_group        = $AzResourceGroupName
+    resource_group        = $AzResourceGroup
     name                  = $AzScaleSetName
     orchestration_mode    = $AzOrchestrationMode
     image                 = $AzSkuImage

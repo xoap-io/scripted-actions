@@ -5,7 +5,7 @@
 .DESCRIPTION
     This script updates an Azure Virtual Desktop Application Group with the Azure CLI.
     The script uses the following Azure CLI command:
-    az desktopvirtualization applicationgroup update --name $AzAppGroupName --resource-group $AzResourceGroupName
+    az desktopvirtualization applicationgroup update --name $AzAppGroupName --resource-group $AzResourceGroup
 
 .PARAMETER Add
     Add an object to a list of objects by specifying a path and key value pairs.
@@ -44,7 +44,7 @@
     Defines the tags for the Azure Virtual Desktop Application Group.
 
 .EXAMPLE
-    .\az-cli-avd-applicationgroup-update.ps1 -AzAppGroupName "MyAppGroup" -AzResourceGroupName "MyResourceGroup"
+    .\az-cli-avd-applicationgroup-update.ps1 -AzAppGroupName "MyAppGroup" -AzResourceGroup "MyResourceGroup"
 
 .LINK
     https://learn.microsoft.com/en-us/cli/azure/desktopvirtualization/applicationgroup
@@ -127,19 +127,18 @@ param(
 )
 
 # Splatting parameters for better readability
-$parameters = @{
-    '--add'=  $Add
-    '--application-group-type'= $ApplicationGroupType
-    '--description'= $Description
-    '--force-string'= $ForceString
-    '--friendly-name'= $FriendlyName
-    '--host-pool-arm-path'= $HostPoolArmPath
-    '--ids'= $IDs
-    '--name'= $Name
-    '--remove'= $Remove
-    '--resource-group'= $ResourceGroup
-    '--set'= $Set
-}
+$parameters = `
+    '--add', $Add
+    '--application-group-type', $ApplicationGroupType
+    '--description', $Description
+    '--force-string', $ForceString
+    '--friendly-name', $FriendlyName
+    '--host-pool-arm-path', $HostPoolArmPath
+    '--ids', $IDs
+    '--name', $Name
+    '--remove', $Remove
+    '--resource-group', $ResourceGroup
+    '--set', $Set
 
 if ($Tags) {
     $parameters += '--tags', $Tags
@@ -157,10 +156,7 @@ try {
 
 } catch {
     # Log the error to the console
-
     Write-Output "Error message $errorMessage"
-
-
     Write-Error "Failed to update the Azure Virtual Desktop Application Group: $($_.Exception.Message)"
 
 } finally {

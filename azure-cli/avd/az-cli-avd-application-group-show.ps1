@@ -5,7 +5,7 @@
 .DESCRIPTION
     This script shows details of an Azure Virtual Desktop Application Group with the Azure CLI.
     The script uses the following Azure CLI command:
-    az desktopvirtualization applicationgroup show --name $AzAppGroupName --resource-group $AzResourceGroupName
+    az desktopvirtualization applicationgroup show --name $AzAppGroupName --resource-group $AzResourceGroup
 
 .PARAMETER IDs
     One or more resource IDs (space-delimited).
@@ -13,11 +13,11 @@
 .PARAMETER Name
     The name of the Azure Virtual Desktop Application Group.
 
-.PARAMETER ResourceGroupName
+.PARAMETER ResourceGroup
     The name of the Azure Resource Group.
 
 .EXAMPLE
-    .\az-cli-avd-applicationgroup-show.ps1 -AzAppGroupName "MyAppGroup" -AzResourceGroupName "MyResourceGroup"
+    .\az-cli-avd-applicationgroup-show.ps1 -AzAppGroupName "MyAppGroup" -AzResourceGroup "MyResourceGroup"
 
 .LINK
     https://learn.microsoft.com/en-us/cli/azure/desktopvirtualization/applicationgroup
@@ -44,15 +44,14 @@ param(
 
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
-    [string]$ResourceGroupName
+    [string]$ResourceGroup
 )
 
 # Splatting parameters for better readability
-$parameters = @{
-    '--ids'            = $AzIds
-    '--name'           = $AzAppGroupName
-    '--resource-group' = $AzResourceGroupName
-}
+$parameters = `
+    '--ids', $Ids
+    '--name', $AppGroupName
+    '--resource-group', $ResourceGroup
 
 # Set Error Action to Stop
 $ErrorActionPreference = "Stop"
@@ -66,10 +65,7 @@ try {
 
 } catch {
     # Log the error to the console
-
     Write-Output "Error message $errorMessage"
-
-
     Write-Error "Failed to retrieve the Azure Virtual Desktop Application Group details: $($_.Exception.Message)"
 
 } finally {

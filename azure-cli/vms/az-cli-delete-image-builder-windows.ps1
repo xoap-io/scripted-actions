@@ -6,13 +6,13 @@
     This script deletes an Azure Image Builder Windows VM.
     The script uses the Azure CLI to delete the specified Azure Image Builder Windows VM.
     The script uses the following Azure CLI commands:
-    az resource delete --resource-group $AzResourceGroupName --resource-type Microsoft.VirtualMachineImages/imageTemplates --name $AzImageBuildName
-    az role assignment delete --assignee $AzAssignee --role $AzRoleDefinitionName --scope /subscriptions/$AzSubscriptionID/resourceGroups/$AzResourceGroupName
+    az resource delete --resource-group $AzResourceGroup --resource-type Microsoft.VirtualMachineImages/imageTemplates --name $AzImageBuildName
+    az role assignment delete --assignee $AzAssignee --role $AzRoleDefinitionName --scope /subscriptions/$AzSubscriptionID/resourceGroups/$AzResourceGroup
     az role definition delete --name $AzRoleDefinitionName
     az identity delete --ids $AzResourceId
-    az group delete --resource-group $AzResourceGroupName
+    az group delete --resource-group $AzResourceGroup
 
-.PARAMETER AzResourceGroupName
+.PARAMETER AzResourceGroup
     Defines the name of the Azure Resource Group.
 
 .PARAMETER AzImageBuildName
@@ -52,7 +52,7 @@
     Prompts you for confirmation before running the cmdlet.
 
 .EXAMPLE
-    .\az-cli-delete-image-builder-windows.ps1 -AzResourceGroupName "MyResourceGroup" -AzImageBuildName "MyImageBuild" -AzAssignee "MyAssignee" -AzRoleDefinitionName "MyRoleDefinition" -AzSubscriptionID "00000000-0000-0000-0000-000000000000" -AzResourceId "00000000-0000-0000-0000-000000000000"
+    .\az-cli-delete-image-builder-windows.ps1 -AzResourceGroup "MyResourceGroup" -AzImageBuildName "MyImageBuild" -AzAssignee "MyAssignee" -AzRoleDefinitionName "MyRoleDefinition" -AzSubscriptionID "00000000-0000-0000-0000-000000000000" -AzResourceId "00000000-0000-0000-0000-000000000000"
 
 .NOTES
     Author: Your Name
@@ -68,7 +68,7 @@
 param(
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
-    [string]$AzResourceGroupName = "MyResourceGroup",
+    [string]$AzResourceGroup = "MyResourceGroup",
 
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
@@ -110,12 +110,12 @@ param(
 
 # Splatting parameters for better readability
 $parameters = @{
-    resource_group        = $AzResourceGroupName
+    resource_group        = $AzResourceGroup
     resource_type         = "Microsoft.VirtualMachineImages/imageTemplates"
     name                  = $AzImageBuildName
     assignee              = $AzAssignee
     role                  = $AzRoleDefinitionName
-    scope                 = "/subscriptions/$AzSubscriptionID/resourceGroups/$AzResourceGroupName"
+    scope                 = "/subscriptions/$AzSubscriptionID/resourceGroups/$AzResourceGroup"
     ids                   = $AzResourceId
     subscription          = $AzSubscriptionID
     debug                 = $AzDebug

@@ -6,10 +6,10 @@
     This script creates a new Linux Azure VM with the Azure PowerShell.
     The script uses the Azure PowerShell to create the specified Linux Azure VM.
     The script uses the following Azure PowerShell command:
-    New-AzVM -ResourceGroupName $AzResourceGroupName -Name $AzVmName -Location $AzLocation -Image $AzImageName -PublicIpAddressName $AzPublicIpAddressName -OpenPorts $AzOpenPorts -Size $AzVmSize
+    New-AzVM -ResourceGroup $AzResourceGroup -Name $AzVmName -Location $AzLocation -Image $AzImageName -PublicIpAddressName $AzPublicIpAddressName -OpenPorts $AzOpenPorts -Size $AzVmSize
     The script sets the ErrorActionPreference to Stop to handle errors properly.
 
-.PARAMETER AzResourceGroupName
+.PARAMETER AzResourceGroup
     Defines the name of the Azure Resource Group.
 
 .PARAMETER AzVmName
@@ -55,7 +55,7 @@
     Prompts you for confirmation before running the cmdlet.
 
 .EXAMPLE
-    .\az-ps-create-linux-vm.ps1 -AzResourceGroupName "myResourceGroup" -AzVmName "myVm" -AzLocation "westus" -AzImageName "UbuntuLTS" -AzPublicIpAddressName "myPublicIP" -AzOpenPorts 22 -AzVmSize "Standard_B1s"
+    .\az-ps-create-linux-vm.ps1 -AzResourceGroup "myResourceGroup" -AzVmName "myVm" -AzLocation "westus" -AzImageName "UbuntuLTS" -AzPublicIpAddressName "myPublicIP" -AzOpenPorts 22 -AzVmSize "Standard_B1s"
 
 .NOTES
     Ensure that Azure PowerShell is installed and authenticated before running the script.
@@ -72,7 +72,7 @@
 param(
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
-    [string]$AzResourceGroupName,
+    [string]$AzResourceGroup,
 
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
@@ -104,7 +104,7 @@ param(
 
 # Splatting parameters for better readability
 $parameters = @{
-    ResourceGroupName    = $AzResourceGroupName
+    ResourceGroup    = $AzResourceGroup
     Name                 = $AzVmName
     Location             = $AzLocation
     Image                = $AzImageName

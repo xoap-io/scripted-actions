@@ -5,7 +5,7 @@
 .DESCRIPTION
     This script creates an Azure Virtual Desktop Application Group with the Azure CLI.
     The script uses the following Azure CLI command:
-    az desktopvirtualization applicationgroup create --resource-group $AzResourceGroupName --name $AzAppGroupName --location $AzLocation --host-pool-arm-path $AzHostPoolArmPath --application-group-type $AzAppGroupType
+    az desktopvirtualization applicationgroup create --resource-group $AzResourceGroup --name $AzAppGroupName --location $AzLocation --host-pool-arm-path $AzHostPoolArmPath --application-group-type $AzAppGroupType
 
 .PARAMETER AppGroupType
     Defines the type of the Azure Virtual Desktop Application Group.
@@ -16,7 +16,7 @@
 .PARAMETER Name
     Defines the name of the Azure Virtual Desktop Application Group.
 
-.PARAMETER ResourceGroupName
+.PARAMETER ResourceGroup
     Defines the name of the Azure Resource Group.
 
 .PARAMETER Description
@@ -32,7 +32,7 @@
     Defines the tags for the Azure Virtual Desktop Application Group.
 
 .EXAMPLE
-    .\az-cli-avd-applicationgroup-create.ps1 -AzResourceGroupName "MyResourceGroup" -AzAppGroupName "MyAppGroup" -AzLocation "eastus" -AzHostPoolArmPath "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.DesktopVirtualization/hostPools/myHostPool" -AzAppGroupType "RemoteApp"
+    .\az-cli-avd-applicationgroup-create.ps1 -AzResourceGroup "MyResourceGroup" -AzAppGroupName "MyAppGroup" -AzLocation "eastus" -AzHostPoolArmPath "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.DesktopVirtualization/hostPools/myHostPool" -AzAppGroupType "RemoteApp"
 
 .LINK
     https://learn.microsoft.com/en-us/cli/azure/desktopvirtualization/applicationgroup
@@ -67,7 +67,7 @@ param(
 
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
-    [string]$ResourceGroupName,
+    [string]$ResourceGroup,
 
     [Parameter(Mandatory=$false)]
     [string]$Description,
@@ -104,12 +104,11 @@ param(
 )
 
 # Splatting parameters for better readability
-$parameters = @{
-    '--application-group-type' = $AppGroupType
-    '--resource-group'= $ResourceGroupName
-    '--name' = $AppGroupName
-    '--host-pool-arm-path' = $HostPoolArmPath
-}
+$parameters = `
+    '--application-group-type', $AppGroupType 
+    '--resource-group', $ResourceGroup
+    '--name', $AppGroupName 
+    '--host-pool-arm-path', $HostPoolArmPath
 
 if ($Description) {
     $parameters += '--description', $Description
@@ -135,10 +134,7 @@ try {
 
 } catch {
     # Log the error to the console
-
     Write-Output "Error message $errorMessage"
-
-
     Write-Error "Failed to create the Azure Virtual Desktop Application Group: $($_.Exception.Message)"
 
 } finally {

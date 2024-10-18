@@ -5,7 +5,7 @@
 .DESCRIPTION
     This script creates a new Azure Storage Account with the Azure CLI.
     The script uses the following Azure CLI command:
-    az storage account create --name $AzStorageAccountName --resource-group $AzResourceGroupName --location $AzLocation --sku $AzStorageSku
+    az storage account create --name $AzStorageAccountName --resource-group $AzResourceGroup --location $AzLocation --sku $AzStorageSku
 
 .PARAMETER Name
     Defines the name of the Azure Storage Account.
@@ -188,7 +188,7 @@
     Defines the VNet name of the Azure Storage Account.
 
 .EXAMPLE
-    .\az-cli-create-storage-account.ps1 -AzStorageAccountName "MyStorageAccount" -AzResourceGroupName "MyResourceGroup" -AzLocation "eastus" -AzStorageSku "Standard_LRS"
+    .\az-cli-create-storage-account.ps1 -AzStorageAccountName "MyStorageAccount" -AzResourceGroup "MyResourceGroup" -AzLocation "eastus" -AzStorageSku "Standard_LRS"
 
 .LINK
     https://learn.microsoft.com/en-us/cli/azure/storage/account
@@ -215,6 +215,12 @@ param(
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
+    [ValidateSet(
+        'Cold',
+        'Cool',
+        'Hot',
+        'Premiun'
+    )]
     [string]$AccessTier,
 
     [Parameter(Mandatory=$false)]
@@ -227,19 +233,19 @@ param(
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
-    [string]$AllowAppend,
+    [bool]$AllowAppend,
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
-    [string]$AllowBlobPublicAccess,
+    [bool]$AllowBlobPublicAccess,
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
-    [string]$AllowCrossTenantReplication,
+    [bool]$AllowCrossTenantReplication,
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
-    [string]$AllowSharedKeyAccess,
+    [bool]$AllowSharedKeyAccess,
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
@@ -251,6 +257,12 @@ param(
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
+    [ValidateSet(
+        'AzureServices',
+        'Logging',
+        'Metrics',
+        'None'
+    )]
     [string]$Bypass,
 
     [Parameter(Mandatory=$false)]
@@ -259,14 +271,28 @@ param(
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
+    [ValidateSet(
+        'Allow',
+        'Deny'
+    )]
     [string]$DefaultAction,
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
+    [ValidateSet(
+        'None',
+        'StorageFileDataSmbShareContributor',
+        'StorageFileDataSmbShareElevatedContributor',
+        'StorageFileDataSmbShareReader'
+    )]
     [string]$DefaultSharePermission,
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
+    [ValidateSet(
+        'AzureDnsZone',
+        'Standard'
+    )]
     [string]$DnsEndpointType,
 
     [Parameter(Mandatory=$false)]
@@ -287,23 +313,23 @@ param(
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
-    [string]$EnableAlw,
+    [bool]$EnableAlw,
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
-    [string]$EnableFilesAadds,
+    [bool]$EnableFilesAadds,
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
-    [string]$EnableFilesAadkerb,
+    [bool]$EnableFilesAadkerb,
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
-    [string]$EnableFilesAdds,
+    [bool]$EnableFilesAdds,
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
-    [string]$EnableHierarchicalNamespace,
+    [bool]$EnableHierarchicalNamespace,
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
@@ -311,15 +337,15 @@ param(
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
-    [string]$EnableLocalUser,
+    [bool]$EnableLocalUser,
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
-    [string]$EnableNfsV3,
+    [bool]$EnableNfsV3,
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
-    [string]$EnableSftp,
+    [bool]$EnableSftp,
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
@@ -327,14 +353,26 @@ param(
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
+    [ValidateSet(
+        'Microsoft.Keyvault',
+        'Microsoft.Storage'
+    )]
     [string]$EncryptionKeySource,
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
+    [ValidateSet(
+        'Account',
+        'Service'
+    )]
     [string]$EncryptionKeyTypeForQueue,
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
+    [ValidateSet(
+        'Account',
+        'Service'
+    )]
     [string]$EncryptionKeyTypeForTable,
 
     [Parameter(Mandatory=$false)]
@@ -347,6 +385,12 @@ param(
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
+    [ValidateSet(
+        'Blob',
+        'File',
+        'Queue',
+        'Table'
+    )]
     [string]$EncryptionServices,
 
     [Parameter(Mandatory=$false)]
@@ -355,10 +399,16 @@ param(
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
-    [string]$HttpsOnly,
+    [bool]$HttpsOnly,
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
+    [ValidateSet(
+        'None',
+        'SystemAssigned',
+        'SystemAssigned,UserAssigned',
+        'UserAssigned'
+    )]
     [string]$IdentityType,
 
     [Parameter(Mandatory=$false)]
@@ -367,6 +417,11 @@ param(
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
+    [ValidateSet(
+        'Disabled',
+        'Locked',
+        'Unlocked'
+    )]
     [string]$ImmutabilityState,
 
     [Parameter(Mandatory=$false)]
@@ -383,14 +438,46 @@ param(
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
+    [ValidateSet(
+        'BlobStorage',
+        'BlockBlobStorage',
+        'FileStorage',
+        'Storage',
+        'StorageV2'
+    )]
     [string]$Kind,
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
+    [ValidateSet(
+        'eastus', 'eastus2', 'southcentralus', 'westus2',
+        'westus3', 'australiaeast', 'southeastasia', 'northeurope',
+        'swedencentral', 'uksouth', 'westeurope', 'centralus',
+        'southafricanorth', 'centralindia', 'eastasia', 'japaneast',
+        'koreacentral', 'canadacentral', 'francecentral', 'germanywestcentral',
+        'italynorth', 'norwayeast', 'polandcentral', 'switzerlandnorth',
+        'uaenorth', 'brazilsouth', 'israelcentral', 'qatarcentral',
+        'asia', 'asiapacific', 'australia', 'brazil',
+        'canada', 'europe', 'france',
+        'global', 'india', 'japan', 'korea',
+        'norway', 'singapore', 'southafrica', 'sweden',
+        'switzerland', 'unitedstates', 'northcentralus', 'westus',
+        'japanwest', 'centraluseuap', 'eastus2euap', 'westcentralus',
+        'southafricawest', 'australiacentral', 'australiacentral2', 'australiasoutheast',
+        'koreasouth', 'southindia', 'westindia', 'canadaeast',
+        'francesouth', 'germanynorth', 'norwaywest', 'switzerlandwest',
+        'ukwest', 'uaecentral', 'brazilsoutheast'
+    )]
     [string]$Location,
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
+    [ValidateSet(
+        'TLS1_0',
+        'TLS1_1',
+        'TLS1_2',
+        'TLS1_3'
+    )]
     [string]$MinTlsVersion,
 
     [Parameter(Mandatory=$false)]
@@ -399,22 +486,31 @@ param(
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
+    [ValidateSet(
+        'Disabled',
+        'Enabled',
+        'SecurityByPerimeter'
+    )]
     [string]$PublicNetworkAccess,
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
-    [string]$PublishInternetEndpoints,
+    [bool]$PublishInternetEndpoints,
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
-    [string]$PublishMicrosoftEndpoints,
+    [bool]$PublishMicrosoftEndpoints,
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
-    [string]$RequireInfrastructureEncryption,
+    [bool]$RequireInfrastructureEncryption,
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
+    [ValidateSet(
+        'MicrosoftRouting',
+        'InternetRouting'
+    )]
     [string]$RoutingChoice,
 
     [Parameter(Mandatory=$false)]
@@ -427,6 +523,16 @@ param(
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
+    [ValidateSet(
+        'Premium_LRS',
+        'Premium_ZRS',
+        'Standard_GRS',
+        'Standard_GZRS',
+        'Standard_LRS',
+        'Standard_RAGRS',
+        'Standard_RAGZRS',
+        'Standard_ZRS'
+    )]
     [string]$Sku,
 
     [Parameter(Mandatory=$false)]
@@ -447,10 +553,9 @@ param(
 )
 
 # Splatting parameters for better readability
-$parameters = @{
-    '--name' = $Name
-    '--resource-group' = $ResourceGroup
-}
+$parameters = `
+    '--name', $Name
+    '--resource-group', $ResourceGroup
 
 if ($AccessTier) {
     $parameters += '--access-tier', $AccessTier
@@ -696,7 +801,6 @@ try {
 
 } catch {
     # Log the error to the console
-
     Write-Output "Error message $errorMessage"
     Write-Error "Failed to create the Azure Storage Account: $($_.Exception.Message)"
 

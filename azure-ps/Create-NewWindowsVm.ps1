@@ -7,7 +7,7 @@
     This script creates a new Azure VM with the Azure PowerShell. The script creates a new Azure Resource Group, a new Azure VM, and a new Azure Public IP Address.
     The script also retrieves the public IP address of the VM.
 
-.PARAMETER ResourceGroupName
+.PARAMETER ResourceGroup
     Defines the name of the Azure Resource Group.
 
 .PARAMETER VmName
@@ -38,7 +38,7 @@
     Prompts you for confirmation before running the cmdlet.
 
 .EXAMPLE
-    .\Create-NewWindowsVm.ps1 -AzResourceGroupName "myResourceGroup" -AzVmName "myVm" -AzLocation "eastus" -AzImageName "myImageName" -AzPublicIpAddressName "myPublicIpAddressName" -AzVmUserName "myVmUser" -AzVmUserPassword "myVmPassword" -AzOpenPorts 3389 -AzVmSize "Standard_D2s_v3"
+    .\Create-NewWindowsVm.ps1 -AzResourceGroup "myResourceGroup" -AzVmName "myVm" -AzLocation "eastus" -AzImageName "myImageName" -AzPublicIpAddressName "myPublicIpAddressName" -AzVmUserName "myVmUser" -AzVmUserPassword "myVmPassword" -AzOpenPorts 3389 -AzVmSize "Standard_D2s_v3"
 
 .LINK
     https://learn.microsoft.com/en-us/powershell/module/az.Compute
@@ -336,7 +336,7 @@ param(
 $parameters = @{
     Name        = $Name
     Credential  = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $UserName, $Password
-    ResourceGroupName = $ResourceGroup
+    ResourceGroup = $ResourceGroup
     Location    = $Location
 }
 
@@ -531,7 +531,7 @@ try {
     # Create the VM
     New-AzVM @parameters -Verbose
 
-    Get-AzVM -ResourceGroupName $resourceGroup -Name $name
+    Get-AzVM -ResourceGroup $resourceGroup -Name $name
 
     # Get the public IP of the VM
     $publicIp = Get-AzPublicIpAddress -Name $parameters.PublicIpAddressName -ResourceGroup $parameters.ResourceGroup

@@ -5,14 +5,14 @@
 .DESCRIPTION
     This script creates an Azure Bastion Host with the Azure CLI.
     The script uses the following Azure CLI command:
-    az network bastion create --name $AzBastionName --public-ip-address $AzPublicIpAddress --resource-group $AzResourceGroupName --vnet-name $AzVnetName --location $AzLocation
+    az network bastion create --name $AzBastionName --public-ip-address $AzPublicIpAddress --resource-group $AzResourceGroup --vnet-name $AzVnetName --location $AzLocation
 
 .PARAMETER BastionName
     Defines the name of the Azure Bastion Host.
 
 .PARAMETER PublicIpAddress
 
-.PARAMETER ResourceGroupName
+.PARAMETER ResourceGroup
     Defines the name of the Azure Resource Group.
 
 .PARAMETER VnetName
@@ -55,7 +55,7 @@
     Availability zones.
 
 .EXAMPLE
-    .\az-cli-bastion-create.ps1 -AzBastionName "MyBastion" -AzPublicIpAddress "MyPublicIP" -AzResourceGroupName "MyResourceGroup" -AzVnetName "MyVnet" -AzLocation "eastus2"
+    .\az-cli-bastion-create.ps1 -AzBastionName "MyBastion" -AzPublicIpAddress "MyPublicIP" -AzResourceGroup "MyResourceGroup" -AzVnetName "MyVnet" -AzLocation "eastus2"
 
 .LINK
     https://learn.microsoft.com/en-us/cli/azure/network/bastion
@@ -82,7 +82,7 @@ param(
 
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
-    [string]$ResourceGroupName,
+    [string]$ResourceGroup,
 
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
@@ -260,12 +260,11 @@ param(
 )
 
 # Splatting parameters for better readability
-$parameters = @{
-    '--name'            = $BastionName
-    '--public-ip-address' = $PublicIpAddress
-    '--resource-group'  = $ResourceGroupName
-    '--vnet-name'       = $VnetName
-}
+$parameters = `
+    '--name', $BastionName
+    '--public-ip-address', $PublicIpAddress
+    '--resource-group', $ResourceGroup
+    '--vnet-name', $VnetName
 
 if ($DisableCopyPaste) {
     $parameters += '--disable-copy-paste', $DisableCopyPaste
@@ -327,10 +326,7 @@ try {
 
 } catch {
     # Log the error to the console
-
     Write-Output "Error message $errorMessage"
-
-
     Write-Error "Failed to create the Azure Bastion Host: $($_.Exception.Message)"
 
 } finally {

@@ -8,7 +8,7 @@
 .PARAMETER Name
     The name of the host pool.
 
-.PARAMETER ResourceGroupName
+.PARAMETER ResourceGroup
     The name of the resource group.
 
 .PARAMETER HostPoolType
@@ -129,7 +129,7 @@ The SSO client secret key vault path.
     Indicates if the host pool is a validation environment.
 
 .EXAMPLE
-    PS C:\> .\New-AzWvdHostPool.ps1 -Name "MyHostPool" -ResourceGroupName "MyResourceGroup" -HostPoolType "Pooled" -LoadBalancerType "BreadthFirst" -PreferredAppGroupType "Desktop"
+    PS C:\> .\New-AzWvdHostPool.ps1 -Name "MyHostPool" -ResourceGroup "MyResourceGroup" -HostPoolType "Pooled" -LoadBalancerType "BreadthFirst" -PreferredAppGroupType "Desktop"
 
 .LINK
     https://learn.microsoft.com/en-us/powershell/module/az.DesktopVirtualization
@@ -153,7 +153,7 @@ param (
 
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
-    [string]$ResourceGroupName,
+    [string]$ResourceGroup,
 
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
@@ -369,7 +369,7 @@ $ErrorActionPreference = "Stop"
 # Splatting parameters for better readability
 $parameters = @{
     Name                  = $Name
-    ResourceGroupName     = $ResourceGroupName
+    ResourceGroup     = $ResourceGroup
     HostPoolType          = $HostPoolType
     LoadBalancerType      = $LoadBalancerType
     PreferredAppGroupType = $PreferredAppGroupType

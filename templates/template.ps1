@@ -19,13 +19,13 @@
 .LINK
     https://github.com/xoap-io/scripted-actions
 
-.PARAMETER AzResourceGroupName
+.PARAMETER AzResourceGroup
     Defines the name of the Azure Resource Group.
 
 #>
 [CmdletBinding()]
 param(
-    [string]$AzResourceGroupName = "myResourceGroup",
+    [string]$AzResourceGroup = "myResourceGroup",
 
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
@@ -99,7 +99,7 @@ param(
 $ErrorActionPreference =  "Stop"
 
 $Parameters = @{
-    ResourceGroupName      = $ResourceGroupName
+    ResourceGroup      = $ResourceGroup
     HostPoolName           = $HostPoolName
     Location               = $Location
     HostPoolType           = $HostPoolType

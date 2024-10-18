@@ -8,7 +8,7 @@
 .PARAMETER Name
     The name of the virtual network.
 
-.PARAMETER ResourceGroupName
+.PARAMETER ResourceGroup
     The name of the Azure Resource Group.
 
 .PARAMETER Location
@@ -51,7 +51,7 @@
     The edge zone for the virtual network.
 
 .EXAMPLE
-    PS C:\> .\New-AzVirtualNetwork.ps1 -Name "MyVNet" -AzResourceGroupName "MyResourceGroup" -AzLocation "eastus" -AzAddressPrefix "10.0.0.0/16"
+    PS C:\> .\New-AzVirtualNetwork.ps1 -Name "MyVNet" -AzResourceGroup "MyResourceGroup" -AzLocation "eastus" -AzAddressPrefix "10.0.0.0/16"
 
 .LINK
     https://learn.microsoft.com/en-us/powershell/module/az.Network
@@ -74,7 +74,7 @@ param(
 
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
-    [string]$ResourceGroupName,
+    [string]$ResourceGroup,
 
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
@@ -162,7 +162,7 @@ param(
 # Splatting parameters for better readability
 $parameters = @{
     Name              = $Name
-    ResourceGroupName = $ResourceGroupName
+    ResourceGroup = $ResourceGroup
     Location          = $Location
     AddressPrefix     = $AddressPrefix
 }

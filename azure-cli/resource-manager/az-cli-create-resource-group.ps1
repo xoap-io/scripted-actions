@@ -5,7 +5,7 @@
 .DESCRIPTION
     This script creates a new Azure Resource Group with the Azure CLI.
     The script uses the following Azure CLI command:
-    az group create --name $AzResourceGroupName --location $AzLocation
+    az group create --name $AzResourceGroup --location $AzLocation
 
 .PARAMETER ResourceGroup
     Defines the name of the Azure Resource Group.
@@ -20,7 +20,7 @@
     Defines the tags for the Azure Resource Group.
 
 .EXAMPLE
-    .\az-cli-create-resource-group.ps1 -AzResourceGroupName "MyResourceGroup" -AzLocation "eastus"
+    .\az-cli-create-resource-group.ps1 -AzResourceGroup "MyResourceGroup" -AzLocation "eastus"
 
 .LINK
     https://learn.microsoft.com/en-us/cli/azure/group
@@ -98,7 +98,6 @@ try {
 
 } catch {
     # Log the error to the console
-
     Write-Output "Error message $errorMessage"
     Write-Error "Failed to create the Azure Resource Group: $($_.Exception.Message)"
 

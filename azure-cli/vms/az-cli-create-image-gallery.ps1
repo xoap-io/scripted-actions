@@ -5,10 +5,10 @@
 .DESCRIPTION
     This script creates a new Azure Image Gallery with the Azure CLI. The script creates a new Azure Resource Group and a new Azure Image Gallery.
     The script uses the following Azure CLI commands:
-    az group create --name $AzResourceGroupName --location $AzLocation
-    az sig create --resource-group $AzResourceGroupName --gallery-name $AzGalleryName
+    az group create --name $AzResourceGroup --location $AzLocation
+    az sig create --resource-group $AzResourceGroup --gallery-name $AzGalleryName
 
-.PARAMETER AzResourceGroupName
+.PARAMETER AzResourceGroup
     Defines the name of the Azure Resource Group.
 
 .PARAMETER AzLocation
@@ -42,7 +42,7 @@
     Prompts you for confirmation before running the cmdlet.
 
 .EXAMPLE
-    .\az-cli-create-image-gallery.ps1 -AzResourceGroupName "MyResourceGroup" -AzLocation "eastus" -AzGalleryName "MyImageGallery"
+    .\az-cli-create-image-gallery.ps1 -AzResourceGroup "MyResourceGroup" -AzLocation "eastus" -AzGalleryName "MyImageGallery"
 
 .NOTES
     Author: Your Name
@@ -58,7 +58,7 @@
 param(
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
-    [string]$AzResourceGroupName = "myResourceGroup",
+    [string]$AzResourceGroup = "myResourceGroup",
 
     [Parameter(Mandatory=$true)]
     [ValidateSet('eastus', 'eastus2', 'northeurope', 'germanywestcentral', 'westcentralus', 'southcentralus', 'centralus', 'northcentralus', 'eastus2euap', 'westus3', 'southeastasia', 'eastasia', 'japaneast', 'japanwest', 'australiaeast', 'australiasoutheast', 'australiacentral', 'australiacentral2', 'centralindia', 'southindia', 'westindia', 'canadacentral', 'canadaeast', 'uksouth', 'ukwest', 'francecentral', 'francesouth', 'norwayeast', 'norwaywest', 'switzerlandnorth', 'switzerlandwest', 'germanynorth', 'germanywestcentral', 'uaenorth', 'uaecentral', 'southafricanorth', 'southafricawest', 'brazilsouth', 'brazilus', 'koreacentral', 'koreasouth')]
@@ -66,61 +66,30 @@ param(
 
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
-    [string]$AzGalleryName = "myImageGallery",
-
-    [Parameter(Mandatory=$false)]
-    [string]$AzSubscription,
-
-    [Parameter(Mandatory=$false)]
-    [switch]$AzDebug,
-
-    [Parameter(Mandatory=$false)]
-    [switch]$AzOnlyShowErrors,
-
-    [Parameter(Mandatory=$false)]
-    [string]$AzOutput,
-
-    [Parameter(Mandatory=$false)]
-    [string]$AzQuery,
-
-    [Parameter(Mandatory=$false)]
-    [switch]$AzVerbose,
-
-
+    [string]$AzGalleryName = "myImageGallery"
 )
 
 # Splatting parameters for better readability
-$parameters = @{
-    name              = $AzResourceGroupName
-    location          = $AzLocation
-    gallery_name      = $AzGalleryName
-    subscription      = $AzSubscription
-    debug             = $AzDebug
-    only_show_errors  = $AzOnlyShowErrors
-    output            = $AzOutput
-    query             = $AzQuery
-    verbose           = $AzVerbose
-}
+$parameters = `
+    'name', $ResourceGroup
+    'location', $Location
+    'gallery-name', $GalleryName
 
 # Set Error Action to Stop
 $ErrorActionPreference = "Stop"
 
 try {
-    # Create a new Azure Resource Group
-    az group create --name $AzResourceGroupName --location $AzLocation
-
     # Create a new Azure Image Gallery
     az sig create @parameters
 
     # Output the result
     Write-Output "Azure Image Gallery created successfully."
+
 } catch {
     # Log the error to the console
-
-Write-Output "Error message $errorMessage"
-
-
+    Write-Output "Error message $errorMessage"
     Write-Error "Failed to create the Azure Image Gallery: $($_.Exception.Message)"
+
 } finally {
     # Cleanup code if needed
     Write-Output "Script execution completed."

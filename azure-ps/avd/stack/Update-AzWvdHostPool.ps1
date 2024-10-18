@@ -8,7 +8,7 @@
 .PARAMETER Name
     The name of the host pool.
 
-.PARAMETER ResourceGroupName
+.PARAMETER ResourceGroup
     The name of the resource group.
 
 .PARAMETER AgentUpdateMaintenanceWindow
@@ -81,7 +81,7 @@
     Specifies whether this is a validation environment.
 
 .EXAMPLE
-    PS C:\> .\Update-AzWvdHostPool.ps1 -Name "MyHostPool" -ResourceGroupName "MyResourceGroup" -Description "Updated Description"
+    PS C:\> .\Update-AzWvdHostPool.ps1 -Name "MyHostPool" -ResourceGroup "MyResourceGroup" -Description "Updated Description"
 
 .LINK
     https://learn.microsoft.com/en-us/powershell/module/az.DesktopVirtualization
@@ -105,7 +105,7 @@ param (
 
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
-    [string]$ResourceGroupName,
+    [string]$ResourceGroup,
 
     #[Parameter(Mandatory=$false)]
     #[ValidateNotNullOrEmpty()]
@@ -238,7 +238,7 @@ param (
 # Splatting parameters for better readability
 $parameters = @{
     Name                = $Name
-    ResourceGroupName   = $ResourceGroupName
+    ResourceGroup   = $ResourceGroup
 }
 
 if ($AgentUpdateMaintenanceWindow) {

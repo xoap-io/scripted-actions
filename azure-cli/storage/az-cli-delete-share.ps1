@@ -82,8 +82,8 @@ $ErrorActionPreference = "Stop"
 
 # Splatting parameters for better readability
 $parameters = `
-    '--name', $Name ,`
-    '--storage-account', $StorageAccount ,`
+    '--name', $Name
+    '--storage-account', $StorageAccount
     '--resource-group', $ResourceGroup
 
 if ($Ids) {
@@ -111,7 +111,6 @@ try {
 
 } catch {
     # Log the error to the console
-
     Write-Output "Error message $errorMessage"
     Write-Error "Failed to delete the Azure Storage Account share: $($_.Exception.Message)"
 

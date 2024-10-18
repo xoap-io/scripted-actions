@@ -5,7 +5,7 @@
 .DESCRIPTION
     This script creates a new registration info in an Azure Virtual Desktop environment with the specified parameters.
 
-.PARAMETER ResourceGroupName
+.PARAMETER ResourceGroup
     The name of the resource group.
 
 .PARAMETER HostPoolName
@@ -15,7 +15,7 @@
     The expiration time for the registration info.
 
 .EXAMPLE
-    PS C:\> .\New-AzWvdRegistrationInfo.ps1 -ResourceGroupName "MyResourceGroup" -HostPoolName "MyHostPool" -ExpirationTime "2023-12-31T23:59:59Z"
+    PS C:\> .\New-AzWvdRegistrationInfo.ps1 -ResourceGroup "MyResourceGroup" -HostPoolName "MyHostPool" -ExpirationTime "2023-12-31T23:59:59Z"
 
 .LINK
     https://learn.microsoft.com/en-us/powershell/module/az.DesktopVirtualization
@@ -35,7 +35,7 @@
 param (
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
-    [string]$ResourceGroupName,
+    [string]$ResourceGroup,
 
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
@@ -48,7 +48,7 @@ param (
 
 # Splatting parameters for better readability
 $parameters = @{
-    ResourceGroupName = $ResourceGroupName
+    ResourceGroup = $ResourceGroup
     HostPoolName      = $HostPoolName
     ExpirationTime    = $ExpirationTime
 }

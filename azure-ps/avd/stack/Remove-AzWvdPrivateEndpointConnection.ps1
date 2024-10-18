@@ -8,14 +8,14 @@
 .PARAMETER Name
     The name of the private endpoint connection.
 
-.PARAMETER ResourceGroupName
+.PARAMETER ResourceGroup
     The name of the resource group.
 
 .PARAMETER WorkspaceName
     The name of the workspace.
 
 .EXAMPLE
-    PS C:\> .\Remove-AzWvdPrivateEndpointConnection.ps1 -Name "MyPrivateEndpoint" -ResourceGroupName "MyResourceGroup" -WorkspaceName "MyWorkspace"
+    PS C:\> .\Remove-AzWvdPrivateEndpointConnection.ps1 -Name "MyPrivateEndpoint" -ResourceGroup "MyResourceGroup" -WorkspaceName "MyWorkspace"
 
 .LINK
     https://learn.microsoft.com/en-us/powershell/module/az.DesktopVirtualization
@@ -39,7 +39,7 @@ param (
 
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
-    [string]$ResourceGroupName,
+    [string]$ResourceGroup,
 
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
@@ -53,7 +53,7 @@ param (
 # Splatting parameters for better readability
 $parameters = @{
     Name              = $Name
-    ResourceGroupName = $ResourceGroupName
+    ResourceGroup = $ResourceGroup
     WorkspaceName     = $WorkspaceName
     HostPoolName      = $HostPoolName
 }

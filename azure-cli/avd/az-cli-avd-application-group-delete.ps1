@@ -5,7 +5,7 @@
 .DESCRIPTION
     This script deletes an Azure Virtual Desktop Application Group with the Azure CLI.
     The script uses the following Azure CLI command:
-    az desktopvirtualization applicationgroup delete --name $AzAppGroupName --resource-group $AzResourceGroupName --subscription $AzSubscription --yes
+    az desktopvirtualization applicationgroup delete --name $AzAppGroupName --resource-group $AzResourceGroup --subscription $AzSubscription --yes
 
 .PARAMETER IDs
     The IDs of the Azure Virtual Desktop Application Group.
@@ -13,14 +13,14 @@
 .PARAMETER Name
     Defines the name of the Azure Virtual Desktop Application Group.
 
-.PARAMETER ResourceGroupName
+.PARAMETER ResourceGroup
     Defines the name of the Azure Resource Group.
 
 .PARAMETER yes
     Do not prompt for confirmation.
 
 .EXAMPLE
-    .\az-cli-avd-applicationgroup-delete.ps1 -AzAppGroupName "MyAppGroup" -AzResourceGroupName "MyResourceGroup" -AzSubscription "MySubscription" -AzYes
+    .\az-cli-avd-applicationgroup-delete.ps1 -AzAppGroupName "MyAppGroup" -AzResourceGroup "MyResourceGroup" -AzSubscription "MySubscription" -AzYes
 
 .LINK
     https://learn.microsoft.com/en-us/cli/azure/desktopvirtualization/applicationgroup
@@ -47,7 +47,7 @@ param(
 
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
-    [string]$ResourceGroupName,
+    [string]$ResourceGroup,
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
@@ -55,12 +55,11 @@ param(
 )
 
 # Splatting parameters for better readability
-$parameters = @{
-    '--ids'=  $IDs
-    '--name'= $NName
-    '--resource-group'= $ResourceGroupName
-    '--yes' = $yes
-}
+$parameters = `
+    '--ids', $IDs
+    '--name', $NName
+    '--resource-group', $ResourceGroup
+    '--yes', $yes
 
 # Set Error Action to Stop
 $ErrorActionPreference = "Stop"
@@ -74,10 +73,7 @@ try {
 
 } catch {
     # Log the error to the console
-
     Write-Output "Error message $errorMessage"
-
-
     Write-Error "Failed to delete the Azure Virtual Desktop Application Group: $($_.Exception.Message)"
 
 } finally {

@@ -5,7 +5,7 @@
 .DESCRIPTION
     This script lists Azure Virtual Desktop workspaces with the Azure CLI.
     The script uses the following Azure CLI command:
-    az desktopvirtualization workspace list --resource-group $AzResourceGroupName
+    az desktopvirtualization workspace list --resource-group $AzResourceGroup
 
 .PARAMETER MaxItems
     Maximum number of items to return.
@@ -17,7 +17,7 @@
     Defines the name of the Azure Resource Group.
 
 .EXAMPLE
-    .\az-cli-avd-workspace-list.ps1 -ResourceGroupName "MyResourceGroup"
+    .\az-cli-avd-workspace-list.ps1 -ResourceGroup "MyResourceGroup"
 
 .LINK
     https://learn.microsoft.com/en-us/cli/azure/desktopvirtualization/workspace
@@ -48,11 +48,10 @@ param(
 )
 
 # Splatting parameters for better readability
-$parameters = @{
-    '--max-items' = $MaxItems
-    '--next-token' = $NextToken
-    '--resource-group' = $ResourceGroup
-}
+$parameters = `
+    '--max-items', $MaxItems
+    '--next-token', $NextToken
+    '--resource-group', $ResourceGroup
 
 # Set Error Action to Stop
 $ErrorActionPreference = "Stop"
@@ -66,10 +65,7 @@ try {
 
 } catch {
     # Log the error to the console
-
     Write-Output "Error message $errorMessage"
-
-
     Write-Error "Failed to list the Azure Virtual Desktop workspaces: $($_.Exception.Message)"
 
 } finally {

@@ -5,7 +5,7 @@
 .DESCRIPTION
     This script creates a new Azure Network Security Group (NSG) rule with the Azure CLI.
     The script uses the following Azure CLI command:
-    az network nsg rule create --resource-group $AzResourceGroupName --nsg-name $AzNsgName --name $AzNsgRuleName --priority $AzNsgPriority --source-address-prefixes $AzSourceAddressPrefixes --source-port-ranges $AzSourcePortRanges --destination-address-prefixes $AzDestinationAddressPrefixes --destination-port-ranges $AzDestinationPortRanges --access $AzAccess --protocol $AzProtocol --description $AzDescription
+    az network nsg rule create --resource-group $AzResourceGroup --nsg-name $AzNsgName --name $AzNsgRuleName --priority $AzNsgPriority --source-address-prefixes $AzSourceAddressPrefixes --source-port-ranges $AzSourcePortRanges --destination-address-prefixes $AzDestinationAddressPrefixes --destination-port-ranges $AzDestinationPortRanges --access $AzAccess --protocol $AzProtocol --description $AzDescription
 
 .PARAMETER Name
     Defines the name of the Azure Network Security Group rule.
@@ -50,7 +50,7 @@
     Defines the source port ranges of the Azure Network Security Group rule.
 
 .EXAMPLE
-    .\az-cli-create-nsg-rule.ps1 -AzResourceGroupName "MyResourceGroup" -AzNsgName "MyNsg" -AzNsgRuleName "MyNsgRule" -AzNsgPriority 100 -AzSourceAddressPrefixes "208.130.28.0/24" -AzSourcePortRanges "80" -AzDestinationAddressPrefixes "*" -AzDestinationPortRanges "80 8080" -AzAccess "Deny" -AzProtocol "Tcp" -AzDescription "Deny from specific IP address ranges on 80 and 8080."
+    .\az-cli-create-nsg-rule.ps1 -AzResourceGroup "MyResourceGroup" -AzNsgName "MyNsg" -AzNsgRuleName "MyNsgRule" -AzNsgPriority 100 -AzSourceAddressPrefixes "208.130.28.0/24" -AzSourcePortRanges "80" -AzDestinationAddressPrefixes "*" -AzDestinationPortRanges "80 8080" -AzAccess "Deny" -AzProtocol "Tcp" -AzDescription "Deny from specific IP address ranges on 80 and 8080."
 
 .LINK
     https://learn.microsoft.com/en-us/cli/azure/network/nsg/rule
@@ -153,12 +153,12 @@ param(
 )
 
 # Splatting parameters for better readability
-$parameters = @{
-    '--name' = $Name
-    '--nsg-name' = $NsgName
-    '--priority' = $Priority
-    '--resource-group' = $ResourceGroup
-}
+$parameters = `
+    '--name', $Name
+    '--nsg-name', $NsgName
+    '--priority', $Priority
+    '--resource-group', $ResourceGroup
+
 
 if ($Access) {
     $parameters += '--access', $Access
@@ -212,7 +212,6 @@ try {
 
 } catch {
     # Log the error to the console
-
     Write-Output "Error message $errorMessage"
     Write-Error "Failed to create the Azure Network Security Group rule: $($_.Exception.Message)"
 

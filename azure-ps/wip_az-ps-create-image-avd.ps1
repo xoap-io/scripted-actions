@@ -5,7 +5,7 @@
 .DESCRIPTION
     This script creates an Azure Image Builder Windows VM using Azure CLI commands. It registers necessary providers, creates a resource group, user-assigned identity, role definition, and image template, and finally creates a VM from the image.
 
-.PARAMETER AzResourceGroupName
+.PARAMETER AzResourceGroup
     Defines the name of the Azure Resource Group.
 
 .PARAMETER AzOpenPorts
@@ -36,7 +36,7 @@
     Prompts you for confirmation before running the cmdlet.
 
 .EXAMPLE
-    .\wip_az-ps-create-image-avd.ps1 -AzResourceGroupName "myResourceGroup" -AzOpenPorts "3389" -AzVmSize "Standard_D2s_v3"
+    .\wip_az-ps-create-image-avd.ps1 -AzResourceGroup "myResourceGroup" -AzOpenPorts "3389" -AzVmSize "Standard_D2s_v3"
 
 .NOTES
     Ensure that Azure PowerShell is installed and authenticated before running the script.
@@ -53,7 +53,7 @@
 param(
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
-    [string]$AzResourceGroupName = "myResourceGroup",
+    [string]$AzResourceGroup = "myResourceGroup",
 
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
@@ -83,7 +83,7 @@ param(
 
 # Splatting parameters for better readability
 $parameters = @{
-    resource_group   = $AzResourceGroupName
+    resource_group   = $AzResourceGroup
     open_ports       = $AzOpenPorts
     vm_size          = $AzVmSize
     debug            = $AzDebug

@@ -11,7 +11,7 @@
 .PARAMETER HostPoolName
     The name of the host pool.
 
-.PARAMETER ResourceGroupName
+.PARAMETER ResourceGroup
     The name of the resource group.
 
 .PARAMETER DisplayName
@@ -24,7 +24,7 @@
     Specifies whether the MSIX package is a regular registration.
 
 .EXAMPLE
-    PS C:\> .\Update-AzWvdMsixPackage.ps1 -FullName "MyMsixPackage" -HostPoolName "MyHostPool" -ResourceGroupName "MyResourceGroup" -DisplayName "Updated Display Name"
+    PS C:\> .\Update-AzWvdMsixPackage.ps1 -FullName "MyMsixPackage" -HostPoolName "MyHostPool" -ResourceGroup "MyResourceGroup" -DisplayName "Updated Display Name"
 
 .LINK
     https://learn.microsoft.com/en-us/powershell/module/az.DesktopVirtualization
@@ -52,7 +52,7 @@ param (
 
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
-    [string]$ResourceGroupName,
+    [string]$ResourceGroup,
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
@@ -74,7 +74,7 @@ $ErrorActionPreference = "Stop"
 $parameters = @{
     FullName             = $FullName
     HostPoolName         = $HostPoolName
-    ResourceGroupName    = $ResourceGroupName
+    ResourceGroup    = $ResourceGroup
 }
 
 if ($DisplayName) {

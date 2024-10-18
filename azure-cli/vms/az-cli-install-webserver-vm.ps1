@@ -7,17 +7,17 @@
     The script uses the Azure CLI to run a PowerShell script on the Azure Virtual Machine and open the specified ports.
     The script uses the following Azure CLI commands:
     az vm run-command invoke `
-        --resource-group $AzResourceGroupName `
+        --resource-group $AzResourceGroup `
         --vm-name $VmName `
         --command-id RunPowerShellScript `
         --scripts $Script
 
     az vm open-port `
         --port $AZOpenPorts `
-        --resource-group $AzResourceGroupName `
+        --resource-group $AzResourceGroup `
         --vm-name $VmName
 
-.PARAMETER AzResourceGroupName
+.PARAMETER AzResourceGroup
     Defines the name of the Azure Resource Group.
 
 .PARAMETER AzVmName
@@ -51,7 +51,7 @@
     Prompts you for confirmation before running the cmdlet.
 
 .EXAMPLE
-    .\az-cli-install-webserver-vm.ps1 -AzResourceGroupName "MyResourceGroup" -AzVmName "MyVmName" -Script "Install-WindowsFeature -name Web-Server -IncludeManagementTools" -AzOpenPorts "80"
+    .\az-cli-install-webserver-vm.ps1 -AzResourceGroup "MyResourceGroup" -AzVmName "MyVmName" -Script "Install-WindowsFeature -name Web-Server -IncludeManagementTools" -AzOpenPorts "80"
 
 .NOTES
     Author: Your Name
@@ -67,7 +67,7 @@
 param(
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
-    [string]$AzResourceGroupName = "myResourceGroup",
+    [string]$AzResourceGroup = "myResourceGroup",
 
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
@@ -101,7 +101,7 @@ param(
 
 # Splatting parameters for better readability
 $parameters = @{
-    resource_group   = $AzResourceGroupName
+    resource_group   = $AzResourceGroup
     vm_name          = $AzVmName
     command_id       = "RunPowerShellScript"
     scripts          = $Script

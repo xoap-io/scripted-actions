@@ -5,7 +5,7 @@
 .DESCRIPTION
     This script creates an Azure Virtual Desktop workspace with the Azure CLI.
     The script uses the following Azure CLI command:
-    az desktopvirtualization workspace create --name $AzWorkspaceName --resource-group $AzResourceGroupName
+    az desktopvirtualization workspace create --name $AzWorkspaceName --resource-group $AzResourceGroup
 
 .PARAMETER Name
     The name of the Azure Virtual Desktop workspace.
@@ -29,7 +29,7 @@
     The tags for the Azure Virtual Desktop workspace.
 
 .EXAMPLE
-    .\az-cli-avd-workspace-create.ps1 -WorkspaceName "MyWorkspace" -ResourceGroupName "MyResourceGroup"
+    .\az-cli-avd-workspace-create.ps1 -WorkspaceName "MyWorkspace" -ResourceGroup "MyResourceGroup"
 
 .LINK
     https://learn.microsoft.com/en-us/cli/azure/desktopvirtualization/workspace
@@ -76,29 +76,28 @@ param(
 )
 
 # Splatting parameters for better readability
-$parameters = @{
-    '--name' = $WorkspaceName
-    '--resource-group' = $ResourceGroupName
-}
+$parameters = `
+    '--name', $WorkspaceName
+    '--resource-group', $ResourceGroup
 
 if ($ApplicationGroupReferences) {
-    $parameters += '--application-group-references', $AzApplicationGroupReferences
+    $parameters += '--application-group-references', $ApplicationGroupReferences
 }
 
 if ($Description) {
-    $parameters += '--description', $AzDescription
+    $parameters += '--description', $Description
 }
 
 if ($FriendlyName) {
-    $parameters += '--friendly-name', $AzFriendlyName
+    $parameters += '--friendly-name', $FriendlyName
 }
 
 if ($Location) {
-    $parameters += '--location', $AzLocation
+    $parameters += '--location', $Location
 }
 
 if ($Tags) {
-    $parameters += '--tags', $AzTags
+    $parameters += '--tags', $Tags
 }
 
 # Set Error Action to Stop
@@ -113,10 +112,7 @@ try {
 
 } catch {
     # Log the error to the console
-
     Write-Output "Error message $errorMessage"
-
-
     Write-Error "Failed to create the Azure Virtual Desktop workspace: $($_.Exception.Message)"
 
 } finally {

@@ -4,12 +4,12 @@
 
 .DESCRIPTION
     This script deletes an Azure Image Builder Template and the corresponding Azure Resource Group with the Azure PowerShell. The script requires the following parameters:
-    - AzResourceGroupName: Defines the name of the Azure Resource Group.
+    - AzResourceGroup: Defines the name of the Azure Resource Group.
     - AzImageTemplateName: Defines the name of the Azure Image Builder Template.
 
     The script will delete the Azure Image Builder Template and the Azure Resource Group with all its resources.
 
-.PARAMETER AzResourceGroupName
+.PARAMETER AzResourceGroup
     Defines the name of the Azure Resource Group.
 
 .PARAMETER AzImageTemplateName
@@ -37,7 +37,7 @@
     Prompts you for confirmation before running the cmdlet.
 
 .EXAMPLE
-    .\az-ps-image-builder-windows-cleanup.ps1 -AzResourceGroupName "myResourceGroup" -AzImageTemplateName "myImageTemplate"
+    .\az-ps-image-builder-windows-cleanup.ps1 -AzResourceGroup "myResourceGroup" -AzImageTemplateName "myImageTemplate"
 
 .NOTES
     Ensure that Azure PowerShell is installed and authenticated before running the script.
@@ -54,7 +54,7 @@
 param(
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
-    [string]$AzResourceGroupName = "myResourceGroup",
+    [string]$AzResourceGroup = "myResourceGroup",
 
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
@@ -80,7 +80,7 @@ param(
 
 # Splatting parameters for better readability
 $parameters = @{
-    ResourceGroupName    = $AzResourceGroupName
+    ResourceGroup    = $AzResourceGroup
     ImageTemplateName    = $AzImageTemplateName
     Debug                = $AzDebug
     OnlyShowErrors       = $AzOnlyShowErrors
@@ -100,7 +100,7 @@ try {
     Remove-AzResourceGroup @parameters -Force
 
     # Output the result
-    Write-Output "Azure Image Builder Template and Resource Group '$($AzResourceGroupName)' deleted successfully."
+    Write-Output "Azure Image Builder Template and Resource Group '$($AzResourceGroup)' deleted successfully."
 } catch {
     # Log the error to the console
 

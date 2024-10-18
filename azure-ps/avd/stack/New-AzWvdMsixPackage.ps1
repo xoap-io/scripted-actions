@@ -8,7 +8,7 @@
 .PARAMETER HostPoolName
     The name of the host pool.
 
-.PARAMETER ResourceGroupName
+.PARAMETER ResourceGroup
     The name of the resource group.
 
 .PARAMETER FullName
@@ -48,7 +48,7 @@
     The version of the MSIX package.
 
 .EXAMPLE
-    PS C:\> .\New-AzWvdMsixPackage.ps1 -HostPoolName "MyHostPool" -ResourceGroupName "MyResourceGroup" -FullName "MyMsixPackage"
+    PS C:\> .\New-AzWvdMsixPackage.ps1 -HostPoolName "MyHostPool" -ResourceGroup "MyResourceGroup" -FullName "MyMsixPackage"
 
 .LINK
     https://learn.microsoft.com/en-us/powershell/module/az.DesktopVirtualization
@@ -72,7 +72,7 @@ param (
 
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
-    [string]$ResourceGroupName,
+    [string]$ResourceGroup,
  
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
@@ -132,7 +132,7 @@ param (
 # Splatting parameters for better readability
 $parameters = @{
     HostPoolName      = $HostPoolName
-    ResourceGroupName = $ResourceGroupName
+    ResourceGroup = $ResourceGroup
     FullName          = $FullName
 }
 

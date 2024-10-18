@@ -5,9 +5,9 @@
 .DESCRIPTION
     This script creates a new Azure VM Scale Set with the Azure PowerShell.
     The script uses the following Azure PowerShell command:
-    New-AzVmss -ResourceGroup $AzResourceGroupName -Name $AzScaleSetName -OrchestrationMode $AzOrchestrationMode -Location $AzLocation -InstanceCount $AzInstanceCount -ImageName $AzImageName
+    New-AzVmss -ResourceGroup $AzResourceGroup -Name $AzScaleSetName -OrchestrationMode $AzOrchestrationMode -Location $AzLocation -InstanceCount $AzInstanceCount -ImageName $AzImageName
 
-.PARAMETER AzResourceGroupName
+.PARAMETER AzResourceGroup
     Defines the name of the Azure Resource Group.
 
 .PARAMETER AzScaleSetName
@@ -47,7 +47,7 @@
     Prompts you for confirmation before running the cmdlet.
 
 .EXAMPLE
-    .\az-ps-create-vm-scale-set.ps1 -AzResourceGroupName "myResourceGroup" -AzScaleSetName "myScaleSet" -AzOrchestrationMode "Uniform" -AzLocation "westus" -AzInstanceCount 2 -AzImageName "UbuntuLTS"
+    .\az-ps-create-vm-scale-set.ps1 -AzResourceGroup "myResourceGroup" -AzScaleSetName "myScaleSet" -AzOrchestrationMode "Uniform" -AzLocation "westus" -AzInstanceCount 2 -AzImageName "UbuntuLTS"
 
 .NOTES
     Ensure that Azure PowerShell is installed and authenticated before running the script.
@@ -64,7 +64,7 @@
 param(
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
-    [string]$AzResourceGroupName,
+    [string]$AzResourceGroup,
 
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
@@ -111,7 +111,7 @@ param(
 
 # Splatting parameters for better readability
 $parameters = @{
-    ResourceGroupName    = $AzResourceGroupName
+    ResourceGroup    = $AzResourceGroup
     Name                 = $AzScaleSetName
     OrchestrationMode    = $AzOrchestrationMode
     Location             = $AzLocation
@@ -132,7 +132,7 @@ try {
     New-AzVmss @parameters
 
     # Output the result
-    Write-Output "Azure VM Scale Set '$($AzScaleSetName)' created successfully in resource group '$($AzResourceGroupName)'."
+    Write-Output "Azure VM Scale Set '$($AzScaleSetName)' created successfully in resource group '$($AzResourceGroup)'."
 } catch {
     # Log the error to the console
 

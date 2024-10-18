@@ -5,14 +5,14 @@
 .DESCRIPTION
     This script removes the specified registration information from an Azure Virtual Desktop environment.
 
-.PARAMETER ResourceGroupName
+.PARAMETER ResourceGroup
     The name of the resource group.
 
 .PARAMETER HostPoolName
     The name of the host pool.
 
 .EXAMPLE
-    PS C:\> .\Remove-AzWvdRegistrationInfo.ps1 -ResourceGroupName "MyResourceGroup" -HostPoolName "MyHostPool"
+    PS C:\> .\Remove-AzWvdRegistrationInfo.ps1 -ResourceGroup "MyResourceGroup" -HostPoolName "MyHostPool"
 
 .LINK
     https://learn.microsoft.com/en-us/powershell/module/az.DesktopVirtualization
@@ -32,7 +32,7 @@
 param (
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
-    [string]$ResourceGroupName,
+    [string]$ResourceGroup,
 
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
@@ -41,7 +41,7 @@ param (
 
 # Splatting parameters for better readability
 $parameters = @{
-    ResourceGroupName = $ResourceGroupName
+    ResourceGroup = $ResourceGroup
     HostPoolName      = $HostPoolName
 }
 

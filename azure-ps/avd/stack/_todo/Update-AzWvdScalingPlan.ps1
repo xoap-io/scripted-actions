@@ -8,7 +8,7 @@
 .PARAMETER Name
     The name of the scaling plan.
 
-.PARAMETER ResourceGroupName
+.PARAMETER ResourceGroup
     The name of the resource group.
 
 
@@ -34,7 +34,7 @@
     The time zone for the scaling plan.
 
 .EXAMPLE
-    PS C:\> .\Update-AzWvdScalingPlan.ps1 -Name "MyScalingPlan" -ResourceGroupName "MyResourceGroup" -Description "Updated Description"
+    PS C:\> .\Update-AzWvdScalingPlan.ps1 -Name "MyScalingPlan" -ResourceGroup "MyResourceGroup" -Description "Updated Description"
 
 .LINK
     https://learn.microsoft.com/en-us/powershell/module/az.DesktopVirtualization
@@ -57,7 +57,7 @@ param (
 
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
-    [string]$ResourceGroupName = "MyResourceGroup",
+    [string]$ResourceGroup = "MyResourceGroup",
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
@@ -92,7 +92,7 @@ try {
     # Splatting parameters for better readability
     $parameters = @{
         Name                = $Name
-        ResourceGroupName   = $ResourceGroupName
+        ResourceGroup   = $ResourceGroup
     }
 
     if ($Description) {

@@ -5,7 +5,7 @@
 .DESCRIPTION
     This script creates an Azure Virtual Network and Subnet.
     The script uses the following Azure CLI command:
-    az network vnet create --name $AzVnetName --resource-group $AzResourceGroupName --address-prefixes $AzVnetAddressPrefix --subnet-name $AzSubnetName --subnet-prefixes $AzSubnetAddressPrefix
+    az network vnet create --name $AzVnetName --resource-group $AzResourceGroup --address-prefixes $AzVnetAddressPrefix --subnet-name $AzSubnetName --subnet-prefixes $AzSubnetAddressPrefix
 
 .PARAMETER Name
     The name of the Azure Virtual Network.
@@ -65,7 +65,7 @@
     The VM protection of the Azure Virtual Network.
 
 .EXAMPLE
-    .\az-cli-create-virtual-network.ps1 -AzVnetName "MyVNet" -AzResourceGroupName "MyResourceGroup" -AzVnetAddressPrefix "10.0.0.0/16" -AzSubnetName "MySubnet" -AzSubnetAddressPrefix "10.0.1.0/24"
+    .\az-cli-create-virtual-network.ps1 -AzVnetName "MyVNet" -AzResourceGroup "MyResourceGroup" -AzVnetAddressPrefix "10.0.0.0/16" -AzSubnetName "MySubnet" -AzSubnetAddressPrefix "10.0.1.0/24"
 
 .LINK
     https://learn.microsoft.com/en-us/cli/azure/network/vnet
@@ -315,7 +315,6 @@ try {
 
 } catch {
     # Log the error to the console
-
     Write-Output "Error message $errorMessage"
     Write-Error "Failed to create the Azure Virtual Network and Subnet: $($_.Exception.Message)"
 

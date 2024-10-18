@@ -11,7 +11,7 @@
 .PARAMETER Name
     The name of the application.
 
-.PARAMETER ResourceGroupName
+.PARAMETER ResourceGroup
     The name of the resource group.
 
 .PARAMETER CommandLineSetting
@@ -54,7 +54,7 @@
     The alias of the application.
 
 .EXAMPLE
-    PS C:\> .\New-AzWvdApplication.ps1 -GroupName "MyAppGroup" -AppName "MyApp" -ResourceGroupName "MyResourceGroup" -CommandLineSetting "RemoteApp"
+    PS C:\> .\New-AzWvdApplication.ps1 -GroupName "MyAppGroup" -AppName "MyApp" -ResourceGroup "MyResourceGroup" -CommandLineSetting "RemoteApp"
 
 .LINK
     https://learn.microsoft.com/en-us/powershell/module/az.DesktopVirtualization
@@ -82,7 +82,7 @@ param (
 
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
-    [string]$ResourceGroupName,
+    [string]$ResourceGroup,
 
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
@@ -143,7 +143,7 @@ param (
 $parameters = @{
     GroupName           = $GroupName
     Name                = $Name
-    ResourceGroupName   = $ResourceGroupName
+    ResourceGroup   = $ResourceGroup
     CommandLineSetting  = $CommandLineSetting
     AppAlias            = $AppAlias
 }

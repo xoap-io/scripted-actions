@@ -11,7 +11,7 @@
 .PARAMETER Name
     The name of the session host.
 
-.PARAMETER ResourceGroupName
+.PARAMETER ResourceGroup
     The name of the resource group.
 
 .PARAMETER AllowNewSession
@@ -24,7 +24,7 @@
     The friendly name of the session host.
 
 .EXAMPLE
-    PS C:\> .\Update-AzWvdSessionHost.ps1 -HostPoolName "MyHostPool" -Name "MySessionHost" -ResourceGroupName "MyResourceGroup" -AllowNewSession $true
+    PS C:\> .\Update-AzWvdSessionHost.ps1 -HostPoolName "MyHostPool" -Name "MySessionHost" -ResourceGroup "MyResourceGroup" -AllowNewSession $true
 
 .LINK
     https://learn.microsoft.com/en-us/powershell/module/az.DesktopVirtualization
@@ -52,7 +52,7 @@ param (
 
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
-    [string]$ResourceGroupName,
+    [string]$ResourceGroup,
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
@@ -71,7 +71,7 @@ param (
 $parameters = @{
     HostPoolName       = $HostPoolName
     Name               = $Name
-    ResourceGroupName  = $ResourceGroupName
+    ResourceGroup  = $ResourceGroup
 }
 
 if ($AllowNewSession) {

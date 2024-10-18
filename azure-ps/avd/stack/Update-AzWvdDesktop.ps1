@@ -11,7 +11,7 @@
 .PARAMETER Name
     The name of the desktop.
 
-.PARAMETER ResourceGroupName
+.PARAMETER ResourceGroup
     The name of the resource group.
 
 .PARAMETER Description
@@ -24,7 +24,7 @@
     A hashtable of tags to assign to the desktop.
 
 .EXAMPLE
-    PS C:\> .\Update-AzWvdDesktop.ps1 -ApplicationGroupName "MyAppGroup" -Name "MyDesktop" -ResourceGroupName "MyResourceGroup" -Description "Updated Description"
+    PS C:\> .\Update-AzWvdDesktop.ps1 -ApplicationGroupName "MyAppGroup" -Name "MyDesktop" -ResourceGroup "MyResourceGroup" -Description "Updated Description"
 
 .LINK
     https://learn.microsoft.com/en-us/powershell/module/az.DesktopVirtualization
@@ -52,7 +52,7 @@ param (
 
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
-    [string]$ResourceGroupName,
+    [string]$ResourceGroup,
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
@@ -71,7 +71,7 @@ param (
 $parameters = @{
     ApplicationGroupName = $ApplicationGroupName
     Name                 = $Name
-    ResourceGroupName    = $ResourceGroupName
+    ResourceGroup    = $ResourceGroup
 }
 
 if ($Description) {

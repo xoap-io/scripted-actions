@@ -8,7 +8,7 @@ This script creates a new scaling plan in an Azure Virtual Desktop environment w
 .PARAMETER Name
 The name of the scaling plan.
 
-.PARAMETER ResourceGroupName
+.PARAMETER ResourceGroup
 The name of the resource group.
 
 
@@ -80,7 +80,7 @@ The tags for the scaling plan.
 
 
 .EXAMPLE
-PS C:\> .\New-AzWvdScalingPlan.ps1 -Name "MyScalingPlan" -ResourceGroupName "MyResourceGroup" -TimeZone "Pacific Standard Time"
+PS C:\> .\New-AzWvdScalingPlan.ps1 -Name "MyScalingPlan" -ResourceGroup "MyResourceGroup" -TimeZone "Pacific Standard Time"
 #>
 
 param (
@@ -90,7 +90,7 @@ param (
 
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
-    [string]$ResourceGroupName = 'MyResourceGroup',
+    [string]$ResourceGroup = 'MyResourceGroup',
 
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
@@ -163,7 +163,7 @@ try {
     # Splatting parameters for better readability
     $parameters = @{
         Name                = $Name
-        ResourceGroupName   = $ResourceGroupName
+        ResourceGroup   = $ResourceGroup
         SubscriptionId      = $SubscriptionId
         TimeZone            = $TimeZone
         }

@@ -5,7 +5,7 @@ Creates a new scaling plan personal schedule in an Azure Virtual Desktop environ
 .DESCRIPTION
 This script creates a new scaling plan personal schedule in an Azure Virtual Desktop environment with the specified parameters.
 
-.PARAMETER ResourceGroupName
+.PARAMETER ResourceGroup
 The name of the resource group.
 
 .PARAMETER ScalingPlanName
@@ -107,12 +107,12 @@ The start VM on connect setting for ramp up.
 
 
 .EXAMPLE
-PS C:\> .\New-AzWvdScalingPlanPersonalSchedule.ps1 -ResourceGroupName "MyResourceGroup" -ScalingPlanName "MyScalingPlan" -ScalingPlanScheduleName "MySchedule"
+PS C:\> .\New-AzWvdScalingPlanPersonalSchedule.ps1 -ResourceGroup "MyResourceGroup" -ScalingPlanName "MyScalingPlan" -ScalingPlanScheduleName "MySchedule"
 #>
 
 param (
     [Parameter(Mandatory=$true)]
-    [string]$ResourceGroupName,
+    [string]$ResourceGroup,
 
     [Parameter(Mandatory=$true)]
     [string]$ScalingPlanName,
@@ -187,7 +187,7 @@ param (
 
 # Splatting parameters for better readability
 $parameters = @{
-    ResourceGroupName                   = $ResourceGroupName
+    ResourceGroup                   = $ResourceGroup
     ScalingPlanName                     = $ScalingPlanName
     ScalingPlanScheduleName             = $ScalingPlanScheduleName
     DaysOfWeek                          = $DaysOfWeek

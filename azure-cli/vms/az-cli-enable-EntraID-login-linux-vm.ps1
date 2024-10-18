@@ -8,10 +8,10 @@
     az vm extension set `
         --publisher Microsoft.Azure.ActiveDirectory `
         --name AADSSHLoginForLinux `
-        --resource-group $AzResourceGroupName `
+        --resource-group $AzResourceGroup `
         --vm-name $AzVmName
 
-.PARAMETER AzResourceGroupName
+.PARAMETER AzResourceGroup
     Defines the name of the Azure Resource Group.
 
 .PARAMETER AzExtensionName
@@ -42,7 +42,7 @@
     Prompts you for confirmation before running the cmdlet.
 
 .EXAMPLE
-    .\az-cli-enable-EntraID-login-linux-vm.ps1 -AzResourceGroupName "MyResourceGroup" -AzExtensionName "Microsoft.Azure.ActiveDirectory" -AzVmName "MyVmName"
+    .\az-cli-enable-EntraID-login-linux-vm.ps1 -AzResourceGroup "MyResourceGroup" -AzExtensionName "Microsoft.Azure.ActiveDirectory" -AzVmName "MyVmName"
 
 .NOTES
     Author: Your Name
@@ -58,7 +58,7 @@
 param(
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
-    [string]$AzResourceGroupName = "myResourceGroup",
+    [string]$AzResourceGroup = "myResourceGroup",
 
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
@@ -90,7 +90,7 @@ param(
 $parameters = @{
     publisher        = $AzExtensionName
     name             = $AzExtensionName
-    resource_group   = $AzResourceGroupName
+    resource_group   = $AzResourceGroup
     vm_name          = $AzVmName
     debug            = $AzDebug
     only_show_errors = $AzOnlyShowErrors

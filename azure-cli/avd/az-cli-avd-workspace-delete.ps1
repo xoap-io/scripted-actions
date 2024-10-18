@@ -5,7 +5,7 @@
 .DESCRIPTION
     This script deletes an Azure Virtual Desktop workspace with the Azure CLI.
     The script uses the following Azure CLI command:
-    az desktopvirtualization workspace delete --name $AzWorkspaceName --resource-group $AzResourceGroupName
+    az desktopvirtualization workspace delete --name $AzWorkspaceName --resource-group $AzResourceGroup
 
 .PARAMETER IDs
     The IDs of the Azure Virtual Desktop workspace.
@@ -20,7 +20,7 @@
     Do not prompt for confirmation.
 
 .EXAMPLE
-    .\az-cli-avd-workspace-delete.ps1 -AzWorkspaceName "MyWorkspace" -AzResourceGroupName "MyResourceGroup"
+    .\az-cli-avd-workspace-delete.ps1 -AzWorkspaceName "MyWorkspace" -AzResourceGroup "MyResourceGroup"
 
 .LINK
     https://learn.microsoft.com/en-us/cli/azure/desktopvirtualization/workspace
@@ -55,12 +55,11 @@ param(
 )
 
 # Splatting parameters for better readability
-$parameters = @{
-    '--ids' = $IDs
-    '--name' = $Name
-    '--resource-group' = $ResourceGroup
-    '--yes' = $yes
-}
+$parameters = `
+    '--ids', $IDs
+    '--name', $Name
+    '--resource-group', $ResourceGroup
+    '--yes', $yes
 
 # Set Error Action to Stop
 $ErrorActionPreference = "Stop"
@@ -74,10 +73,7 @@ try {
 
 } catch {
     # Log the error to the console
-
     Write-Output "Error message $errorMessage"
-
-
     Write-Error "Failed to delete the Azure Virtual Desktop workspace: $($_.Exception.Message)"
 
 } finally {

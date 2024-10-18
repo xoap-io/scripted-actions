@@ -8,7 +8,7 @@
 .PARAMETER Name
 The name of the application group.
 
-.PARAMETER ResourceGroupName
+.PARAMETER ResourceGroup
     The name of the resource group.
 
 .PARAMETER ApplicationGroupType
@@ -72,7 +72,7 @@ The name of the application group.
     The tags for the application group.
 
 .EXAMPLE
-    PS C:\> .\New-AzWvdApplicationGroup.ps1 -Name "MyAppGroup" -ResourceGroupName "MyResourceGroup" -ApplicationGroupType "RemoteApp" -HostPoolArmPath "/subscriptions/xxxx/resourceGroups/xxxx/providers/Microsoft.DesktopVirtualization/hostPools/xxxx"
+    PS C:\> .\New-AzWvdApplicationGroup.ps1 -Name "MyAppGroup" -ResourceGroup "MyResourceGroup" -ApplicationGroupType "RemoteApp" -HostPoolArmPath "/subscriptions/xxxx/resourceGroups/xxxx/providers/Microsoft.DesktopVirtualization/hostPools/xxxx"
 
 .LINK
     https://learn.microsoft.com/en-us/powershell/module/az.DesktopVirtualization
@@ -95,7 +95,7 @@ param (
 
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
-    [string]$ResourceGroupName,
+    [string]$ResourceGroup,
 
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
@@ -201,7 +201,7 @@ param (
 # Splatting parameters for better readability
 $parameters = @{
     Name                 = $Name
-    ResourceGroupName    = $ResourceGroupName
+    ResourceGroup    = $ResourceGroup
     ApplicationGroupType = $ApplicationGroupType
     HostPoolArmPath      = $HostPoolArmPath
     Location             = $Location

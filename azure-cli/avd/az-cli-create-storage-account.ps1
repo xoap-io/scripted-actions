@@ -5,7 +5,7 @@
 .DESCRIPTION
     This script creates a new Azure Storage Account with the Azure CLI.
     The script uses the following Azure CLI command:
-    az storage account create --name $AzStorageAccountName --resource-group $AzResourceGroupName --location $AzLocation --sku $AzStorageSku
+    az storage account create --name $AzStorageAccountName --resource-group $AzResourceGroup --location $AzLocation --sku $AzStorageSku
 
 .PARAMETER Name
     Defines the name of the Azure Storage Account.
@@ -188,7 +188,7 @@
     Defines the VNet name of the Azure Storage Account.
 
 .EXAMPLE
-    .\az-cli-create-storage-account.ps1 -AzStorageAccountName "MyStorageAccount" -AzResourceGroupName "MyResourceGroup" -AzLocation "eastus" -AzStorageSku "Standard_LRS"
+    .\az-cli-create-storage-account.ps1 -AzStorageAccountName "MyStorageAccount" -AzResourceGroup "MyResourceGroup" -AzLocation "eastus" -AzStorageSku "Standard_LRS"
 
 .LINK
     https://learn.microsoft.com/en-us/cli/azure/storage/account
@@ -447,10 +447,9 @@ param(
 )
 
 # Splatting parameters for better readability
-$parameters = @{
-    '--name' = $Name
-    '--resource-group' = $ResourceGroup
-}
+$parameters = `
+    '--name', $Name
+    '--resource-group', $ResourceGroup
 
 if ($AccessTier) {
     $parameters += '--access-tier', $AccessTier
@@ -696,7 +695,6 @@ try {
 
 } catch {
     # Log the error to the console
-
     Write-Output "Error message $errorMessage"
     Write-Error "Failed to create the Azure Storage Account: $($_.Exception.Message)"
 

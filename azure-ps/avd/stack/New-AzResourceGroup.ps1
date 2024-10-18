@@ -5,9 +5,9 @@
 .DESCRIPTION
     This script creates a new Azure Resource Group with the Azure PowerShell.
     The script uses the following Azure PowerShell command:
-    New-AzResourceGroup -Name $AzResourceGroupName -Location $AzLocation
+    New-AzResourceGroup -Name $AzResourceGroup -Location $AzLocation
 
-.PARAMETER AzResourceGroupName
+.PARAMETER AzResourceGroup
     Defines the name of the Azure Resource Group.
 
 .PARAMETER AzLocation
@@ -17,7 +17,7 @@
     Defines the tags for the Azure Resource Group.
 
 .EXAMPLE
-    .\New-AzResourceGroup.ps1 -AzResourceGroupName "myResourceGroup" -AzLocation "westus"
+    .\New-AzResourceGroup.ps1 -AzResourceGroup "myResourceGroup" -AzLocation "westus"
 
 .LINK
     https://learn.microsoft.com/en-us/powershell/module/az.Resources
@@ -37,7 +37,7 @@
 param(
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
-    [string]$ResourceGroupName,
+    [string]$ResourceGroup,
 
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
@@ -69,7 +69,7 @@ param(
 
 # Splatting parameters for better readability
 $parameters = @{
-    Name        = $ResourceGroupName
+    Name        = $ResourceGroup
     Location    = $Location
 }
 
@@ -85,7 +85,7 @@ try {
     New-AzResourceGroup @parameters
 
     # Output the result
-    Write-Output "Azure Resource Group '$($ResourceGroupName)' created successfully in location '$($Location)'."
+    Write-Output "Azure Resource Group '$($ResourceGroup)' created successfully in location '$($Location)'."
 
 } catch {
     # Log the error to the console

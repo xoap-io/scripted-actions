@@ -5,7 +5,7 @@
 .DESCRIPTION
     This script deletes an Azure Image Builder Linux VM and its associated resources, including the image template, role assignments, identities, image versions, image definitions, and the resource group.
 
-.PARAMETER AzResourceGroupName
+.PARAMETER AzResourceGroup
     Defines the name of the Azure Resource Group.
 
 .PARAMETER AzOpenPorts
@@ -33,7 +33,7 @@
     Prompts you for confirmation before running the cmdlet.
 
 .EXAMPLE
-    .\wip_az-cli-delete-image-builder-linux.ps1 -AzResourceGroupName "myResourceGroup" -AzOpenPorts "3389"
+    .\wip_az-cli-delete-image-builder-linux.ps1 -AzResourceGroup "myResourceGroup" -AzOpenPorts "3389"
 
 .NOTES
     Author: Your Name
@@ -49,7 +49,7 @@
 param(
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
-    [string]$AzResourceGroupName = 'myResourceGroup',
+    [string]$AzResourceGroup = 'myResourceGroup',
 
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
@@ -75,7 +75,7 @@ param(
 
 # Splatting parameters for better readability
 $parameters = @{
-    resource_group   = $AzResourceGroupName
+    resource_group   = $AzResourceGroup
     open_ports       = $AzOpenPorts
     debug            = $AzDebug
     only_show_errors = $AzOnlyShowErrors

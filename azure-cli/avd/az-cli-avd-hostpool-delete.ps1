@@ -5,10 +5,10 @@
 .DESCRIPTION
     This script deletes an Azure Virtual Desktop Host Pool with the Azure CLI.
     The script uses the following Azure CLI command:
-    az desktopvirtualization hostpool delete --name $AzHostPoolName --resource-group $AzResourceGroupName
+    az desktopvirtualization hostpool delete --name $AzHostPoolName --resource-group $AzResourceGroup
 
 .EXAMPLE
-    .\az-cli-avd-hostpool-delete.ps1 -AzHostPoolName "MyHostPool" -AzResourceGroupName "MyResourceGroup"
+    .\az-cli-avd-hostpool-delete.ps1 -AzHostPoolName "MyHostPool" -AzResourceGroup "MyResourceGroup"
 
 
 .LINK
@@ -31,7 +31,7 @@ param(
 
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
-    [string]$ResourceGroupName,
+    [string]$ResourceGroup,
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
@@ -39,14 +39,13 @@ param(
 )
 
 # Splatting parameters for better readability
-$parameters = @{
-    '--force' = $AzForce
-    '--ids' = $AzIds
-    '--name' = $AzHostPoolName
-    '--resource-group' = $AzResourceGroupName
-    '--subscription' = $AzSubscription
-    '--yes' = $AzYes
-}
+$parameters = `
+    '--force', $Force
+    '--ids', $Ids
+    '--name', $HostPoolName
+    '--resource-group', $AesourceGroup
+    '--subscription', $Subscription
+    '--yes', $Yes
 
 # Set Error Action to Stop
 $ErrorActionPreference = "Stop"
@@ -60,10 +59,7 @@ try {
 
 } catch {
     # Log the error to the console
-
     Write-Output "Error message $errorMessage"
-
-
     Write-Error "Failed to delete the Azure Virtual Desktop Host Pool: $($_.Exception.Message)"
 
 } finally {

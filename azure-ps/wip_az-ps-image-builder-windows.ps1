@@ -5,7 +5,7 @@
 .DESCRIPTION
     This script creates an Azure Image Builder Windows VM using Azure PowerShell commands. It registers necessary providers, creates a resource group, user-assigned identity, role definition, and image template, and finally creates a VM from the image.
 
-.PARAMETER AzResourceGroupName
+.PARAMETER AzResourceGroup
     Defines the name of the Azure Resource Group.
 
 .PARAMETER AzLocation
@@ -39,7 +39,7 @@
     Prompts you for confirmation before running the cmdlet.
 
 .EXAMPLE
-    .\wip_az-ps-image-builder-windows.ps1 -AzResourceGroupName "myResourceGroup" -AzLocation "westus2" -AzVmName "myWinVM01" -AzVmSize "Standard_D2s_v3"
+    .\wip_az-ps-image-builder-windows.ps1 -AzResourceGroup "myResourceGroup" -AzLocation "westus2" -AzVmName "myWinVM01" -AzVmSize "Standard_D2s_v3"
 
 .NOTES
     Ensure that Azure PowerShell is installed and authenticated before running the script.
@@ -56,7 +56,7 @@
 param(
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
-    [string]$AzResourceGroupName = "myResourceGroup",
+    [string]$AzResourceGroup = "myResourceGroup",
 
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
@@ -90,7 +90,7 @@ param(
 
 # Splatting parameters for better readability
 $parameters = @{
-    ResourceGroupName    = $AzResourceGroupName
+    ResourceGroup    = $AzResourceGroup
     Location             = $AzLocation
     VmName               = $AzVmName
     VmSize               = $AzVmSize
@@ -109,37 +109,37 @@ try {
     Get-AzResourceProvider -ProviderNamespace Microsoft.Compute, Microsoft.KeyVault, Microsoft.Storage, Microsoft.VirtualMachineImages, Microsoft.Network, Microsoft.ManagedIdentity | Where-Object RegistrationState -ne Registered | Register-AzResourceProvider
 
     # Create resource group
-    New-AzResourceGroup -Name $parameters.ResourceGroupName -Location $parameters.Location
+    New-AzResourceGroup -Name $parameters.ResourceGroup -Location $parameters.Location
 
     # Create user-assigned identity
     $identityName = "aibBuiUserId$(Get-Date -Format 'yyyyMMddHHmmss')"
-    New-AzUserAssignedIdentity -ResourceGroupName $parameters.ResourceGroupName -Name $identityName
+    New-AzUserAssignedIdentity -ResourceGroup $parameters.ResourceGroup -Name $identityName
 
     # Get identity ID and URI
-    $imgBuilderCliId = (Get-AzUserAssignedIdentity -ResourceGroupName $parameters.ResourceGroupName -Name $identityName).ClientId
+    $imgBuilderCliId = (Get-AzUserAssignedIdentity -ResourceGroup $parameters.ResourceGroup -Name $identityName).ClientId
     $subscriptionID = (Get-AzContext).Subscription.Id
-    $imgBuilderId = "/subscriptions/$subscriptionID/resourceGroups/$parameters.ResourceGroupName/providers/Microsoft.ManagedIdentity/userAssignedIdentities/$identityName"
+    $imgBuilderId = "/subscriptions/$subscriptionID/resourceGroups/$parameters.ResourceGroup/providers/Microsoft.ManagedIdentity/userAssignedIdentities/$identityName"
 
     # Download and update role definition template
     $roleDefTemplate = "aibRoleImageCreation.json"
     Invoke-WebRequest -Uri "https://raw.githubusercontent.com/Azure/azvmimagebuilder/master/solutions/12_Creating_AIB_Security_Roles/aibRoleImageCreation.json" -OutFile $roleDefTemplate
-    (Get-Content $roleDefTemplate) -replace '<subscriptionID>', $subscriptionID -replace '<rgName>', $parameters.ResourceGroupName -replace 'Azure Image Builder Service Image Creation Role', "Azure Image Builder Image Def$(Get-Date -Format 'yyyyMMddHHmmss')" | Set-Content $roleDefTemplate
+    (Get-Content $roleDefTemplate) -replace '<subscriptionID>', $subscriptionID -replace '<rgName>', $parameters.ResourceGroup -replace 'Azure Image Builder Service Image Creation Role', "Azure Image Builder Image Def$(Get-Date -Format 'yyyyMMddHHmmss')" | Set-Content $roleDefTemplate
 
     # Create role definition and assign role
     New-AzRoleDefinition -InputFile $roleDefTemplate
-    New-AzRoleAssignment -Assignee $imgBuilderCliId -RoleDefinitionName "Azure Image Builder Image Def$(Get-Date -Format 'yyyyMMddHHmmss')" -Scope "/subscriptions/$subscriptionID/resourceGroups/$parameters.ResourceGroupName"
+    New-AzRoleAssignment -Assignee $imgBuilderCliId -RoleDefinitionName "Azure Image Builder Image Def$(Get-Date -Format 'yyyyMMddHHmmss')" -Scope "/subscriptions/$subscriptionID/resourceGroups/$parameters.ResourceGroup"
 
     # Download and update image template
     $imageTemplate = "helloImageTemplateWin.json"
     Invoke-WebRequest -Uri "https://raw.githubusercontent.com/azure/azvmimagebuilder/master/quickquickstarts/0_Creating_a_Custom_Windows_Managed_Image/helloImageTemplateWin.json" -OutFile $imageTemplate
-    (Get-Content $imageTemplate) -replace '<subscriptionID>', $subscriptionID -replace '<rgName>', $parameters.ResourceGroupName -replace '<region>', $parameters.Location -replace '<imageName>', 'aibWinImage' -replace '<runOutputName>', 'aibWindows' -replace '<imgBuilderId>', $imgBuilderId | Set-Content $imageTemplate
+    (Get-Content $imageTemplate) -replace '<subscriptionID>', $subscriptionID -replace '<rgName>', $parameters.ResourceGroup -replace '<region>', $parameters.Location -replace '<imageName>', 'aibWinImage' -replace '<runOutputName>', 'aibWindows' -replace '<imgBuilderId>', $imgBuilderId | Set-Content $imageTemplate
 
     # Create and run image template
-    az resource create --resource-group $parameters.ResourceGroupName --properties @$imageTemplate --is-full-object --resource-type Microsoft.VirtualMachineImages/imageTemplates -n helloImageTemplateWin01
-    az resource invoke-action --resource-group $parameters.ResourceGroupName --resource-type Microsoft.VirtualMachineImages/imageTemplates -n helloImageTemplateWin01 --action Run
+    az resource create --resource-group $parameters.ResourceGroup --properties @$imageTemplate --is-full-object --resource-type Microsoft.VirtualMachineImages/imageTemplates -n helloImageTemplateWin01
+    az resource invoke-action --resource-group $parameters.ResourceGroup --resource-type Microsoft.VirtualMachineImages/imageTemplates -n helloImageTemplateWin01 --action Run
 
     # Create VM from image
-    az vm create --resource-group $parameters.ResourceGroupName --name $parameters.VmName --admin-username aibuser --location $parameters.Location --image "/subscriptions/$subscriptionID/resourceGroups/$parameters.ResourceGroupName/providers/Microsoft.Compute/galleries/myIbGallery/images/myIbImageDef/versions/latest" --security-type TrustedLaunch --generate-ssh-keys
+    az vm create --resource-group $parameters.ResourceGroup --name $parameters.VmName --admin-username aibuser --location $parameters.Location --image "/subscriptions/$subscriptionID/resourceGroups/$parameters.ResourceGroup/providers/Microsoft.Compute/galleries/myIbGallery/images/myIbImageDef/versions/latest" --security-type TrustedLaunch --generate-ssh-keys
 
     # Output the result
     Write-Output "Azure Image Builder Windows VM created successfully."

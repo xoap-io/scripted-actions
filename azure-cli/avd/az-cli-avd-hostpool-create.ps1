@@ -5,7 +5,7 @@
 .DESCRIPTION
     This script creates an Azure Virtual Desktop Host Pool with the Azure CLI.
     The script uses the following Azure CLI command:
-    az desktopvirtualization hostpool create --host-pool-type $AzHostPoolType --load-balancer-type $AzLoadBalancerType --name $AzHostPoolName --preferred-app-group-type $AzPreferredAppGroupType --resource-group $AzResourceGroupName --custom-rdp-property $AzCustomRdpProperty --description $AzDescription --friendly-name $AzFriendlyName --location $AzLocation --max-session-limit $AzMaxSessionLimit --personal-desktop-assignment-type $AzPersonalDesktopAssignmentType --registration-info $AzRegistrationInfo --sso-client-id $AzSsoClientId --sso-client-secret-key-vault-path $AzSsoClientSecretKeyVaultPath --sso-secret-type $AzSsoSecretType --ssoadfs-authority $AzSsoAdfsAuthority --start-vm-on-connect $AzStartVmOnConnect --tags $AzTags --validation-environment $AzValidationEnvironment --vm-template $AzVmTemplate
+    az desktopvirtualization hostpool create --host-pool-type $AzHostPoolType --load-balancer-type $AzLoadBalancerType --name $AzHostPoolName --preferred-app-group-type $AzPreferredAppGroupType --resource-group $AzResourceGroup --custom-rdp-property $AzCustomRdpProperty --description $AzDescription --friendly-name $AzFriendlyName --location $AzLocation --max-session-limit $AzMaxSessionLimit --personal-desktop-assignment-type $AzPersonalDesktopAssignmentType --registration-info $AzRegistrationInfo --sso-client-id $AzSsoClientId --sso-client-secret-key-vault-path $AzSsoClientSecretKeyVaultPath --sso-secret-type $AzSsoSecretType --ssoadfs-authority $AzSsoAdfsAuthority --start-vm-on-connect $AzStartVmOnConnect --tags $AzTags --validation-environment $AzValidationEnvironment --vm-template $AzVmTemplate
 
 .PARAMETER HostPoolType
     Defines the type of the Azure Virtual Desktop Host Pool.
@@ -19,7 +19,7 @@
 .PARAMETER PreferredAppGroupType
     Defines the preferred application group type.
 
-.PARAMETER ResourceGroupName
+.PARAMETER ResourceGroup
     Defines the name of the Azure Resource Group.
 
 .PARAMETER CustomRdpProperty
@@ -68,7 +68,7 @@
     Defines the VM template.
 
 .EXAMPLE
-    .\az-cli-avd-hostpool-create.ps1 -AzHostPoolName "MyHostPool" -AzResourceGroupName "MyResourceGroup"
+    .\az-cli-avd-hostpool-create.ps1 -AzHostPoolName "MyHostPool" -AzResourceGroup "MyResourceGroup"
 
 .LINK
     https://learn.microsoft.com/en-us/cli/azure/desktopvirtualization/hostpool
@@ -109,7 +109,7 @@ param(
 
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
-    [string]$ResourceGroupName,
+    [string]$ResourceGroup,
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
@@ -207,13 +207,12 @@ param(
 )
 
 # Splatting parameters for better readability
-$parameters = @{
-    '--host-pool-type'            = $HostPoolType
-    '--load-balancer-type'        = $LoadBalancerType
-    '--name'                      = $HostPoolName
-    '--preferred-app-group-type'  = $PreferredAppGroupType
-    '--resource-group'            = $ResourceGroupName
-}
+$parameters = `
+    '--host-pool-type', $HostPoolType
+    '--load-balancer-type', $LoadBalancerType
+    '--name', $HostPoolName
+    '--preferred-app-group-type', $PreferredAppGroupType
+    '--resource-group', $ResourceGroup
 
 if ($CustomRdpProperty) {
     $parameters += '--custom-rdp-property', $CustomRdpProperty
@@ -287,10 +286,7 @@ try {
 
 } catch {
     # Log the error to the console
-
     Write-Output "Error message $errorMessage"
-
-
     Write-Error "Failed to create the Azure Virtual Desktop Host Pool: $($_.Exception.Message)"
 
 } finally {

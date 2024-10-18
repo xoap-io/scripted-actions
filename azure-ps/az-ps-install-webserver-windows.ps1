@@ -5,10 +5,10 @@
 .DESCRIPTION
     This script installs the Web Server feature on a Windows VM in Azure. The script uses the Azure PowerShell to run a PowerShell script on the specified Azure VM.
     The script uses the following Azure PowerShell command:
-    Invoke-AzVMRunCommand -ResourceGroupName $AzResourceGroupName -VMName $AzVmName -CommandId 'RunPowerShellScript' -ScriptString 'Install-WindowsFeature -Name Web-Server -IncludeManagementTools'
+    Invoke-AzVMRunCommand -ResourceGroup $AzResourceGroup -VMName $AzVmName -CommandId 'RunPowerShellScript' -ScriptString 'Install-WindowsFeature -Name Web-Server -IncludeManagementTools'
     The script sets the ErrorActionPreference to Stop to handle errors properly.
 
-.PARAMETER AzResourceGroupName
+.PARAMETER AzResourceGroup
     Defines the name of the Azure Resource Group.
 
 .PARAMETER AzVmName
@@ -36,7 +36,7 @@
     Prompts you for confirmation before running the cmdlet.
 
 .EXAMPLE
-    .\az-ps-install-webserver-windows.ps1 -AzResourceGroupName "myResourceGroup" -AzVmName "myVm"
+    .\az-ps-install-webserver-windows.ps1 -AzResourceGroup "myResourceGroup" -AzVmName "myVm"
 
 .NOTES
     Ensure that Azure PowerShell is installed and authenticated before running the script.
@@ -53,7 +53,7 @@
 param(
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
-    [string]$AzResourceGroupName = "myResourceGroup",
+    [string]$AzResourceGroup = "myResourceGroup",
 
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
@@ -79,7 +79,7 @@ param(
 
 # Splatting parameters for better readability
 $parameters = @{
-    ResourceGroupName    = $AzResourceGroupName
+    ResourceGroup    = $AzResourceGroup
     Name                 = $AzVmName
     Debug                = $AzDebug
     OnlyShowErrors       = $AzOnlyShowErrors

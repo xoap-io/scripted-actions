@@ -96,7 +96,7 @@ $ErrorActionPreference = "Stop"
 
 # Splatting parameters for better readability
 $parameters = `
-    '--name', $Name ,`
+    '--name', $Name
     '--storage-account', $StorageAccount
 
 if ($AccessTier) {
@@ -132,7 +132,6 @@ try {
 
 } catch {
     # Log the error to the console
-
     Write-Output "Error message $errorMessage"
     Write-Error "Failed to create the Azure Storage Account share: $($_.Exception.Message)"
 

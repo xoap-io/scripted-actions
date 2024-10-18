@@ -4,15 +4,15 @@
 
 .DESCRIPTION
     This script deletes an Azure Resource Group with the Azure PowerShell. The script requires the following parameter:
-    - AzResourceGroupName: Defines the name of the Azure Resource Group.
+    - AzResourceGroup: Defines the name of the Azure Resource Group.
 
     The script will delete the Azure Resource Group with all its resources.
 
-.PARAMETER AzResourceGroupName
+.PARAMETER AzResourceGroup
     Defines the name of the Azure Resource Group.
 
 .EXAMPLE
-    .\Remove-AzResourceGroup.ps1 -AzResourceGroupName "myResourceGroup"
+    .\Remove-AzResourceGroup.ps1 -AzResourceGroup "myResourceGroup"
 
 .LINK
     https://learn.microsoft.com/en-us/powershell/module/az.Resources
@@ -32,12 +32,12 @@
 param(
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
-    [string]$AzResourceGroupName
+    [string]$AzResourceGroup
 )
 
 # Splatting parameters for better readability
 $parameters = @{
-    Name = $AzResourceGroupName
+    Name = $AzResourceGroup
 }
 
 # Set Error Action to Stop
@@ -48,7 +48,7 @@ try {
     Remove-AzResourceGroup @parameters -Force
 
     # Output the result
-    Write-Output "Azure Resource Group '$($ResourceGroupName)' deleted successfully."
+    Write-Output "Azure Resource Group '$($ResourceGroup)' deleted successfully."
 
 } catch {
     # Log the error to the console

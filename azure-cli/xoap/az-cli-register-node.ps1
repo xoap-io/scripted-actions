@@ -6,7 +6,7 @@
     This script registers a new Azure VM in XOAP. The script uses the Azure CLI to run a PowerShell script on the Azure VM.
     The PowerShell script downloads the DSC configuration from the XOAP platform and applies it to the Azure VM.
 
-.PARAMETER AzResourceGroupName
+.PARAMETER AzResourceGroup
     Defines the name of the Azure Resource Group.
 
 .PARAMETER AzVmName
@@ -40,7 +40,7 @@
     Prompts you for confirmation before running the cmdlet.
 
 .EXAMPLE
-    .\az-cli-register-node.ps1 -AzResourceGroupName "myResourceGroup" -AzVmName "myVmName" -WorkspaceId "myWorkspaceId" -GroupName "myGroupName"
+    .\az-cli-register-node.ps1 -AzResourceGroup "myResourceGroup" -AzVmName "myVmName" -WorkspaceId "myWorkspaceId" -GroupName "myGroupName"
 
 .NOTES
     Author: Your Name
@@ -80,12 +80,11 @@ param(
 )
 
 # Splatting parameters for better readability
-$parameters = @{
-    '--resource-group'  = $AzResourceGroupName
-    '--vmname'          = $AzVmName
-    '--command-id'      = $CommandId
-    '--scripts'         = $Scripts
-}
+$parameters = `
+    '--resource-group', $AzResourceGroup
+    '--vmname', $AzVmName
+    '--command-id', $CommandId
+    '--scripts', $Scripts
 
 # Set Error Action to Stop
 $ErrorActionPreference = "Stop"
@@ -99,7 +98,6 @@ try {
 
 } catch {
     # Log the error to the console
-
     Write-Output "Error message $errorMessage"
     Write-Error "Failed to register Azure VM in XOAP: $($_.Exception.Message)"
 

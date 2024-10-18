@@ -5,7 +5,7 @@
 .DESCRIPTION
     This script lists Azure Virtual Desktop Host Pools with the Azure CLI.
     The script uses the following Azure CLI command:
-    az desktopvirtualization hostpool list --resource-group $AzResourceGroupName
+    az desktopvirtualization hostpool list --resource-group $AzResourceGroup
 
 .PARAMETER MaxItems
     Maximum number of items to return.
@@ -13,11 +13,11 @@
 .PARAMETER NextToken
     Token to retrieve the next page of results.
 
-.PARAMETER ResourceGroupName
+.PARAMETER ResourceGroup
     Defines the name of the Azure Resource Group.
 
 .EXAMPLE
-    .\az-cli-avd-hostpool-list.ps1 -AzResourceGroupName "MyResourceGroup"
+    .\az-cli-avd-hostpool-list.ps1 -AzResourceGroup "MyResourceGroup"
 
 .LINK
     https://learn.microsoft.com/en-us/cli/azure/desktopvirtualization/hostpool
@@ -44,15 +44,14 @@ param(
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
-    [string]$ResourceGroupName
+    [string]$ResourceGroup
 )
 
 # Splatting parameters for better readability
-$parameters = @{
-    '--max-items' = $AzMaxItems
-    '--next-token' = $AzNextToken
-    '--resource-group' = $AzResourceGroupName
-}
+$parameters = `
+    '--max-items', $MaxItems
+    '--next-token', $NextToken
+    '--resource-group', $ResourceGroup
 
 # Set Error Action to Stop
 $ErrorActionPreference = "Stop"
@@ -66,10 +65,7 @@ try {
 
 } catch {
     # Log the error to the console
-
     Write-Output "Error message $errorMessage"
-
-
     Write-Error "Failed to list the Azure Virtual Desktop Host Pools: $($_.Exception.Message)"
 
 } finally {

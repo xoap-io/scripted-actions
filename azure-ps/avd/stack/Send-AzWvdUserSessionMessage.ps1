@@ -8,7 +8,7 @@
 .PARAMETER HostPoolName
     The name of the host pool.
 
-.PARAMETER ResourceGroupName
+.PARAMETER ResourceGroup
     The name of the resource group.
 
 .PARAMETER SessionHostName
@@ -24,7 +24,7 @@
     The title of the message.
 
 .EXAMPLE
-    PS C:\> .\Send-AzWvdUserSessionMessage.ps1 -HostPoolName "MyHostPool" -ResourceGroupName "MyResourceGroup" -SessionHostName "MySessionHost" -UserSessionId "12345" -MessageBody "Hello, User!" -MessageTitle "Greeting"
+    PS C:\> .\Send-AzWvdUserSessionMessage.ps1 -HostPoolName "MyHostPool" -ResourceGroup "MyResourceGroup" -SessionHostName "MySessionHost" -UserSessionId "12345" -MessageBody "Hello, User!" -MessageTitle "Greeting"
 
 .LINK
     https://learn.microsoft.com/en-us/powershell/module/az.DesktopVirtualization
@@ -48,7 +48,7 @@ param (
 
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
-    [string]$ResourceGroupName,
+    [string]$ResourceGroup,
 
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
@@ -70,7 +70,7 @@ param (
 # Splatting parameters for better readability
 $parameters = @{
     HostPoolName      = $HostPoolName
-    ResourceGroupName = $ResourceGroupName
+    ResourceGroup = $ResourceGroup
     SessionHostName   = $SessionHostName
     UserSessionId     = $UserSessionId
     MessageBody       = $MessageBody

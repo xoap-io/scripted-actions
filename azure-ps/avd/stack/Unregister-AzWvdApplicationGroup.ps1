@@ -5,7 +5,7 @@
 .DESCRIPTION
     This script unregisters an Azure Virtual Desktop Application Group.
 
-.PARAMETER ResourceGroupName
+.PARAMETER ResourceGroup
     The name of the resource group.
 
 .PARAMETER WorkspaceName
@@ -15,7 +15,7 @@
     The path of the application group.
 
 .EXAMPLE
-    PS C:\> .\Unregister-AzWvdApplicationGroup.ps1 -ResourceGroupName "MyResourceGroup" -WorkspaceName "MyWorkspace" -ApplicationGroupPath "MyAppGroupPath"
+    PS C:\> .\Unregister-AzWvdApplicationGroup.ps1 -ResourceGroup "MyResourceGroup" -WorkspaceName "MyWorkspace" -ApplicationGroupPath "MyAppGroupPath"
 
 .LINK
     https://learn.microsoft.com/en-us/powershell/module/az.DesktopVirtualization
@@ -35,7 +35,7 @@
 param (
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
-    [string]$ResourceGroupName,
+    [string]$ResourceGroup,
 
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
@@ -48,7 +48,7 @@ param (
 
 # Splatting parameters for better readability
 $parameters = @{
-    ResourceGroupName    = $ResourceGroupName
+    ResourceGroup    = $ResourceGroup
     WorkspaceName        = $WorkspaceName
     ApplicationGroupPath = $ApplicationGroupPath
 }

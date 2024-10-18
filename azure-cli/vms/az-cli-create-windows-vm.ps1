@@ -1,4 +1,5 @@
 <#
+
 .SYNOPSIS
     Create a new Azure VM with the Azure PowerShell.
 
@@ -6,46 +7,167 @@
     This script creates a new Azure VM with the Azure PowerShell. The script creates a new Azure Resource Group, a new Azure VM, and a new Azure Public IP Address.
     The script also retrieves the public IP address of the VM.
 
-.NOTES
-    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
-    The use of the scripts does not require XOAP, but it will make your life easier.
-    You are allowed to pull the script from the repository and use it with XOAP or other solutions
-    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no liability for the function,
-    the use and the consequences of the use of this freely available script.
-    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
-
-.COMPONENT
-    Azure CLI
-
-.LINK
-    https://github.com/scriptrunner/ActionPacks/tree/master/ActiveDirectory/Users
-
-.PARAMETER AzResourceGroupName
-    Defines the name of the Azure Resource Group.
-
-.PARAMETER AzVmName
+.PARAMETER Name
     Defines the name of the Azure VM.
 
-.PARAMETER AzLocation
+.PARAMETER UserName
+    Defines the username for the Azure VM.
+
+.PARAMETER Password
+    Defines the password for the Azure VM.
+
+.PARAMETER ResourceGroup
+    Defines the name of the Azure Resource Group.
+
+.PARAMETER Location
     Defines the location of the Azure VM.
 
-.PARAMETER AzImageName
-    Defines the name of the Azure VM image.
+.PARAMETER EdgeZone
+    Defines the edge zone of the Azure VM.
 
-.PARAMETER AzPublicIpAddressName
-    Defines the name of the Azure VM public IP address.
+.PARAMETER Zone
+    Defines the zone of the Azure VM.
 
-.PARAMETER AzVmUserName
-    Defines the name of the Azure VM user.
+.PARAMETER PublicIpSku
+    Defines the SKU of the public IP address.
 
-.PARAMETER AzVmUserPassword
-    Defines the password of the Azure VM user.
+.PARAMETER NetworkInterfaceDeleteOption
+    Defines the network interface delete option.
 
-.PARAMETER AzOpenPorts
-    Defines the open ports of the Azure VM.
+.PARAMETER NetworkName
+    Defines the name of the virtual network.
 
-.PARAMETER AzVmSize
-    Defines the size of the Azure VM.
+.PARAMETER AddressPrefix
+    Defines the address prefix of the virtual network.
+
+.PARAMETER SubnetName
+    Defines the name of the subnet.
+
+.PARAMETER SubnetAddressPrefix
+    Defines the address prefix of the subnet.
+
+.PARAMETER PublicIpAddressName
+    Defines the name of the public IP address.
+
+.PARAMETER DomainNameLabel
+    Defines the domain name label.
+
+.PARAMETER AllocationMethod
+    Defines the allocation method.
+
+.PARAMETER SecurityGroupName
+    Defines the security group name.
+
+.PARAMETER OpenPorts
+    Defines the open ports.
+
+.PARAMETER Image
+    Defines the image to use for the VM.
+
+.PARAMETER Size
+    Defines the size of the VM.
+
+.PARAMETER AvailabilitySetName
+    Defines the availability set name.
+
+.PARAMETER SystemAssignedIdentity
+    Defines the system-assigned identity.
+
+.PARAMETER UserAssignedIdentity
+    Defines the user-assigned identity.
+
+.PARAMETER OSDiskDeleteOption
+    Defines the OS disk delete option.
+
+.PARAMETER DataDiskSizeInGb
+    Defines the data disk size in GB.
+
+.PARAMETER DataDiskDeleteOption
+    Defines the data disk delete option.
+
+.PARAMETER EnableUltraSSD
+    Defines whether to enable Ultra SSD.
+
+.PARAMETER ProximityPlacementGroupId
+    Defines the proximity placement group ID.
+
+.PARAMETER HostId
+    Defines the host ID.
+
+.PARAMETER VmssId
+    Defines the VMSS ID.
+
+.PARAMETER Priority
+    Defines the priority.
+
+.PARAMETER EvictionPolicy
+    Defines the eviction policy.
+
+.PARAMETER MaxPrice
+    Defines the maximum price.
+
+.PARAMETER EncryptionAtHost
+    Defines whether to enable encryption at host.
+
+.PARAMETER HostGroupId
+    Defines the host group ID.
+
+.PARAMETER SshKeyName
+    Defines the SSH key name.
+
+.PARAMETER GenerateSshKey
+    Defines whether to generate an SSH key.
+
+.PARAMETER CapacityReservationGroupId
+    Defines the capacity reservation group ID.
+
+.PARAMETER UserData
+    Defines the user data.
+
+.PARAMETER ImageReferenceId
+    Defines the image reference ID.
+
+.PARAMETER PlatformFaultDomain
+    Defines the platform fault domain.
+
+.PARAMETER HibernationEnabled
+    Defines whether hibernation is enabled.
+
+.PARAMETER vCPUCountAvailable
+    Defines the available vCPU count.
+
+.PARAMETER vCPUCountPerCore
+    Defines the vCPU count per core.
+
+.PARAMETER DiskControllerType
+    Defines the disk controller type.
+
+.PARAMETER SharedGalleryImageId
+    Defines the shared gallery image ID.
+
+.PARAMETER SecurityType
+    Defines the security type.
+
+.PARAMETER EnableVtpm
+    Defines whether to enable VTPM.
+
+.PARAMETER EnableSecureBoot
+    Defines whether to enable secure boot.
+
+.EXAMPLE
+    .\Create-NewWindowsVm.ps1 -AzResourceGroup "myResourceGroup" -AzVmName "myVm" -AzLocation "eastus" -AzImageName "myImageName" -AzPublicIpAddressName "myPublicIpAddressName" -AzVmUserName "myVmUser" -AzVmUserPassword "myVmPassword" -AzOpenPorts 3389 -AzVmSize "Standard_D2s_v3"
+
+.LINK
+    https://learn.microsoft.com/en-us/powershell/module/az.Compute
+
+.LINK
+    https://learn.microsoft.com/en-us/powershell/module/az.compute/new-azvm?view=azps-12.3.0
+
+.LINK
+    https://github.com/xoap-io/scripted-actions
+
+.COMPONENT
+    Azure PowerShell
 
 #>
 
@@ -57,100 +179,37 @@ param(
 
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
-    [string]$ResourceGroupName,
+    [string]$UserName,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
-    [bool]$AcceleratedNetworking,
+    [securestring]$Password,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
-    [string]$AcceptTerm,
+    [string]$ResourceGroup,
 
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [securestring]$AdminPassword,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$AdminUsername,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$Asgs,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$AssignIdentity,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$AttachDataDisks,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$AttachOsDisk,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
+    [Parameter(Mandatory=$true)]
     [ValidateSet(
-        'all',
-        'password',
-        'ssh'
+        'eastus', 'eastus2', 'southcentralus', 'westus2',
+        'westus3', 'australiaeast', 'southeastasia', 'northeurope',
+        'swedencentral', 'uksouth', 'westeurope', 'centralus',
+        'southafricanorth', 'centralindia', 'eastasia', 'japaneast',
+        'koreacentral', 'canadacentral', 'francecentral', 'germanywestcentral',
+        'italynorth', 'norwayeast', 'polandcentral', 'switzerlandnorth',
+        'uaenorth', 'brazilsouth', 'israelcentral', 'qatarcentral',
+        'asia', 'asiapacific', 'australia', 'brazil',
+        'canada', 'europe', 'france',
+        'global', 'india', 'japan', 'korea',
+        'norway', 'singapore', 'southafrica', 'sweden',
+        'switzerland', 'unitedstates', 'northcentralus', 'westus',
+        'japanwest', 'centraluseuap', 'eastus2euap', 'westcentralus',
+        'southafricawest', 'australiacentral', 'australiacentral2', 'australiasoutheast',
+        'koreasouth', 'southindia', 'westindia', 'canadaeast',
+        'francesouth', 'germanynorth', 'norwaywest', 'switzerlandwest',
+        'ukwest', 'uaecentral', 'brazilsoutheast'
     )]
-    [string]$AuthenticationType,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$AvailabilitySet,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$BootDiagnosticsStorage,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$CapacityReservationGroup,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$ComputerName,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$Count,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$CustomData,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$DataDiskCaching,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$DataDiskDeleteOption,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$DataDiskEncryptionSets,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$DataDiskSizesGb,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$DisableIntegrityMonitoringAutoupgrade,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [ValidateSet(
-        'NVMe',
-        'SCSI'
-    )]
-    [string]$DiskControllerType,
+    [string]$Location,
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
@@ -158,183 +217,7 @@ param(
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
-    [bool]$EnableAgent,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [bool]$EnableAutoUpdate,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [bool]$EnableHibernation,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [bool]$EnableHotpatching,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$EnableIntegrityMonitoring,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [bool]$EnableProxyAgent,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [bool]$EnableSecureBoot,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [bool]$EnableVtpm,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [bool]$EncryptionAtHost,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [bool]$EphemeralOsDisk,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [ValidateSet(
-        'CacheDisk',
-        'NvmeDisk'
-    )]
-    [string]$EphemeralOsDiskPlacement,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$EvictionPolicy,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$GenerateSshKeys,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$Host,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$HostGroup,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$Image,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$LicenseType,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$Location,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$MaxPrice,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$NicDeleteOption,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$Nics,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$NoWait,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$Nsg,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$NsgRule,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$OsDiskCaching,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$OsDiskDeleteOption,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$OsDiskEncryptionSet,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$OsDiskName,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$OsDiskSecureVmDiskEncryptionSet,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$OsDiskSecurityEncryptionType,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$OsDiskSizeGb,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$OsType,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$PatchMode,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$PlanName,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$PlanProduct,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$PlanPromotionCode,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$PlanPublisher,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$PlatformFaultDomain,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$Ppg,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$Priority,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$PrivateIpAddress,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$PublicIpAddress,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$PublicIpAddressAllocation,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$PublicIpAddressDnsName,
+    [string]$Zone,
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
@@ -342,71 +225,19 @@ param(
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
-    [string]$Role,
+    [string]$NetworkInterfaceDeleteOption,
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
-    [string]$Scope,
+    [string]$NetworkName,
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
-    [string]$Secrets,
+    [string]$AddressPrefix,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
-    [string]$SecurityType,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$Size,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$SourceDiskRestorePoint,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$SourceDiskRestorePointSizeGb,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$SourceResource,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$SourceResourceSize,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$Specialized,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$SshDestKeyPath,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$SshKeyName,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$SshKeyValues,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$StorageAccount,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$StorageContainerName,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$StorageSku,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$Subnet,
+    [string]$SubnetName,
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
@@ -414,15 +245,103 @@ param(
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
-    [string]$Tags,
+    [string]$PublicIpAddressName,
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
-    [string]$UltraSsdEnabled,
+    [string]$DomainNameLabel,
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
-    [string]$UseUnmanagedDisk,
+    [string]$AllocationMethod,
+
+    [Parameter(Mandatory=$false)]
+    [ValidateNotNullOrEmpty()]
+    [string]$SecurityGroupName,
+
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
+    [string]$OpenPorts,
+
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
+    [string]$Image,
+
+    [Parameter(Mandatory=$false)]
+    [ValidateNotNullOrEmpty()]
+    [string]$Size,
+
+    [Parameter(Mandatory=$false)]
+    [ValidateNotNullOrEmpty()]
+    [string]$AvailabilitySetName,
+
+    [Parameter(Mandatory=$false)]
+    [ValidateNotNullOrEmpty()]
+    [string]$SystemAssignedIdentity,
+
+    [Parameter(Mandatory=$false)]
+    [ValidateNotNullOrEmpty()]
+    [string]$UserAssignedIdentity,
+
+    [Parameter(Mandatory=$false)]
+    [ValidateNotNullOrEmpty()]
+    [string]$OSDiskDeleteOption,
+
+    [Parameter(Mandatory=$false)]
+    [ValidateNotNullOrEmpty()]
+    [int]$DataDiskSizeInGb,
+
+    [Parameter(Mandatory=$false)]
+    [ValidateNotNullOrEmpty()]
+    [string]$DataDiskDeleteOption,
+
+    [Parameter(Mandatory=$false)]
+    [ValidateNotNullOrEmpty()]
+    [switch]$EnableUltraSSD,
+
+    [Parameter(Mandatory=$false)]
+    [ValidateNotNullOrEmpty()]
+    [string]$ProximityPlacementGroupId,
+
+    [Parameter(Mandatory=$false)]
+    [ValidateNotNullOrEmpty()]
+    [string]$HostId,
+
+    [Parameter(Mandatory=$false)]
+    [ValidateNotNullOrEmpty()]
+    [string]$VmssId,
+
+    [Parameter(Mandatory=$false)]
+    [ValidateNotNullOrEmpty()]
+    [string]$Priority,
+
+    [Parameter(Mandatory=$false)]
+    [ValidateNotNullOrEmpty()]
+    [string]$EvictionPolicy,
+
+    [Parameter(Mandatory=$false)]
+    [ValidateNotNullOrEmpty()]
+    [double]$MaxPrice,
+
+    [Parameter(Mandatory=$false)]
+    [ValidateNotNullOrEmpty()]
+    [switch]$EncryptionAtHost,
+
+    [Parameter(Mandatory=$false)]
+    [ValidateNotNullOrEmpty()]
+    [string]$HostGroupId,   
+
+    [Parameter(Mandatory=$false)]
+    [ValidateNotNullOrEmpty()]
+    [string]$SshKeyName,
+
+    [Parameter(Mandatory=$false)]
+    [ValidateNotNullOrEmpty()]
+    [switch]$GenerateSshKey,
+
+    [Parameter(Mandatory=$false)]
+    [ValidateNotNullOrEmpty()]
+    [string]$CapacityReservationGroupId,
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
@@ -430,450 +349,255 @@ param(
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
-    [string]$VCpusAvailable,
+    [string]$ImageReferenceId,
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
-    [string]$VCpusPerCore,
+    [int]$PlatformFaultDomain,
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
-    [string]$Validate,
+    [switch]$HibernationEnabled,
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
-    [string]$Vmss,
+    [int]$vCPUCountAvailable,
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
-    [string]$VnetAddressPrefix,
+    [int]$vCPUCountPerCore,
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
-    [string]$VnetName,
+    [string]$DiskControllerType,
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
-    [string]$Workspace,
+    [string]$SharedGalleryImageId,
+
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
+    [string]$SecurityType,
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
-    [string]$Zone
+    [bool]$EnableVtpm,
+
+    [Parameter(Mandatory=$false)]
+    [ValidateNotNullOrEmpty()]
+    [bool]$EnableSecureBoot
 )
 
-#Set Error Action to Silently Continue
-$ErrorActionPreference =  "Stop"
-
-# Create a new Azure VM
-
+# Splatting parameters for better readability
 $parameters = @{
-    '--resource-group' = $ResourceGroup
-    '--name' = $Name
-}
-
-if ($AcceleratedNetworking) {
-    $parameters += '--accelerated-networking', $AcceleratedNetworking
-}
-
-if ($AcceptTerm) {
-    $parameters += '--accept-term', $AcceptTerm
-}
-
-if ($AdminPassword) {
-    $parameters += '--admin-password', $AdminPassword
-}
-
-if ($AdminUsername) {
-    $parameters += '--admin-username', $AdminUsername
-}
-
-if ($Asgs) {
-    $parameters += '--asgs', $Asgs
-}
-
-if ($AssignIdentity) {
-    $parameters += '--assign-identity', $AssignIdentity
-}
-
-if ($AttachDataDisks) {
-    $parameters += '--attach-data-disks', $AttachDataDisks
-}
-
-if ($AttachOsDisk) {
-    $parameters += '--attach-os-disk', $AttachOsDisk
-}
-
-if ($AuthenticationType) {
-    $parameters += '--authentication-type', $AuthenticationType
-}
-
-if ($AvailabilitySet) {
-    $parameters += '--availability-set', $AvailabilitySet
-}
-
-if ($BootDiagnosticsStorage) {
-    $parameters += '--boot-diagnostics-storage', $BootDiagnosticsStorage
-}
-
-if ($CapacityReservationGroup) {
-    $parameters += '--capacity-reservation-group', $CapacityReservationGroup
-}
-
-if ($ComputerName) {
-    $parameters += '--computer-name', $ComputerName
-}
-
-if ($Count) {
-    $parameters += '--count', $Count
-}
-
-if ($CustomData) {
-    $parameters += '--custom-data', $CustomData
-}
-
-if ($DataDiskCaching) {
-    $parameters += '--data-disk-caching', $DataDiskCaching
-}
-
-if ($DataDiskDeleteOption) {
-    $parameters += '--data-disk-delete-option', $DataDiskDeleteOption
-}
-
-if ($DataDiskEncryptionSets) {
-    $parameters += '--data-disk-encryption-sets', $DataDiskEncryptionSets
-}
-
-if ($DataDiskSizesGb) {
-    $parameters += '--data-disk-sizes-gb', $DataDiskSizesGb
-}
-
-if ($DisableIntegrityMonitoringAutoupgrade) {
-    $parameters += '--disable-integrity-monitoring-autoupgrade', $DisableIntegrityMonitoringAutoupgrade
-}
-
-if ($DiskControllerType) {
-    $parameters += '--disk-controller-type', $DiskControllerType
+    Name        = $Name
+    Credential  = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $UserName, $Password
+    ResourceGroup = $ResourceGroup
+    Location    = $Location
 }
 
 if ($EdgeZone) {
-    $parameters += '--edge-zone', $EdgeZone
-}
-
-if ($EnableAgent) {
-    $parameters += '--enable-agent', $EnableAgent
-}
-
-if ($EnableAutoUpdate) {
-    $parameters += '--enable-auto-update', $EnableAutoUpdate
-}
-
-if ($EnableHibernation) {
-    $parameters += '--enable-hibernation', $EnableHibernation
-}
-
-if ($EnableHotpatching) {
-    $parameters += '--enable-hotpatching', $EnableHotpatching
-}
-
-if ($EnableIntegrityMonitoring) {
-    $parameters += '--enable-integrity-monitoring', $EnableIntegrityMonitoring
-}
-
-if ($EnableProxyAgent) {
-    $parameters += '--enable-proxy-agent', $EnableProxyAgent
-}
-
-if ($EnableSecureBoot) {
-    $parameters += '--enable-secure-boot', $EnableSecureBoot
-}
-
-if ($EnableVtpm) {
-    $parameters += '--enable-vtpm', $EnableVtpm
-}
-
-if ($EncryptionAtHost) {
-    $parameters += '--encryption-at-host', $EncryptionAtHost
-}
-
-if ($EphemeralOsDisk) {
-    $parameters += '--ephemeral-os-disk', $EphemeralOsDisk
-}
-
-if ($EphemeralOsDiskPlacement) {
-    $parameters += '--ephemeral-os-disk-placement', $EphemeralOsDiskPlacement
-}
-
-if ($EvictionPolicy) {
-    $parameters += '--eviction-policy', $EvictionPolicy
-}
-
-if ($GenerateSshKeys) {
-    $parameters += '--generate-ssh-keys', $GenerateSshKeys
-}
-
-if ($Host) {
-    $parameters += '--host', $Host
-}
-
-if ($HostGroup) {
-    $parameters += '--host-group', $HostGroup
-}
-
-if ($Image) {
-    $parameters += '--image', $Image
-}
-
-if ($LicenseType) {
-    $parameters += '--license-type', $LicenseType
-}
-
-if ($Location) {
-    $parameters += '--location', $Location
-}
-
-if ($MaxPrice) {
-    $parameters += '--max-price', $MaxPrice
-}
-
-if ($NicDeleteOption) {
-    $parameters += '--nic-delete-option', $NicDeleteOption
-}
-
-if ($Nics) {
-    $parameters += '--nics', $Nics
-}
-
-if ($NoWait) {
-    $parameters += '--no-wait', $NoWait
-}
-
-if ($Nsg) {
-    $parameters += '--nsg', $Nsg
-}
-
-if ($NsgRule) {
-    $parameters += '--nsg-rule', $NsgRule
-}
-
-if ($OsDiskCaching) {
-    $parameters += '--os-disk-caching', $OsDiskCaching
-}
-
-if ($OsDiskDeleteOption) {
-    $parameters += '--os-disk-delete-option', $OsDiskDeleteOption
-}
-
-if ($OsDiskEncryptionSet) {
-    $parameters += '--os-disk-encryption-set', $OsDiskEncryptionSet
-}
-
-if ($OsDiskName) {
-    $parameters += '--os-disk-name', $OsDiskName
-}
-
-if ($OsDiskSecureVmDiskEncryptionSet) {
-    $parameters += '--os-disk-secure-vm-disk-encryption-set', $OsDiskSecureVmDiskEncryptionSet
-}
-
-if ($OsDiskSecurityEncryptionType) {
-    $parameters += '--os-disk-security-encryption-type', $OsDiskSecurityEncryptionType
-}
-
-if ($OsDiskSizeGb) {
-    $parameters += '--os-disk-size-gb', $OsDiskSizeGb
-}
-
-if ($OsType) {
-    $parameters += '--os-type', $OsType
-}
-
-if ($PatchMode) {
-    $parameters += '--patch-mode', $PatchMode
-}
-
-if ($PlanName) {
-    $parameters += '--plan-name', $PlanName
-}
-
-if ($PlanProduct) {
-    $parameters += '--plan-product', $PlanProduct
-}
-
-if ($PlanPromotionCode) {
-    $parameters += '--plan-promotion-code', $PlanPromotionCode
-}
-
-if ($PlanPublisher) {
-    $parameters += '--plan-publisher', $PlanPublisher
-}
-
-if ($PlatformFaultDomain) {
-    $parameters += '--platform-fault-domain', $PlatformFaultDomain
-}
-
-if ($Ppg) {
-    $parameters += '--ppg', $Ppg
-}
-
-if ($Priority) {
-    $parameters += '--priority', $Priority
-}
-
-if ($PrivateIpAddress) {
-    $parameters += '--private-ip-address', $PrivateIpAddress
-}
-
-if ($PublicIpAddress) {
-    $parameters += '--public-ip-address', $PublicIpAddress
-}
-
-if ($PublicIpAddressAllocation) {
-    $parameters += '--public-ip-address-allocation', $PublicIpAddressAllocation
-}
-
-if ($PublicIpAddressDnsName) {
-    $parameters += '--public-ip-address-dns-name', $PublicIpAddressDnsName
-}
-
-if ($PublicIpSku) {
-    $parameters += '--public-ip-sku', $PublicIpSku
-}
-
-if ($Role) {
-    $parameters += '--role', $Role
-}
-
-if ($Scope) {
-    $parameters += '--scope', $Scope
-}
-
-if ($Secrets) {
-    $parameters += '--secrets', $Secrets
-}
-
-if ($SecurityType) {
-    $parameters += '--security-type', $SecurityType
-}
-
-if ($Size) {
-    $parameters += '--size', $Size
-}
-
-if ($SourceDiskRestorePoint) {
-    $parameters += '--source-disk-restore-point', $SourceDiskRestorePoint
-}
-
-if ($SourceDiskRestorePointSizeGb) {
-    $parameters += '--source-disk-restore-point-size-gb', $SourceDiskRestorePointSizeGb
-}
-
-if ($SourceResource) {
-    $parameters += '--source-resource', $SourceResource
-}
-
-if ($SourceResourceSize) {
-    $parameters += '--source-resource-size', $SourceResourceSize
-}
-
-if ($Specialized) {
-    $parameters += '--specialized', $Specialized
-}
-
-if ($SshDestKeyPath) {
-    $parameters += '--ssh-dest-key-path', $SshDestKeyPath
-}
-
-if ($SshKeyName) {
-    $parameters += '--ssh-key-name', $SshKeyName
-}
-
-if ($SshKeyValues) {
-    $parameters += '--ssh-key-values', $SshKeyValues
-}
-
-if ($StorageAccount) {
-    $parameters += '--storage-account', $StorageAccount
-}
-
-if ($StorageContainerName) {
-    $parameters += '--storage-container-name', $StorageContainerName
-}
-
-if ($StorageSku) {
-    $parameters += '--storage-sku', $StorageSku
-}
-
-if ($Subnet) {
-    $parameters += '--subnet', $Subnet
-}
-
-if ($SubnetAddressPrefix) {
-    $parameters += '--subnet-address-prefix', $SubnetAddressPrefix
-}
-
-if ($Tags) {
-    $parameters += '--tags', $Tags
-}
-
-if ($UltraSsdEnabled) {
-    $parameters += '--ultra-ssd-enabled', $UltraSsdEnabled
-}
-
-if ($UseUnmanagedDisk) {
-    $parameters += '--use-unmanaged-disk', $UseUnmanagedDisk
-}
-
-if ($UserData) {
-    $parameters += '--user-data', $UserData
-}
-
-if ($VCpusAvailable) {
-    $parameters += '--v-cpus-available', $VCpusAvailable
-}
-
-if ($VCpusPerCore) {
-    $parameters += '--v-cpus-per-core', $VCpusPerCore
-}
-
-if ($Validate) {
-    $parameters += '--validate', $Validate
-}
-
-if ($Vmss) {
-    $parameters += '--vmss', $Vmss
-}
-
-if ($VnetAddressPrefix) {
-    $parameters += '--vnet-address-prefix', $VnetAddressPrefix
-}
-
-if ($VnetName) {
-    $parameters += '--vnet-name', $VnetName
-}
-
-if ($Workspace) {
-    $parameters += '--workspace', $Workspace
+    $parameters['EdgeZone'] = $EdgeZone
 }
 
 if ($Zone) {
-    $parameters += '--zone', $Zone
+    $parameters['Zone'] = $Zone
 }
 
+if ($PublicIpSku) {
+    $parameters['PublicIpSku'] = $PublicIpSku
+}
+
+if ($NetworkInterfaceDeleteOption) {
+    $parameters['NetworkInterfaceDeleteOption'] = $NetworkInterfaceDeleteOption
+}
+
+if ($NetworkName) {
+    $parameters['VirtualNetWorkName'] = $NetworkName
+}
+
+if ($AddressPrefix) {
+    $parameters['AddressPrefix'] = $AddressPrefix
+}
+
+if ($SubnetName) {
+    $parameters['SubnetName'] = $SubnetName
+}
+
+if ($SubnetAddressPrefix) {
+    $parameters['SubnetAddressPrefix'] = $SubnetAddressPrefix
+}
+
+if ($PublicIpAddressName) {
+    $parameters['PublicIpAddressName'] = $PublicIpAddressName
+}
+
+if ($DomainNameLabel) {
+    $parameters['DomainNameLabel'] = $DomainNameLabel
+}
+
+if ($AllocationMethod) {
+    $parameters['AllocationMethod'] = $AllocationMethod
+}
+
+if ($SecurityGroupName) {
+    $parameters['SecurityGroupName'] = $SecurityGroupName
+}
+
+if ($OpenPorts) {
+    $parameters['OpenPorts'] = $OpenPorts
+}
+
+if ($Image) {
+    $parameters['Image'] = $Image
+}
+
+if ($Size) {
+    $parameters['Size'] = $Size
+}
+
+if ($AvailabilitySetName) {
+    $parameters['AvailabilitySetName'] = $AvailabilitySetName
+}
+
+if ($SystemAssignedIdentity) {
+    $parameters['SystemAssignedIdentity'] = $SystemAssignedIdentity
+}
+
+if ($UserAssignedIdentity) {
+    $parameters['UserAssignedIdentity'] = $UserAssignedIdentity
+}
+
+if ($OSDiskDeleteOption) {
+    $parameters['OSDiskDeleteOption'] = $OSDiskDeleteOption
+}
+
+if ($DataDiskSizeInGb) {
+    $parameters['DataDiskSizeInGb'] = $DataDiskSizeInGb
+}
+
+if ($DataDiskDeleteOption) {
+    $parameters['DataDiskDeleteOption'] = $DataDiskDeleteOption
+}
+
+if ($EnableUltraSSD) {
+    $parameters['EnableUltraSSD'] = $EnableUltraSSD
+}
+
+if ($ProximityPlacementGroupId) {
+    $parameters['ProximityPlacementGroupId'] = $ProximityPlacementGroupId
+}
+
+if ($HostId) {
+    $parameters['HostId'] = $HostId
+}
+
+if ($VmssId) {
+    $parameters['VmssId'] = $VmssId
+}
+
+if ($Priority) {
+    $parameters['Priority'] = $Priority
+}
+
+if ($EvictionPolicy) {
+    $parameters['EvictionPolicy'] = $EvictionPolicy
+}
+
+if ($MaxPrice) {
+    $parameters['MaxPrice'] = $MaxPrice
+}
+
+if ($EncryptionAtHost) {
+    $parameters['EncryptionAtHost'] = $EncryptionAtHost
+}
+
+if ($HostGroupId) {
+    $parameters['HostGroupId'] = $HostGroupId
+}
+
+if ($SshKeyName) {
+    $parameters['SshKeyName'] = $SshKeyName
+}
+
+if ($GenerateSshKey) {
+    $parameters['GenerateSshKey'] = $GenerateSshKey
+}
+
+if ($CapacityReservationGroupId) {
+    $parameters['CapacityReservationGroupId'] = $CapacityReservationGroupId
+}
+
+if ($UserData) {
+    $parameters['UserData'] = $UserData
+}
+
+if ($ImageReferenceId) {
+    $parameters['ImageReferenceId'] = $ImageReferenceId
+}
+
+if ($PlatformFaultDomain) {
+    $parameters['PlatformFaultDomain'] = $PlatformFaultDomain
+}
+
+if ($HibernationEnabled) {
+    $parameters['HibernationEnabled'] = $HibernationEnabled
+}
+
+if ($vCPUCountAvailable) {
+    $parameters['vCPUCountAvailable'] = $vCPUCountAvailable
+}
+
+if ($vCPUCountPerCore) {
+    $parameters['vCPUCountPerCore'] = $vCPUCountPerCore
+}
+
+if ($DiskControllerType) {
+    $parameters['DiskControllerType'] = $DiskControllerType
+}
+
+if ($SharedGalleryImageId) {
+    $parameters['SharedGalleryImageId'] = $SharedGalleryImageId
+}
+
+if ($SecurityType) {
+    $parameters['SecurityType'] = $SecurityType
+}
+
+if ($EnableVtpm) {
+    $parameters['EnableVtpm'] = $EnableVtpm
+}
+
+if ($EnableSecureBoot) {
+    $parameters['EnableSecureBoot'] = $EnableSecureBoot
+}
+
+
+# Set Error Action to Stop
+$ErrorActionPreference = "Stop"
+
 try {
-    # Create a new Azure VM
-    az vm create @parameters
+    # Create the VM
+    New-AzVM @parameters -Verbose
+
+    Get-AzVM -ResourceGroup $resourceGroup -Name $name
+
+    # Get the public IP of the VM
+    $publicIp = Get-AzPublicIpAddress -Name $parameters.PublicIpAddressName -ResourceGroup $parameters.ResourceGroup
+
+    # Output the public IP details
+    $publicIp | Select-Object -Property Name, IpAddress, @{label='FQDN';expression={$_.DnsSettings.Fqdn}}
 
     # Output the result
-    Write-Output "Azure VM created successfully."
-
+    Write-Output "Azure VM '$($parameters.Name)' created successfully."
+    Write-Output "Public IP address: $($publicIp.IpAddress)"
 } catch {
-    # Log the error to the console
-
+    # Log the error to a file
+    $errorMessage = "Error: $($_.Exception.Message)"
     Write-Output "Error message $errorMessage"
 
-
-    Write-Error "Failed to create the Azure VM: $($_.Exception.Message)"
-
+    # Write the error to the console
+    Write-Error "Failed to create Azure VM: $($_.Exception.Message)"
 } finally {
     # Cleanup code if needed
     Write-Output "Script execution completed."

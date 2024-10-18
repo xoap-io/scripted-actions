@@ -48,24 +48,24 @@ param (
     [string]$Location = "westeurope",
     
     [Parameter(Mandatory=$true)]
-    [string]$ResourceGroupName,
+    [string]$ResourceGroup
 
-    [Parameter(Mandatory=$true)]
-    [securestring]$Password
+    #[Parameter(Mandatory=$true)]
+    #[securestring]$Password
 )
 # Retrieve the Host Pool
-$HostPool = Get-AzWvdHostPool -ResourceGroupName $ResourceGroupName -Name $HostPoolName
+$HostPool = Get-AzWvdHostPool -ResourceGroup $ResourceGroup -Name $HostPoolName
 if (-not $HostPool) {
-    Write-Error "Host Pool '$HostPoolName' not found in Resource Group '$ResourceGroupName' at location '$Location'."
+    Write-Error "Host Pool '$HostPoolName' not found in Resource Group '$ResourceGroup' at location '$Location'."
     exit
 }
 
 # Create a new registration token for the Host Pool
-New-AzWvdRegistrationInfo -ResourceGroupName $ResourceGroupName -HostPoolName $HostPoolName -ExpirationTime (Get-Date).AddDays(1).ToString("yyyy-MM-dd 12:00")
+New-AzWvdRegistrationInfo -ResourceGroup $ResourceGroup -HostPoolName $HostPoolName -ExpirationTime (Get-Date).AddDays(1).ToString("yyyy-MM-dd 12:00")
 
 $parameters = @{
     HostPoolName = $HostPoolName
-    ResourceGroupName = $ResourceGroupName
+    ResourceGroup = $ResourceGroup
 }
 
 $registrationkeytoken = (Get-AzWvdHostPoolRegistrationToken @parameters).Token
@@ -138,6 +138,11 @@ $ScriptBlock = {
     }
 
     try {
+        
+        #Install-Module -Name PowerShellGet -Force -Confirm
+        #Install-Module -Name Az -Repository PSGallery -Force -Confirm
+        #Update-Module -Name Az -Force -Confirm
+        
         # Uninstall existing installations if needed
         Uninstall-Package -ProductName $agentProductName
         Uninstall-Package -ProductName $bootLoaderProductName
@@ -167,10 +172,10 @@ $ScriptBlock = {
                 "options": 3
             }'
             ProtectedSettingString = '{
-            "password":"' + $(Get-AzKeyVaultSecret -VaultName "keyvault-test4353768787" -Name "VMjoin" -AsPlainText) + '"}'
+            "password":"' + $(Get-AzKeyVaultSecret -VaultName "azure-avd-keyvault" -Name "domain-join" -AsPlainText) + '"}'
             
             VMName                 = $VMName
-            ResourceGroupName      = $resourceGroupName
+            ResourceGroup      = $ResourceGroup
             location               = $Location
         }
         Set-AzVMExtension @domainJoinSettings
@@ -190,7 +195,7 @@ $ScriptBlock = {
                 }
             }"
             VMName             = $VMName
-            ResourceGroupName  = $resourceGroupName
+            ResourceGroup  = $ResourceGroup
             location           = $Location
         }
         Set-AzVMExtension @avdDscSettings  
@@ -208,7 +213,7 @@ try {
     # Run script on the VM
     Write-Host "Running script on $VmName..."
     $Script = [scriptblock]::create($ScriptBlock)
-    $cmdRes = Invoke-AzVMRunCommand -ResourceGroupName $resourceGroupName -VMName $VmName -CommandId 'RunPowerShellScript' -ScriptString $Script -Parameter @{'RegistrationKeyToken' = $registrationkeytoken;}
+    $cmdRes = Invoke-AzVMRunCommand -ResourceGroup $ResourceGroup -VMName $VmName -CommandId 'RunPowerShellScript' -ScriptString $Script -Parameter @{'RegistrationKeyToken' = $registrationkeytoken;}
     $cmdRes.Value | ForEach-Object { Write-Host $_.Message }
     Write-Host "Script execution completed on $VmName."
 } 

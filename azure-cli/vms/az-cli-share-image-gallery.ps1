@@ -7,7 +7,7 @@
 
     The script uses the following Azure CLI commands:
     az sig show `
-        --resource-group $AzResourceGroupName `
+        --resource-group $AzResourceGroup `
         --gallery-name $AzGalleryName `
         --query id
 
@@ -16,7 +16,7 @@
         --assignee $EmailAddress `
         --scope $GalleryId
 
-.PARAMETER AzResourceGroupName
+.PARAMETER AzResourceGroup
     Defines the name of the Azure Resource Group.
 
 .PARAMETER AzGalleryName
@@ -47,7 +47,7 @@
     Prompts you for confirmation before running the cmdlet.
 
 .EXAMPLE
-    .\az-cli-share-image-gallery.ps1 -AzResourceGroupName "MyResourceGroup" -AzGalleryName "MyGallery" -EmailAddress "user@example.com"
+    .\az-cli-share-image-gallery.ps1 -AzResourceGroup "MyResourceGroup" -AzGalleryName "MyGallery" -EmailAddress "user@example.com"
 
 .NOTES
     Author: Your Name
@@ -63,7 +63,7 @@
 param(
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
-    [string]$AzResourceGroupName = "myResourceGroup",
+    [string]$AzResourceGroup = "myResourceGroup",
 
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
@@ -93,7 +93,7 @@ param(
 
 # Splatting parameters for better readability
 $parameters = @{
-    resource_group   = $AzResourceGroupName
+    resource_group   = $AzResourceGroup
     gallery_name     = $AzGalleryName
     query            = "id"
     role             = "Reader"

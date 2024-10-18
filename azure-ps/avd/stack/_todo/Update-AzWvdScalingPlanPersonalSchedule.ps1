@@ -5,7 +5,7 @@ Updates an Azure Virtual Desktop Scaling Plan Pooled Schedule.
 .DESCRIPTION
 This script updates the properties of an Azure Virtual Desktop Scaling Plan Pooled Schedule.
 
-.PARAMETER ResourceGroupName
+.PARAMETER ResourceGroup
 The name of the resource group.
 
 .PARAMETER ScalingPlanName
@@ -80,7 +80,7 @@ The start time minute for ramp up.
 
 
 .EXAMPLE
-PS C:\> .\Update-AzWvdScalingPlanPooledSchedule.ps1 -ResourceGroupName "MyResourceGroup" -ScalingPlanName "MyScalingPlan" -ScalingPlanScheduleName "MySchedule"
+PS C:\> .\Update-AzWvdScalingPlanPooledSchedule.ps1 -ResourceGroup "MyResourceGroup" -ScalingPlanName "MyScalingPlan" -ScalingPlanScheduleName "MySchedule"
 
 .LINK
     https://learn.microsoft.com/en-us/powershell/module/az.DesktopVirtualization
@@ -98,7 +98,7 @@ PS C:\> .\Update-AzWvdScalingPlanPooledSchedule.ps1 -ResourceGroupName "MyResour
 
 param (
     [Parameter(Mandatory=$true)]
-    [string]$ResourceGroupName,
+    [string]$ResourceGroup,
 
     [Parameter(Mandatory=$true)]
     [string]$ScalingPlanName,
@@ -152,7 +152,7 @@ param (
 
 # Splatting parameters for better readability
 $parameters = @{
-    ResourceGroupName            = $ResourceGroupName
+    ResourceGroup            = $ResourceGroup
     ScalingPlanName              = $ScalingPlanName
     ScalingPlanScheduleName      = $ScalingPlanScheduleName
     DaysOfWeek                   = $DaysOfWeek

@@ -5,7 +5,7 @@
 .DESCRIPTION
     This script creates a new Azure Storage Account with the specified parameters.
 
-.PARAMETER ResourceGroupName
+.PARAMETER ResourceGroup
     The name of the Resource Group where the Storage Account will be created.
 
 .PARAMETER Name
@@ -144,7 +144,7 @@
     The routing choice.
 
 .EXAMPLE
-    .\New-AzStorageAccount.ps1 -ResourceGroupName "MyResourceGroup" -Name "MyStorageAccount" -SkuName "Standard_LRS" -Location "eastus" -Kind "StorageV2"
+    .\New-AzStorageAccount.ps1 -ResourceGroup "MyResourceGroup" -Name "MyStorageAccount" -SkuName "Standard_LRS" -Location "eastus" -Kind "StorageV2"
 
     This command creates a new ure Storage Account named 'MyStorageAccount' in the 'MyResourceGroup' Resource Group located in the 'eastus' region with the 'Standard_LRS' SKU and 'StorageV2' kind.
 
@@ -160,12 +160,11 @@
 .COMPONENT
     Azure PowerShell
 #>
-
 [CmdletBinding()]
 param(
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
-    [string]$ResourceGroupName,
+    [string]$ResourceGroup,
 
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
@@ -264,10 +263,9 @@ param(
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
     [ValidateSet(
-        'None',
         'SystemAssigned', 
         'UserAssigned', 
-        'SystemAssigned,UserAssigned'
+        'SystemAssigned, UserAssigned'
     )]
     [string]$IdentityType,
 
@@ -440,184 +438,184 @@ param(
     [string]$RoutingChoice
 )
 
-# Splatting parameters for better readability
-$parameters = @{
-    ResourceGroupName = $ResourceGroupName
-    Name              = $Name
-    SkuName           = $SkuName
-    Location          = $Location
-    Kind              = $Kind
-    AccessTier        = $AccessTier
-}
-
-if ($CustomDomainName) {
-    $parameters['CustomDomainName'], $CustomDomainName
-}
-
-if ($UseSubDomain) {
-    $parameters['UseSubDomain'], $UseSubDomain
-}
-
-if ($Tags) {
-    $parameters['Tag'], $Tags
-}
-
-if ($EnableHttpsTrafficOnly) {
-    $parameters['EnableHttpsTrafficOnly'], $EnableHttpsTrafficOnly
-}
-
-if ($AssignIdentity) {
-    $parameters['AssignIdentity'], $AssignIdentity
-}
-
-if ($UserAssignedIdentityId) {
-    $parameters['UserAssignedIdentityId'], $UserAssignedIdentityId
-}
-
-if ($IdentityType) {
-    $parameters['IdentityType'], $IdentityType
-}
-
-if ($KeyVaultUserAssignedIdentityId) {
-    $parameters['KeyVaultUserAssignedIdentityId'], $KeyVaultUserAssignedIdentityId
-}
-
-if ($KeyVaultFederatedClientId) {
-    $parameters['KeyVaultFederatedClientId'], $KeyVaultFederatedClientId
-}
-
-if ($KeyName) {
-    $parameters['KeyName'], $KeyName
-}
-
-if ($KeyVersion) {
-    $parameters['KeyVersion'], $KeyVersion
-}
-
-if ($KeyVaultUri) {
-    $parameters['KeyVaultUri'], $KeyVaultUri
-}
-
-#if ($NetworkRuleSet) {
-#    $parameters['NetworkRuleSet'], $NetworkRuleSet
-#}
-
-if ($EnableSftp) {
-    $parameters['EnableSftp'], $EnableSftp
-}
-
-if ($EnableLocalUser) {
-    $parameters['EnableLocalUser'], $EnableLocalUser
-}
-
-if ($EnableHierarchicalNamespace) {
-    $parameters['EnableHierarchicalNamespace'], $EnableHierarchicalNamespace
-}
-
-if ($EnableLargeFileShare) {
-    $parameters['EnableLargeFileShare'], $EnableLargeFileShare
-}
-
-if ($PublishMicrosoftEndpoint) {
-    $parameters['PublishMicrosoftEndpoint'], $PublishMicrosoftEndpoint
-}
-
-if ($PublishInternetEndpoint) {
-    $parameters['PublishInternetEndpoint'], $PublishInternetEndpoint
-}
-
-if ($EnableureActiveDirectoryDomainServicesForFile) {
-    $parameters['EnableActiveDirectoryDomainServicesForFile'], $EnableureActiveDirectoryDomainServicesForFile
-}
-
-if ($ActiveDirectoryDomainName) {
-    $parameters['ActiveDirectoryDomainName'], $ActiveDirectoryDomainName
-}
-
-if ($ActiveDirectoryDomainGuid) {
-    $parameters['ActiveDirectoryDomainGuid'], $ActiveDirectoryDomainGuid
-}
-
-if ($EncryptionKeyTypeForTable) {
-    $parameters['EncryptionKeyTypeForTable'], $EncryptionKeyTypeForTable
-}
-
-if ($EncryptionKeyTypeForQueue) {
-    $parameters['EncryptionKeyTypeForQueue'], $EncryptionKeyTypeForQueue
-}
-
-if ($RequireInfrastructureEncryption) {
-    $parameters['RequireInfrastructureEncryption'], $RequireInfrastructureEncryption
-}
-
-#if ($SasExpirationPeriod) {
-#    $parameters['SasExpirationPeriod'], $SasExpirationPeriod
-#}
-
-if ($KeyExpirationPeriodInDay) {
-    $parameters['KeyExpirationPeriodInDay'], $KeyExpirationPeriodInDay
-}
-
-if ($AllowBlobPublicAccess) {
-    $parameters['AllowBlobPublicAccess'], $AllowBlobPublicAccess
-}
-
-if ($MinimumTlsVersion) {
-    $parameters['MinimumTlsVersion'], $MinimumTlsVersion
-}
-
-if ($AllowSharedKeyAccess) {
-    $parameters['AllowSharedKeyAccess'], $AllowSharedKeyAccess
-}
-
-if ($EnableNfsV3) {
-    $parameters['EnableNfsV3'], $EnableNfsV3
-}
-
-if ($AllowCrossTenantReplication) {
-    $parameters['AllowCrossTenantReplication'], $AllowCrossTenantReplication
-}
-
-if ($DefaultSharePermission) {
-    $parameters['DefaultSharePermission'], $DefaultSharePermission
-}
-
-if ($EdgeZone) {
-    $parameters['EdgeZone'], $EdgeZone
-}
-
-if ($PublicNetworkAccess) {
-    $parameters['PublicNetworkAccess'], $PublicNetworkAccess
-}
-
-if ($EnableAccountLevelImmutability) {
-    $parameters['EnableAccountLevelImmutability'], $EnableAccountLevelImmutability
-}
-
-if ($ImmutabilityPeriod) {
-    $parameters['ImmutabilityPeriod'], $ImmutabilityPeriod
-}
-
-if ($ImmutabilityPolicyState) {
-    $parameters['ImmutabilityPolicyState'], $ImmutabilityPolicyState
-}
-
-if ($AllowedCopyScope) {
-    $parameters['AllowedCopyScope'], $AllowedCopyScope
-}
-
-if ($DnsEndpointType) {
-    $parameters['DnsEndpointType'], $DnsEndpointType
-}
-
-if ($RoutingChoice) {
-    $parameters['RoutingChoice'], $RoutingChoice
-}
-
 # Set Error Action to Silently Continue
 $ErrorActionPreference = "Stop"
 
 try {
+    # Splatting parameters for better readability
+    $parameters = @{
+        ResourceGroup = $ResourceGroup
+        Name              = $Name
+        SkuName           = $SkuName
+        Location          = $Location
+        Kind              = $Kind
+        AccessTier        = $AccessTier
+    }
+
+    if ($CustomDomainName) {
+        $parameters['CustomDomainName'] = $CustomDomainName
+    }
+
+    if ($UseSubDomain) {
+        $parameters['UseSubDomain'] = $UseSubDomain
+    }
+
+    if ($Tags) {
+        $parameters['Tag'], $Tags
+    }
+
+    if ($EnableHttpsTrafficOnly) {
+        $parameters['EnableHttpsTrafficOnly'] = $EnableHttpsTrafficOnly
+    }
+
+    if ($AssignIdentity) {
+        $parameters['AssignIdentity'] = $AssignIdentity
+    }
+
+    if ($UserAssignedIdentityId) {
+        $parameters['UserAssignedIdentityId'] = $UserAssignedIdentityId
+    }
+
+    if ($IdentityType) {
+        $parameters['IdentityType'] = $IdentityType
+    }
+
+    if ($KeyVaultUserAssignedIdentityId) {
+        $parameters['KeyVaultUserAssignedIdentityId'] = $KeyVaultUserAssignedIdentityId
+    }
+
+    if ($KeyVaultFederatedClientId) {
+        $parameters['KeyVaultFederatedClientId'] = $KeyVaultFederatedClientId
+    }
+
+    if ($KeyName) {
+        $parameters['KeyName'] = $KeyName
+    }
+
+    if ($KeyVersion) {
+        $parameters['KeyVersion'] = $KeyVersion
+    }
+
+    if ($KeyVaultUri) {
+        $parameters['KeyVaultUri'] = $KeyVaultUri
+    }
+
+    #if ($NetworkRuleSet) {
+    #    $parameters['NetworkRuleSet'] = $NetworkRuleSet
+    #}
+
+    if ($EnableSftp) {
+        $parameters['EnableSftp'] = $EnableSftp
+    }
+
+    if ($EnableLocalUser) {
+        $parameters['EnableLocalUser'] = $EnableLocalUser
+    }
+
+    if ($EnableHierarchicalNamespace) {
+        $parameters['EnableHierarchicalNamespace'] = $EnableHierarchicalNamespace
+    }
+
+    if ($EnableLargeFileShare) {
+        $parameters['EnableLargeFileShare'] = $EnableLargeFileShare
+    }
+
+    if ($PublishMicrosoftEndpoint) {
+        $parameters['PublishMicrosoftEndpoint'] = $PublishMicrosoftEndpoint
+    }
+
+    if ($PublishInternetEndpoint) {
+        $parameters['PublishInternetEndpoint'] = $PublishInternetEndpoint
+    }
+
+    if ($EnableureActiveDirectoryDomainServicesForFile) {
+        $parameters['EnableActiveDirectoryDomainServicesForFile'] = $EnableureActiveDirectoryDomainServicesForFile
+    }
+
+    if ($ActiveDirectoryDomainName) {
+        $parameters['ActiveDirectoryDomainName'] = $ActiveDirectoryDomainName
+    }
+
+    if ($ActiveDirectoryDomainGuid) {
+        $parameters['ActiveDirectoryDomainGuid'] = $ActiveDirectoryDomainGuid
+    }
+
+    if ($EncryptionKeyTypeForTable) {
+        $parameters['EncryptionKeyTypeForTable'] = $EncryptionKeyTypeForTable
+    }
+
+    if ($EncryptionKeyTypeForQueue) {
+        $parameters['EncryptionKeyTypeForQueue'] = $EncryptionKeyTypeForQueue
+    }
+
+    if ($RequireInfrastructureEncryption) {
+        $parameters['RequireInfrastructureEncryption'] = $RequireInfrastructureEncryption
+    }
+
+    #if ($SasExpirationPeriod) {
+    #    $parameters['SasExpirationPeriod'] = $SasExpirationPeriod
+    #}
+
+    if ($KeyExpirationPeriodInDay) {
+        $parameters['KeyExpirationPeriodInDay'] = $KeyExpirationPeriodInDay
+    }
+
+    if ($AllowBlobPublicAccess) {
+        $parameters['AllowBlobPublicAccess'] = $AllowBlobPublicAccess
+    }
+
+    if ($MinimumTlsVersion) {
+        $parameters['MinimumTlsVersion'] = $MinimumTlsVersion
+    }
+
+    if ($AllowSharedKeyAccess) {
+        $parameters['AllowSharedKeyAccess'] = $AllowSharedKeyAccess
+    }
+
+    if ($EnableNfsV3) {
+        $parameters['EnableNfsV3'] = $EnableNfsV3
+    }
+
+    if ($AllowCrossTenantReplication) {
+        $parameters['AllowCrossTenantReplication'] = $AllowCrossTenantReplication
+    }
+
+    if ($DefaultSharePermission) {
+        $parameters['DefaultSharePermission'] = $DefaultSharePermission
+    }
+
+    if ($EdgeZone) {
+        $parameters['EdgeZone'] = $EdgeZone
+    }
+
+    if ($PublicNetworkAccess) {
+        $parameters['PublicNetworkAccess'] = $PublicNetworkAccess
+    }
+
+    if ($EnableAccountLevelImmutability) {
+        $parameters['EnableAccountLevelImmutability'] = $EnableAccountLevelImmutability
+    }
+
+    if ($ImmutabilityPeriod) {
+        $parameters['ImmutabilityPeriod'] = $ImmutabilityPeriod
+    }
+
+    if ($ImmutabilityPolicyState) {
+        $parameters['ImmutabilityPolicyState'] = $ImmutabilityPolicyState
+    }
+
+    if ($AllowedCopyScope) {
+        $parameters['AllowedCopyScope'] = $AllowedCopyScope
+    }
+
+    if ($DnsEndpointType) {
+        $parameters['DnsEndpointType'] = $DnsEndpointType
+    }
+
+    if ($RoutingChoice) {
+        $parameters['RoutingChoice'] = $RoutingChoice
+    }
+
     # Create the virtual network and capture the result
     $result = New-AzStorageAccount @parameters
 
@@ -626,7 +624,7 @@ try {
     Write-Output $result
 
 } catch [System.Exception] {
-
+    # Write the error to the console
     Write-Error "Failed to create the Storage account: $($_.Exception.Message)"
 
 } finally {

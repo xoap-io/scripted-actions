@@ -88,11 +88,11 @@ param (
 
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
-    [string]$NetResourceGroupName,
+    [string]$NetResourceGroup,
 
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
-    [string]$ResourceGroupName,
+    [string]$ResourceGroup,
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
@@ -101,7 +101,7 @@ param (
 
 # Configure the NIC with static IP
 try {
-    $nic = New-AzNetworkInterface -ResourceGroupName $ResourceGroupName `
+    $nic = New-AzNetworkInterface -ResourceGroup $ResourceGroup `
         -Name ($VmName + '_nic0') `
         -Location $Location `
         -SubnetId $subnet.Id `
@@ -137,7 +137,7 @@ Write-Output $vmConfig
 
 # Create the VM
 try {
-    $virtualMachine = New-AzVM -ResourceGroupName $ResourceGroupName `
+    $virtualMachine = New-AzVM -ResourceGroup $ResourceGroup `
         -Location $Location `
         -VM $vmConfig -ErrorAction Stop
     Write-Output "AVD VM $VmName created successfully with static IP $IpAddress."
@@ -148,7 +148,7 @@ try {
 
 # Assign tags to the VM
 try {
-    $VirtualMachine = Get-AzVM -ResourceGroupName $ResourceGroupName -Name $VMName
+    $VirtualMachine = Get-AzVM -ResourceGroup $ResourceGroup -Name $VMName
     Update-AzTag -ResourceId $VirtualMachine.Id -Tag $tags -Operation Merge 
     Write-Output "Tags are added to the virtual machine: $_"
     

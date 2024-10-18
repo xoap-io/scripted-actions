@@ -8,11 +8,11 @@
 .PARAMETER Name
     The name of the host pool.
 
-.PARAMETER ResourceGroupName
+.PARAMETER ResourceGroup
     The name of the resource group.
 
 .EXAMPLE
-    PS C:\> .\Remove-AzWvdHostPool.ps1 -Name "MyHostPool" -ResourceGroupName "MyResourceGroup"
+    PS C:\> .\Remove-AzWvdHostPool.ps1 -Name "MyHostPool" -ResourceGroup "MyResourceGroup"
 
 .LINK
     https://learn.microsoft.com/en-us/powershell/module/az.DesktopVirtualization
@@ -36,13 +36,13 @@ param (
 
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
-    [string]$ResourceGroupName
+    [string]$ResourceGroup
 )
 
 # Splatting parameters for better readability
 $parameters = @{
     Name              = $Name
-    ResourceGroupName = $ResourceGroupName
+    ResourceGroup = $ResourceGroup
 }
 
 # Set Error Action to Stop

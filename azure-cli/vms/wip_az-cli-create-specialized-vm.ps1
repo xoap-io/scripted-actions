@@ -5,7 +5,7 @@
 .DESCRIPTION
     This script creates an Azure specialized VM from an existing image in a shared image gallery. It registers necessary providers, creates a resource group, and creates a VM with the specified parameters.
 
-.PARAMETER AzResourceGroupName
+.PARAMETER AzResourceGroup
     Defines the name of the Azure Resource Group.
 
 .PARAMETER AzOpenPorts
@@ -42,7 +42,7 @@
     Prompts you for confirmation before running the cmdlet.
 
 .EXAMPLE
-    .\wip_az-cli-create-specialized-vm.ps1 -AzResourceGroupName "myResourceGroup" -AzOpenPorts "3389" -AzVmName "myVM2" -AzImageId "/subscriptions/<Subscription ID>/resourceGroups/myGalleryRG/providers/Microsoft.Compute/galleries/myGallery/images/myImageDefinition" -AzLocation "eastus"
+    .\wip_az-cli-create-specialized-vm.ps1 -AzResourceGroup "myResourceGroup" -AzOpenPorts "3389" -AzVmName "myVM2" -AzImageId "/subscriptions/<Subscription ID>/resourceGroups/myGalleryRG/providers/Microsoft.Compute/galleries/myGallery/images/myImageDefinition" -AzLocation "eastus"
 
 .NOTES
     Author: Your Name
@@ -58,7 +58,7 @@
 param(
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
-    [string]$AzResourceGroupName = 'myResourceGroup',
+    [string]$AzResourceGroup = 'myResourceGroup',
 
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
@@ -96,7 +96,7 @@ param(
 
 # Splatting parameters for better readability
 $parameters = @{
-    resource_group   = $AzResourceGroupName
+    resource_group   = $AzResourceGroup
     open_ports       = $AzOpenPorts
     vm_name          = $AzVmName
     image_id         = $AzImageId

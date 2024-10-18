@@ -11,14 +11,14 @@
 .PARAMETER Id
     The ID of the user session.
 
-.PARAMETER ResourceGroupName
+.PARAMETER ResourceGroup
     The name of the resource group.
 
 .PARAMETER SessionHostName
     The name of the session host.
 
 .EXAMPLE
-    PS C:\> .\Remove-AzWvdUserSession.ps1 -HostPoolName "MyHostPool" -Id "12345" -ResourceGroupName "MyResourceGroup" -SessionHostName "MySessionHost"
+    PS C:\> .\Remove-AzWvdUserSession.ps1 -HostPoolName "MyHostPool" -Id "12345" -ResourceGroup "MyResourceGroup" -SessionHostName "MySessionHost"
 
 .LINK
     https://learn.microsoft.com/en-us/powershell/module/az.DesktopVirtualization
@@ -46,7 +46,7 @@ param (
 
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
-    [string]$ResourceGroupName,
+    [string]$ResourceGroup,
 
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
@@ -57,7 +57,7 @@ param (
 $parameters = @{
     HostPoolName      = $HostPoolName
     Id                = $Id
-    ResourceGroupName = $ResourceGroupName
+    ResourceGroup = $ResourceGroup
     SessionHostName   = $SessionHostName
 }
 

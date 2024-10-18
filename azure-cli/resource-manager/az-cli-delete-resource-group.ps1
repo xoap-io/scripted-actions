@@ -9,7 +9,7 @@
 
     The script uses the following Azure CLI command:
     az group delete `
-        --resource-group $AzResourceGroupName
+        --resource-group $AzResourceGroup
 
     The script sets the ErrorActionPreference to SilentlyContinue to suppress error messages.
     
@@ -99,7 +99,6 @@ try {
 
 } catch {
     # Log the error to the console
-
     Write-Output "Error message $errorMessage"
     Write-Error "Failed to delete the Azure Resource Group: $($_.Exception.Message)"
 

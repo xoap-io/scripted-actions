@@ -5,7 +5,7 @@
 .DESCRIPTION
     This script updates an Azure Virtual Desktop workspace with the Azure CLI.
     The script uses the following Azure CLI command:
-    az desktopvirtualization workspace update --name $AzWorkspaceName --resource-group $AzResourceGroupName
+    az desktopvirtualization workspace update --name $AzWorkspaceName --resource-group $AzResourceGroup
 
 .PARAMETER Add
     Add an object to a list of objects by specifying a path and key value pairs.
@@ -41,7 +41,7 @@
     The tags for the Azure Virtual Desktop workspace.
 
 .EXAMPLE
-    .\az-cli-avd-workspace-update.ps1 -AzWorkspaceName "MyWorkspace" -AzResourceGroupName "MyResourceGroup"
+    .\az-cli-avd-workspace-update.ps1 -AzWorkspaceName "MyWorkspace" -AzResourceGroup "MyResourceGroup"
 
 .LINK
     https://learn.microsoft.com/en-us/cli/azure/desktopvirtualization/workspace
@@ -104,19 +104,18 @@ param(
 )
 
 # Splatting parameters for better readability
-$parameters = @{
-    '--add' = $Add
-    '--application-group-references' = $ApplicationGroupReferences
-    '--description' = $Description
-    '--force-string' = $ForceString
-    '--friendly-name' = $FriendlyName
-    '--ids' = $Ids
-    '--name' = $Name
-    '--remove' = $Remove
-    '--resource-group' = $ResourceGroup
-    '--set' = $Set
-    '--tags' = $Tags
-}
+$parameters = `
+    '--add', $Add
+    '--application-group-references', $ApplicationGroupReferences
+    '--description', $Description
+    '--force-string', $ForceString
+    '--friendly-name', $FriendlyName
+    '--ids', $Ids
+    '--name', $Name
+    '--remove', $Remove
+    '--resource-group', $ResourceGroup
+    '--set', $Set
+    '--tags', $Tags
 
 # Set Error Action to Stop
 $ErrorActionPreference = "Stop"

@@ -5,7 +5,7 @@
 .DESCRIPTION
     This script removes a specified scaling plan pooled schedule from an Azure Virtual Desktop environment.
 
-.PARAMETER ResourceGroupName
+.PARAMETER ResourceGroup
     The name of the resource group.
 
 .PARAMETER ScalingPlanName
@@ -15,7 +15,7 @@
     The name of the scaling plan schedule.
 
 .EXAMPLE
-    PS C:\> .\Remove-AzWvdScalingPlanPooledSchedule.ps1 -ResourceGroupName "MyResourceGroup" -ScalingPlanName "MyScalingPlan" -ScalingPlanScheduleName "MySchedule"
+    PS C:\> .\Remove-AzWvdScalingPlanPooledSchedule.ps1 -ResourceGroup "MyResourceGroup" -ScalingPlanName "MyScalingPlan" -ScalingPlanScheduleName "MySchedule"
 
 .LINK
     https://learn.microsoft.com/en-us/powershell/module/az.DesktopVirtualization
@@ -35,7 +35,7 @@
 param (
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
-    [string]$ResourceGroupName,
+    [string]$ResourceGroup,
 
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
@@ -48,7 +48,7 @@ param (
 
 # Splatting parameters for better readability
 $parameters = @{
-    ResourceGroupName       = $ResourceGroupName
+    ResourceGroup       = $ResourceGroup
     ScalingPlanName         = $ScalingPlanName
     ScalingPlanScheduleName = $ScalingPlanScheduleName
 }

@@ -5,7 +5,7 @@
 .DESCRIPTION
     This script shows details of an Azure Virtual Desktop Host Pool with the Azure CLI.
     The script uses the following Azure CLI command:
-    az desktopvirtualization hostpool show --name $AzHostPoolName --resource-group $AzResourceGroupName
+    az desktopvirtualization hostpool show --name $AzHostPoolName --resource-group $AzResourceGroup
 
 .PARAMETER IDs
     One or more resource IDs (space-delimited).
@@ -13,11 +13,11 @@
 .PARAMETER Name
     The name of the Azure Virtual Desktop Host Pool.
 
-.PARAMETER ResourceGroupName
+.PARAMETER ResourceGroup
     The name of the Azure Resource Group.
 
 .EXAMPLE
-    .\az-cli-avd-hostpool-show.ps1 -AzHostPoolName "MyHostPool" -AzResourceGroupName "MyResourceGroup"
+    .\az-cli-avd-hostpool-show.ps1 -AzHostPoolName "MyHostPool" -AzResourceGroup "MyResourceGroup"
 
 .LINK
     https://learn.microsoft.com/en-us/cli/azure/desktopvirtualization/hostpool
@@ -44,15 +44,14 @@ param(
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
-    [string]$ResourceGroupName
+    [string]$ResourceGroup
 )
 
 # Splatting parameters for better readability
-$parameters = @{
-    '--ids' = $Ids
-    '--name' = $HostPoolName
-    '--resource-group' = $ResourceGroupName
-}
+$parameters = `
+    '--ids', $Ids
+    '--name', $HostPoolName
+    '--resource-group', $ResourceGroup
 
 # Set Error Action to Stop
 $ErrorActionPreference = "Stop"
@@ -66,10 +65,7 @@ try {
 
 } catch {
     # Log the error to the console
-
     Write-Output "Error message $errorMessage"
-
-
     Write-Error "Failed to retrieve the Azure Virtual Desktop Host Pool details: $($_.Exception.Message)"
 
 } finally {

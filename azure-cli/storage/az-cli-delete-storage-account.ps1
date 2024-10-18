@@ -5,7 +5,7 @@
 .DESCRIPTION
     This script deletes a new Azure Storage Account with the Azure CLI.
     The script uses the following Azure CLI command:
-    az storage account delete --name $StorageAccountName --resource-group $ResourceGroupName
+    az storage account delete --name $StorageAccountName --resource-group $ResourceGroup
 
 
 
@@ -22,7 +22,7 @@
 
 
 .EXAMPLE
-    .\az-cli-create-storage-account.ps1 -AzStorageAccountName "MyStorageAccount" -AzResourceGroupName "MyResourceGroup" -AzLocation "eastus" -AzStorageSku "Standard_LRS"
+    .\az-cli-create-storage-account.ps1 -AzStorageAccountName "MyStorageAccount" -AzResourceGroup "MyResourceGroup" -AzLocation "eastus" -AzStorageSku "Standard_LRS"
 
 .LINK
     https://learn.microsoft.com/en-us/cli/azure/storage/account
@@ -41,10 +41,6 @@
 param(
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
-    [string]$Ids,
-
-    [Parameter(Mandatory=$true)]
-    [ValidateNotNullOrEmpty()]
     [string]$Name,
 
     [Parameter(Mandatory=$true)]
@@ -53,12 +49,16 @@ param(
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
+    [string]$Ids,
+
+    [Parameter(Mandatory=$false)]
+    [ValidateNotNullOrEmpty()]
     [bool]$Yes
 )
 
 # Splatting parameters for better readability
 $parameters = `
-    '--name', $Name ,`
+    '--name', $Name
     '--resource-group', $ResourceGroup
 
 if ($Yes) {
@@ -81,7 +81,6 @@ try {
 
 } catch {
     # Log the error to the console
-
     Write-Output "Error message $errorMessage"
     Write-Error "Failed to delete the Azure Storage Account: $($_.Exception.Message)"
 

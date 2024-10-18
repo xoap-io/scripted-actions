@@ -5,7 +5,7 @@
 .DESCRIPTION
     This script creates a new Azure Image Definition in a Shared Image Gallery with the Azure CLI.
     The script uses the following Azure CLI command:
-    az sig image-definition create --resource-group $AzResourceGroupName --gallery-name $AzGalleryName --gallery-image-definition $AzImageDefinition --publisher $AzImagePublisher --offer $AzImageOffer --sku $AzImageSku --os-type $AzImageType --os-state $AzOsState
+    az sig image-definition create --resource-group $AzResourceGroup --gallery-name $AzGalleryName --gallery-image-definition $AzImageDefinition --publisher $AzImagePublisher --offer $AzImageOffer --sku $AzImageSku --os-type $AzImageType --os-state $AzOsState
 
 .PARAMETER ImageDefinition
     Defines the name of the Azure Image Definition.
@@ -86,7 +86,7 @@
     Defines the tags of the Azure Image Definition.
 
 .EXAMPLE
-    .\az-cli-create-image-definition.ps1 -ResourceGroupName "MyResourceGroup" -GalleryName "MyGallery" -ImageDefinition "MyImageDefinition" -ImagePublisher "MicrosoftWindowsDesktop" -ImageOffer "Windows-11" -ImageSku "win11-23h2-entn" -ImageType "Windows" -OsState "Generalized"
+    .\az-cli-create-image-definition.ps1 -ResourceGroup "MyResourceGroup" -GalleryName "MyGallery" -ImageDefinition "MyImageDefinition" -ImagePublisher "MicrosoftWindowsDesktop" -ImageOffer "Windows-11" -ImageSku "win11-23h2-entn" -ImageType "Windows" -OsState "Generalized"
 
 .LINK
     https://learn.microsoft.com/en-us/cli/azure/sig/image-definition
@@ -245,12 +245,12 @@ param(
 
 # Splatting parameters for better readability
 $parameters = `
-    '--gallery-image-definition',  $ImageDefinition,`
-    '--gallery-name', $AzGalleryName,`
-    '--offer', $AzImageOffer,`
-    '--os-type', $AzImageType,`
-    '--publisher', $AzImagePublisher,`
-    '--resource-group', $AzResourceGroupName,`
+    '--gallery-image-definition',  $ImageDefinition
+    '--gallery-name', $AzGalleryName
+    '--offer', $AzImageOffer
+    '--os-type', $AzImageType
+    '--publisher', $AzImagePublisher
+    '--resource-group', $AzResourceGroup
     '--sku', $AzImageSku
 
 if ($Architecture) {
@@ -341,7 +341,6 @@ try {
 
 } catch {
     # Log the error to the console
-
     Write-Output "Error message $errorMessage"
     Write-Error "Failed to create the Azure Image Definition: $($_.Exception.Message)"
 

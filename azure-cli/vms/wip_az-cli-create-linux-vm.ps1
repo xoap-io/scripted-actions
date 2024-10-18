@@ -5,7 +5,7 @@
 .DESCRIPTION
     This script creates an Azure Linux VM. It registers necessary providers, creates a resource group, and creates a VM with the specified parameters.
 
-.PARAMETER AzResourceGroupName
+.PARAMETER AzResourceGroup
     Defines the name of the Azure Resource Group.
 
 .PARAMETER AzOpenPorts
@@ -36,7 +36,7 @@
     Prompts you for confirmation before running the cmdlet.
 
 .EXAMPLE
-    .\wip_az-cli-create-linux-vm.ps1 -AzResourceGroupName "myResourceGroup" -AzOpenPorts "3389" -AzVmSize "Standard_A1_v2"
+    .\wip_az-cli-create-linux-vm.ps1 -AzResourceGroup "myResourceGroup" -AzOpenPorts "3389" -AzVmSize "Standard_A1_v2"
 
 .NOTES
     Author: Your Name
@@ -52,7 +52,7 @@
 param(
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
-    [string]$AzResourceGroupName = 'myResourceGroup',
+    [string]$AzResourceGroup = 'myResourceGroup',
 
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
@@ -82,7 +82,7 @@ param(
 
 # Splatting parameters for better readability
 $parameters = @{
-    resource_group   = $AzResourceGroupName
+    resource_group   = $AzResourceGroup
     open_ports       = $AzOpenPorts
     vm_size          = $AzVmSize
     debug            = $AzDebug

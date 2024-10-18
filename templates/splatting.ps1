@@ -8,7 +8,7 @@
     The script allows additional configurations for the Host Pool, such as host pool type, load balancer type, preferred application group type, etc.
     The script will validate the parameters, execute the creation command, and handle any errors that occur during the process.
 
-.PARAMETER ResourceGroupName
+.PARAMETER ResourceGroup
     The name of the Azure Resource Group where the Host Pool will be created. This parameter is mandatory.
 
 .PARAMETER HostPoolName
@@ -45,7 +45,7 @@
     A hashtable of tags to apply to the Host Pool. This parameter is optional.
 
 .EXAMPLE
-    .\New-WvdHostPool.ps1 -ResourceGroupName "MyResourceGroup" -HostPoolName "MyHostPool" -Location "eastus" -HostPoolType "Pooled"
+    .\New-WvdHostPool.ps1 -ResourceGroup "MyResourceGroup" -HostPoolName "MyHostPool" -Location "eastus" -HostPoolType "Pooled"
 
     This command creates a new WVD Host Pool named 'MyHostPool' in the 'MyResourceGroup' Resource Group located in the 'eastus' region with the 'Pooled' host pool type.
 
@@ -73,7 +73,7 @@
 param(
     [Parameter(Mandatory = $true)]
     [ValidateNotNullOrEmpty()]   
-    [string]$ResourceGroupName,
+    [string]$ResourceGroup,
 
     [Parameter(Mandatory = $true)]
     [ValidateNotNullOrEmpty()]
@@ -129,7 +129,7 @@ param(
 $ErrorActionPreference = "Stop"
 
 $Parameters = @{
-    ResourceGroupName      = $ResourceGroupName
+    ResourceGroup      = $ResourceGroup
     HostPoolName           = $HostPoolName
     Location               = $Location
     HostPoolType           = $HostPoolType
@@ -145,7 +145,7 @@ $Parameters = @{
 
 try {
     # Start creating the Host Pool
-    Write-Output "Creating Host Pool '$HostPoolName' in Resource Group '$ResourceGroupName' at Location '$Location'..."
+    Write-Output "Creating Host Pool '$HostPoolName' in Resource Group '$ResourceGroup' at Location '$Location'..."
     $hostPool = New-AzWvdHostPool @Parameters
     Write-Output "Host Pool '$HostPoolName' created successfully in '$Location'."
     $hostPool

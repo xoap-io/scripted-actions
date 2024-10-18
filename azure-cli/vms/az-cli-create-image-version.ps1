@@ -5,9 +5,9 @@
 .DESCRIPTION
     This script creates a new version of an Azure Gallery Image with the Azure CLI.
     The script uses the following Azure CLI command:
-    az sig image-version create --resource-group $AzResourceGroupName --gallery-name $AzGallery --gallery-image-definition $AzImageDefinition --gallery-image-version $AzGalleryImageVersion --target-regions $AzTargetRegions --replica-count $AzReplicaCount --managed-image /subscriptions/$AzSubscriptionId/resourceGroups/$AzResourceGroupName/providers/Microsoft.Compute/virtualMachines/$AzVmName
+    az sig image-version create --resource-group $AzResourceGroup --gallery-name $AzGallery --gallery-image-definition $AzImageDefinition --gallery-image-version $AzGalleryImageVersion --target-regions $AzTargetRegions --replica-count $AzReplicaCount --managed-image /subscriptions/$AzSubscriptionId/resourceGroups/$AzResourceGroup/providers/Microsoft.Compute/virtualMachines/$AzVmName
 
-.PARAMETER AzResourceGroupName
+.PARAMETER AzResourceGroup
     Defines the name of the Azure Resource Group.
 
 .PARAMETER AzGallery
@@ -68,7 +68,7 @@
     Prompts you for confirmation before running the cmdlet.
 
 .EXAMPLE
-    .\az-cli-create-image-version.ps1 -AzResourceGroupName "MyResourceGroup" -AzGallery "MyGallery" -AzImageDefinition "MyImageDefinition" -AzGalleryImageVersion "1.0.0" -AzTargetRegions "westus" -AzReplicaCount 1 -AzSubscriptionId "00000000-0000-0000-0000-000000000000" -AzVmName "MyVm"
+    .\az-cli-create-image-version.ps1 -AzResourceGroup "MyResourceGroup" -AzGallery "MyGallery" -AzImageDefinition "MyImageDefinition" -AzGalleryImageVersion "1.0.0" -AzTargetRegions "westus" -AzReplicaCount 1 -AzSubscriptionId "00000000-0000-0000-0000-000000000000" -AzVmName "MyVm"
 
 .NOTES
     Author: Your Name
@@ -84,7 +84,7 @@
 param(
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
-    [string]$AzResourceGroupName = "MyResourceGroup",
+    [string]$AzResourceGroup = "MyResourceGroup",
 
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
@@ -149,13 +149,13 @@ param(
 
 # Splatting parameters for better readability
 $parameters = @{
-    resource_group            = $AzResourceGroupName
+    resource_group            = $AzResourceGroup
     gallery_name              = $AzGallery
     gallery_image_definition  = $AzImageDefinition
     gallery_image_version     = $AzGalleryImageVersion
     target_regions            = $AzTargetRegions
     replica_count             = $AzReplicaCount
-    managed_image             = "/subscriptions/$AzSubscriptionId/resourceGroups/$AzResourceGroupName/providers/Microsoft.Compute/virtualMachines/$AzVmName"
+    managed_image             = "/subscriptions/$AzSubscriptionId/resourceGroups/$AzResourceGroup/providers/Microsoft.Compute/virtualMachines/$AzVmName"
     location                  = $AzLocation
     exclude_from_latest       = $AzExcludeFromLatest
     end_of_life_date          = $AzEndOfLifeDate

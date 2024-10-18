@@ -8,7 +8,7 @@
 .PARAMETER Name
     The name of the application group.
 
-.PARAMETER ResourceGroupName
+.PARAMETER ResourceGroup
     The name of the resource group.
 
 .PARAMETER Description
@@ -24,7 +24,7 @@
     A hashtable of tags to assign to the application group.
 
 .EXAMPLE
-    PS C:\> .\ v.ps1 -Name "MyAppGroup" -ResourceGroupName "MyResourceGroup" -Description "Updated Description"
+    PS C:\> .\ v.ps1 -Name "MyAppGroup" -ResourceGroup "MyResourceGroup" -Description "Updated Description"
 
 .LINK
     https://learn.microsoft.com/en-us/powershell/module/az.DesktopVirtualization
@@ -48,7 +48,7 @@ param (
 
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
-    [string]$ResourceGroupName,
+    [string]$ResourceGroup,
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
@@ -70,7 +70,7 @@ param (
 # Splatting parameters for better readability
 $parameters = @{
     Name              = $Name
-    ResourceGroupName = $ResourceGroupName
+    ResourceGroup = $ResourceGroup
 }
 
 if ($Description) {

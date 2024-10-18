@@ -31,7 +31,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string]$AzResourceGroupName = "myResourceGroupName"
+    [string]$AzResourceGroup = "myResourceGroup"
 )
 
 #Set Error Action to Silently Continue
