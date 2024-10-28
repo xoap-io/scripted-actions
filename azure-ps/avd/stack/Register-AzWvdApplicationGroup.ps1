@@ -48,8 +48,8 @@ param (
 
 # Splatting parameters for better readability
 $parameters = @{
-    ResourceGroup    = $ResourceGroup
-    WorkspaceName        = $WorkspaceName
+    ResourceGroup = $ResourceGroup
+    WorkspaceName = $WorkspaceName
     ApplicationGroupPath = $ApplicationGroupPath
 }
 

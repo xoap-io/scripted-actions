@@ -7,9 +7,6 @@
     The script uses the following Azure CLI command:
     az storage account delete --name $StorageAccountName --resource-group $ResourceGroup
 
-
-
-
 .PARAMETER Name
     Defines the name of the Azure Storage Account.
 
@@ -18,8 +15,6 @@
 
 .PARAMETER AccessTier
     Defines the access tier of the Azure Storage Account.
-
-
 
 .EXAMPLE
     .\az-cli-create-storage-account.ps1 -AzStorageAccountName "MyStorageAccount" -AzResourceGroup "MyResourceGroup" -AzLocation "eastus" -AzStorageSku "Standard_LRS"

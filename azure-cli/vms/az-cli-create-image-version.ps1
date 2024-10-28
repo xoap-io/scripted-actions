@@ -46,35 +46,8 @@
 .PARAMETER AzTags
     Defines the tags for the image version.
 
-.PARAMETER AzDebug
-    Increase logging verbosity to show all debug logs.
-
-.PARAMETER AzOnlyShowErrors
-    Only show errors, suppressing warnings.
-
-.PARAMETER AzOutput
-    Output format.
-
-.PARAMETER AzQuery
-    JMESPath query string.
-
-.PARAMETER AzVerbose
-    Increase logging verbosity.
-
-.PARAMETER WhatIf
-    Shows what would happen if the cmdlet runs. The cmdlet is not run.
-
-.PARAMETER Confirm
-    Prompts you for confirmation before running the cmdlet.
-
 .EXAMPLE
     .\az-cli-create-image-version.ps1 -AzResourceGroup "MyResourceGroup" -AzGallery "MyGallery" -AzImageDefinition "MyImageDefinition" -AzGalleryImageVersion "1.0.0" -AzTargetRegions "westus" -AzReplicaCount 1 -AzSubscriptionId "00000000-0000-0000-0000-000000000000" -AzVmName "MyVm"
-
-.NOTES
-    Author: Your Name
-    Date:   2024-09-03
-    Version: 1.1
-    Requires: Azure CLI
 
 .LINK
     https://learn.microsoft.com/en-us/cli/azure/sig/image-version
@@ -127,24 +100,7 @@ param(
     [string]$AzStorageAccountType = "Standard_LRS",
 
     [Parameter(Mandatory=$false)]
-    [hashtable]$AzTags,
-
-    [Parameter(Mandatory=$false)]
-    [switch]$AzDebug,
-
-    [Parameter(Mandatory=$false)]
-    [switch]$AzOnlyShowErrors,
-
-    [Parameter(Mandatory=$false)]
-    [string]$AzOutput,
-
-    [Parameter(Mandatory=$false)]
-    [string]$AzQuery,
-
-    [Parameter(Mandatory=$false)]
-    [switch]$AzVerbose,
-
-
+    [hashtable]$AzTags
 )
 
 # Splatting parameters for better readability

@@ -141,11 +141,11 @@ param (
 
 # Splatting parameters for better readability
 $parameters = @{
-    GroupName           = $GroupName
-    Name                = $Name
-    ResourceGroup   = $ResourceGroup
-    CommandLineSetting  = $CommandLineSetting
-    AppAlias            = $AppAlias
+    GroupName = $GroupName
+    Name = $Name
+    ResourceGroup = $ResourceGroup
+    CommandLineSetting = $CommandLineSetting
+    AppAlias = $AppAlias
 }
 
 if ($Description) {

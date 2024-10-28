@@ -49,12 +49,6 @@
 .EXAMPLE
     .\az-cli-share-image-gallery.ps1 -AzResourceGroup "MyResourceGroup" -AzGalleryName "MyGallery" -EmailAddress "user@example.com"
 
-.NOTES
-    Author: Your Name
-    Date:   2024-09-03
-    Version: 1.1
-    Requires: Azure CLI
-
 .LINK
     https://learn.microsoft.com/en-us/cli/azure/vm
 #>
@@ -71,24 +65,7 @@ param(
 
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
-    [string]$EmailAddress = "hello@xoap.io",
-
-    [Parameter(Mandatory=$false)]
-    [switch]$AzDebug,
-
-    [Parameter(Mandatory=$false)]
-    [switch]$AzOnlyShowErrors,
-
-    [Parameter(Mandatory=$false)]
-    [string]$AzOutput,
-
-    [Parameter(Mandatory=$false)]
-    [string]$AzQuery,
-
-    [Parameter(Mandatory=$false)]
-    [switch]$AzVerbose,
-
-
+    [string]$EmailAddress = "hello@xoap.io"
 )
 
 # Splatting parameters for better readability
@@ -99,11 +76,6 @@ $parameters = @{
     role             = "Reader"
     assignee         = $EmailAddress
     scope            = ""
-    debug            = $AzDebug
-    only_show_errors = $AzOnlyShowErrors
-    output           = $AzOutput
-    query            = $AzQuery
-    verbose          = $AzVerbose
 }
 
 # Set Error Action to Stop

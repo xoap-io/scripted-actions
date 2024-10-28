@@ -7,10 +7,10 @@
     The script uses the following Azure PowerShell command:
     New-AzResourceGroup -Name $AzResourceGroup -Location $AzLocation
 
-.PARAMETER AzResourceGroup
+.PARAMETER ResourceGroup
     Defines the name of the Azure Resource Group.
 
-.PARAMETER AzLocation
+.PARAMETER Location
     Defines the location of the Azure Resource Group.
 
 .PARAMETER Tags
@@ -89,10 +89,7 @@ try {
 
 } catch {
     # Log the error to the console
-
     Write-Output "Error message $errorMessage"
-
-
     Write-Error "Failed to create Azure Resource Group: $($_.Exception.Message)"
 
 } finally {

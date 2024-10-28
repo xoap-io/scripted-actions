@@ -5,44 +5,17 @@
 .DESCRIPTION
     This script creates an Azure Linux VM. It registers necessary providers, creates a resource group, and creates a VM with the specified parameters.
 
-.PARAMETER AzResourceGroup
+.PARAMETER ResourceGroup
     Defines the name of the Azure Resource Group.
 
-.PARAMETER AzOpenPorts
+.PARAMETER OpenPorts
     Defines the ports to open on the Azure Virtual Machine.
 
-.PARAMETER AzVmSize
+.PARAMETER VmSize
     Defines the size of the Azure Virtual Machine.
-
-.PARAMETER AzDebug
-    Increase logging verbosity to show all debug logs.
-
-.PARAMETER AzOnlyShowErrors
-    Only show errors, suppressing warnings.
-
-.PARAMETER AzOutput
-    Output format.
-
-.PARAMETER AzQuery
-    JMESPath query string.
-
-.PARAMETER AzVerbose
-    Increase logging verbosity.
-
-.PARAMETER WhatIf
-    Shows what would happen if the cmdlet runs. The cmdlet is not run.
-
-.PARAMETER Confirm
-    Prompts you for confirmation before running the cmdlet.
 
 .EXAMPLE
     .\wip_az-cli-create-linux-vm.ps1 -AzResourceGroup "myResourceGroup" -AzOpenPorts "3389" -AzVmSize "Standard_A1_v2"
-
-.NOTES
-    Author: Your Name
-    Date:   2024-09-03
-    Version: 1.1
-    Requires: Azure CLI
 
 .LINK
     https://learn.microsoft.com/en-us/cli/azure/vm
@@ -60,24 +33,7 @@ param(
 
     [Parameter(Mandatory=$true)]
     [ValidateSet('Standard_A0', 'Standard_A1', 'Standard_A2', 'Standard_A3', 'Standard_A4', 'Standard_A5', 'Standard_A6', 'Standard_A7', 'Standard_A8', 'Standard_A9', 'Standard_A10', 'Standard_A11', 'Standard_A1_v2', 'Standard_A2_v2', 'Standard_A4_v2', 'Standard_A8_v2', 'Standard_A2m_v2', 'Standard_A4m_v2', 'Standard_A8m_v2', 'Standard_B1s', 'Standard_B1ms', 'Standard_B2s', 'Standard_B2ms', 'Standard_B4ms', 'Standard_B8ms', 'Standard_B12ms', 'Standard_B16ms', 'Standard_B20ms', 'Standard_B24ms', 'Standard_B1ls', 'Standard_B1s', 'Standard_B2s', 'Standard_B4s', 'Standard_B8s', 'Standard_B12s', 'Standard_B16s', 'Standard_B20s', 'Standard_B24s', 'Standard_D1', 'Standard_D2', 'Standard_D3', 'Standard_D4', 'Standard_D11', 'Standard_D12', 'Standard_D13', 'Standard_D14', 'Standard_D1_v2', 'Standard_D2_v2', 'Standard_D3_v2', 'Standard_D4_v2', 'Standard_D5_v2', 'Standard_D11_v2', 'Standard_D12_v2', 'Standard_D13_v2', 'Standard_D14_v2', 'Standard_D15_v2', 'Standard_D2_v3', 'Standard_D4_v3', 'Standard_D8_v3', 'Standard_D16_v3', 'Standard_D32_v3', 'Standard_D48_v3', 'Standard_D64_v3', 'Standard_D2s_v3', 'Standard_D4s_v3', 'Standard_D8s_v3', 'Standard_D16s_v3', 'Standard_D32s_v3', 'Standard_D48s_v3', 'Standard_D64s_v3', 'Standard_D2_v4', 'Standard_D4_v4', 'Standard_D8_v4', 'Standard_D16_v4', 'Standard_D32_v4', 'Standard_D48_v4', 'Standard_D64_v4', 'Standard_D2s_v4')]
-    [string]$AzVmSize,
-
-    [Parameter(Mandatory=$false)]
-    [switch]$AzDebug,
-
-    [Parameter(Mandatory=$false)]
-    [switch]$AzOnlyShowErrors,
-
-    [Parameter(Mandatory=$false)]
-    [string]$AzOutput,
-
-    [Parameter(Mandatory=$false)]
-    [string]$AzQuery,
-
-    [Parameter(Mandatory=$false)]
-    [switch]$AzVerbose,
-
-
+    [string]$AzVmSize
 )
 
 # Splatting parameters for better readability

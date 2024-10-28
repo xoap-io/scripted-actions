@@ -49,8 +49,8 @@ param (
 # Splatting parameters for better readability
 $parameters = @{
     ResourceGroup = $ResourceGroup
-    HostPoolName      = $HostPoolName
-    ExpirationTime    = $ExpirationTime
+    HostPoolName = $HostPoolName
+    ExpirationTime = $ExpirationTime
 }
 
 # Set Error Action to Stop

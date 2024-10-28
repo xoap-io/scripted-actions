@@ -25,7 +25,6 @@
 
 .COMPONENT
     Azure PowerShell
-
 #>
 
 [CmdletBinding()]

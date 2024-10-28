@@ -218,7 +218,8 @@ param (
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
     [ValidateSet(
-        'Default', 'Scheduled'
+        'Default',
+        'Scheduled'
     )]
     [string]$AgentUpdateType,
 
@@ -291,7 +292,10 @@ param (
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
     [ValidateSet(
-        'Disabled', 'Enabled', 'EnabledForClientsOnly', 'EnabledForSessionHostsOnly'
+        'Disabled',
+        'Enabled',
+        'EnabledForClientsOnly',
+        'EnabledForSessionHostsOnly'
     )]
     [string]$PublicNetworkAccess,
 
@@ -302,7 +306,9 @@ param (
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
     [ValidateSet(
-        'Delete', 'None', 'Update'
+        'Delete',
+        'None',
+        'Update'
     )]
     [string]$RegistrationTokenOperation,
 
@@ -368,12 +374,12 @@ $ErrorActionPreference = "Stop"
 
 # Splatting parameters for better readability
 $parameters = @{
-    Name                  = $Name
-    ResourceGroup     = $ResourceGroup
-    HostPoolType          = $HostPoolType
-    LoadBalancerType      = $LoadBalancerType
+    Name = $Name
+    ResourceGroup = $ResourceGroup
+    HostPoolType = $HostPoolType
+    LoadBalancerType = $LoadBalancerType
     PreferredAppGroupType = $PreferredAppGroupType
-    Location              = $Location
+    Location = $Location
 }
 
 if ($DesktopAppGroupName) {

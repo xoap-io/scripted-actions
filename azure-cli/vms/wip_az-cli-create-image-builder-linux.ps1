@@ -14,35 +14,8 @@
 .PARAMETER AzVmSize
     Defines the size of the Azure Virtual Machine.
 
-.PARAMETER AzDebug
-    Increase logging verbosity to show all debug logs.
-
-.PARAMETER AzOnlyShowErrors
-    Only show errors, suppressing warnings.
-
-.PARAMETER AzOutput
-    Output format.
-
-.PARAMETER AzQuery
-    JMESPath query string.
-
-.PARAMETER AzVerbose
-    Increase logging verbosity.
-
-.PARAMETER WhatIf
-    Shows what would happen if the cmdlet runs. The cmdlet is not run.
-
-.PARAMETER Confirm
-    Prompts you for confirmation before running the cmdlet.
-
 .EXAMPLE
     .\wip_az-cli-create-image-builder-linux.ps1 -AzResourceGroup "myResourceGroup" -AzOpenPorts "3389" -AzVmSize "Standard_A1_v2"
-
-.NOTES
-    Author: Your Name
-    Date:   2024-09-03
-    Version: 1.1
-    Requires: Azure CLI
 
 .LINK
     https://learn.microsoft.com/en-us/cli/azure/vm
@@ -75,9 +48,7 @@ param(
     [string]$AzQuery,
 
     [Parameter(Mandatory=$false)]
-    [switch]$AzVerbose,
-
-
+    [switch]$AzVerbose
 )
 
 # Splatting parameters for better readability

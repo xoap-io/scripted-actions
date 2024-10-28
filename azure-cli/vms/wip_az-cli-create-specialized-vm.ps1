@@ -20,35 +20,8 @@
 .PARAMETER AzLocation
     Defines the location for the resource group.
 
-.PARAMETER AzDebug
-    Increase logging verbosity to show all debug logs.
-
-.PARAMETER AzOnlyShowErrors
-    Only show errors, suppressing warnings.
-
-.PARAMETER AzOutput
-    Output format.
-
-.PARAMETER AzQuery
-    JMESPath query string.
-
-.PARAMETER AzVerbose
-    Increase logging verbosity.
-
-.PARAMETER WhatIf
-    Shows what would happen if the cmdlet runs. The cmdlet is not run.
-
-.PARAMETER Confirm
-    Prompts you for confirmation before running the cmdlet.
-
 .EXAMPLE
     .\wip_az-cli-create-specialized-vm.ps1 -AzResourceGroup "myResourceGroup" -AzOpenPorts "3389" -AzVmName "myVM2" -AzImageId "/subscriptions/<Subscription ID>/resourceGroups/myGalleryRG/providers/Microsoft.Compute/galleries/myGallery/images/myImageDefinition" -AzLocation "eastus"
-
-.NOTES
-    Author: Your Name
-    Date:   2024-09-03
-    Version: 1.1
-    Requires: Azure CLI
 
 .LINK
     https://learn.microsoft.com/en-us/cli/azure/vm
@@ -74,24 +47,7 @@ param(
 
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
-    [string]$AzLocation = 'eastus',
-
-    [Parameter(Mandatory=$false)]
-    [switch]$AzDebug,
-
-    [Parameter(Mandatory=$false)]
-    [switch]$AzOnlyShowErrors,
-
-    [Parameter(Mandatory=$false)]
-    [string]$AzOutput,
-
-    [Parameter(Mandatory=$false)]
-    [string]$AzQuery,
-
-    [Parameter(Mandatory=$false)]
-    [switch]$AzVerbose,
-
-
+    [string]$AzLocation = 'eastus'
 )
 
 # Splatting parameters for better readability

@@ -148,9 +148,9 @@ $ErrorActionPreference = "Stop"
 try {
     # Splatting parameters
     $params = @{
-        Name                        = $Name
-        ResourceGroup           = $ResourceGroup
-        Location                    = $Location
+        Name = $Name
+        ResourceGroup = $ResourceGroup
+        Location = $Location
     }
 
         if ($EnabledForDeployment) {

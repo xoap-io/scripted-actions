@@ -20,35 +20,8 @@
 .PARAMETER AzVmName
     Defines the name of the Azure Virtual Machine.
 
-.PARAMETER AzDebug
-    Increase logging verbosity to show all debug logs.
-
-.PARAMETER AzOnlyShowErrors
-    Only show errors, suppressing warnings.
-
-.PARAMETER AzOutput
-    Output format.
-
-.PARAMETER AzQuery
-    JMESPath query string.
-
-.PARAMETER AzVerbose
-    Increase logging verbosity.
-
-.PARAMETER WhatIf
-    Shows what would happen if the cmdlet runs. The cmdlet is not run.
-
-.PARAMETER Confirm
-    Prompts you for confirmation before running the cmdlet.
-
 .EXAMPLE
     .\az-cli-enable-EntraID-login-linux-vm.ps1 -AzResourceGroup "MyResourceGroup" -AzExtensionName "Microsoft.Azure.ActiveDirectory" -AzVmName "MyVmName"
-
-.NOTES
-    Author: Your Name
-    Date:   2024-09-03
-    Version: 1.1
-    Requires: Azure CLI
 
 .LINK
     https://learn.microsoft.com/en-us/cli/azure/vm
@@ -66,24 +39,7 @@ param(
 
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
-    [string]$AzVmName = "myVmName",
-
-    [Parameter(Mandatory=$false)]
-    [switch]$AzDebug,
-
-    [Parameter(Mandatory=$false)]
-    [switch]$AzOnlyShowErrors,
-
-    [Parameter(Mandatory=$false)]
-    [string]$AzOutput,
-
-    [Parameter(Mandatory=$false)]
-    [string]$AzQuery,
-
-    [Parameter(Mandatory=$false)]
-    [switch]$AzVerbose,
-
-
+    [string]$AzVmName = "myVmName"
 )
 
 # Splatting parameters for better readability

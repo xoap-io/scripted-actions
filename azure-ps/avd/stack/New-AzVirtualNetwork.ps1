@@ -161,10 +161,10 @@ param(
 
 # Splatting parameters for better readability
 $parameters = @{
-    Name              = $Name
+    Name = $Name
     ResourceGroup = $ResourceGroup
-    Location          = $Location
-    AddressPrefix     = $AddressPrefix
+    Location = $Location
+    AddressPrefix = $AddressPrefix
 }
 
 if ($DnsServer) {

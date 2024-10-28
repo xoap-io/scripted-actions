@@ -5,41 +5,14 @@
 .DESCRIPTION
     This script deletes an Azure Image Builder Linux VM and its associated resources, including the image template, role assignments, identities, image versions, image definitions, and the resource group.
 
-.PARAMETER AzResourceGroup
+.PARAMETER ResourceGroup
     Defines the name of the Azure Resource Group.
 
-.PARAMETER AzOpenPorts
+.PARAMETER OpenPorts
     Defines the ports to open on the Azure Virtual Machine.
-
-.PARAMETER AzDebug
-    Increase logging verbosity to show all debug logs.
-
-.PARAMETER AzOnlyShowErrors
-    Only show errors, suppressing warnings.
-
-.PARAMETER AzOutput
-    Output format.
-
-.PARAMETER AzQuery
-    JMESPath query string.
-
-.PARAMETER AzVerbose
-    Increase logging verbosity.
-
-.PARAMETER WhatIf
-    Shows what would happen if the cmdlet runs. The cmdlet is not run.
-
-.PARAMETER Confirm
-    Prompts you for confirmation before running the cmdlet.
 
 .EXAMPLE
     .\wip_az-cli-delete-image-builder-linux.ps1 -AzResourceGroup "myResourceGroup" -AzOpenPorts "3389"
-
-.NOTES
-    Author: Your Name
-    Date:   2024-09-03
-    Version: 1.1
-    Requires: Azure CLI
 
 .LINK
     https://learn.microsoft.com/en-us/cli/azure/vm
@@ -49,40 +22,17 @@
 param(
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
-    [string]$AzResourceGroup = 'myResourceGroup',
+    [string]$ResourceGroup = 'myResourceGroup',
 
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
-    [string]$AzOpenPorts = '3389',
-
-    [Parameter(Mandatory=$false)]
-    [switch]$AzDebug,
-
-    [Parameter(Mandatory=$false)]
-    [switch]$AzOnlyShowErrors,
-
-    [Parameter(Mandatory=$false)]
-    [string]$AzOutput,
-
-    [Parameter(Mandatory=$false)]
-    [string]$AzQuery,
-
-    [Parameter(Mandatory=$false)]
-    [switch]$AzVerbose,
-
-
+    [string]$OpenPorts = '3389'
 )
 
 # Splatting parameters for better readability
-$parameters = @{
-    resource_group   = $AzResourceGroup
-    open_ports       = $AzOpenPorts
-    debug            = $AzDebug
-    only_show_errors = $AzOnlyShowErrors
-    output           = $AzOutput
-    query            = $AzQuery
-    verbose          = $AzVerbose
-}
+$parameters = `
+    'resource-group', $AzResourceGroup
+    'open-ports', $AzOpenPorts
 
 # Set Error Action to Stop
 $ErrorActionPreference = "Stop"

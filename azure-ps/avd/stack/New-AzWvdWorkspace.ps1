@@ -165,7 +165,8 @@ param (
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
     [ValidateSet(
-        'Enabled', 'Disabled'
+        'Enabled',
+        'Disabled'
     )]
     [string]$PublicNetworkAccess,
 

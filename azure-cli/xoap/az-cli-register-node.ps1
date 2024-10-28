@@ -6,10 +6,10 @@
     This script registers a new Azure VM in XOAP. The script uses the Azure CLI to run a PowerShell script on the Azure VM.
     The PowerShell script downloads the DSC configuration from the XOAP platform and applies it to the Azure VM.
 
-.PARAMETER AzResourceGroup
+.PARAMETER ResourceGroup
     Defines the name of the Azure Resource Group.
 
-.PARAMETER AzVmName
+.PARAMETER VmName
     Defines the name of the Azure VM.
 
 .PARAMETER WorkspaceId
@@ -17,27 +17,6 @@
 
 .PARAMETER GroupName
     Defines the XOAP config.XO group name to assign the node to.
-
-.PARAMETER AzDebug
-    Increase logging verbosity to show all debug logs.
-
-.PARAMETER AzOnlyShowErrors
-    Only show errors, suppressing warnings.
-
-.PARAMETER AzOutput
-    Output format.
-
-.PARAMETER AzQuery
-    JMESPath query string.
-
-.PARAMETER AzVerbose
-    Increase logging verbosity.
-
-.PARAMETER WhatIf
-    Shows what would happen if the cmdlet runs. The cmdlet is not run.
-
-.PARAMETER Confirm
-    Prompts you for confirmation before running the cmdlet.
 
 .EXAMPLE
     .\az-cli-register-node.ps1 -AzResourceGroup "myResourceGroup" -AzVmName "myVmName" -WorkspaceId "myWorkspaceId" -GroupName "myGroupName"

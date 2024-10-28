@@ -200,11 +200,11 @@ param (
 
 # Splatting parameters for better readability
 $parameters = @{
-    Name                 = $Name
-    ResourceGroup    = $ResourceGroup
+    Name = $Name
+    ResourceGroup = $ResourceGroup
     ApplicationGroupType = $ApplicationGroupType
-    HostPoolArmPath      = $HostPoolArmPath
-    Location             = $Location
+    HostPoolArmPath = $HostPoolArmPath
+    Location = $Location
 }
 
 if ($SubscriptionId) {

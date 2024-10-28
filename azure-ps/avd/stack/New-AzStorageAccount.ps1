@@ -181,7 +181,7 @@ param(
         'Premium_ZRS',
         'Standard_GZRS',
         'Standard_RAGZRS'
-        )]
+    )]
     [string]$SkuName,
 
     [Parameter(Mandatory=$true)]
@@ -265,7 +265,7 @@ param(
     [ValidateSet(
         'SystemAssigned', 
         'UserAssigned', 
-        'SystemAssigned, UserAssigned'
+        'SystemAssigned,UserAssigned'
     )]
     [string]$IdentityType,
 
@@ -386,7 +386,12 @@ param(
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
-    [ValidateSet('None', 'StorageFileDataSmbShareContributor', 'StorageFileDataSmbShareReader', 'StorageFileDataSmbShareElevatedContributor')]
+    [ValidateSet(
+        'None',
+        'StorageFileDataSmbShareContributor',
+        'StorageFileDataSmbShareReader',
+        'StorageFileDataSmbShareElevatedContributor'
+    )]
     [string]$DefaultSharePermission,
 
     [Parameter(Mandatory=$false)]
@@ -445,11 +450,11 @@ try {
     # Splatting parameters for better readability
     $parameters = @{
         ResourceGroup = $ResourceGroup
-        Name              = $Name
-        SkuName           = $SkuName
-        Location          = $Location
-        Kind              = $Kind
-        AccessTier        = $AccessTier
+        Name = $Name
+        SkuName = $SkuName
+        Location = $Location
+        Kind = $Kind
+        AccessTier = $AccessTier
     }
 
     if ($CustomDomainName) {
