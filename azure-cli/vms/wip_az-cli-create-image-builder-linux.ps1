@@ -1,134 +1,127 @@
 <#
 .SYNOPSIS
-    Short description
+    Create an Azure Image Builder Linux VM.
 
 .DESCRIPTION
-    Long description
+    This script creates an Azure Image Builder Linux VM. It registers necessary providers, creates a resource group, user-assigned identity, role definitions, and assigns roles. It also creates a shared image gallery, image definition, and image template, and finally creates a VM from the image.
 
-.NOTES
-    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
-    The use of the scripts does not require XOAP, but it will make your life easier.
-    You are allowed to pull the script from the repository and use it with XOAP or other solutions
-    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no liability for the function,
-    the use and the consequences of the use of this freely available script.
-    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
-
-.COMPONENT
-    Azure CLI
-
-.LINK
-    https://github.com/xoap-io/scripted-actions
-
-.PARAMETER AzResourceGroupName
+.PARAMETER AzResourceGroup
     Defines the name of the Azure Resource Group.
 
+.PARAMETER AzOpenPorts
+    Defines the ports to open on the Azure Virtual Machine.
+
+.PARAMETER AzVmSize
+    Defines the size of the Azure Virtual Machine.
+
+.EXAMPLE
+    .\wip_az-cli-create-image-builder-linux.ps1 -AzResourceGroup "myResourceGroup" -AzOpenPorts "3389" -AzVmSize "Standard_A1_v2"
+
+.LINK
+    https://learn.microsoft.com/en-us/cli/azure/vm
 #>
+
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory)]
-    [string]$AzResourceGroupName = 'myResourceGroup',
-    [Parameter(Mandatory)]
-    [string]$AZOpenPorts = '3389',
-    [Parameter(Mandatory)]
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
+    [string]$AzResourceGroup = 'myResourceGroup',
+
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
+    [string]$AzOpenPorts = '3389',
+
+    [Parameter(Mandatory=$true)]
     [ValidateSet('Standard_A0', 'Standard_A1', 'Standard_A2', 'Standard_A3', 'Standard_A4', 'Standard_A5', 'Standard_A6', 'Standard_A7', 'Standard_A8', 'Standard_A9', 'Standard_A10', 'Standard_A11', 'Standard_A1_v2', 'Standard_A2_v2', 'Standard_A4_v2', 'Standard_A8_v2', 'Standard_A2m_v2', 'Standard_A4m_v2', 'Standard_A8m_v2', 'Standard_B1s', 'Standard_B1ms', 'Standard_B2s', 'Standard_B2ms', 'Standard_B4ms', 'Standard_B8ms', 'Standard_B12ms', 'Standard_B16ms', 'Standard_B20ms', 'Standard_B24ms', 'Standard_B1ls', 'Standard_B1s', 'Standard_B2s', 'Standard_B4s', 'Standard_B8s', 'Standard_B12s', 'Standard_B16s', 'Standard_B20s', 'Standard_B24s', 'Standard_D1', 'Standard_D2', 'Standard_D3', 'Standard_D4', 'Standard_D11', 'Standard_D12', 'Standard_D13', 'Standard_D14', 'Standard_D1_v2', 'Standard_D2_v2', 'Standard_D3_v2', 'Standard_D4_v2', 'Standard_D5_v2', 'Standard_D11_v2', 'Standard_D12_v2', 'Standard_D13_v2', 'Standard_D14_v2', 'Standard_D15_v2', 'Standard_D2_v3', 'Standard_D4_v3', 'Standard_D8_v3', 'Standard_D16_v3', 'Standard_D32_v3', 'Standard_D48_v3', 'Standard_D64_v3', 'Standard_D2s_v3', 'Standard_D4s_v3', 'Standard_D8s_v3', 'Standard_D16s_v3', 'Standard_D32s_v3', 'Standard_D48s_v3', 'Standard_D64s_v3', 'Standard_D2_v4', 'Standard_D4_v4', 'Standard_D8_v4', 'Standard_D16_v4', 'Standard_D32_v4', 'Standard_D48_v4', 'Standard_D64_v4', 'Standard_D2s_v4')]
-    [string]$AzVmSize
+    [string]$AzVmSize,
+
+    [Parameter(Mandatory=$false)]
+    [switch]$AzDebug,
+
+    [Parameter(Mandatory=$false)]
+    [switch]$AzOnlyShowErrors,
+
+    [Parameter(Mandatory=$false)]
+    [string]$AzOutput,
+
+    [Parameter(Mandatory=$false)]
+    [string]$AzQuery,
+
+    [Parameter(Mandatory=$false)]
+    [switch]$AzVerbose
 )
 
-#Set Error Action to Silently Continue
-$ErrorActionPreference =  "Stop"
+# Splatting parameters for better readability
+$parameters = @{
+    resource_group   = $AzResourceGroup
+    open_ports       = $AzOpenPorts
+    vm_size          = $AzVmSize
+    debug            = $AzDebug
+    only_show_errors = $AzOnlyShowErrors
+    output           = $AzOutput
+    query            = $AzQuery
+    verbose          = $AzVerbose
+}
 
-az provider register -n Microsoft.VirtualMachineImages
-az provider register -n Microsoft.Compute
-az provider register -n Microsoft.KeyVault
-az provider register -n Microsoft.Storage
-az provider register -n Microsoft.Network
-az provider register -n Microsoft.ContainerInstance
+# Set Error Action to Stop
+$ErrorActionPreference = "Stop"
 
-# Resource group name - ibLinuxGalleryRG in this example
-sigResourceGroup=ibLinuxGalleryRG
-# Datacenter location - West US 2 in this example
-location=westus2
-# Additional region to replicate the image to - East US in this example
-additionalregion=eastus
-# Name of the Azure Compute Gallery - myGallery in this example
-sigName=myIbGallery
-# Name of the image definition to be created - myImageDef in this example
-imageDefName=myIbImageDef
-# Reference name in the image distribution metadata
-runOutputName=aibLinuxSIG
+try {
+    # Register necessary providers
+    az provider register -n Microsoft.VirtualMachineImages
+    az provider register -n Microsoft.Compute
+    az provider register -n Microsoft.KeyVault
+    az provider register -n Microsoft.Storage
+    az provider register -n Microsoft.Network
+    az provider register -n Microsoft.ContainerInstance
 
-subscriptionID=$(az account show --query id --output tsv)
+    # Create resource group
+    az group create -n $parameters.resource_group -l westus2
 
-az group create -n $sigResourceGroup -l $location
+    # Create user-assigned identity
+    $identityName = "aibBuiUserId$(Get-Date -Format 'yyyyMMddHHmmss')"
+    az identity create -g $parameters.resource_group -n $identityName
 
-# Create user-assigned identity for VM Image Builder to access the storage account where the script is stored
-identityName=aibBuiUserId$(date +'%s')
-az identity create -g $sigResourceGroup -n $identityName
+    # Get identity ID and URI
+    $imgBuilderCliId = az identity show -g $parameters.resource_group -n $identityName --query clientId -o tsv
+    $subscriptionID = az account show --query id --output tsv
+    $imgBuilderId = "/subscriptions/$subscriptionID/resourcegroups/$parameters.resource_group/providers/Microsoft.ManagedIdentity/userAssignedIdentities/$identityName"
 
-# Get the identity ID
-imgBuilderCliId=$(az identity show -g $sigResourceGroup -n $identityName --query clientId -o tsv)
+    # Download and update role definition template
+    $roleDefTemplate = "aibRoleImageCreation.json"
+    Invoke-WebRequest -Uri "https://raw.githubusercontent.com/Azure/azvmimagebuilder/master/solutions/12_Creating_AIB_Security_Roles/aibRoleImageCreation.json" -OutFile $roleDefTemplate
+    (Get-Content $roleDefTemplate) -replace '<subscriptionID>', $subscriptionID -replace '<rgName>', $parameters.resource_group -replace 'Azure Image Builder Service Image Creation Role', "Azure Image Builder Image Def$(Get-Date -Format 'yyyyMMddHHmmss')" | Set-Content $roleDefTemplate
 
-# Get the user identity URI that's needed for the template
-imgBuilderId=/subscriptions/$subscriptionID/resourcegroups/$sigResourceGroup/providers/Microsoft.ManagedIdentity/userAssignedIdentities/$identityName
+    # Create role definition and assign role
+    az role definition create --role-definition ./$roleDefTemplate
+    az role assignment create --assignee $imgBuilderCliId --role "Azure Image Builder Image Def$(Get-Date -Format 'yyyyMMddHHmmss')" --scope "/subscriptions/$subscriptionID/resourceGroups/$parameters.resource_group"
 
-# Download an Azure role-definition template, and update the template with the parameters that were specified earlier
-curl https://raw.githubusercontent.com/Azure/azvmimagebuilder/master/solutions/12_Creating_AIB_Security_Roles/aibRoleImageCreation.json -o aibRoleImageCreation.json
+    # Create shared image gallery and image definition
+    az sig create -g $parameters.resource_group --gallery-name myIbGallery
+    az sig image-definition create -g $parameters.resource_group --gallery-name myIbGallery --gallery-image-definition myIbImageDef --publisher myIbPublisher --offer myOffer --sku 20_04-lts-gen2 --os-type Linux --hyper-v-generation V2 --features SecurityType=TrustedLaunchSupported
 
-imageRoleDefName="Azure Image Builder Image Def"$(date +'%s')
+    # Download and update image template
+    $imageTemplate = "helloImageTemplateforSIG.json"
+    Invoke-WebRequest -Uri "https://raw.githubusercontent.com/Azure/azvmimagebuilder/master/quickquickstarts/1_Creating_a_Custom_Linux_Shared_Image_Gallery_Image/helloImageTemplateforSIG.json" -OutFile $imageTemplate
+    (Get-Content $imageTemplate) -replace '<subscriptionID>', $subscriptionID -replace '<rgName>', $parameters.resource_group -replace '<imageDefName>', 'myIbImageDef' -replace '<sharedImageGalName>', 'myIbGallery' -replace '<region1>', 'westus2' -replace '<region2>', 'eastus' -replace '<runOutputName>', 'aibLinuxSIG' -replace '<imgBuilderId>', $imgBuilderId | Set-Content $imageTemplate
 
-# Update the definition
-sed -i -e "s/<subscriptionID>/$subscriptionID/g" aibRoleImageCreation.json
-sed -i -e "s/<rgName>/$sigResourceGroup/g" aibRoleImageCreation.json
-sed -i -e "s/Azure Image Builder Service Image Creation Role/$imageRoleDefName/g" aibRoleImageCreation.json
+    # Create and run image template
+    az resource create --resource-group $parameters.resource_group --properties @$imageTemplate --is-full-object --resource-type Microsoft.VirtualMachineImages/imageTemplates -n helloImageTemplateforSIG01
+    az resource invoke-action --resource-group $parameters.resource_group --resource-type Microsoft.VirtualMachineImages/imageTemplates -n helloImageTemplateforSIG01 --action Run
 
-# Create role definitions
-az role definition create --role-definition ./aibRoleImageCreation.json
+    # Create VM from image
+    az vm create --resource-group $parameters.resource_group --name myAibGalleryVM --admin-username aibuser --location westus2 --image "/subscriptions/$subscriptionID/resourceGroups/$parameters.resource_group/providers/Microsoft.Compute/galleries/myIbGallery/images/myIbImageDef/versions/latest" --security-type TrustedLaunch --generate-ssh-keys
 
-# Grant a role definition to the user-assigned identity
-az role assignment create --assignee $imgBuilderCliId --role "$imageRoleDefName" --scope /subscriptions/$subscriptionID/resourceGroups/$sigResourceGroup
+    # Output the result
+    Write-Output "Azure Image Builder Linux VM created successfully."
+} catch {
+    # Log the error to the console
 
-az sig create -g $sigResourceGroup --gallery-name $sigName
+Write-Output "Error message $errorMessage"
 
-az sig image-definition create `
-   -g $sigResourceGroup `
-   --gallery-name $sigName `
-   --gallery-image-definition $imageDefName `
-   --publisher myIbPublisher `
-   --offer myOffer `
-   --sku 20_04-lts-gen2 `
-   --os-type Linux `
-   --hyper-v-generation V2 `
-   --features SecurityType=TrustedLaunchSupported
 
-curl https://raw.githubusercontent.com/Azure/azvmimagebuilder/master/quickquickstarts/1_Creating_a_Custom_Linux_Shared_Image_Gallery_Image/helloImageTemplateforSIG.json -o helloImageTemplateforSIG.json
-sed -i -e "s/<subscriptionID>/$subscriptionID/g" helloImageTemplateforSIG.json
-sed -i -e "s/<rgName>/$sigResourceGroup/g" helloImageTemplateforSIG.json
-sed -i -e "s/<imageDefName>/$imageDefName/g" helloImageTemplateforSIG.json
-sed -i -e "s/<sharedImageGalName>/$sigName/g" helloImageTemplateforSIG.json
-sed -i -e "s/<region1>/$location/g" helloImageTemplateforSIG.json
-sed -i -e "s/<region2>/$additionalregion/g" helloImageTemplateforSIG.json
-sed -i -e "s/<runOutputName>/$runOutputName/g" helloImageTemplateforSIG.json
-sed -i -e "s%<imgBuilderId>%$imgBuilderId%g" helloImageTemplateforSIG.json
-
-az resource create `
-    --resource-group $sigResourceGroup `
-    --properties @helloImageTemplateforSIG.json `
-    --is-full-object `
-    --resource-type Microsoft.VirtualMachineImages/imageTemplates `
-    -n helloImageTemplateforSIG01
-
-az resource invoke-action `
-     --resource-group $sigResourceGroup `
-     --resource-type  Microsoft.VirtualMachineImages/imageTemplates `
-     -n helloImageTemplateforSIG01 `
-     --action Run
-
-az vm create `
-  --resource-group $sigResourceGroup `
-  --name myAibGalleryVM `
-  --admin-username aibuser `
-  --location $location `
-  --image "/subscriptions/$subscriptionID/resourceGroups/$sigResourceGroup/providers/Microsoft.Compute/galleries/$sigName/images/$imageDefName/versions/latest" `
-  --security-type TrustedLaunch `
-  --generate-ssh-keys
-
+    Write-Error "Failed to create Azure Image Builder Linux VM: $($_.Exception.Message)"
+} finally {
+    # Cleanup code if needed
+    Write-Output "Script execution completed."
+}

@@ -8,28 +8,10 @@
     az vm extension set `
         --publisher Microsoft.Azure.ActiveDirectory `
         --name AADSSHLoginForLinux `
-        --resource-group $AzResourceGroupName `
-        --vm-name $VmName
+        --resource-group $AzResourceGroup `
+        --vm-name $AzVmName
 
-    The script sets the ErrorActionPreference to SilentlyContinue to suppress error messages.
-    
-    It does not return any output.
-
-.NOTES
-    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
-    The use of the scripts does not require XOAP, but it will make your life easier.
-    You are allowed to pull the script from the repository and use it with XOAP or other solutions
-    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no liability for the function,
-    the use and the consequences of the use of this freely available script.
-    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
-
-.COMPONENT
-    Azure CLI
-
-.LINK
-    https://github.com/xoap-io/scripted-actions
-
-.PARAMETER AzResourceGroupName
+.PARAMETER AzResourceGroup
     Defines the name of the Azure Resource Group.
 
 .PARAMETER AzExtensionName
@@ -38,25 +20,58 @@
 .PARAMETER AzVmName
     Defines the name of the Azure Virtual Machine.
 
+.EXAMPLE
+    .\az-cli-enable-EntraID-login-linux-vm.ps1 -AzResourceGroup "MyResourceGroup" -AzExtensionName "Microsoft.Azure.ActiveDirectory" -AzVmName "MyVmName"
+
+.LINK
+    https://learn.microsoft.com/en-us/cli/azure/vm
 #>
+
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory)]
-    [string]$AzResourceGroupName = "myResourceGroup",
-    [Parameter(Mandatory)]
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
+    [string]$AzResourceGroup = "myResourceGroup",
+
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
     [string]$AzExtensionName = "Microsoft.Azure.ActiveDirectory",
-    [Parameter(Mandatory)]
+
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
     [string]$AzVmName = "myVmName"
 )
 
-#Set Error Action to Silently Continue
-$ErrorActionPreference =  "Stop"
+# Splatting parameters for better readability
+$parameters = @{
+    publisher        = $AzExtensionName
+    name             = $AzExtensionName
+    resource_group   = $AzResourceGroup
+    vm_name          = $AzVmName
+    debug            = $AzDebug
+    only_show_errors = $AzOnlyShowErrors
+    output           = $AzOutput
+    query            = $AzQuery
+    verbose          = $AzVerbose
+}
 
-az vm extension set `
-    --publisher $AzExtensionName `
-    --name $AzExtensionName `
-    --resource-group $AzResourceGroupName `
-    --vm-name $AzVmName
+# Set Error Action to Stop
+$ErrorActionPreference = "Stop"
 
-# Output IP address for SSH access
-export IP_ADDRESS = $(az vm show --show-details --resource-group $AzResourceGroupName --name $AzVmName --query publicIps --output tsv)
+try {
+    # Enable EntraID login for the Linux VM
+    az vm extension set @parameters
+
+    # Output the result
+    Write-Output "EntraID login enabled for the Linux VM successfully."
+} catch {
+    # Log the error to the console
+
+Write-Output "Error message $errorMessage"
+
+
+    Write-Error "Failed to enable EntraID login for the Linux VM: $($_.Exception.Message)"
+} finally {
+    # Cleanup code if needed
+    Write-Output "Script execution completed."
+}

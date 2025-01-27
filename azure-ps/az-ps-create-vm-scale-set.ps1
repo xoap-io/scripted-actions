@@ -5,33 +5,9 @@
 .DESCRIPTION
     This script creates a new Azure VM Scale Set with the Azure PowerShell.
     The script uses the following Azure PowerShell command:
-    New-AzVmss `
-        -ResourceGroup $AzResourceGroupName `
-        -Name $AzScaleSetName `
-        -OrchestrationMode $AzOrchestrationMode `
-        -Location $AzLocation `
-        -InstanceCount $AzInstanceCount `
-        -ImageName $AzImageName
+    New-AzVmss -ResourceGroup $AzResourceGroup -Name $AzScaleSetName -OrchestrationMode $AzOrchestrationMode -Location $AzLocation -InstanceCount $AzInstanceCount -ImageName $AzImageName
 
-    The script sets the ErrorActionPreference to SilentlyContinue to suppress error messages.
-    
-    It does not return any output.
-
-.NOTES
-    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
-    The use of the scripts does not require XOAP, but it will make your life easier.
-    You are allowed to pull the script from the repository and use it with XOAP or other solutions
-    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no liability for the function,
-    the use and the consequences of the use of this freely available script.
-    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
-
-.COMPONENT
-    Azure PowerShell
-
-.LINK
-    https://github.com/xoap-io/scripted-actions
-
-.PARAMETER AzResourceGroupName
+.PARAMETER AzResourceGroup
     Defines the name of the Azure Resource Group.
 
 .PARAMETER AzScaleSetName
@@ -49,61 +25,122 @@
 .PARAMETER AzImageName
     Defines the name of the Azure Scale Set image.
 
+.PARAMETER AzDebug
+    Increase logging verbosity to show all debug logs.
+
+.PARAMETER AzOnlyShowErrors
+    Only show errors, suppressing warnings.
+
+.PARAMETER AzOutput
+    Output format.
+
+.PARAMETER AzQuery
+    JMESPath query string.
+
+.PARAMETER AzVerbose
+    Increase logging verbosity.
+
+.PARAMETER WhatIf
+    Shows what would happen if the cmdlet runs. The cmdlet is not run.
+
+.PARAMETER Confirm
+    Prompts you for confirmation before running the cmdlet.
+
+.EXAMPLE
+    .\az-ps-create-vm-scale-set.ps1 -AzResourceGroup "myResourceGroup" -AzScaleSetName "myScaleSet" -AzOrchestrationMode "Uniform" -AzLocation "westus" -AzInstanceCount 2 -AzImageName "UbuntuLTS"
+
+.NOTES
+    Ensure that Azure PowerShell is installed and authenticated before running the script.
+    Author: Your Name
+    Date:   2024-09-03
+    Version: 1.1
+    Requires: Azure PowerShell
+
+.LINK
+    https://learn.microsoft.com/en-us/powershell/azure/new-azureps
 #>
+
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory)]
-    [string]$AzResourceGroupName = "myResourceGroup",
-    [Parameter(Mandatory)]
-    [string]$AzScaleSetName = "myScaleSet",
-    [Parameter(Mandatory)]
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
+    [string]$AzResourceGroup,
+
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
+    [string]$AzScaleSetName,
+
+    [Parameter(Mandatory=$true)]
     [ValidateSet('Uniform', 'Flexible')]
     [string]$AzOrchestrationMode,
-    [Parameter(Mandatory)]
-    [ValidateSet(
-        'eastus', 'eastus2', 'southcentralus', 'westus2',
-        'westus3', 'australiaeast', 'southeastasia', 'northeurope',
-        'swedencentral', 'uksouth', 'westeurope', 'centralus',
-        'southafricanorth', 'centralindia', 'eastasia', 'japaneast',
-        'koreacentral', 'canadacentral', 'francecentral', 'germanywestcentral',
-        'italynorth', 'norwayeast', 'polandcentral', 'switzerlandnorth',
-        'uaenorth', 'brazilsouth', 'israelcentral', 'qatarcentral',
-        'asia', 'asiapacific', 'australia', 'brazil',
-        'canada', 'europe', 'france', 'germany',
-        'global', 'india', 'japan', 'korea',
-        'norway', 'singapore', 'southafrica', 'sweden',
-        'switzerland', 'unitedstates', 'northcentralus', 'westus',
-        'japanwest', 'centraluseuap', 'eastus2euap', 'westcentralus',
-        'southafricawest', 'australiacentral', 'australiacentral2', 'australiasoutheast',
-        'koreasouth', 'southindia', 'westindia', 'canadaeast',
-        'francesouth', 'germanynorth', 'norwaywest', 'switzerlandwest',
-        'ukwest', 'uaecentral', 'brazilsoutheast'
-    )]
+
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
     [string]$AzLocation,
-    [Parameter(Mandatory)]
-    [int]$AzInstanceCount = 2,
-    [Parameter(Mandatory)]
-<<<<<<< HEAD
-    [string]$AzImageName = "myImageName"
-=======
+
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
+    [int]$AzInstanceCount,
+
+    [Parameter(Mandatory=$true)]
     [ValidateSet(
-        'Win2022AzureEdition', 'Win2022AzureEditionCore', 'Win2019Datacenter', 'Win2016Datacenter', 
-        'Win2012R2Datacenter', 'Win2012Datacenter', 'UbuntuLTS', 'Ubuntu2204', 
-        'CentOS85Gen2', 'Debian11', 'OpenSuseLeap154Gen2', 'RHELRaw8LVMGen2', 
+        'Win2022AzureEdition', 'Win2022AzureEditionCore', 'Win2019Datacenter', 'Win2016Datacenter',
+        'Win2012R2Datacenter', 'Win2012Datacenter', 'UbuntuLTS', 'Ubuntu2204',
+        'CentOS85Gen2', 'Debian11', 'OpenSuseLeap154Gen2', 'RHELRaw8LVMGen2',
         'SuseSles15SP3', 'FlatcarLinuxFreeGen2'
     )]
-    [string]$AzImageName
->>>>>>> d27ed172490c2a99af476a122f8fcfd7a8ae8575
+    [string]$AzImageName,
+
+    [Parameter(Mandatory=$false)]
+    [switch]$AzDebug,
+
+    [Parameter(Mandatory=$false)]
+    [switch]$AzOnlyShowErrors,
+
+    [Parameter(Mandatory=$false)]
+    [string]$AzOutput,
+
+    [Parameter(Mandatory=$false)]
+    [string]$AzQuery,
+
+    [Parameter(Mandatory=$false)]
+    [switch]$AzVerbose,
+
 
 )
 
-#Set Error Action to Silently Continue
-$ErrorActionPreference =  "Stop"
+# Splatting parameters for better readability
+$parameters = @{
+    ResourceGroup    = $AzResourceGroup
+    Name                 = $AzScaleSetName
+    OrchestrationMode    = $AzOrchestrationMode
+    Location             = $AzLocation
+    InstanceCount        = $AzInstanceCount
+    ImageName            = $AzImageName
+    Debug                = $AzDebug
+    OnlyShowErrors       = $AzOnlyShowErrors
+    Output               = $AzOutput
+    Query                = $AzQuery
+    Verbose              = $AzVerbose
+}
 
-New-AzVmss `
-    -ResourceGroup $AzResourceGroupName `
-    -Name $AzScaleSetName `
-    -OrchestrationMode $AzOrchestrationMode `
-    -Location $AzResourceGroupName `
-    -InstanceCount $AzInstanceCount `
-    -ImageName $AzImageName `
+# Set Error Action to Stop
+$ErrorActionPreference = "Stop"
+
+try {
+    # Create the VM Scale Set
+    New-AzVmss @parameters
+
+    # Output the result
+    Write-Output "Azure VM Scale Set '$($AzScaleSetName)' created successfully in resource group '$($AzResourceGroup)'."
+} catch {
+    # Log the error to the console
+
+Write-Output "Error message $errorMessage"
+
+
+    Write-Error "Failed to create Azure VM Scale Set: $($_.Exception.Message)"
+} finally {
+    # Cleanup code if needed
+    Write-Output "Script execution completed."
+}

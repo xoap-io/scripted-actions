@@ -9,7 +9,7 @@
 
     The script uses the following Azure CLI command:
     az group delete `
-        --resource-group $AzResourceGroupName
+        --resource-group $AzResourceGroup
 
     The script sets the ErrorActionPreference to SilentlyContinue to suppress error messages.
     
@@ -23,24 +23,86 @@
     the use and the consequences of the use of this freely available script.
     PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
 
-.COMPONENT
-    Azure CLI
+.PARAMETER Name
+    Defines the name of the Azure Resource Group.
+
+.PARAMETER ForceDeletionTypes
+    Defines the force deletion types of the Azure Resource Group.
+
+.PARAMETER NoWait
+    Defines the no-wait status of the Azure Resource Group.
+
+.PARAMETER Yes
+    Do not prompt for confirmation.
+
+.LINK
+    https://learn.microsoft.com/en-us/cli/azure/group
+
+.LINK
+    https://learn.microsoft.com/en-us/cli/azure/group?view=azure-cli-latest
 
 .LINK
     https://github.com/xoap-io/scripted-actions
 
-.PARAMETER AzResourceGroupName
-    Defines the name of the Azure Resource Group.
-
+.COMPONENT
+    Azure CLI
 #>
+
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory)]
-    [string]$AzResourceGroupName = "myResourceGroup"
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
+    [string]$Name,
+
+    [Parameter(Mandatory=$false)]
+    [ValidateNotNullOrEmpty()]
+    [ValidateSet(
+        'Microsoft.Compute/virtualMachineScaleSets',
+        'Microsoft.Compute/virtualMachines',
+        'Microsoft.Databricks/workspaces'
+    )]
+    [string]$ForceDeletionTypes,
+
+    [Parameter(Mandatory=$false)]
+    [ValidateNotNullOrEmpty()]
+    [bool]$NoWait,
+
+    [Parameter(Mandatory=$false)]
+    [ValidateNotNullOrEmpty()]
+    [bool]$Yes
 )
 
-#Set Error Action to Silently Continue
-$ErrorActionPreference =  "Stop"
+$parameters = `
+    '--resource-group', $Name
 
-az group delete `
-    --resource-group $AzResourceGroupName --yes --no-wait
+if ($ForceDeletionTypes) {
+    $parameters += '--force-deletion-types', $ForceDeletionTypes
+}
+
+if ($NoWait) {
+    $parameters += '--no-wait'
+}
+
+if ($Yes) {
+    $parameters += '--yes'
+}
+
+# Set Error Action to Stop
+$ErrorActionPreference = "Stop"
+
+try {
+    # Delete an Azure Resource Group
+    az group delete @parameters
+
+    # Output the result
+    Write-Output "Azure Resource Group deleted successfully."
+
+} catch {
+    # Log the error to the console
+    Write-Output "Error message $errorMessage"
+    Write-Error "Failed to delete the Azure Resource Group: $($_.Exception.Message)"
+
+} finally {
+    # Cleanup code if needed
+    Write-Output "Script execution completed."
+}

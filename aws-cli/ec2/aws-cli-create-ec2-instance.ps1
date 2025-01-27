@@ -55,7 +55,9 @@ param(
     [Parameter(Mandatory)]
     [string]$AwsKeyPairName = "myKeyPairName",
     [Parameter(Mandatory)]
-    [string]$AwsSecurityGroupId = "mySecurityGroupId"
+    [string]$AwsSecurityGroupId = "mySecurityGroupId",
+    [Parameter(Mandatory)]
+    [string]$AwsSubnetId = "mySubnetId"
 )
 
 #Set Error Action to Silently Continue

@@ -58,7 +58,7 @@ param(
 $ErrorActionPreference =  "Stop"
 
 Send-SSMCommand `
-    -InstanceIds @($AwsInstanceId) `
-    -DocumentName $AwsSsmDocumentName `
-    -Comment $AwsSsmDocumentComment `
-    -Parameter @{'commands'=@('"Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://api.dev.xoap.io/dsc/Policy/$XOAPWorkspaceId/Download/$XOAPGroupName'))"')}
+    --instance-ids @($AwsInstanceId) `
+    --document-name $AwsSsmDocumentName `
+    --comment $AwsSsmDocumentComment `
+    --parameters @{'commands'=@('"Invoke-Expression ((New-Object System.Net.WebClient).DownloadString(\"https://api.dev.xoap.io/dsc/Policy/$XOAPWorkspaceId/Download/$XOAPGroupName\"))"')}

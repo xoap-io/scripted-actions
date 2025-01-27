@@ -4,46 +4,111 @@
 
 .DESCRIPTION
     This script deletes an Azure Image Builder Template and the corresponding Azure Resource Group with the Azure PowerShell. The script requires the following parameters:
-    - AzResourceGroupName: Defines the name of the Azure Resource Group.
+    - AzResourceGroup: Defines the name of the Azure Resource Group.
     - AzImageTemplateName: Defines the name of the Azure Image Builder Template.
 
     The script will delete the Azure Image Builder Template and the Azure Resource Group with all its resources.
 
-.NOTES
-    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
-    The use of the scripts does not require XOAP, but it will make your life easier.
-    You are allowed to pull the script from the repository and use it with XOAP or other solutions
-    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no liability for the function,
-    the use and the consequences of the use of this freely available script.
-    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
-
-.COMPONENT
-    Azure PowerShell
-
-.LINK
-    https://github.com/xoap-io/scripted-actions
-
-.PARAMETER AzResourceGroupName
+.PARAMETER AzResourceGroup
     Defines the name of the Azure Resource Group.
 
 .PARAMETER AzImageTemplateName
     Defines the name of the Azure Image Builder Template.
 
+.PARAMETER AzDebug
+    Increase logging verbosity to show all debug logs.
+
+.PARAMETER AzOnlyShowErrors
+    Only show errors, suppressing warnings.
+
+.PARAMETER AzOutput
+    Output format.
+
+.PARAMETER AzQuery
+    JMESPath query string.
+
+.PARAMETER AzVerbose
+    Increase logging verbosity.
+
+.PARAMETER WhatIf
+    Shows what would happen if the cmdlet runs. The cmdlet is not run.
+
+.PARAMETER Confirm
+    Prompts you for confirmation before running the cmdlet.
+
+.EXAMPLE
+    .\az-ps-image-builder-windows-cleanup.ps1 -AzResourceGroup "myResourceGroup" -AzImageTemplateName "myImageTemplate"
+
+.NOTES
+    Ensure that Azure PowerShell is installed and authenticated before running the script.
+    Author: Your Name
+    Date:   2024-09-03
+    Version: 1.1
+    Requires: Azure PowerShell
+
+.LINK
+    https://github.com/xoap-io/scripted-actions
 #>
+
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory)]
-    [string]$AzResourceGroupName = "myResourceGroup",
-    [Parameter(Mandatory)]
-    [string]$AzImageTemplateName = "myImageTemplate"
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
+    [string]$AzResourceGroup = "myResourceGroup",
+
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
+    [string]$AzImageTemplateName = "myImageTemplate",
+
+    [Parameter(Mandatory=$false)]
+    [switch]$AzDebug,
+
+    [Parameter(Mandatory=$false)]
+    [switch]$AzOnlyShowErrors,
+
+    [Parameter(Mandatory=$false)]
+    [string]$AzOutput,
+
+    [Parameter(Mandatory=$false)]
+    [string]$AzQuery,
+
+    [Parameter(Mandatory=$false)]
+    [switch]$AzVerbose,
+
+
 )
 
-#Set Error Action to Silently Continue
-$ErrorActionPreference =  "Stop"
+# Splatting parameters for better readability
+$parameters = @{
+    ResourceGroup    = $AzResourceGroup
+    ImageTemplateName    = $AzImageTemplateName
+    Debug                = $AzDebug
+    OnlyShowErrors       = $AzOnlyShowErrors
+    Output               = $AzOutput
+    Query                = $AzQuery
+    Verbose              = $AzVerbose
+}
 
-Remove-AzImageBuilderTemplate `
-    -ResourceGroupName $AzResourceGroupName `
-    -Name $AzImageTemplateName
+# Set Error Action to Stop
+$ErrorActionPreference = "Stop"
 
-Remove-AzResourceGroup `
-    -Name $AzResourceGroupName
+try {
+    # Remove the Image Builder Template
+    Remove-AzImageBuilderTemplate @parameters -Force
+
+    # Remove the Resource Group
+    Remove-AzResourceGroup @parameters -Force
+
+    # Output the result
+    Write-Output "Azure Image Builder Template and Resource Group '$($AzResourceGroup)' deleted successfully."
+} catch {
+    # Log the error to the console
+
+Write-Output "Error message $errorMessage"
+
+
+    Write-Error "Failed to delete Azure Image Builder Template and Resource Group: $($_.Exception.Message)"
+} finally {
+    # Cleanup code if needed
+    Write-Output "Script execution completed."
+}
