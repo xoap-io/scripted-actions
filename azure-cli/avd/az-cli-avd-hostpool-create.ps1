@@ -3,293 +3,233 @@
     Create an Azure Virtual Desktop Host Pool with the Azure CLI.
 
 .DESCRIPTION
-    This script creates an Azure Virtual Desktop Host Pool with the Azure CLI.
-    The script uses the following Azure CLI command:
-    az desktopvirtualization hostpool create --host-pool-type $AzHostPoolType --load-balancer-type $AzLoadBalancerType --name $AzHostPoolName --preferred-app-group-type $AzPreferredAppGroupType --resource-group $AzResourceGroup --custom-rdp-property $AzCustomRdpProperty --description $AzDescription --friendly-name $AzFriendlyName --location $AzLocation --max-session-limit $AzMaxSessionLimit --personal-desktop-assignment-type $AzPersonalDesktopAssignmentType --registration-info $AzRegistrationInfo --sso-client-id $AzSsoClientId --sso-client-secret-key-vault-path $AzSsoClientSecretKeyVaultPath --sso-secret-type $AzSsoSecretType --ssoadfs-authority $AzSsoAdfsAuthority --start-vm-on-connect $AzStartVmOnConnect --tags $AzTags --validation-environment $AzValidationEnvironment --vm-template $AzVmTemplate
+    This script creates an Azure Virtual Desktop Host Pool using Azure CLI.
+    It includes validation for Azure CLI availability and login status.
 
-.PARAMETER HostPoolType
-    Defines the type of the Azure Virtual Desktop Host Pool.
-
-.PARAMETER LoadBalancerType
-    Defines the type of the Azure Virtual Desktop Load Balancer.
-
-.PARAMETER HostPoolName
-    Defines the name of the Azure Virtual Desktop Host Pool.
-
-.PARAMETER PreferredAppGroupType
-    Defines the preferred application group type.
+.PARAMETER Name
+    The name of the Azure Virtual Desktop Host Pool.
 
 .PARAMETER ResourceGroup
-    Defines the name of the Azure Resource Group.
+    The name of the Azure Resource Group.
 
-.PARAMETER CustomRdpProperty
-    Defines the custom RDP property.
+.PARAMETER HostPoolType
+    The type of the host pool. Valid values: 'BYODesktops', 'Pooled', 'Personal'
 
-.PARAMETER Description
-    Defines the description of the Azure Virtual Desktop Host Pool.
+.PARAMETER LoadBalancerType
+    The load balancer type. Valid values: 'BreadthFirst', 'DepthFirst', 'Persistent'
 
-.PARAMETER FriendlyName
-    Defines the friendly name of the Azure Virtual Desktop Host Pool.
+.PARAMETER PreferredAppGroupType
+    The preferred application group type. Valid values: 'Desktop', 'None', 'RailApplications'
 
 .PARAMETER Location
-    Defines the location of the Azure Virtual Desktop Host Pool.
+    The Azure region for the host pool.
 
 .PARAMETER MaxSessionLimit
-    Defines the maximum session limit.
+    Maximum session limit for pooled host pools (1-999999).
 
 .PARAMETER PersonalDesktopAssignmentType
-    Defines the personal desktop assignment type.
+    Assignment type for personal host pools. Valid values: 'Automatic', 'Direct'
 
-.PARAMETER RegistrationInfo
-    Defines the registration information.
+.PARAMETER Description
+    Optional description for the host pool.
 
-.PARAMETER SsoClientId
-    Defines the SSO client ID.
+.PARAMETER FriendlyName
+    Optional friendly name for the host pool.
 
-.PARAMETER SsoClientSecretKeyVaultPath
-    Defines the SSO client secret key vault path.
-
-.PARAMETER SsoSecretType
-    Defines the SSO secret type.
-
-.PARAMETER SsoAdfsAuthority
-    Defines the SSO ADFS authority.
+.PARAMETER CustomRdpProperty
+    Optional custom RDP properties.
 
 .PARAMETER StartVmOnConnect
-    Defines whether to start the VM on connect.
-
-.PARAMETER Tags
-    Defines the tags for the Azure Virtual Desktop Host Pool.
+    Enable start VM on connect feature.
 
 .PARAMETER ValidationEnvironment
-    Defines the validation environment.
+    Mark as validation environment.
 
-.PARAMETER VmTemplate
-    Defines the VM template.
+.PARAMETER Tags
+    Optional tags in the format 'key1=value1 key2=value2'.
 
 .EXAMPLE
-    .\az-cli-avd-hostpool-create.ps1 -AzHostPoolName "MyHostPool" -AzResourceGroup "MyResourceGroup"
+    .\az-cli-avd-hostpool-create.ps1 -Name "MyHostPool" -ResourceGroup "MyResourceGroup" -HostPoolType "Pooled" -LoadBalancerType "BreadthFirst" -PreferredAppGroupType "Desktop" -Location "eastus"
+
+.EXAMPLE
+    .\az-cli-avd-hostpool-create.ps1 -Name "PersonalPool" -ResourceGroup "MyRG" -HostPoolType "Personal" -LoadBalancerType "Persistent" -PreferredAppGroupType "Desktop" -Location "westus2" -PersonalDesktopAssignmentType "Automatic"
 
 .LINK
     https://learn.microsoft.com/en-us/cli/azure/desktopvirtualization/hostpool
+
+.COMPONENT
+    Azure CLI
 #>
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory)]
     [ValidateNotNullOrEmpty()]
-    [ValidateSet(
-        'BYODesktops',
-        'Pooled',
-        'Personal'
-    )]
-    [string]$HostPoolType,
+    [string]$Name,
 
-    [Parameter(Mandatory=$true)]
-    [ValidateNotNullOrEmpty()]
-    [ValidateSet(
-        'BreadthFirst',
-        'DepthFirst',
-        'Persistent'
-    )]
-    [string]$LoadBalancerType,
-
-    [Parameter(Mandatory=$true)]
-    [ValidateNotNullOrEmpty()]
-    [string]$HostPoolName,
-
-    [Parameter(Mandatory=$true)]
-    [ValidateNotNullOrEmpty()]
-    [ValidateSet(
-        'Desktop',
-        'None',
-        'RailApplications'
-    )]
-    [string]$PreferredAppGroupType,
-
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory)]
     [ValidateNotNullOrEmpty()]
     [string]$ResourceGroup,
 
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$CustomRdpProperty,
+    [Parameter(Mandatory)]
+    [ValidateSet('BYODesktops', 'Pooled', 'Personal')]
+    [string]$HostPoolType,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory)]
+    [ValidateSet('BreadthFirst', 'DepthFirst', 'Persistent')]
+    [string]$LoadBalancerType,
+
+    [Parameter(Mandatory)]
+    [ValidateSet('Desktop', 'None', 'RailApplications')]
+    [string]$PreferredAppGroupType,
+
+    [Parameter(Mandatory)]
+    [ValidateSet(
+        'eastus', 'eastus2', 'southcentralus', 'westus2',
+        'westus3', 'australiaeast', 'southeastasia', 'northeurope',
+        'swedencentral', 'uksouth', 'westeurope', 'centralus',
+        'southafricanorth', 'centralindia', 'eastasia', 'japaneast',
+        'koreacentral', 'canadacentral', 'francecentral', 'germanywestcentral',
+        'italynorth', 'norwayeast', 'polandcentral', 'switzerlandnorth',
+        'uaenorth', 'brazilsouth', 'israelcentral', 'qatarcentral'
+    )]
+    [string]$Location,
+
+    [Parameter()]
+    [ValidateRange(1, 999999)]
+    [int]$MaxSessionLimit,
+
+    [Parameter()]
+    [ValidateSet('Automatic', 'Direct')]
+    [string]$PersonalDesktopAssignmentType,
+
+    [Parameter()]
     [ValidateNotNullOrEmpty()]
     [string]$Description,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter()]
     [ValidateNotNullOrEmpty()]
     [string]$FriendlyName,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter()]
     [ValidateNotNullOrEmpty()]
-    [string]$Location,
+    [string]$CustomRdpProperty,
 
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$MaxSessionLimit,
+    [Parameter()]
+    [switch]$StartVmOnConnect,
 
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [ValidateSet(
-        'Automatic',
-        'Direct'
-    )]
-    [string]$PersonalDesktopAssignmentType,
+    [Parameter()]
+    [switch]$ValidationEnvironment,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter()]
     [ValidateNotNullOrEmpty()]
-    [string]$RegistrationInfo,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$SsoClientId,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$SsoClientSecretKeyVaultPath,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [ValidateSet(
-        'Certificate',
-        'CertificateInKeyVault',
-        'SharedKey',
-        'SharedKeyInKeyVault'
-    )]
-    [string]$SsoSecretType,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$SsoAdfsAuthority,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [ValidateSet(
-        '0',
-        '1',
-        'f',
-        'false',
-        'n',
-        'no',
-        't',
-        'true',
-        'y',
-        'yes'
-    )]
-    [string]$StartVmOnConnect,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$Tags,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [ValidateSet(
-        '0',
-        '1',
-        'f',
-        'false',
-        'n',
-        'no',
-        't',
-        'true',
-        'y',
-        'yes'
-    )]
-    [string]$ValidationEnvironment,
-
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$VmTemplate
+    [string]$Tags
 )
 
-# Splatting parameters for better readability
-$parameters = `
-    '--host-pool-type', $HostPoolType
-    '--load-balancer-type', $LoadBalancerType
-    '--name', $HostPoolName
-    '--preferred-app-group-type', $PreferredAppGroupType
-    '--resource-group', $ResourceGroup
-
-if ($CustomRdpProperty) {
-    $parameters += '--custom-rdp-property', $CustomRdpProperty
-}
-
-if ($Description) {
-    $parameters += '--description', $Description
-}
-
-if ($FriendlyName) {
-    $parameters += '--friendly-name', $FriendlyName
-}
-
-if ($Location) {
-    $parameters += '--location', $Location
-}
-
-if ($MaxSessionLimit) {
-    $parameters += '--max-session-limit', $MaxSessionLimit
-}
-
-if ($PersonalDesktopAssignmentType) {
-    $parameters += '--personal-desktop-assignment-type', $PersonalDesktopAssignmentType
-}
-
-if ($RegistrationInfo) {
-    $parameters += '--registration-info', $RegistrationInfo
-}
-
-if ($SsoClientId) {
-    $parameters += '--sso-client-id', $SsoClientId
-}
-
-if ($SsoClientSecretKeyVaultPath) {
-    $parameters += '--sso-client-secret-key-vault-path', $SsoClientSecretKeyVaultPath
-}
-
-if ($SsoSecretType) {
-    $parameters += '--sso-secret-type', $SsoSecretType
-}
-
-if ($SsoAdfsAuthority) {
-    $parameters += '--ssoadfs-authority', $SsoAdfsAuthority
-}
-
-if ($StartVmOnConnect) {
-    $parameters += '--start-vm-on-connect', $StartVmOnConnect
-}
-
-if ($Tags) {
-    $parameters += '--tags', $Tags
-}
-
-if ($ValidationEnvironment) {
-    $parameters += '--validation-environment', $ValidationEnvironment
-}
-
-if ($VmTemplate) {
-    $parameters += '--vm-template', $VmTemplate
-}
-
-# Set Error Action to Stop
-$ErrorActionPreference = "Stop"
+$ErrorActionPreference = 'Stop'
 
 try {
-    # Create the Azure Virtual Desktop Host Pool
-    az desktopvirtualization hostpool create @parameters
-
-    # Output the result
-    Write-Output "Azure Virtual Desktop Host Pool created successfully."
-
+    Write-Host "Validating Azure CLI is available..." -ForegroundColor Cyan
+    $azVersion = az version --output tsv --query '"azure-cli"' 2>$null
+    if (-not $azVersion) {
+        throw "Azure CLI is not installed or not available in PATH"
+    }
+    
+    Write-Host "Checking Azure CLI login status..." -ForegroundColor Cyan
+    $account = az account show --output json 2>$null | ConvertFrom-Json
+    if (-not $account) {
+        throw "Not logged in to Azure CLI. Please run 'az login' first"
+    }
+    Write-Host "Logged in as: $($account.user.name)" -ForegroundColor Green
+    
+    # Validate parameter combinations
+    if ($HostPoolType -eq 'Pooled' -and $PersonalDesktopAssignmentType) {
+        Write-Warning "PersonalDesktopAssignmentType is only valid for Personal host pools. Ignoring parameter."
+        $PersonalDesktopAssignmentType = $null
+    }
+    
+    if ($HostPoolType -eq 'Personal' -and $MaxSessionLimit) {
+        Write-Warning "MaxSessionLimit is only valid for Pooled host pools. Ignoring parameter."
+        $MaxSessionLimit = $null
+    }
+    
+    if ($HostPoolType -eq 'Personal' -and $LoadBalancerType -ne 'Persistent') {
+        Write-Warning "Personal host pools should use Persistent load balancer type. Changing to Persistent."
+        $LoadBalancerType = 'Persistent'
+    }
+    
+    Write-Host "Creating Azure Virtual Desktop Host Pool..." -ForegroundColor Cyan
+    
+    $azParams = @(
+        'desktopvirtualization', 'hostpool', 'create',
+        '--name', $Name,
+        '--resource-group', $ResourceGroup,
+        '--host-pool-type', $HostPoolType,
+        '--load-balancer-type', $LoadBalancerType,
+        '--preferred-app-group-type', $PreferredAppGroupType,
+        '--location', $Location
+    )
+    
+    if ($MaxSessionLimit -and $HostPoolType -eq 'Pooled') {
+        $azParams += '--max-session-limit', $MaxSessionLimit.ToString()
+    }
+    
+    if ($PersonalDesktopAssignmentType -and $HostPoolType -eq 'Personal') {
+        $azParams += '--personal-desktop-assignment-type', $PersonalDesktopAssignmentType
+    }
+    
+    if ($Description) {
+        $azParams += '--description', $Description
+    }
+    
+    if ($FriendlyName) {
+        $azParams += '--friendly-name', $FriendlyName
+    }
+    
+    if ($CustomRdpProperty) {
+        $azParams += '--custom-rdp-property', $CustomRdpProperty
+    }
+    
+    if ($StartVmOnConnect) {
+        $azParams += '--start-vm-on-connect', 'true'
+    }
+    
+    if ($ValidationEnvironment) {
+        $azParams += '--validation-environment', 'true'
+    }
+    
+    if ($Tags) {
+        $azParams += '--tags', $Tags
+    }
+    
+    $azParams += '--output', 'json'
+    
+    $result = & az @azParams
+    if ($LASTEXITCODE -ne 0) {
+        throw "Azure CLI command failed with exit code: $LASTEXITCODE"
+    }
+    
+    $hostPool = $result | ConvertFrom-Json
+    
+    Write-Host "Azure Virtual Desktop Host Pool created successfully:" -ForegroundColor Green
+    Write-Host "  Name: $($hostPool.name)" -ForegroundColor White
+    Write-Host "  Resource Group: $($hostPool.resourceGroup)" -ForegroundColor White
+    Write-Host "  Location: $($hostPool.location)" -ForegroundColor White
+    Write-Host "  Type: $($hostPool.hostPoolType)" -ForegroundColor White
+    Write-Host "  Load Balancer Type: $($hostPool.loadBalancerType)" -ForegroundColor White
+    Write-Host "  Preferred App Group Type: $($hostPool.preferredAppGroupType)" -ForegroundColor White
+    Write-Host "  ID: $($hostPool.id)" -ForegroundColor White
+    
+    if ($hostPool.maxSessionLimit) {
+        Write-Host "  Max Session Limit: $($hostPool.maxSessionLimit)" -ForegroundColor White
+    }
+    
+    if ($hostPool.personalDesktopAssignmentType) {
+        Write-Host "  Personal Desktop Assignment: $($hostPool.personalDesktopAssignmentType)" -ForegroundColor White
+    }
+    
+    return $hostPool
 } catch {
-    # Log the error to the console
-    Write-Output "Error message $errorMessage"
-    Write-Error "Failed to create the Azure Virtual Desktop Host Pool: $($_.Exception.Message)"
-
-} finally {
-    # Cleanup code if needed
-    Write-Output "Script execution completed."
+    Write-Error "Failed to create Azure Virtual Desktop Host Pool: $_"
+    exit 1
 }

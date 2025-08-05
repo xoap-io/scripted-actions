@@ -31,11 +31,16 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string]$AwsDirectoryId = "myDirectoryId"
+    [ValidatePattern('^d-[a-zA-Z0-9]{8,}$')]
+    [string]$AwsDirectoryId
 )
 
-#Set Error Action to Silently Continue
-$ErrorActionPreference =  "Stop"
-
-aws workspaces deregister-workspace-directory `
-    --directory-id $AwsDirectoryId
+$ErrorActionPreference = 'Stop'
+try {
+    aws workspaces deregister-workspace-directory `
+        --directory-id $AwsDirectoryId
+    Write-Host "Successfully deregistered directory $AwsDirectoryId from WorkSpaces."
+} catch {
+    Write-Error "Failed to deregister directory: $_"
+    exit 1
+}

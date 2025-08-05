@@ -31,11 +31,16 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string]$AwsWorkspaceId = "myWorkspaceId"
+    [ValidatePattern('^ws-[a-zA-Z0-9]{8,}$')]
+    [string]$AwsWorkspaceId
 )
 
-#Set Error Action to Silently Continue
-$ErrorActionPreference =  "Stop"
-
-aws workspaces rebuild-workspaces `
-    --rebuild-workspace-requests $AwsWorkspaceId
+$ErrorActionPreference = 'Stop'
+try {
+    aws workspaces rebuild-workspaces `
+        --rebuild-workspace-requests $AwsWorkspaceId
+    Write-Host "Successfully rebuilt Workspace $AwsWorkspaceId."
+} catch {
+    Write-Error "Failed to rebuild Workspace: $_"
+    exit 1
+}

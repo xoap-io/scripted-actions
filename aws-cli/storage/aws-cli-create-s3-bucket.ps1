@@ -31,18 +31,34 @@
     Defines the region of the AWS S3 Bucket.
 
 #>
+
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string]$AwsBucketName = "myBucketName",
+    [string]$AwsBucketName,
     [Parameter(Mandatory)]
     [ValidateSet('af-south-1','ap-east-1','ap-northeast-1','ap-northeast-2','ap-northeast-3','ap-south-1','ap-southeast-1','ap-southeast-2','ca-central-1','eu-central-1','eu-north-1','eu-south-1','eu-west-1','eu-west-2','eu-west-3','me-south-1','sa-east-1','us-east-1','us-east-2','us-west-1','us-west-2')]
-    [string]$AwsBucketRegion = ""
+    [string]$AwsBucketRegion
 )
 
-#Set Error Action to Silently Continue
-$ErrorActionPreference =  "Stop"
+$ErrorActionPreference = 'Stop'
 
-aws s3api create-bucket `
-    --bucket $AwsBucketName `
-    --region $AwsBucketRegion
+# Check for AWS CLI
+if (-not (Get-Command aws -ErrorAction SilentlyContinue)) {
+    Write-Error 'AWS CLI is not installed or not in PATH.'
+    exit 127
+}
+
+try {
+    $result = aws s3api create-bucket --bucket $AwsBucketName --region $AwsBucketRegion --output json 2>&1
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "S3 bucket created successfully." -ForegroundColor Green
+        Write-Host $result
+    } else {
+        Write-Error "Failed to create S3 bucket: $result"
+        exit $LASTEXITCODE
+    }
+} catch {
+    Write-Error "Unexpected error: $_"
+    exit 1
+}

@@ -1,41 +1,47 @@
-<#
+
+<#!
 .SYNOPSIS
-    Terminate an AWS EC2 instance.
+    Terminates an AWS EC2 instance using the latest AWS CLI (v2.16+).
 
 .DESCRIPTION
-    This script terminates an AWS EC2 instance. The script uses the following AWS CLI command:
-    aws ec2 terminate-instances --instance-ids $AwsInstanceId
+    This script robustly terminates an EC2 instance, with improved error handling and output. Compatible with AWS CLI v2.16+ (2025).
 
-    The script sets the ErrorActionPreference to SilentlyContinue to suppress error messages.
-    
-    It does not return any output.
+.PARAMETER InstanceId
+    The ID of the AWS EC2 instance to terminate.
 
-.NOTES
-    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
-    The use of the scripts does not require XOAP, but it will make your life easier.
-    You are allowed to pull the script from the repository and use it with XOAP or other solutions
-    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no liability for the function,
-    the use and the consequences of the use of this freely available script.
-    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
-
-.COMPONENT
-    AWS CLI
+.EXAMPLE
+    .\aws-cli-terminate-instance.ps1 -InstanceId i-1234567890abcdef0
 
 .LINK
     https://github.com/xoap-io/scripted-actions
-
-.PARAMETER AwsInstanceId
-    Defines the ID of the AWS EC2 instance.
-
 #>
+
+
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string]$AwsInstanceId = "myInstanceId"
+    [ValidatePattern('^i-[a-zA-Z0-9]{8,}$')]
+    [string]$InstanceId
 )
 
-#Set Error Action to Silently Continue
-$ErrorActionPreference =  "Stop"
+$ErrorActionPreference = 'Stop'
 
-aws ec2 terminate-instances `
-    --instance-ids $AwsInstanceId
+# Check for AWS CLI
+if (-not (Get-Command aws -ErrorAction SilentlyContinue)) {
+    Write-Error 'AWS CLI is not installed or not in PATH.'
+    exit 127
+}
+
+try {
+    $result = aws ec2 terminate-instances --instance-ids $InstanceId --output json 2>&1
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "EC2 instance terminated successfully." -ForegroundColor Green
+        Write-Host $result
+    } else {
+        Write-Error "Failed to terminate EC2 instance: $result"
+        exit $LASTEXITCODE
+    }
+} catch {
+    Write-Error "Unexpected error: $_"
+    exit 1
+}

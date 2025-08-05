@@ -34,11 +34,16 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string]$AwsWorkspaceId = "myWorkspaceId"
+    [ValidatePattern('^ws-[a-zA-Z0-9]{8,}$')]
+    [string]$AwsWorkspaceId
 )
 
-#Set Error Action to Silently Continue
-$ErrorActionPreference =  "Stop"
-
-aws workspaces restore-workspace `
-    --workspace-id $AwsWorkspaceId
+$ErrorActionPreference = 'Stop'
+try {
+    aws workspaces restore-workspace `
+        --workspace-id $AwsWorkspaceId
+    Write-Host "Successfully restored Workspace $AwsWorkspaceId."
+} catch {
+    Write-Error "Failed to restore Workspace: $_"
+    exit 1
+}

@@ -3,12 +3,8 @@
     Show details of an Azure Virtual Desktop Application Group with the Azure CLI.
 
 .DESCRIPTION
-    This script shows details of an Azure Virtual Desktop Application Group with the Azure CLI.
-    The script uses the following Azure CLI command:
-    az desktopvirtualization applicationgroup show --name $AzAppGroupName --resource-group $AzResourceGroup
-
-.PARAMETER IDs
-    One or more resource IDs (space-delimited).
+    This script shows details of an Azure Virtual Desktop Application Group using Azure CLI.
+    It includes validation for Azure CLI availability and login status.
 
 .PARAMETER Name
     The name of the Azure Virtual Desktop Application Group.
@@ -17,16 +13,10 @@
     The name of the Azure Resource Group.
 
 .EXAMPLE
-    .\az-cli-avd-applicationgroup-show.ps1 -AzAppGroupName "MyAppGroup" -AzResourceGroup "MyResourceGroup"
+    .\az-cli-avd-application-group-show.ps1 -Name "MyAppGroup" -ResourceGroup "MyResourceGroup"
 
 .LINK
     https://learn.microsoft.com/en-us/cli/azure/desktopvirtualization/applicationgroup
-
-.LINK
-    https://learn.microsoft.com/en-us/cli/azure/desktopvirtualization/applicationgroup?view=azure-cli-latest
-
-.LINK
-    https://github.com/xoap-io/scripted-actions
 
 .COMPONENT
     Azure CLI
@@ -34,41 +24,59 @@
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [string]$IDs,
-
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory)]
     [ValidateNotNullOrEmpty()]
     [string]$Name,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory)]
     [ValidateNotNullOrEmpty()]
     [string]$ResourceGroup
 )
 
-# Splatting parameters for better readability
-$parameters = `
-    '--ids', $Ids
-    '--name', $AppGroupName
-    '--resource-group', $ResourceGroup
-
-# Set Error Action to Stop
-$ErrorActionPreference = "Stop"
+$ErrorActionPreference = 'Stop'
 
 try {
-    # Show details of the Azure Virtual Desktop Application Group
-    az desktopvirtualization applicationgroup show @parameters
-
-    # Output the result
-    Write-Output "Azure Virtual Desktop Application Group details retrieved successfully."
-
+    Write-Host "Validating Azure CLI is available..." -ForegroundColor Cyan
+    $azVersion = az version --output tsv --query '"azure-cli"' 2>$null
+    if (-not $azVersion) {
+        throw "Azure CLI is not installed or not available in PATH"
+    }
+    
+    Write-Host "Checking Azure CLI login status..." -ForegroundColor Cyan
+    $account = az account show --output json 2>$null | ConvertFrom-Json
+    if (-not $account) {
+        throw "Not logged in to Azure CLI. Please run 'az login' first"
+    }
+    Write-Host "Logged in as: $($account.user.name)" -ForegroundColor Green
+    
+    Write-Host "Retrieving Application Group details..." -ForegroundColor Cyan
+    
+    $azParams = @(
+        'desktopvirtualization', 'applicationgroup', 'show',
+        '--name', $Name,
+        '--resource-group', $ResourceGroup,
+        '--output', 'json'
+    )
+    
+    $result = & az @azParams
+    if ($LASTEXITCODE -ne 0) {
+        throw "Azure CLI command failed with exit code: $LASTEXITCODE"
+    }
+    
+    $appGroup = $result | ConvertFrom-Json
+    
+    Write-Host "Application Group Details:" -ForegroundColor Green
+    Write-Host "  Name: $($appGroup.name)" -ForegroundColor White
+    Write-Host "  Resource Group: $($appGroup.resourceGroup)" -ForegroundColor White
+    Write-Host "  Location: $($appGroup.location)" -ForegroundColor White
+    Write-Host "  Type: $($appGroup.applicationGroupType)" -ForegroundColor White
+    Write-Host "  Host Pool: $($appGroup.hostPoolArmPath)" -ForegroundColor White
+    Write-Host "  Description: $($appGroup.description)" -ForegroundColor White
+    Write-Host "  Friendly Name: $($appGroup.friendlyName)" -ForegroundColor White
+    Write-Host "  ID: $($appGroup.id)" -ForegroundColor White
+    
+    return $appGroup
 } catch {
-    # Log the error to the console
-    Write-Output "Error message $errorMessage"
-    Write-Error "Failed to retrieve the Azure Virtual Desktop Application Group details: $($_.Exception.Message)"
-
-} finally {
-    # Cleanup code if needed
-    Write-Output "Script execution completed."
+    Write-Error "Failed to retrieve Azure Virtual Desktop Application Group details: $_"
+    exit 1
 }

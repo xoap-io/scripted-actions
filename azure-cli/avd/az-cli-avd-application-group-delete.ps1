@@ -3,33 +3,26 @@
     Delete an Azure Virtual Desktop Application Group with the Azure CLI.
 
 .DESCRIPTION
-    This script deletes an Azure Virtual Desktop Application Group with the Azure CLI.
-    The script uses the following Azure CLI command:
-    az desktopvirtualization applicationgroup delete --name $AzAppGroupName --resource-group $AzResourceGroup --subscription $AzSubscription --yes
-
-.PARAMETER IDs
-    The IDs of the Azure Virtual Desktop Application Group.
+    This script deletes an Azure Virtual Desktop Application Group using Azure CLI.
+    It includes validation for Azure CLI availability and login status.
 
 .PARAMETER Name
-    Defines the name of the Azure Virtual Desktop Application Group.
+    The name of the Azure Virtual Desktop Application Group to delete.
 
 .PARAMETER ResourceGroup
-    Defines the name of the Azure Resource Group.
+    The name of the Azure Resource Group.
 
-.PARAMETER yes
-    Do not prompt for confirmation.
+.PARAMETER Force
+    Do not prompt for confirmation before deletion.
 
 .EXAMPLE
-    .\az-cli-avd-applicationgroup-delete.ps1 -AzAppGroupName "MyAppGroup" -AzResourceGroup "MyResourceGroup" -AzSubscription "MySubscription" -AzYes
+    .\az-cli-avd-application-group-delete.ps1 -Name "MyAppGroup" -ResourceGroup "MyResourceGroup"
+
+.EXAMPLE
+    .\az-cli-avd-application-group-delete.ps1 -Name "MyAppGroup" -ResourceGroup "MyResourceGroup" -Force
 
 .LINK
     https://learn.microsoft.com/en-us/cli/azure/desktopvirtualization/applicationgroup
-
-.LINK
-    https://learn.microsoft.com/en-us/cli/azure/desktopvirtualization/applicationgroup?view=azure-cli-latest
-
-.LINK
-    https://github.com/xoap-io/scripted-actions
 
 .COMPONENT
     Azure CLI
@@ -37,46 +30,70 @@
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory=$true)]
-    [ValidateNotNullOrEmpty()]
-    [string]$IDs,
-
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory)]
     [ValidateNotNullOrEmpty()]
     [string]$Name,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory)]
     [ValidateNotNullOrEmpty()]
     [string]$ResourceGroup,
 
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
-    [switch]$yes
+    [Parameter()]
+    [switch]$Force
 )
 
-# Splatting parameters for better readability
-$parameters = `
-    '--ids', $IDs
-    '--name', $NName
-    '--resource-group', $ResourceGroup
-    '--yes', $yes
-
-# Set Error Action to Stop
-$ErrorActionPreference = "Stop"
+$ErrorActionPreference = 'Stop'
 
 try {
-    # Delete the Azure Virtual Desktop Application Group
-    az desktopvirtualization applicationgroup delete @parameters
-
-    # Output the result
-    Write-Output "Azure Virtual Desktop Application Group deleted successfully."
-
+    Write-Host "Validating Azure CLI is available..." -ForegroundColor Cyan
+    $azVersion = az version --output tsv --query '"azure-cli"' 2>$null
+    if (-not $azVersion) {
+        throw "Azure CLI is not installed or not available in PATH"
+    }
+    
+    Write-Host "Checking Azure CLI login status..." -ForegroundColor Cyan
+    $account = az account show --output json 2>$null | ConvertFrom-Json
+    if (-not $account) {
+        throw "Not logged in to Azure CLI. Please run 'az login' first"
+    }
+    Write-Host "Logged in as: $($account.user.name)" -ForegroundColor Green
+    
+    Write-Host "Checking if Application Group exists..." -ForegroundColor Cyan
+    $existingAppGroup = az desktopvirtualization applicationgroup show --name $Name --resource-group $ResourceGroup --output json 2>$null
+    if (-not $existingAppGroup) {
+        Write-Warning "Application Group '$Name' not found in resource group '$ResourceGroup'"
+        exit 0
+    }
+    
+    $appGroupData = $existingAppGroup | ConvertFrom-Json
+    Write-Host "Found Application Group: $($appGroupData.name)" -ForegroundColor Yellow
+    Write-Host "  Type: $($appGroupData.applicationGroupType)" -ForegroundColor Yellow
+    Write-Host "  Location: $($appGroupData.location)" -ForegroundColor Yellow
+    
+    if (-not $Force) {
+        $confirmation = Read-Host "Are you sure you want to delete Application Group '$Name'? (y/N)"
+        if ($confirmation -ne 'y' -and $confirmation -ne 'Y') {
+            Write-Host "Deletion cancelled" -ForegroundColor Yellow
+            exit 0
+        }
+    }
+    
+    Write-Host "Deleting Azure Virtual Desktop Application Group..." -ForegroundColor Cyan
+    
+    $azParams = @(
+        'desktopvirtualization', 'applicationgroup', 'delete',
+        '--name', $Name,
+        '--resource-group', $ResourceGroup,
+        '--yes'
+    )
+    
+    & az @azParams
+    if ($LASTEXITCODE -ne 0) {
+        throw "Azure CLI command failed with exit code: $LASTEXITCODE"
+    }
+    
+    Write-Host "Azure Virtual Desktop Application Group '$Name' deleted successfully" -ForegroundColor Green
 } catch {
-    # Log the error to the console
-    Write-Output "Error message $errorMessage"
-    Write-Error "Failed to delete the Azure Virtual Desktop Application Group: $($_.Exception.Message)"
-
-} finally {
-    # Cleanup code if needed
-    Write-Output "Script execution completed."
+    Write-Error "Failed to delete Azure Virtual Desktop Application Group: $_"
+    exit 1
 }
