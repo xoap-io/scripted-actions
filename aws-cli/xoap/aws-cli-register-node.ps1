@@ -61,7 +61,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 try {
-    $commandString = "Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://api.dev.xoap.io/dsc/Policy/$XOAPWorkspaceId/Download/$XOAPGroupName'))"
+    $commandString = "Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://api.xoap.io/dsc/Policy/$XOAPWorkspaceId/Download/$XOAPGroupName'))"
     aws ssm send-command `
         --instance-ids $AwsInstanceId `
         --document-name $AwsSsmDocumentName `

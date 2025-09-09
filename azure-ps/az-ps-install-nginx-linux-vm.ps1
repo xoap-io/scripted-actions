@@ -72,9 +72,7 @@ param(
     [string]$AzQuery,
 
     [Parameter(Mandatory=$false)]
-    [switch]$AzVerbose,
-
-
+    [switch]$AzVerbose
 )
 
 # Splatting parameters for better readability
