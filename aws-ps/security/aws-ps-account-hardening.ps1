@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  Enhanced AWS Account Hardening with CloudWatch Monitoring (CIS AWS Foundations v5.0.0 aligned)
+  Enhanced AWS Account Hardening with CloudWatch Monitoring (CIS AWS Foundations v3.0.0 aligned)
 
 .DESCRIPTION
   Comprehensive security hardening including CloudWatch log metric filters, alarms, 
