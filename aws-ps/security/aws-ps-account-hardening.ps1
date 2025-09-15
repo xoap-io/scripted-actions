@@ -94,7 +94,7 @@ param(
   [Parameter()][ValidatePattern('^[a-zA-Z0-9\-_]+$')][string]$TrailName = "cis-multi-region-trail",
   [Parameter()][ValidatePattern('^[a-z0-9\-\.]*$')][string]$TrailBucketName = "",
   [Parameter()][ValidatePattern('^alias/[a-zA-Z0-9\-_/]+$')][string]$TrailKmsAlias = "alias/cis-cloudtrail",
-  [Parameter()][switch]$TrailEnableLogFileValidation = $true,
+  [Parameter()][switch]$TrailEnableLogFileValidation,
   
   # Config
   [Parameter()][ValidatePattern('^[a-z0-9\-\.]*$')][string]$ConfigBucketName = "",
@@ -119,14 +119,14 @@ param(
   
   # CloudWatch Monitoring
   [Parameter()][ValidatePattern('^[a-zA-Z0-9\-_]+$')][string]$SnsTopicName = "cis-security-alerts",
-  [Parameter()][switch]$EnableCloudWatchAlarms = $true,
+  [Parameter()][switch]$EnableCloudWatchAlarms,
   
   # New parameters for additional services
-  [Parameter()][switch]$EnableInspector = $true,
-  [Parameter()][switch]$EnableMacie = $true,
-  [Parameter()][switch]$EnableGuardDutyRuntimeMonitoring = $true,
-  [Parameter()][switch]$EnableVpcEndpoints = $true,
-  [Parameter()][switch]$EnableS3Lifecycle = $true,
+  [Parameter()][switch]$EnableInspector,
+  [Parameter()][switch]$EnableMacie,
+  [Parameter()][switch]$EnableGuardDutyRuntimeMonitoring,
+  [Parameter()][switch]$EnableVpcEndpoints,
+  [Parameter()][switch]$EnableS3Lifecycle,
   [Parameter()][ValidateRange(30,3653)][int]$S3LifecycleTransitionDays = 90,
   [Parameter()][ValidateRange(90,7300)][int]$S3LifecycleExpirationDays = 2555,
   # Additional remediation toggles
@@ -189,7 +189,11 @@ function Invoke-AwsCliSafe {
       throw "AWS CLI command failed with exit code: $LASTEXITCODE"
     }
   } catch {
-    Write-Warn "AWS CLI command failed: $Command - $_"
+  Write-Warn ("AWS CLI command failed: {0} - {1}" -f $Command, $_)
+  # CIS Benchmark: MFA for root user (manual remediation)
+  Write-Warn "[CIS 1.5/IAM.9] MFA for root user: Manual remediation required. See https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_mfa_enable_virtual.html"
+  # CIS Benchmark: S3 MFA delete (manual remediation)
+  Write-Warn "[CIS 2.1.2/S3.20] S3 MFA delete: Manual remediation required. See https://docs.aws.amazon.com/AmazonS3/latest/userguide/MultiFactorAuthenticationDelete.html"
     throw
   }
 }
@@ -215,6 +219,37 @@ function New-SecuritySNSTopic {
       
       # Validate the topic ARN format before proceeding
       if (-not $topicArn -or -not $topicArn.StartsWith("arn:aws:sns:")) {
+      # CIS Benchmark: Enable IAM Access Analyzer external access analyzer
+      Write-Info "[CIS 1.20/IAM.28] Enabling IAM Access Analyzer external access analyzer..."
+      try {
+        $existingAnalyzers = aws accessanalyzer list-analyzers --region $region --output json 2>$null | ConvertFrom-Json
+        $hasExternalAnalyzer = $false
+        if ($existingAnalyzers.analyzers) {
+          foreach ($analyzer in $existingAnalyzers.analyzers) {
+            if ($analyzer.type -eq "ACCOUNT" -and $analyzer.status -eq "ACTIVE") {
+              $hasExternalAnalyzer = $true
+              Write-Info "[$region] IAM Access Analyzer external access analyzer already enabled: $($analyzer.name)"
+            }
+          }
+        }
+        if (-not $hasExternalAnalyzer) {
+          aws accessanalyzer create-analyzer --type ACCOUNT --analyzer-name "external-access-analyzer" --region $region 2> analyzer-error.txt | Out-Null
+          if ($LASTEXITCODE -eq 0) {
+            Write-Info "[$region] IAM Access Analyzer external access analyzer enabled."
+          } else {
+            $errMsg = (Get-Content analyzer-error.txt -ErrorAction SilentlyContinue | Select-Object -First 5) -join ' '
+            Write-Warn ("[{0}] Failed to enable IAM Access Analyzer external access analyzer: {1}" -f $region, $errMsg)
+            if ($errMsg -match 'ResourceAlreadyExistsException') {
+              Write-Info "[$region] Analyzer already exists."
+            } elseif ($errMsg -match 'AccessDenied') {
+              Write-Warn ("[{0}] Missing permissions. Required: access-analyzer:CreateAnalyzer, access-analyzer:ListAnalyzers. See https://docs.aws.amazon.com/console/securityhub/IAM.28/remediation" -f $region)
+            }
+          }
+          Remove-Item analyzer-error.txt -ErrorAction SilentlyContinue
+        }
+      } catch {
+  Write-Warn ("[{0}] Exception enabling IAM Access Analyzer external access analyzer: {1}" -f $region, $_)
+      }
         throw "Invalid SNS topic ARN received: $topicArn"
       }
       
@@ -226,12 +261,31 @@ function New-SecuritySNSTopic {
       
       # Return only the clean topic ARN, not subscription details
       return $topicArn
+      # CIS Benchmark: S3 object-level read event logging
+      Write-Info "[CIS 3.9/S3.23] Enabling S3 object-level read event logging..."
+      try {
+        $buckets = aws s3api list-buckets --output json | ConvertFrom-Json
+        foreach ($bucket in $buckets.Buckets) {
+          $bucketName = $bucket.Name
+          $trail = aws cloudtrail describe-trails --region $region --output json | ConvertFrom-Json
+          if ($trail.trailList.Count -gt 0) {
+            $trailName = $trail.trailList[0].Name
+            $eventSelectors = @(
+              @{ ReadWriteType = "ReadOnly"; IncludeManagementEvents = $false; DataResources = @(@{ Type = "AWS::S3::Object"; Values = @("arn:aws:s3:::$bucketName/*") }) }
+            ) | ConvertTo-Json -Depth 10
+            aws cloudtrail put-event-selectors --trail-name $trailName --region $region --event-selectors $eventSelectors 2>$null | Out-Null
+            Write-Info "[$region] Enabled object-level read event logging for bucket: $bucketName"
+          }
+        }
+      } catch {
+  Write-Warn ("[{0}] Failed to enable S3 object-level read event logging: {1}" -f $region, $_)
+      }
     } else {
       $accountId = Get-AccountId
       return "arn:aws:sns:${Region}:${accountId}:$SnsTopicName"
     }
   } catch {
-    Write-Warn "[$Region] Failed to create SNS topic: $_"
+  Write-Warn ("[{0}] Failed to create SNS topic: {1}" -f $Region, $_)
     return $null
   }
 }
@@ -250,7 +304,7 @@ function New-CloudWatchMetricFiltersAndAlarms {
   
   # Validate the log group name parameter
   if (-not $CloudTrailLogGroupName -or $CloudTrailLogGroupName.Length -gt 512) {
-    Write-Warn "[$Region] Invalid CloudTrail log group name (length: $($CloudTrailLogGroupName.Length)): $CloudTrailLogGroupName"
+  Write-Warn ("[{0}] Invalid CloudTrail log group name (length: {1}): {2}" -f $Region, $CloudTrailLogGroupName.Length, $CloudTrailLogGroupName)
     return
   }
   
@@ -390,7 +444,7 @@ function New-CloudWatchMetricFiltersAndAlarms {
         
         # Validate SNS ARN before creating alarm
         if (-not $SnsTopicArn -or -not $SnsTopicArn.StartsWith("arn:aws:sns:")) {
-          Write-Warn "[$Region] Invalid SNS ARN for alarm $alarmName : $SnsTopicArn"
+          Write-Warn ("[{0}] Invalid SNS ARN for alarm {1} : {2}" -f $Region, $alarmName, $SnsTopicArn)
           continue
         }
         
@@ -411,7 +465,7 @@ function New-CloudWatchMetricFiltersAndAlarms {
       
       Write-Info "[$Region] Created metric filter and alarm for: $metricName"
     } catch {
-      Write-Warn "[$Region] Failed to create metric filter/alarm for $($filter.Name): $_"
+  Write-Warn ("[{0}] Failed to create metric filter/alarm for {1}: {2}" -f $Region, $filter.Name, $_)
     }
   }
 }
@@ -442,7 +496,7 @@ function Enable-ConfigWithServiceLinkedRole {
     if ($_.Exception.Message -like "*already exists*" -or $_.Exception.Message -like "*InvalidInput*" -or $_.Exception.Message -like "*EntityAlreadyExists*") {
       Write-Info "[$Region] Config service-linked role already exists"
     } else {
-      Write-Warn "[$Region] Failed to create Config service-linked role: $_"
+  Write-Warn ("[{0}] Failed to create Config service-linked role: {1}" -f $Region, $_)
     }
   }
   
@@ -526,7 +580,7 @@ function Enable-ConfigWithServiceLinkedRole {
       aws s3api put-bucket-policy --bucket $bucketName --policy file://config-bucket-policy.json
       Remove-Item "config-bucket-policy.json" -ErrorAction SilentlyContinue
     } catch {
-      Write-Warn "[$Region] Failed to apply Config bucket policy: $_"
+  Write-Warn ("[{0}] Failed to apply Config bucket policy: {1}" -f $Region, $_)
     }
   }
   
@@ -562,7 +616,7 @@ function Enable-ConfigWithServiceLinkedRole {
     }
     Write-Info "[$Region] AWS Config configured successfully with service-linked role"
   } catch {
-    Write-Warn "[$Region] Failed to configure Config: $_"
+  Write-Warn ("[{0}] Failed to configure Config: {1}" -f $Region, $_)
   }
 }
 
@@ -874,7 +928,7 @@ function Enable-CloudTrailWithCloudWatchLogs {
               $trailCreated = $true
               Write-Info "[$Region] Updated CloudTrail with CloudWatch Logs integration"
             } catch {
-              Write-Warn "[$Region] Failed to update CloudTrail with CloudWatch Logs: $_"
+              Write-Warn ("[{0}] Failed to update CloudTrail with CloudWatch Logs: {1}" -f $Region, $_)
               # If current trail has CloudWatch Logs but we can't update it, try to preserve existing setup
               if ($currentCloudWatchLogsRoleArn) {
                 Write-Info "[$Region] Attempting to update trail while preserving existing CloudWatch Logs configuration"
@@ -1154,7 +1208,7 @@ function New-KmsKey {
     Write-Info "[$Region] Created KMS key: $AliasName -> $keyId"
     return $keyId
   } catch {
-    Write-Warn "[$Region] Failed to create KMS key $AliasName : $_"
+    Write-Warn ("[{0}] Failed to create KMS key {1} : {2}" -f $Region, $AliasName, $_)
     return $null
   }
 }
@@ -1208,7 +1262,7 @@ function New-SecureBucket {
       }
       Write-Info "[$Region] Created S3 bucket: $BucketName"
     } catch {
-      Write-Warn "[$Region] Failed to create bucket $BucketName : $_"
+      Write-Warn ("[{0}] Failed to create bucket {1} : {2}" -f $Region, $BucketName, $_)
       return $null
     }
   }
@@ -1257,7 +1311,7 @@ function New-SecureBucket {
       Remove-Item "encryption-config.json" -ErrorAction SilentlyContinue
       
     } catch {
-      Write-Warn "[$Region] Failed to configure security settings for bucket $BucketName : $_"
+      Write-Warn ("[{0}] Failed to configure security settings for bucket {1} : {2}" -f $Region, $BucketName, $_)
     }
   }
   
@@ -1319,7 +1373,7 @@ function Enable-SecurityHub {
   
   # Check if Security Hub is already enabled
   try {
-    $enabledStandards = aws securityhub get-enabled-standards --region $Region --output json 2>$null | ConvertFrom-Json
+  # $enabledStandards = aws securityhub get-enabled-standards --region $Region --output json 2>$null | ConvertFrom-Json
     if ($LASTEXITCODE -eq 0) {
       Write-Info "[$Region] Security Hub already enabled"
       $hubEnabled = $true
@@ -1408,7 +1462,7 @@ function Enable-VpcFlowLogs {
         Invoke-AwsCliSafe "logs put-retention-policy --log-group-name $logGroupName --retention-in-days $FlowLogRetentionDays --region $Region"
       } catch {
         if (-not ($_.Exception.Message -like "*ResourceAlreadyExistsException*")) {
-          Write-Warn "[$Region] Failed to create log group: $_"
+    Write-Warn ("[{0}] Failed to create log group: {1}" -f $Region, $_)
         }
       }
       
@@ -1796,7 +1850,7 @@ function Enable-CloudTrailWithCloudWatchLogs {
         Write-Info "[$Region] Set retention policy for log group: $logGroupName"
       }
     } catch {
-      Write-Warn "[$Region] Failed to set retention policy: $_"
+  Write-Warn ("[{0}] Failed to set retention policy: {1}" -f $Region, $_)
     }
   }
     
@@ -1866,7 +1920,7 @@ function Enable-CloudTrailWithCloudWatchLogs {
                 aws iam attach-role-policy --role-name $cloudTrailLogRoleName --policy-arn "arn:aws:iam::${accountId}:policy/CloudTrailLogsPolicy" 2>$null | Out-Null
                 Write-Info "[$Region] Attached new CloudTrailLogsPolicy to existing role"
               } catch {
-                Write-Warn "[$Region] Failed to create or attach CloudTrailLogsPolicy: $_"
+                Write-Warn ("[{0}] Failed to create or attach CloudTrailLogsPolicy: {1}" -f $Region, $_)
               }
               
               Remove-Item "cloudtrail-logs-policy.json" -ErrorAction SilentlyContinue
@@ -1875,7 +1929,7 @@ function Enable-CloudTrailWithCloudWatchLogs {
             Write-Info "[$Region] CloudTrailLogsPolicy already attached to role"
           }
         } catch {
-          Write-Warn "[$Region] Could not verify policy attachment: $_"
+          Write-Warn ("[{0}] Could not verify policy attachment: {1}" -f $Region, $_)
         }
       } else {
         # Role doesn't exist, create it
@@ -1943,7 +1997,7 @@ function Enable-CloudTrailWithCloudWatchLogs {
         Write-Info "[$Region] Waiting for IAM role to propagate (30 seconds)..."
       }
     } catch {
-      Write-Warn "[$Region] Failed to setup CloudTrail CloudWatch Logs role: $_"
+  Write-Warn ("[{0}] Failed to setup CloudTrail CloudWatch Logs role: {1}" -f $Region, $_)
       # Set role ARN to null to skip CloudWatch Logs integration
       $cloudTrailLogRoleArn = $null
     }
@@ -2050,7 +2104,7 @@ function Enable-CloudTrailWithCloudWatchLogs {
               # Use the existing role for metric filters
               $cloudTrailLogRoleArn = $currentCloudWatchLogsRoleArn
             } catch {
-              Write-Warn "[$Region] Failed to update CloudTrail: $_"
+              Write-Warn ("[{0}] Failed to update CloudTrail: {1}" -f $Region, $_)
             }
           } else {
             try {
@@ -2377,6 +2431,7 @@ function Set-BucketEnforceSSL {
 function Enable-SSMCloudWatchLogging {
   param([Parameter(Mandatory)][ValidatePattern('^[a-z]{2}-[a-z]+-[0-9]$')][string]$Region)
   
+    Test-RootUserHardwareMFA
   Write-Info "[$Region] Enabling SSM Automation CloudWatch logging"
   
   try {
@@ -2399,6 +2454,7 @@ function Enable-SSMCloudWatchLogging {
     }
   } catch {
     Write-Warn "[$Region] Failed to enable SSM CloudWatch logging: $_"
+        if ($EnableGuardDutyRuntimeMonitoring) { Enable-GuardDutyRuntimeMonitoring }
   }
 }
 
@@ -2409,7 +2465,9 @@ function Set-SubnetPublicIpSettings {
   
   try {
     # Get all subnets
+        if ($EnableVpcEndpoints) { New-VpcEndpoints -Region $region }
     $subnets = aws ec2 describe-subnets --region $Region --output json | ConvertFrom-Json
+        if ($EnableS3Lifecycle) { Enable-S3BucketEnhancements -Region $region }
     
     foreach ($subnet in $subnets.Subnets) {
       $subnetId = $subnet.SubnetId
@@ -2432,7 +2490,7 @@ function Enable-VpcBlockPublicAccess {
   Write-Info "[$Region] Configuring VPC Block Public Access settings"
   
   try {
-    $accountId = Get-AccountId
+  # $accountId = Get-AccountId
     if (-not $DryRun) {
       # Note: This is a newer feature and may not be available in all regions yet
       aws ec2 modify-vpc-attribute --vpc-id "vpc-*" --enable-network-address-usage-metrics --region $Region 2>$null | Out-Null
@@ -2834,6 +2892,95 @@ try {
       # Enhanced security services
       Enable-SecurityHub -Region $region
       Enable-GuardDutyEnhanced -Region $region
+        # GuardDuty.11: Enable GuardDuty Runtime Monitoring
+        Write-Info "[GuardDuty.11] Enabling GuardDuty Runtime Monitoring..."
+        try {
+          $detectors = aws guardduty list-detectors --region $region --output json 2>$null | ConvertFrom-Json
+          foreach ($detectorId in $detectors.DetectorIds) {
+            aws guardduty update-feature --detector-id $detectorId --name RUNTIME_MONITORING --status ENABLED --region $region 2> gd-error.txt | Out-Null
+            if ($LASTEXITCODE -eq 0) {
+              Write-Info "[$region] GuardDuty Runtime Monitoring enabled for detector $detectorId."
+            } else {
+              $errMsg = (Get-Content gd-error.txt -ErrorAction SilentlyContinue | Select-Object -First 5) -join ' '
+              Write-Warn ("[{0}] Failed to enable GuardDuty Runtime Monitoring for detector {1}: {2}" -f $region, $detectorId, $errMsg)
+              if ($errMsg -match 'AccessDenied') {
+                Write-Warn ("[{0}] Missing permissions. Required: guardduty:UpdateFeature, guardduty:ListDetectors. See https://docs.aws.amazon.com/console/securityhub/GuardDuty.11/remediation" -f $region)
+              }
+            }
+            Remove-Item gd-error.txt -ErrorAction SilentlyContinue
+              # GuardDuty.12: Enable GuardDuty ECS Runtime Monitoring
+              Write-Info "[GuardDuty.12] Enabling GuardDuty ECS Runtime Monitoring..."
+              aws guardduty update-feature --detector-id $detectorId --name ECS_RUNTIME_MONITORING --status ENABLED --region $region 2> gd-ecs-error.txt | Out-Null
+              if ($LASTEXITCODE -eq 0) {
+                Write-Info "[$region] GuardDuty ECS Runtime Monitoring enabled for detector $detectorId."
+              } else {
+                $errMsgEcs = (Get-Content gd-ecs-error.txt -ErrorAction SilentlyContinue | Select-Object -First 5) -join ' '
+                Write-Warn ("[{0}] Failed to enable GuardDuty ECS Runtime Monitoring for detector {1}: {2}" -f $region, $detectorId, $errMsgEcs)
+                if ($errMsgEcs -match 'AccessDenied') {
+                  Write-Warn ("[{0}] Missing permissions. Required: guardduty:UpdateFeature, guardduty:ListDetectors. See https://docs.aws.amazon.com/console/securityhub/GuardDuty.12/remediation" -f $region)
+                }
+              }
+              Remove-Item gd-ecs-error.txt -ErrorAction SilentlyContinue
+                # GuardDuty.13: Enable GuardDuty EC2 Runtime Monitoring
+                Write-Info "[GuardDuty.13] Enabling GuardDuty EC2 Runtime Monitoring..."
+                aws guardduty update-feature --detector-id $detectorId --name EC2_RUNTIME_MONITORING --status ENABLED --region $region 2> gd-ec2-error.txt | Out-Null
+                if ($LASTEXITCODE -eq 0) {
+                  Write-Info "[$region] GuardDuty EC2 Runtime Monitoring enabled for detector $detectorId."
+                } else {
+                  $errMsgEc2 = (Get-Content gd-ec2-error.txt -ErrorAction SilentlyContinue | Select-Object -First 5) -join ' '
+                  Write-Warn ("[{0}] Failed to enable GuardDuty EC2 Runtime Monitoring for detector {1}: {2}" -f $region, $detectorId, $errMsgEc2)
+                  if ($errMsgEc2 -match 'AccessDenied') {
+                    Write-Warn ("[{0}] Missing permissions. Required: guardduty:UpdateFeature, guardduty:ListDetectors. See https://docs.aws.amazon.com/console/securityhub/GuardDuty.13/remediation" -f $region)
+                  }
+                }
+                Remove-Item gd-ec2-error.txt -ErrorAction SilentlyContinue
+
+                # GuardDuty.7: Enable GuardDuty EKS Runtime Monitoring with automated agent management
+                Write-Info "[GuardDuty.7] Enabling GuardDuty EKS Runtime Monitoring with automated agent management..."
+                aws guardduty update-feature --detector-id $detectorId --name EKS_RUNTIME_MONITORING --status ENABLED --region $region --additional-features '[{"name":"EKS_ADDON_MANAGEMENT","status":"ENABLED"}]' 2> gd-eks-error.txt | Out-Null
+                if ($LASTEXITCODE -eq 0) {
+                  Write-Info "[$region] GuardDuty EKS Runtime Monitoring with automated agent management enabled for detector $detectorId."
+                } else {
+                  $errMsgEks = (Get-Content gd-eks-error.txt -ErrorAction SilentlyContinue | Select-Object -First 5) -join ' '
+                  Write-Warn ("[{0}] Failed to enable GuardDuty EKS Runtime Monitoring with automated agent management for detector {1}: {2}" -f $region, $detectorId, $errMsgEks)
+                  if ($errMsgEks -match 'AccessDenied') {
+                    Write-Warn ("[{0}] Missing permissions. Required: guardduty:UpdateFeature, guardduty:ListDetectors. See https://docs.aws.amazon.com/console/securityhub/GuardDuty.7/remediation" -f $region)
+                  }
+                }
+                Remove-Item gd-eks-error.txt -ErrorAction SilentlyContinue
+
+                # SSM.6: Enable CloudWatch logging for SSM Automation
+                Write-Info "[SSM.6] Enabling CloudWatch logging for SSM Automation documents..."
+                $automationDocs = aws ssm list-documents --document-filter-list key=Owner,value=Self --region $region --query "DocumentIdentifiers[?DocumentType=='Automation'].Name" --output text 2> ssm-docs-error.txt
+                if ($LASTEXITCODE -eq 0 -and $automationDocs) {
+                  foreach ($docName in $automationDocs -split "\n") {
+                    Write-Info "[$region] Enabling CloudWatch logging for SSM Automation document: $docName"
+                    aws ssm update-document --name $docName --document-version "\$LATEST" --logging-configuration '{"CloudWatchLogGroupName":"/aws/ssm/automation/$docName","CloudWatchOutputEnabled":true}' --region $region 2> ssm-log-error.txt | Out-Null
+                    if ($LASTEXITCODE -eq 0) {
+                      Write-Info "[$region] CloudWatch logging enabled for SSM Automation document $docName."
+                    } else {
+                      $errMsgSsm = (Get-Content ssm-log-error.txt -ErrorAction SilentlyContinue | Select-Object -First 5) -join ' '
+                      Write-Warn ("[{0}] Failed to enable CloudWatch logging for SSM Automation document {1}: {2}" -f $region, $docName, $errMsgSsm)
+                      if ($errMsgSsm -match 'AccessDenied') {
+                        Write-Warn ("[{0}] Missing permissions. Required: ssm:UpdateDocument, ssm:ListDocuments. See https://docs.aws.amazon.com/console/securityhub/SSM.6/remediation" -f $region)
+                      }
+                    }
+                    Remove-Item ssm-log-error.txt -ErrorAction SilentlyContinue
+                  }
+                } elseif (-not $automationDocs) {
+                  Write-Info "[$region] No SSM Automation documents found to update."
+                } else {
+                  $errMsgDocs = (Get-Content ssm-docs-error.txt -ErrorAction SilentlyContinue | Select-Object -First 5) -join ' '
+                  Write-Warn ("[{0}] Failed to list SSM Automation documents: {1}" -f $region, $errMsgDocs)
+                  if ($errMsgDocs -match 'AccessDenied') {
+                    Write-Warn ("[{0}] Missing permissions. Required: ssm:ListDocuments. See https://docs.aws.amazon.com/console/securityhub/SSM.6/remediation" -f $region)
+                  }
+                }
+                Remove-Item ssm-docs-error.txt -ErrorAction SilentlyContinue
+          }
+        } catch {
+          Write-Warn "[$region] Exception enabling GuardDuty Runtime Monitoring: $_"
+        }
       Enable-InspectorV2 -Region $region
       Enable-MacieService -Region $region
       
@@ -2847,12 +2994,160 @@ try {
       Set-SubnetPublicIpSettings -Region $region
       Enable-VpcBlockPublicAccess -Region $region
       New-VpcEndpoints -Region $region
+
+        # EC2.55: Ensure VPC interface endpoint for ECR API
+        Write-Info "[EC2.55] Ensuring VPC interface endpoint for ECR API..."
+        try {
+          $vpcs = aws ec2 describe-vpcs --region $region --output json 2>$null | ConvertFrom-Json
+          foreach ($vpc in $vpcs.Vpcs) {
+            $vpcId = $vpc.VpcId
+            $existingEndpoints = aws ec2 describe-vpc-endpoints --filters "Name=vpc-id,Values=$vpcId" --region $region --output json 2>$null | ConvertFrom-Json
+            $hasEcrApiEndpoint = $false
+            foreach ($ep in $existingEndpoints.VpcEndpoints) {
+              if ($ep.ServiceName -eq "com.amazonaws.$region.ecr.api" -and $ep.VpcEndpointType -eq "Interface") {
+                $hasEcrApiEndpoint = $true
+                Write-Info "[$region] VPC $vpcId already has ECR API interface endpoint."
+              }
+            }
+            if (-not $hasEcrApiEndpoint) {
+              $subnets = aws ec2 describe-subnets --filters "Name=vpc-id,Values=$vpcId" --region $region --output json 2>$null | ConvertFrom-Json
+              $subnetIds = $subnets.Subnets | Select-Object -First 2 | ForEach-Object { $_.SubnetId }
+              if ($subnetIds.Count -gt 0) {
+                $subnetIdsStr = $subnetIds -join " "
+                aws ec2 create-vpc-endpoint --vpc-id $vpcId --service-name "com.amazonaws.$region.ecr.api" --vpc-endpoint-type Interface --subnet-ids $subnetIdsStr --region $region 2> ecrapi-error.txt | Out-Null
+                if ($LASTEXITCODE -eq 0) {
+                  Write-Info "[$region] Created ECR API interface endpoint for VPC $vpcId."
+                } else {
+                  $errMsg = (Get-Content ecrapi-error.txt -ErrorAction SilentlyContinue | Select-Object -First 5) -join ' '
+                  Write-Warn ("[{0}] Failed to create ECR API interface endpoint for VPC {1}: {2}" -f $region, $vpcId, $errMsg)
+                  if ($errMsg -match 'AccessDenied') {
+                    Write-Warn ("[{0}] Missing permissions. Required: ec2:CreateVpcEndpoint, ec2:DescribeVpcEndpoints, ec2:DescribeVpcs, ec2:DescribeSubnets. See https://docs.aws.amazon.com/console/securityhub/EC2.55/remediation" -f $region)
+                  }
+                }
+                Remove-Item ecrapi-error.txt -ErrorAction SilentlyContinue
+              } else {
+                Write-Warn "[$region] No subnets found in VPC $vpcId for ECR API endpoint."
+              }
+            }
+              # EC2.56: Ensure VPC interface endpoint for Docker Registry (ECR DKR)
+              $hasEcrDkrEndpoint = $false
+              foreach ($ep in $existingEndpoints.VpcEndpoints) {
+                if ($ep.ServiceName -eq "com.amazonaws.$region.ecr.dkr" -and $ep.VpcEndpointType -eq "Interface") {
+                  $hasEcrDkrEndpoint = $true
+                  Write-Info "[$region] VPC $vpcId already has ECR DKR interface endpoint."
+                }
+              }
+              if (-not $hasEcrDkrEndpoint) {
+                if ($subnetIds.Count -gt 0) {
+                  $subnetIdsStr = $subnetIds -join " "
+                  aws ec2 create-vpc-endpoint --vpc-id $vpcId --service-name "com.amazonaws.$region.ecr.dkr" --vpc-endpoint-type Interface --subnet-ids $subnetIdsStr --region $region 2> ecrdkr-error.txt | Out-Null
+                  if ($LASTEXITCODE -eq 0) {
+                    Write-Info "[$region] Created ECR DKR interface endpoint for VPC $vpcId."
+                  } else {
+                    $errMsg = (Get-Content ecrdkr-error.txt -ErrorAction SilentlyContinue | Select-Object -First 5) -join ' '
+                    Write-Warn ("[{0}] Failed to create ECR DKR interface endpoint for VPC {1}: {2}" -f $region, $vpcId, $errMsg)
+                    if ($errMsg -match 'AccessDenied') {
+                      Write-Warn ("[{0}] Missing permissions. Required: ec2:CreateVpcEndpoint, ec2:DescribeVpcEndpoints, ec2:DescribeVpcs, ec2:DescribeSubnets. See https://docs.aws.amazon.com/console/securityhub/EC2.56/remediation" -f $region)
+                    }
+                  }
+                  Remove-Item ecrdkr-error.txt -ErrorAction SilentlyContinue
+                } else {
+                  Write-Warn "[$region] No subnets found in VPC $vpcId for ECR DKR endpoint."
+                }
+              }
+                # EC2.57: Ensure VPC interface endpoint for Systems Manager (SSM)
+                $hasSsmEndpoint = $false
+                foreach ($ep in $existingEndpoints.VpcEndpoints) {
+                  if ($ep.ServiceName -eq "com.amazonaws.$region.ssm" -and $ep.VpcEndpointType -eq "Interface") {
+                    $hasSsmEndpoint = $true
+                    Write-Info "[$region] VPC $vpcId already has SSM interface endpoint."
+                  }
+                }
+                if (-not $hasSsmEndpoint) {
+                  if ($subnetIds.Count -gt 0) {
+                    $subnetIdsStr = $subnetIds -join " "
+                    aws ec2 create-vpc-endpoint --vpc-id $vpcId --service-name "com.amazonaws.$region.ssm" --vpc-endpoint-type Interface --subnet-ids $subnetIdsStr --region $region 2> ssm-error.txt | Out-Null
+                    if ($LASTEXITCODE -eq 0) {
+                      Write-Info "[$region] Created SSM interface endpoint for VPC $vpcId."
+                    } else {
+                      $errMsg = (Get-Content ssm-error.txt -ErrorAction SilentlyContinue | Select-Object -First 5) -join ' '
+                      Write-Warn ("[{0}] Failed to create SSM interface endpoint for VPC {1}: {2}" -f $region, $vpcId, $errMsg)
+                      if ($errMsg -match 'AccessDenied') {
+                        Write-Warn ("[{0}] Missing permissions. Required: ec2:CreateVpcEndpoint, ec2:DescribeVpcEndpoints, ec2:DescribeVpcs, ec2:DescribeSubnets. See https://docs.aws.amazon.com/console/securityhub/EC2.57/remediation" -f $region)
+                      }
+                    }
+                    Remove-Item ssm-error.txt -ErrorAction SilentlyContinue
+                  } else {
+                    Write-Warn "[$region] No subnets found in VPC $vpcId for SSM endpoint."
+                  }
+                }
+                  # EC2.58: Ensure VPC interface endpoint for Systems Manager Incident Manager Contacts (ssm-contacts)
+                  $hasSsmContactsEndpoint = $false
+                  foreach ($ep in $existingEndpoints.VpcEndpoints) {
+                    if ($ep.ServiceName -eq "com.amazonaws.$region.ssm-contacts" -and $ep.VpcEndpointType -eq "Interface") {
+                      $hasSsmContactsEndpoint = $true
+                      Write-Info "[$region] VPC $vpcId already has SSM Contacts interface endpoint."
+                    }
+                  }
+                  if (-not $hasSsmContactsEndpoint) {
+                    if ($subnetIds.Count -gt 0) {
+                      $subnetIdsStr = $subnetIds -join " "
+                      aws ec2 create-vpc-endpoint --vpc-id $vpcId --service-name "com.amazonaws.$region.ssm-contacts" --vpc-endpoint-type Interface --subnet-ids $subnetIdsStr --region $region 2> ssmcontacts-error.txt | Out-Null
+                      if ($LASTEXITCODE -eq 0) {
+                        Write-Info "[$region] Created SSM Contacts interface endpoint for VPC $vpcId."
+                      } else {
+                        $errMsg = (Get-Content ssmcontacts-error.txt -ErrorAction SilentlyContinue | Select-Object -First 5) -join ' '
+                        Write-Warn ("[{0}] Failed to create SSM Contacts interface endpoint for VPC {1}: {2}" -f $region, $vpcId, $errMsg)
+                        if ($errMsg -match 'AccessDenied') {
+                          Write-Warn ("[{0}] Missing permissions. Required: ec2:CreateVpcEndpoint, ec2:DescribeVpcEndpoints, ec2:DescribeVpcs, ec2:DescribeSubnets. See https://docs.aws.amazon.com/console/securityhub/EC2.58/remediation" -f $region)
+                        }
+                      }
+                      Remove-Item ssmcontacts-error.txt -ErrorAction SilentlyContinue
+                    } else {
+                      Write-Warn "[$region] No subnets found in VPC $vpcId for SSM Contacts endpoint."
+                    }
+                  }
+          }
+        } catch {
+          Write-Warn "[$region] Exception ensuring ECR API interface endpoint: $_"
+        }
       
       # New: S3 enhancements
       Enable-S3BucketEnhancements -Region $region
       
       # New: SSM enhancements
       Enable-SSMCloudWatchLogging -Region $region
+
+        # S3.23: Ensure multi-region CloudTrail logs all read data events for all S3 buckets
+        Write-Info "[CIS 3.9/S3.23] Ensuring multi-region CloudTrail logs all S3 object-level read events..."
+        try {
+          $trails = aws cloudtrail describe-trails --region $region --output json 2>$null | ConvertFrom-Json
+          $multiRegionTrail = $trails.trailList | Where-Object { $_.IsMultiRegionTrail -eq $true }
+          if ($multiRegionTrail) {
+            $trailName = $multiRegionTrail[0].Name
+            $buckets = aws s3api list-buckets --output json 2>$null | ConvertFrom-Json
+            $eventSelectors = @()
+            foreach ($bucket in $buckets.Buckets) {
+              $eventSelectors += @{ ReadWriteType = "ReadOnly"; IncludeManagementEvents = $false; DataResources = @(@{ Type = "AWS::S3::Object"; Values = @("arn:aws:s3:::$($bucket.Name)/*") }) }
+            }
+            $selectorsJson = $eventSelectors | ConvertTo-Json -Depth 10
+            aws cloudtrail put-event-selectors --trail-name $trailName --region $region --event-selectors $selectorsJson 2> ct-error.txt | Out-Null
+            if ($LASTEXITCODE -eq 0) {
+              Write-Info "[$region] Multi-region CloudTrail now logs all S3 object-level read events."
+            } else {
+              $errMsg = (Get-Content ct-error.txt -ErrorAction SilentlyContinue | Select-Object -First 5) -join ' '
+              Write-Warn "[$region] Failed to configure S3 object-level read event logging: $errMsg"
+              if ($errMsg -match 'AccessDenied') {
+                Write-Warn "[$region] Missing permissions. Required: cloudtrail:PutEventSelectors, cloudtrail:DescribeTrails, s3:ListAllMyBuckets. See https://docs.aws.amazon.com/console/securityhub/S3.23/remediation"
+              }
+            }
+            Remove-Item ct-error.txt -ErrorAction SilentlyContinue
+          } else {
+            Write-Warn "[$region] No multi-region CloudTrail found. Please create one to meet S3.23 compliance. See https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-create-and-update-a-trail.html"
+          }
+        } catch {
+          Write-Warn "[$region] Exception configuring S3 object-level read event logging: $_"
+        }
       
     } catch {
       $regionErrors += "$region : $_"
@@ -2894,6 +3189,61 @@ try {
   Write-SecurityReminders
   
   Write-Info "=== Enhanced Account Hardening Complete ==="
+
+    # Manual remediation summary
+    $ManualRemediation = @()
+    # Hardware MFA for root user
+    $accountSummary = aws iam get-account-summary --output json 2>$null | ConvertFrom-Json
+    $mfaDevices = $accountSummary.SummaryMap.AccountMFAEnabled
+    $virtualMfaDevices = aws iam list-virtual-mfa-devices --assignment-status Assigned --output json 2>$null | ConvertFrom-Json
+    $rootVirtualMfa = $virtualMfaDevices.VirtualMFADevices | Where-Object { $_.User -and $_.User.UserName -eq "root" }
+    if ($mfaDevices -ne 1 -or $rootVirtualMfa) {
+      $ManualRemediation += "Enable hardware MFA for root user (IAM.6, IAM.9). See https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_mfa_enable_physical.html"
+    }
+    # S3 MFA Delete
+    $buckets = aws s3api list-buckets --output json 2>$null | ConvertFrom-Json
+    foreach ($bucket in $buckets.Buckets) {
+      $bucketName = $bucket.Name
+      $versioning = aws s3api get-bucket-versioning --bucket $bucketName --output json 2>$null | ConvertFrom-Json
+      if ($versioning.Status -eq "Enabled" -and $versioning.MFADelete -ne "Enabled") {
+        $ManualRemediation += "Enable S3 MFA Delete for bucket $bucketName (S3.20). See https://docs.aws.amazon.com/AmazonS3/latest/userguide/MultiFactorAuthenticationDelete.html"
+      }
+    }
+    # IAM Access Analyzer external access analyzer
+    $analyzers = aws accessanalyzer list-analyzers --output json 2>$null | ConvertFrom-Json
+    $hasExternalAnalyzer = $analyzers.analyzers | Where-Object { $_.type -eq "ACCOUNT" }
+    if (-not $hasExternalAnalyzer) {
+      $ManualRemediation += "Enable IAM Access Analyzer external access analyzer (IAM.28). See https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html"
+    }
+    # S3 object-level read event logging
+    foreach ($bucket in $buckets.Buckets) {
+      $bucketName = $bucket.Name
+      $trail = aws cloudtrail describe-trails --output json 2>$null | ConvertFrom-Json
+      $hasObjectLogging = $false
+      foreach ($t in $trail.trailList) {
+        $selectors = aws cloudtrail get-event-selectors --trail-name $t.Name --output json 2>$null | ConvertFrom-Json
+        foreach ($sel in $selectors.EventSelectors) {
+          if ($sel.DataResources) {
+            foreach ($dr in $sel.DataResources) {
+              if ($dr.Type -eq "AWS::S3::Object" -and $dr.Values -contains "arn:aws:s3:::$bucketName/*") {
+                $hasObjectLogging = $true
+              }
+            }
+          }
+        }
+      }
+      if (-not $hasObjectLogging) {
+        $ManualRemediation += "Enable S3 object-level read event logging for bucket $bucketName (S3.23). See https://docs.aws.amazon.com/awscloudtrail/latest/userguide/logging-data-events-with-cloudtrail.html"
+      }
+    }
+    # Output manual remediation summary if needed
+    if ($ManualRemediation.Count -gt 0) {
+      Write-Warn "=== MANUAL REMEDIATION REQUIRED ==="
+      foreach ($item in $ManualRemediation) {
+        Write-Warn $item
+      }
+      throw "Manual remediation required for some controls. See warnings above."
+    }
   
 } catch {
   Write-Err "Enhanced account hardening failed: $_"
