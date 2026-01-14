@@ -46,7 +46,7 @@ param (
         'ukwest', 'uaecentral', 'brilsoutheast'
     )]
     [string]$Location = "westeurope",
-    
+
     [Parameter(Mandatory=$true)]
     [string]$ResourceGroup
 
@@ -138,11 +138,11 @@ $ScriptBlock = {
     }
 
     try {
-        
+
         #Install-Module -Name PowerShellGet -Force -Confirm
         #Install-Module -Name Az -Repository PSGallery -Force -Confirm
         #Update-Module -Name Az -Force -Confirm
-        
+
         # Uninstall existing installations if needed
         Uninstall-Package -ProductName $agentProductName
         Uninstall-Package -ProductName $bootLoaderProductName
@@ -161,7 +161,7 @@ $ScriptBlock = {
 
         $domainJoinSettings = @{
             Name                   = "joindomain"
-            Type                   = "JsonADDomainExtension" 
+            Type                   = "JsonADDomainExtension"
             Publisher              = "Microsoft.Compute"
             typeHandlerVersion     = "1.3"
             SettingString          = '{
@@ -173,16 +173,16 @@ $ScriptBlock = {
             }'
             ProtectedSettingString = '{
             "password":"' + $(Get-AzKeyVaultSecret -VaultName "azure-avd-keyvault" -Name "domain-join" -AsPlainText) + '"}'
-            
+
             VMName                 = $VMName
             ResourceGroup      = $ResourceGroup
             location               = $Location
         }
         Set-AzVMExtension @domainJoinSettings
-    
+
         $avdDscSettings = @{
             Name               = "Microsoft.PowerShell.DSC"
-            Type               = "DSC" 
+            Type               = "DSC"
             Publisher          = "Microsoft.Powershell"
             typeHandlerVersion = "2.73"
             SettingString      = "{
@@ -198,7 +198,7 @@ $ScriptBlock = {
             ResourceGroup  = $ResourceGroup
             location           = $Location
         }
-        Set-AzVMExtension @avdDscSettings  
+        Set-AzVMExtension @avdDscSettings
 
         Write-Host "All installations complete."
     }
@@ -216,7 +216,7 @@ try {
     $cmdRes = Invoke-AzVMRunCommand -ResourceGroup $ResourceGroup -VMName $VmName -CommandId 'RunPowerShellScript' -ScriptString $Script -Parameter @{'RegistrationKeyToken' = $registrationkeytoken;}
     $cmdRes.Value | ForEach-Object { Write-Host $_.Message }
     Write-Host "Script execution completed on $VmName."
-} 
+}
 catch {
     Write-Host "An error occurred while running the script on $VmName $_" -ForegroundColor Red
     throw

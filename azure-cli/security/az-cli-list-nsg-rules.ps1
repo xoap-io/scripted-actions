@@ -6,7 +6,7 @@
     This script lists and analyzes Azure Network Security Group rules using the Azure CLI with comprehensive filtering and reporting capabilities.
     Supports filtering by NSG, resource group, rule properties, and security analysis.
     Includes rule conflict detection, security gap analysis, and export capabilities.
-    
+
     The script uses the Azure CLI command: az network nsg rule list
 
 .PARAMETER ResourceGroup
@@ -142,13 +142,13 @@ function Test-AzureCLI {
         if ($LASTEXITCODE -ne 0) {
             throw "Azure CLI is not installed or not functioning correctly"
         }
-        
+
         Write-Host "🔍 Checking Azure CLI authentication..." -ForegroundColor Cyan
         $null = az account show 2>$null
         if ($LASTEXITCODE -ne 0) {
             throw "Not authenticated to Azure CLI. Please run 'az login' first"
         }
-        
+
         Write-Host "✅ Azure CLI validation successful" -ForegroundColor Green
         return $true
     }
@@ -161,10 +161,10 @@ function Test-AzureCLI {
 # Function to get all NSGs or validate specific NSG
 function Get-NetworkSecurityGroups {
     param($ResourceGroup, $NsgName)
-    
+
     try {
         $nsgs = @()
-        
+
         if ($NsgName -and $ResourceGroup) {
             # Specific NSG
             Write-Host "🔍 Validating NSG '$NsgName' in resource group '$ResourceGroup'..." -ForegroundColor Cyan
@@ -189,7 +189,7 @@ function Get-NetworkSecurityGroups {
             $nsgs = az network nsg list --query "[].{name:name, resourceGroup:resourceGroup, location:location}" --output json | ConvertFrom-Json
             Write-Host "✅ Found $($nsgs.Count) NSG(s) in subscription" -ForegroundColor Green
         }
-        
+
         return $nsgs
     }
     catch {
@@ -201,23 +201,23 @@ function Get-NetworkSecurityGroups {
 # Function to get rules for an NSG
 function Get-NSGRules {
     param($ResourceGroup, $NsgName, $IncludeDefaults)
-    
+
     try {
         $query = "[].{name:name, priority:priority, direction:direction, access:access, protocol:protocol, sourceAddressPrefix:sourceAddressPrefix, sourcePortRange:sourcePortRange, destinationAddressPrefix:destinationAddressPrefix, destinationPortRange:destinationPortRange, description:description, source:sourceAddressPrefixes[0], destination:destinationAddressPrefixes[0]}"
-        
+
         $rules = az network nsg rule list --resource-group $ResourceGroup --nsg-name $NsgName --query $query --output json | ConvertFrom-Json
-        
+
         if (-not $IncludeDefaults) {
             # Filter out default Azure rules
             $rules = $rules | Where-Object { $_.name -notmatch '^(AllowVnetInBound|AllowAzureLoadBalancerInBound|DenyAllInBound|AllowVnetOutBound|AllowInternetOutBound|DenyAllOutBound)$' }
         }
-        
+
         # Add NSG context to each rule
         foreach ($rule in $rules) {
             $rule | Add-Member -NotePropertyName 'nsgName' -NotePropertyValue $NsgName
             $rule | Add-Member -NotePropertyName 'resourceGroup' -NotePropertyValue $ResourceGroup
         }
-        
+
         return $rules
     }
     catch {
@@ -229,64 +229,64 @@ function Get-NSGRules {
 # Function to filter rules based on criteria
 function Get-FilteredRules {
     param($Rules, $Filters)
-    
+
     $filteredRules = $Rules
-    
+
     if ($Filters.RuleName) {
         $filteredRules = $filteredRules | Where-Object { $_.name -like "*$($Filters.RuleName)*" }
     }
-    
+
     if ($Filters.Direction) {
         $filteredRules = $filteredRules | Where-Object { $_.direction -eq $Filters.Direction }
     }
-    
+
     if ($Filters.Access) {
         $filteredRules = $filteredRules | Where-Object { $_.access -eq $Filters.Access }
     }
-    
+
     if ($Filters.Protocol) {
         $filteredRules = $filteredRules | Where-Object { $_.protocol -eq $Filters.Protocol }
     }
-    
+
     if ($Filters.Priority) {
         $range = $Filters.Priority -split '-'
         $minPriority = [int]$range[0]
         $maxPriority = [int]$range[1]
         $filteredRules = $filteredRules | Where-Object { $_.priority -ge $minPriority -and $_.priority -le $maxPriority }
     }
-    
+
     if ($Filters.SourceAddress) {
-        $filteredRules = $filteredRules | Where-Object { 
-            ($_.sourceAddressPrefix -like "*$($Filters.SourceAddress)*") -or 
+        $filteredRules = $filteredRules | Where-Object {
+            ($_.sourceAddressPrefix -like "*$($Filters.SourceAddress)*") -or
             ($_.source -like "*$($Filters.SourceAddress)*")
         }
     }
-    
+
     if ($Filters.DestinationPort) {
         $ports = $Filters.DestinationPort -split ','
-        $filteredRules = $filteredRules | Where-Object { 
+        $filteredRules = $filteredRules | Where-Object {
             $rule = $_
-            $ports | ForEach-Object { 
+            $ports | ForEach-Object {
                 ($rule.destinationPortRange -like "*$_*") -or ($rule.destinationPortRange -eq "*")
             }
         }
     }
-    
+
     return $filteredRules
 }
 
 # Function to analyze rule conflicts
 function Find-RuleConflicts {
     param($Rules)
-    
+
     Write-Host "🔍 Analyzing rule conflicts..." -ForegroundColor Cyan
     $conflicts = @()
-    
+
     for ($i = 0; $i -lt $Rules.Count; $i++) {
         for ($j = $i + 1; $j -lt $Rules.Count; $j++) {
             $rule1 = $Rules[$i]
             $rule2 = $Rules[$j]
-            
+
             # Check for same NSG and direction
             if ($rule1.nsgName -eq $rule2.nsgName -and $rule1.direction -eq $rule2.direction) {
                 # Check for overlapping criteria with different actions
@@ -299,7 +299,7 @@ function Find-RuleConflicts {
                     }
                     $conflicts += $conflict
                 }
-                
+
                 # Check for duplicate priorities
                 if ($rule1.priority -eq $rule2.priority) {
                     $conflict = @{
@@ -313,28 +313,28 @@ function Find-RuleConflicts {
             }
         }
     }
-    
+
     return $conflicts
 }
 
 # Function to analyze security gaps
 function Find-SecurityGaps {
     param($Rules)
-    
+
     Write-Host "🔍 Analyzing security gaps..." -ForegroundColor Cyan
     $gaps = @()
-    
+
     # Check for common security issues
     $inboundRules = $Rules | Where-Object { $_.direction -eq "Inbound" }
     $null = $Rules | Where-Object { $_.direction -eq "Outbound" }
-    
+
     # Check for overly permissive rules
-    $permissiveRules = $Rules | Where-Object { 
-        ($_.sourceAddressPrefix -eq "*" -or $_.source -eq "*") -and 
-        ($_.destinationPortRange -eq "*") -and 
+    $permissiveRules = $Rules | Where-Object {
+        ($_.sourceAddressPrefix -eq "*" -or $_.source -eq "*") -and
+        ($_.destinationPortRange -eq "*") -and
         $_.access -eq "Allow"
     }
-    
+
     if ($permissiveRules.Count -gt 0) {
         $gaps += @{
             Type = "Overly Permissive Rules"
@@ -343,7 +343,7 @@ function Find-SecurityGaps {
             Rules = $permissiveRules.name -join ", "
         }
     }
-    
+
     # Check for missing deny-all rules
     $denyAllInbound = $inboundRules | Where-Object { $_.access -eq "Deny" -and $_.priority -ge 4000 }
     if ($denyAllInbound.Count -eq 0) {
@@ -354,16 +354,16 @@ function Find-SecurityGaps {
             Rules = "Consider adding a deny-all rule with priority 4000+"
         }
     }
-    
+
     # Check for common vulnerable ports
     $vulnerablePorts = @("22", "3389", "1433", "3306", "5432")
     foreach ($port in $vulnerablePorts) {
-        $exposedRules = $inboundRules | Where-Object { 
-            $_.destinationPortRange -eq $port -and 
-            ($_.sourceAddressPrefix -eq "*" -or $_.source -eq "*") -and 
+        $exposedRules = $inboundRules | Where-Object {
+            $_.destinationPortRange -eq $port -and
+            ($_.sourceAddressPrefix -eq "*" -or $_.source -eq "*") -and
             $_.access -eq "Allow"
         }
-        
+
         if ($exposedRules.Count -gt 0) {
             $portName = switch ($port) {
                 "22" { "SSH" }
@@ -372,7 +372,7 @@ function Find-SecurityGaps {
                 "3306" { "MySQL" }
                 "5432" { "PostgreSQL" }
             }
-            
+
             $gaps += @{
                 Type = "Exposed $portName Port"
                 Count = $exposedRules.Count
@@ -381,14 +381,14 @@ function Find-SecurityGaps {
             }
         }
     }
-    
+
     return $gaps
 }
 
 # Function to format output
 function Format-Output {
     param($Rules, $Conflicts, $Gaps, $Format)
-    
+
     switch ($Format) {
         'Table' {
             if ($Rules.Count -gt 0) {
@@ -428,7 +428,7 @@ function Format-Output {
 # Function to show conflicts
 function Show-Conflicts {
     param($Conflicts)
-    
+
     if ($Conflicts.Count -gt 0) {
         Write-Host "`n⚠️ Rule Conflicts Found:" -ForegroundColor Red
         foreach ($conflict in $Conflicts) {
@@ -447,7 +447,7 @@ function Show-Conflicts {
 # Function to show security gaps
 function Show-SecurityGaps {
     param($Gaps)
-    
+
     if ($Gaps.Count -gt 0) {
         Write-Host "`n🔍 Security Gaps Found:" -ForegroundColor Yellow
         foreach ($gap in $Gaps) {
@@ -467,19 +467,19 @@ function Show-SecurityGaps {
 try {
     Write-Host "🚀 Starting NSG Rules Analysis" -ForegroundColor Green
     Write-Host "==============================" -ForegroundColor Green
-    
+
     # Validate Azure CLI
     if (-not (Test-AzureCLI)) {
         exit 1
     }
-    
+
     # Get NSGs
     $nsgs = Get-NetworkSecurityGroups -ResourceGroup $ResourceGroup -NsgName $NsgName
     if ($nsgs.Count -eq 0) {
         Write-Warning "No NSGs found matching the criteria"
         exit 0
     }
-    
+
     # Collect all rules
     $allRules = @()
     foreach ($nsg in $nsgs) {
@@ -487,7 +487,7 @@ try {
         $rules = Get-NSGRules -ResourceGroup $nsg.resourceGroup -NsgName $nsg.name -IncludeDefaults $IncludeDefaultRules
         $allRules += $rules
     }
-    
+
     # Apply filters
     $filters = @{
         RuleName = $RuleName
@@ -498,25 +498,25 @@ try {
         SourceAddress = $SourceAddress
         DestinationPort = $DestinationPort
     }
-    
+
     $filteredRules = Get-FilteredRules -Rules $allRules -Filters $filters
-    
+
     # Analyze conflicts and gaps if requested
     $conflicts = @()
     $gaps = @()
-    
+
     if ($ShowConflicts) {
         $conflicts = Find-RuleConflicts -Rules $filteredRules
     }
-    
+
     if ($ShowGaps) {
         $gaps = Find-SecurityGaps -Rules $filteredRules
     }
-    
+
     # Format and display output
     if ($OutputFormat -eq 'JSON' -or $ExportPath) {
         $output = Format-Output -Rules $filteredRules -Conflicts $conflicts -Gaps $gaps -Format $OutputFormat
-        
+
         if ($ExportPath) {
             $output | Out-File -FilePath $ExportPath -Encoding UTF8
             Write-Host "✅ Results exported to: $ExportPath" -ForegroundColor Green
@@ -528,12 +528,12 @@ try {
     else {
         Format-Output -Rules $filteredRules -Conflicts $conflicts -Gaps $gaps -Format $OutputFormat
     }
-    
+
     # Show analysis results
     if ($ShowConflicts) {
         Show-Conflicts -Conflicts $conflicts
     }
-    
+
     if ($ShowGaps) {
         Show-SecurityGaps -Gaps $gaps
     }

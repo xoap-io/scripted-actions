@@ -147,7 +147,7 @@ $ErrorActionPreference = 'Stop'
 # Function to check and install PowerCLI if needed
 function Test-PowerCLIInstallation {
     Write-Host "Checking PowerCLI installation..." -ForegroundColor Yellow
-    
+
     try {
         $powerCLIModule = Get-Module -Name VMware.PowerCLI -ListAvailable
         if (-not $powerCLIModule) {
@@ -158,14 +158,14 @@ function Test-PowerCLIInstallation {
             $version = $powerCLIModule | Sort-Object Version -Descending | Select-Object -First 1
             Write-Host "PowerCLI version $($version.Version) found." -ForegroundColor Green
         }
-        
+
         # Import the module
         Import-Module VMware.PowerCLI -Force
-        
+
         # Disable certificate warnings for lab environments
         Set-PowerCLIConfiguration -InvalidCertificateAction Ignore -Confirm:$false -Scope User | Out-Null
         Set-PowerCLIConfiguration -ParticipateInCEIP $false -Confirm:$false -Scope User | Out-Null
-        
+
         return $true
     }
     catch {
@@ -177,17 +177,17 @@ function Test-PowerCLIInstallation {
 # Function to connect to vCenter
 function Connect-ToVCenter {
     param($Server)
-    
+
     try {
         Write-Host "Connecting to vCenter Server: $Server" -ForegroundColor Yellow
-        
+
         # Check if already connected
         $connection = $global:DefaultVIServers | Where-Object { $_.Name -eq $Server -and $_.IsConnected }
         if ($connection) {
             Write-Host "Already connected to $Server" -ForegroundColor Green
             return $connection
         }
-        
+
         # Connect to vCenter (will prompt for credentials if not cached)
         $connection = Connect-VIServer -Server $Server -Force
         Write-Host "Successfully connected to vCenter: $($connection.Name)" -ForegroundColor Green
@@ -208,12 +208,12 @@ function Get-TargetVMs {
         $ResourcePoolName,
         $ExcludeVMs
     )
-    
+
     Write-Host "Identifying target VMs..." -ForegroundColor Yellow
-    
+
     try {
         $targetVMs = @()
-        
+
         if ($VMName) {
             # Single VM or wildcard pattern
             $targetVMs = Get-VM -Name $VMName -ErrorAction SilentlyContinue
@@ -249,23 +249,23 @@ function Get-TargetVMs {
             # All VMs (use with caution)
             $targetVMs = Get-VM
         }
-        
+
         # Exclude specified VMs
         if ($ExcludeVMs) {
             $targetVMs = $targetVMs | Where-Object { $_.Name -notin $ExcludeVMs }
             Write-Host "Excluded $($ExcludeVMs.Count) VM(s) from operation" -ForegroundColor Gray
         }
-        
+
         if (-not $targetVMs) {
             throw "No VMs found matching the specified criteria"
         }
-        
+
         Write-Host "Found $($targetVMs.Count) VM(s) matching criteria:" -ForegroundColor Green
         foreach ($vm in $targetVMs) {
             $toolsStatus = if ($vm.ExtensionData.Guest.ToolsStatus) { $vm.ExtensionData.Guest.ToolsStatus } else { "Unknown" }
             Write-Host "  - $($vm.Name) [$($vm.PowerState)] [Tools: $toolsStatus]" -ForegroundColor White
         }
-        
+
         return $targetVMs
     }
     catch {
@@ -277,10 +277,10 @@ function Get-TargetVMs {
 # Function to check VMware Tools status
 function Test-VMwareToolsStatus {
     param($VM)
-    
+
     $toolsStatus = $VM.ExtensionData.Guest.ToolsStatus
     $toolsRunning = $VM.ExtensionData.Guest.ToolsRunningStatus
-    
+
     return @{
         Status = $toolsStatus
         Running = $toolsRunning
@@ -296,21 +296,21 @@ function New-PowerOperationSnapshot {
         $SnapshotName,
         $Operation
     )
-    
+
     try {
         if (-not $SnapshotName) {
             $SnapshotName = "Before$Operation-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
         }
-        
+
         Write-Host "      Creating snapshot '$SnapshotName'..." -ForegroundColor Gray
-        
+
         # Check if snapshot already exists
         $existingSnapshot = Get-Snapshot -VM $VM -Name $SnapshotName -ErrorAction SilentlyContinue
         if ($existingSnapshot) {
             Write-Warning "      Snapshot '$SnapshotName' already exists"
             return $existingSnapshot
         }
-        
+
         $snapshot = New-Snapshot -VM $VM -Name $SnapshotName -Description "Auto-created before $Operation operation" -Memory:$true -Quiesce:$true
         Write-Host "      ✓ Snapshot created: $($snapshot.Name)" -ForegroundColor Green
         return $snapshot
@@ -332,16 +332,16 @@ function Start-VMPowerOperation {
         $CreateSnapshot,
         $SnapshotName
     )
-    
+
     Write-Host "Starting $($VMs.Count) VM(s)..." -ForegroundColor Yellow
-    
+
     $results = @()
     $startTasks = @()
-    
+
     foreach ($vm in $VMs) {
         try {
             Write-Host "  Processing VM: $($vm.Name)" -ForegroundColor Cyan
-            
+
             # Check current power state
             if ($vm.PowerState -eq "PoweredOn") {
                 Write-Host "    VM is already powered on" -ForegroundColor Yellow
@@ -354,12 +354,12 @@ function Start-VMPowerOperation {
                 }
                 continue
             }
-            
+
             # Create snapshot if requested
             if ($CreateSnapshot) {
                 New-PowerOperationSnapshot -VM $vm -SnapshotName $SnapshotName -Operation "Start" | Out-Null
             }
-            
+
             # Start the VM
             $startTask = Start-VM -VM $vm -RunAsync
             $startTasks += @{
@@ -367,9 +367,9 @@ function Start-VMPowerOperation {
                 VM = $vm
                 StartTime = Get-Date
             }
-            
+
             Write-Host "    ✓ Start task initiated" -ForegroundColor Green
-            
+
             # Sequential startup with delay
             if ($PowerOnSequence -and $vm -ne $VMs[-1]) {
                 Write-Host "    Waiting $SequenceDelay seconds before next VM..." -ForegroundColor Gray
@@ -387,20 +387,20 @@ function Start-VMPowerOperation {
             Write-Host "    ✗ Failed to start: $($_.Exception.Message)" -ForegroundColor Red
         }
     }
-    
+
     # Wait for completion if requested
     if ($WaitForCompletion -and $startTasks.Count -gt 0) {
         Write-Host "`nWaiting for VM start operations to complete..." -ForegroundColor Yellow
-        
+
         foreach ($taskInfo in $startTasks) {
             try {
                 $timeoutSeconds = $TimeoutMinutes * 60
                 Wait-Task -Task $taskInfo.Task -TimeoutSeconds $timeoutSeconds | Out-Null
-                
+
                 # Refresh VM state
                 $vm = Get-VM -Name $taskInfo.VM.Name
                 $duration = [math]::Round((Get-Date).Subtract($taskInfo.StartTime).TotalSeconds, 1)
-                
+
                 $results += @{
                     VM = $vm.Name
                     Operation = "Start"
@@ -409,7 +409,7 @@ function Start-VMPowerOperation {
                     PowerState = $vm.PowerState
                     Duration = "$duration seconds"
                 }
-                
+
                 Write-Host "  ✓ $($vm.Name) started successfully ($duration seconds)" -ForegroundColor Green
             }
             catch {
@@ -436,7 +436,7 @@ function Start-VMPowerOperation {
             }
         }
     }
-    
+
     return $results
 }
 
@@ -450,17 +450,17 @@ function Stop-VMPowerOperation {
         $CreateSnapshot,
         $SnapshotName
     )
-    
+
     $operation = if ($GracefulShutdown) { "GracefulShutdown" } else { "Stop" }
     Write-Host "Stopping $($VMs.Count) VM(s) [Method: $operation]..." -ForegroundColor Yellow
-    
+
     $results = @()
     $stopTasks = @()
-    
+
     foreach ($vm in $VMs) {
         try {
             Write-Host "  Processing VM: $($vm.Name)" -ForegroundColor Cyan
-            
+
             # Check current power state
             if ($vm.PowerState -eq "PoweredOff") {
                 Write-Host "    VM is already powered off" -ForegroundColor Yellow
@@ -473,12 +473,12 @@ function Stop-VMPowerOperation {
                 }
                 continue
             }
-            
+
             # Create snapshot if requested
             if ($CreateSnapshot) {
                 New-PowerOperationSnapshot -VM $vm -SnapshotName $SnapshotName -Operation $operation | Out-Null
             }
-            
+
             # Check VMware Tools for graceful shutdown
             if ($GracefulShutdown) {
                 $toolsStatus = Test-VMwareToolsStatus -VM $vm
@@ -492,14 +492,14 @@ function Stop-VMPowerOperation {
             } else {
                 $stopTask = Stop-VM -VM $vm -Kill -RunAsync
             }
-            
+
             $stopTasks += @{
                 Task = $stopTask
                 VM = $vm
                 StartTime = Get-Date
                 Method = if ($GracefulShutdown -and (Test-VMwareToolsStatus -VM $vm).IsRunning) { "Graceful" } else { "Hard" }
             }
-            
+
             Write-Host "    ✓ Stop task initiated" -ForegroundColor Green
         }
         catch {
@@ -513,20 +513,20 @@ function Stop-VMPowerOperation {
             Write-Host "    ✗ Failed to stop: $($_.Exception.Message)" -ForegroundColor Red
         }
     }
-    
+
     # Wait for completion if requested
     if ($WaitForCompletion -and $stopTasks.Count -gt 0) {
         Write-Host "`nWaiting for VM stop operations to complete..." -ForegroundColor Yellow
-        
+
         foreach ($taskInfo in $stopTasks) {
             try {
                 $timeoutSeconds = $TimeoutMinutes * 60
                 Wait-Task -Task $taskInfo.Task -TimeoutSeconds $timeoutSeconds | Out-Null
-                
+
                 # Refresh VM state
                 $vm = Get-VM -Name $taskInfo.VM.Name
                 $duration = [math]::Round((Get-Date).Subtract($taskInfo.StartTime).TotalSeconds, 1)
-                
+
                 $results += @{
                     VM = $vm.Name
                     Operation = $operation
@@ -536,7 +536,7 @@ function Stop-VMPowerOperation {
                     Duration = "$duration seconds"
                     Method = $taskInfo.Method
                 }
-                
+
                 Write-Host "  ✓ $($vm.Name) stopped successfully [$($taskInfo.Method), $duration seconds]" -ForegroundColor Green
             }
             catch {
@@ -565,7 +565,7 @@ function Stop-VMPowerOperation {
             }
         }
     }
-    
+
     return $results
 }
 
@@ -579,16 +579,16 @@ function Restart-VMPowerOperation {
         $CreateSnapshot,
         $SnapshotName
     )
-    
+
     Write-Host "Rebooting $($VMs.Count) VM(s)..." -ForegroundColor Yellow
-    
+
     $results = @()
     $rebootTasks = @()
-    
+
     foreach ($vm in $VMs) {
         try {
             Write-Host "  Processing VM: $($vm.Name)" -ForegroundColor Cyan
-            
+
             # Check current power state
             if ($vm.PowerState -eq "PoweredOff") {
                 Write-Host "    VM is powered off, starting instead of rebooting" -ForegroundColor Yellow
@@ -601,12 +601,12 @@ function Restart-VMPowerOperation {
                 }
                 continue
             }
-            
+
             # Create snapshot if requested
             if ($CreateSnapshot) {
                 New-PowerOperationSnapshot -VM $vm -SnapshotName $SnapshotName -Operation "Reboot" | Out-Null
             }
-            
+
             # Check VMware Tools for graceful reboot
             if ($GracefulShutdown) {
                 $toolsStatus = Test-VMwareToolsStatus -VM $vm
@@ -628,14 +628,14 @@ function Restart-VMPowerOperation {
             } else {
                 $rebootTask = Restart-VM -VM $vm -RunAsync
             }
-            
+
             $rebootTasks += @{
                 Task = $rebootTask
                 VM = $vm
                 StartTime = Get-Date
                 Operation = "Reboot"
             }
-            
+
             Write-Host "    ✓ Reboot task initiated" -ForegroundColor Green
         }
         catch {
@@ -649,11 +649,11 @@ function Restart-VMPowerOperation {
             Write-Host "    ✗ Failed to reboot: $($_.Exception.Message)" -ForegroundColor Red
         }
     }
-    
+
     # Wait for completion if requested
     if ($WaitForCompletion -and $rebootTasks.Count -gt 0) {
         Write-Host "`nWaiting for VM reboot operations to complete..." -ForegroundColor Yellow
-        
+
         foreach ($taskInfo in $rebootTasks) {
             try {
                 if ($taskInfo.Task) {
@@ -670,11 +670,11 @@ function Restart-VMPowerOperation {
                         }
                     }
                 }
-                
+
                 # Refresh VM state
                 $vm = Get-VM -Name $taskInfo.VM.Name
                 $duration = [math]::Round((Get-Date).Subtract($taskInfo.StartTime).TotalSeconds, 1)
-                
+
                 $results += @{
                     VM = $vm.Name
                     Operation = $taskInfo.Operation
@@ -683,7 +683,7 @@ function Restart-VMPowerOperation {
                     PowerState = $vm.PowerState
                     Duration = "$duration seconds"
                 }
-                
+
                 Write-Host "  ✓ $($vm.Name) rebooted successfully ($duration seconds)" -ForegroundColor Green
             }
             catch {
@@ -710,7 +710,7 @@ function Restart-VMPowerOperation {
             }
         }
     }
-    
+
     return $results
 }
 
@@ -723,16 +723,16 @@ function Suspend-VMPowerOperation {
         $CreateSnapshot,
         $SnapshotName
     )
-    
+
     Write-Host "Suspending $($VMs.Count) VM(s)..." -ForegroundColor Yellow
-    
+
     $results = @()
     $suspendTasks = @()
-    
+
     foreach ($vm in $VMs) {
         try {
             Write-Host "  Processing VM: $($vm.Name)" -ForegroundColor Cyan
-            
+
             # Check current power state
             if ($vm.PowerState -eq "Suspended") {
                 Write-Host "    VM is already suspended" -ForegroundColor Yellow
@@ -745,7 +745,7 @@ function Suspend-VMPowerOperation {
                 }
                 continue
             }
-            
+
             if ($vm.PowerState -eq "PoweredOff") {
                 Write-Host "    VM is powered off, cannot suspend" -ForegroundColor Yellow
                 $results += @{
@@ -757,12 +757,12 @@ function Suspend-VMPowerOperation {
                 }
                 continue
             }
-            
+
             # Create snapshot if requested
             if ($CreateSnapshot) {
                 New-PowerOperationSnapshot -VM $vm -SnapshotName $SnapshotName -Operation "Suspend" | Out-Null
             }
-            
+
             # Suspend the VM
             $suspendTask = Suspend-VM -VM $vm -RunAsync
             $suspendTasks += @{
@@ -770,7 +770,7 @@ function Suspend-VMPowerOperation {
                 VM = $vm
                 StartTime = Get-Date
             }
-            
+
             Write-Host "    ✓ Suspend task initiated" -ForegroundColor Green
         }
         catch {
@@ -784,20 +784,20 @@ function Suspend-VMPowerOperation {
             Write-Host "    ✗ Failed to suspend: $($_.Exception.Message)" -ForegroundColor Red
         }
     }
-    
+
     # Wait for completion if requested
     if ($WaitForCompletion -and $suspendTasks.Count -gt 0) {
         Write-Host "`nWaiting for VM suspend operations to complete..." -ForegroundColor Yellow
-        
+
         foreach ($taskInfo in $suspendTasks) {
             try {
                 $timeoutSeconds = $TimeoutMinutes * 60
                 Wait-Task -Task $taskInfo.Task -TimeoutSeconds $timeoutSeconds | Out-Null
-                
+
                 # Refresh VM state
                 $vm = Get-VM -Name $taskInfo.VM.Name
                 $duration = [math]::Round((Get-Date).Subtract($taskInfo.StartTime).TotalSeconds, 1)
-                
+
                 $results += @{
                     VM = $vm.Name
                     Operation = "Suspend"
@@ -806,7 +806,7 @@ function Suspend-VMPowerOperation {
                     PowerState = $vm.PowerState
                     Duration = "$duration seconds"
                 }
-                
+
                 Write-Host "  ✓ $($vm.Name) suspended successfully ($duration seconds)" -ForegroundColor Green
             }
             catch {
@@ -833,7 +833,7 @@ function Suspend-VMPowerOperation {
             }
         }
     }
-    
+
     return $results
 }
 
@@ -844,22 +844,22 @@ function Get-VMPowerStatus {
         $OutputFormat,
         $OutputPath
     )
-    
+
     Write-Host "Getting power status for $($VMs.Count) VM(s)..." -ForegroundColor Yellow
-    
+
     $statusData = @()
-    
+
     foreach ($vm in $VMs) {
         try {
             $toolsStatus = Test-VMwareToolsStatus -VM $vm
             $uptime = "N/A"
-            
+
             if ($vm.PowerState -eq "PoweredOn" -and $vm.ExtensionData.Guest.BootTime) {
                 $bootTime = $vm.ExtensionData.Guest.BootTime
                 $uptimeSpan = (Get-Date).Subtract($bootTime)
                 $uptime = "$([math]::Floor($uptimeSpan.TotalDays))d $($uptimeSpan.Hours)h $($uptimeSpan.Minutes)m"
             }
-            
+
             $statusItem = [PSCustomObject]@{
                 VMName = $vm.Name
                 PowerState = $vm.PowerState
@@ -877,14 +877,14 @@ function Get-VMPowerStatus {
                 LastBootTime = if ($vm.ExtensionData.Guest.BootTime) { $vm.ExtensionData.Guest.BootTime } else { "N/A" }
                 Timestamp = Get-Date
             }
-            
+
             $statusData += $statusItem
         }
         catch {
             Write-Warning "Failed to get status for VM '$($vm.Name)': $($_.Exception.Message)"
         }
     }
-    
+
     # Export status
     switch ($OutputFormat) {
         "Console" {
@@ -906,7 +906,7 @@ function Get-VMPowerStatus {
             Write-Host "Status report exported to: $OutputPath" -ForegroundColor Green
         }
     }
-    
+
     return $statusData
 }
 
@@ -916,41 +916,41 @@ function Show-PowerOperationSummary {
         $Results,
         $Operation
     )
-    
+
     Write-Host "`n=== Power $Operation Summary ===" -ForegroundColor Cyan
-    
+
     $successful = $Results | Where-Object { $_.Status -eq "Success" }
     $failed = $Results | Where-Object { $_.Status -eq "Failed" }
     $inProgress = $Results | Where-Object { $_.Status -eq "InProgress" }
     $skipped = $Results | Where-Object { $_.Status -in @("AlreadyRunning", "AlreadyStopped", "AlreadySuspended", "InvalidState") }
     $timeout = $Results | Where-Object { $_.Status -eq "Timeout" }
-    
+
     Write-Host "Total VMs: $($Results.Count)" -ForegroundColor White
     Write-Host "Successful: $($successful.Count)" -ForegroundColor Green
     Write-Host "Failed: $($failed.Count)" -ForegroundColor Red
     Write-Host "In Progress: $($inProgress.Count)" -ForegroundColor Yellow
     Write-Host "Skipped: $($skipped.Count)" -ForegroundColor Yellow
     Write-Host "Timed Out: $($timeout.Count)" -ForegroundColor Red
-    
+
     if ($failed.Count -gt 0) {
         Write-Host "`nFailed Operations:" -ForegroundColor Red
         foreach ($result in $failed) {
             Write-Host "  - $($result.VM): $($result.Message)" -ForegroundColor White
         }
     }
-    
+
     if ($timeout.Count -gt 0) {
         Write-Host "`nTimed Out Operations:" -ForegroundColor Red
         foreach ($result in $timeout) {
             Write-Host "  - $($result.VM): $($result.Message)" -ForegroundColor White
         }
     }
-    
+
     # Show average duration if available
     $withDuration = $successful | Where-Object { $_.Duration }
     if ($withDuration.Count -gt 0) {
-        $avgDuration = ($withDuration | ForEach-Object { 
-            [double]($_.Duration -replace ' seconds', '') 
+        $avgDuration = ($withDuration | ForEach-Object {
+            [double]($_.Duration -replace ' seconds', '')
         } | Measure-Object -Average).Average
         Write-Host "`nAverage operation time: $([math]::Round($avgDuration, 1)) seconds" -ForegroundColor Cyan
     }
@@ -961,7 +961,7 @@ try {
     Write-Host "=== vSphere VM Power Operations ===" -ForegroundColor Cyan
     Write-Host "Target vCenter: $VCenterServer" -ForegroundColor White
     Write-Host "Operation: $Operation" -ForegroundColor White
-    
+
     if ($VMName) { Write-Host "Target VM Pattern: $VMName" -ForegroundColor White }
     if ($VMNames) { Write-Host "Target VMs: $($VMNames -join ', ')" -ForegroundColor White }
     if ($ClusterName) { Write-Host "Target Cluster: $ClusterName" -ForegroundColor White }
@@ -969,18 +969,18 @@ try {
     if ($GracefulShutdown) { Write-Host "Using graceful shutdown/reboot" -ForegroundColor White }
     if ($CreateSnapshot) { Write-Host "Creating snapshots before operations" -ForegroundColor White }
     Write-Host ""
-    
+
     # Check and install PowerCLI
     if (-not (Test-PowerCLIInstallation)) {
         throw "PowerCLI installation failed"
     }
-    
+
     # Connect to vCenter
     $connection = Connect-ToVCenter -Server $VCenterServer
-    
+
     # Get target VMs
     $targetVMs = Get-TargetVMs -VMName $VMName -VMNames $VMNames -ClusterName $ClusterName -ResourcePoolName $ResourcePoolName -ExcludeVMs $ExcludeVMs
-    
+
     # Confirm operation if not using Force and operation is potentially disruptive
     if (-not $Force -and $Operation -in @("Stop", "Reboot", "Suspend", "Reset", "GracefulShutdown") -and $targetVMs.Count -gt 1) {
         $confirmation = Read-Host "`nProceed with $Operation operation on $($targetVMs.Count) VM(s)? (y/N)"
@@ -989,7 +989,7 @@ try {
             exit 0
         }
     }
-    
+
     # Perform the power operation
     $results = @()
     switch ($Operation) {
@@ -1045,12 +1045,12 @@ try {
             $results = Get-VMPowerStatus -VMs $targetVMs -OutputFormat $OutputFormat -OutputPath $OutputPath
         }
     }
-    
+
     # Display summary (except for Status operation which already displays results)
     if ($Operation -ne "Status") {
         Show-PowerOperationSummary -Results $results -Operation $Operation
     }
-    
+
     Write-Host "`n=== Operation Completed ===" -ForegroundColor Green
 }
 catch {

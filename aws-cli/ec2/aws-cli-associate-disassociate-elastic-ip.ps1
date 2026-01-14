@@ -124,19 +124,19 @@ try {
     switch ($Action) {
         'Allocate' {
             Write-Output "Allocating new Elastic IP in domain: $Domain"
-            
+
             $allocateArgs = @('ec2', 'allocate-address', '--domain', $Domain)
             $allocateArgs += $awsArgs
             $allocateArgs += @('--output', 'json')
-            
+
             $result = & aws @allocateArgs 2>&1
-            
+
             if ($LASTEXITCODE -eq 0) {
                 $allocationData = $result | ConvertFrom-Json
                 Write-Output "✅ Elastic IP allocated successfully!"
                 Write-Output "Public IP: $($allocationData.PublicIp)"
                 Write-Output "Allocation ID: $($allocationData.AllocationId)"
-                
+
                 if ($Domain -eq 'vpc') {
                     Write-Output "Domain: VPC"
                 } else {
@@ -151,7 +151,7 @@ try {
             if (-not $InstanceId -and -not $NetworkInterfaceId) {
                 throw "Either InstanceId or NetworkInterfaceId must be specified for association."
             }
-            
+
             if (-not $AllocationId -and -not $PublicIp) {
                 throw "Either AllocationId (for VPC) or PublicIp (for EC2-Classic) must be specified."
             }
@@ -165,11 +165,11 @@ try {
                 if ($LASTEXITCODE -ne 0) {
                     throw "Failed to describe instance: $instanceResult"
                 }
-                
+
                 $instanceData = $instanceResult | ConvertFrom-Json
                 $instance = $instanceData.Reservations[0].Instances[0]
                 Write-Output "Instance state: $($instance.State.Name)"
-                
+
                 if ($instance.State.Name -ne 'running') {
                     Write-Warning "Instance is not in running state. Current state: $($instance.State.Name)"
                 }
@@ -206,11 +206,11 @@ try {
             $associateArgs += @('--output', 'json')
 
             $result = & aws @associateArgs 2>&1
-            
+
             if ($LASTEXITCODE -eq 0) {
                 $associationData = $result | ConvertFrom-Json
                 Write-Output "✅ Elastic IP associated successfully!"
-                
+
                 if ($associationData.AssociationId) {
                     Write-Output "Association ID: $($associationData.AssociationId)"
                 }
@@ -222,7 +222,7 @@ try {
                     if ($LASTEXITCODE -eq 0) {
                         $updatedData = $updatedResult | ConvertFrom-Json
                         $updatedInstance = $updatedData.Reservations[0].Instances[0]
-                        
+
                         if ($updatedInstance.PublicIpAddress) {
                             Write-Output "Public IP Address: $($updatedInstance.PublicIpAddress)"
                         }
@@ -252,14 +252,14 @@ try {
             }
 
             $result = & aws @disassociateArgs 2>&1
-            
+
             if ($LASTEXITCODE -eq 0) {
                 Write-Output "✅ Elastic IP disassociated successfully!"
-                
+
                 if ($AssociationId) {
                     Write-Output "Disassociated Association ID: $AssociationId"
                 }
-                
+
                 if ($PublicIp) {
                     Write-Output "Disassociated Public IP: $PublicIp"
                 }
@@ -275,17 +275,17 @@ try {
 
             # Check if the Elastic IP is currently associated
             Write-Output "Checking Elastic IP status before release..."
-            
+
             if ($AllocationId) {
                 $addressResult = aws ec2 describe-addresses --allocation-ids $AllocationId @awsArgs --output json 2>&1
             } else {
                 $addressResult = aws ec2 describe-addresses --public-ips $PublicIp @awsArgs --output json 2>&1
             }
-            
+
             if ($LASTEXITCODE -eq 0) {
                 $addressData = $addressResult | ConvertFrom-Json
                 $address = $addressData.Addresses[0]
-                
+
                 if ($address.AssociationId) {
                     Write-Warning "Elastic IP is currently associated with an instance."
                     Write-Output "Association ID: $($address.AssociationId)"
@@ -310,14 +310,14 @@ try {
             }
 
             $result = & aws @releaseArgs 2>&1
-            
+
             if ($LASTEXITCODE -eq 0) {
                 Write-Output "✅ Elastic IP released successfully!"
-                
+
                 if ($AllocationId) {
                     Write-Output "Released Allocation ID: $AllocationId"
                 }
-                
+
                 if ($PublicIp) {
                     Write-Output "Released Public IP: $PublicIp"
                 }

@@ -13,15 +13,15 @@ try {
     if (-not $workspace) {
         throw "WorkSpace $WorkspaceId not found"
     }
-    
+
     Write-Host "Retrieving tags for WorkSpace $WorkspaceId..." -ForegroundColor Cyan
-    
+
     $tags = Get-WKSWorkspaceTag -WorkspaceId $WorkspaceId
-    
+
     if ($tags -and $tags.Count -gt 0) {
         Write-Host "Found $($tags.Count) tag(s) for WorkSpace ${WorkspaceId}:" -ForegroundColor Green
         $tags | Format-Table -Property Key, Value -AutoSize
-        
+
         return $tags
     } else {
         Write-Host "No tags found for WorkSpace $WorkspaceId" -ForegroundColor Yellow

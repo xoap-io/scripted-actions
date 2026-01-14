@@ -1,4 +1,4 @@
-<# 
+<#
 .SYNOPSIS
   Deploy Azure DNS Security Policy (dnsResolverPolicies) with domain lists, rules, VNet links, and diagnostics.
 
@@ -35,7 +35,7 @@
   Author: XOAP
   Version: 2.0
   Requires: Az.Accounts, Az.Resources, Az.Monitor, Az.Network, Az.DnsResolver
-  
+
 .EXAMPLE
   .\az-ps-create-dns-security-policy.ps1 `
     -Name "dns-security-demo" `
@@ -102,7 +102,7 @@ $ErrorActionPreference = 'Stop'
 
 begin {
   Write-Verbose "Starting DNS Security Policy deployment: $Name"
-  
+
   # --- Helper: Ensure modules ---
   $required = @('Az.Accounts','Az.Resources','Az.Monitor','Az.Network','Az.DnsResolver')
   foreach ($m in $required) {
@@ -123,8 +123,8 @@ begin {
         Write-Verbose "Creating Resource Group '$Name' in '$Location'..."
         return New-AzResourceGroup -Name $Name -Location $Location -Tag $Tags -Force
       } else {
-        if ($Tags.Count -gt 0) { 
-          Set-AzResourceGroup -Name $Name -Tag $Tags | Out-Null 
+        if ($Tags.Count -gt 0) {
+          Set-AzResourceGroup -Name $Name -Tag $Tags | Out-Null
         }
         return $rg
       }
@@ -141,8 +141,8 @@ begin {
         Write-Verbose "Creating DNS Resolver Policy '$PolicyName'..."
         return New-AzDnsResolverPolicy -Name $PolicyName -ResourceGroupName $RgName -Location $Location -Tag $Tags
       } else {
-        if ($Tags.Count -gt 0) { 
-          Update-AzDnsResolverPolicy -Name $PolicyName -ResourceGroupName $RgName -Tag $Tags | Out-Null 
+        if ($Tags.Count -gt 0) {
+          Update-AzDnsResolverPolicy -Name $PolicyName -ResourceGroupName $RgName -Tag $Tags | Out-Null
         }
         return $existing
       }
@@ -269,11 +269,11 @@ process {
   try {
     # Basic context sanity check
     $ctx = Get-AzContext -ErrorAction SilentlyContinue
-    if (-not $ctx) { 
-      throw "No Azure context found. Run Connect-AzAccount first." 
+    if (-not $ctx) {
+      throw "No Azure context found. Run Connect-AzAccount first."
     }
     Write-Verbose "Using Azure subscription: $($ctx.Subscription.Name)"
-    
+
     Write-Host "Starting DNS Security Policy deployment..." -ForegroundColor Cyan
 
     # 1) Resource Group
@@ -291,11 +291,11 @@ process {
     $domainListMap = @{}
     foreach ($key in $DomainLists.Keys) {
       $entry = $DomainLists[$key]
-      if (-not $entry.name) { 
-        throw "DomainLists['$key'] must contain 'name'." 
+      if (-not $entry.name) {
+        throw "DomainLists['$key'] must contain 'name'."
       }
-      if (-not $entry.domains) { 
-        throw "DomainLists['$key'] must contain 'domains' (@('example.com.'))." 
+      if (-not $entry.domains) {
+        throw "DomainLists['$key'] must contain 'domains' (@('example.com.'))."
       }
 
       Write-Verbose "Processing domain list: $($entry.name)"
@@ -309,15 +309,15 @@ process {
     foreach ($key in $Rules.Keys) {
       $r = $Rules[$key]
       foreach ($required in @('name','action_type','domain_list_keys','dns_security_rule_state','priority')) {
-        if (-not $r.ContainsKey($required)) { 
-          throw "Rules['$key'] missing required property '$required'." 
+        if (-not $r.ContainsKey($required)) {
+          throw "Rules['$key'] missing required property '$required'."
         }
       }
-      
+
       $domainListIds = @()
       foreach ($dlKey in $r.domain_list_keys) {
-        if (-not $domainListMap.ContainsKey($dlKey)) { 
-          throw "Rule '$($r.name)' references unknown domain_list_key '$dlKey'." 
+        if (-not $domainListMap.ContainsKey($dlKey)) {
+          throw "Rule '$($r.name)' references unknown domain_list_key '$dlKey'."
         }
         $domainListIds += $domainListMap[$dlKey].Id
       }
@@ -340,11 +340,11 @@ process {
     Write-Host "Processing VNet links..." -ForegroundColor Cyan
     foreach ($link in $VnetLinks) {
       foreach ($required in @('name','resource_group_name')) {
-        if (-not $link.ContainsKey($required)) { 
-          throw "Each VnetLinks entry needs '$required'." 
+        if (-not $link.ContainsKey($required)) {
+          throw "Each VnetLinks entry needs '$required'."
         }
       }
-      
+
       Write-Verbose "Processing VNet link: $($link.name) in RG: $($link.resource_group_name)"
       $vnet = Get-AzVirtualNetwork -Name $link.name -ResourceGroupName $link.resource_group_name -ErrorAction Stop
 
@@ -353,12 +353,12 @@ process {
         throw "VNet '$($link.name)' is in region '$($vnet.Location)' but policy is in '$Location'. They must match."
       }
 
-      $linkName = if ($link.ContainsKey('link_name') -and $link.link_name) { 
-        $link.link_name 
-      } else { 
-        "$Name-$($link.name)-link" 
+      $linkName = if ($link.ContainsKey('link_name') -and $link.link_name) {
+        $link.link_name
+      } else {
+        "$Name-$($link.name)-link"
       }
-      
+
       $null = Get-OrCreatePolicyVnetLink -LinkName $linkName -RgName $rg.ResourceGroupName -PolicyName $policy.Name -VnetId $vnet.Id -Location $Location -Tags $Tags
       Write-Host "  ✓ VNet Link: $linkName -> $($vnet.Name)" -ForegroundColor Green
     }
@@ -370,7 +370,7 @@ process {
 
     Write-Host "`nDeployment completed successfully!" -ForegroundColor Green
     Write-Host "DNS Security Policy ID: $($policy.Id)" -ForegroundColor Yellow
-    
+
   } catch {
     Write-Error "Deployment failed: $($_.Exception.Message)"
     Write-Error $_.ScriptStackTrace

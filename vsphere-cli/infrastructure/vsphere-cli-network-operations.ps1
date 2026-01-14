@@ -81,7 +81,7 @@ param (
     [string]$VCenterServer,
 
     [Parameter(Mandatory = $true)]
-    [ValidateSet("CreatePortGroup", "DeletePortGroup", "CreateStandardSwitch", "DeleteStandardSwitch", 
+    [ValidateSet("CreatePortGroup", "DeletePortGroup", "CreateStandardSwitch", "DeleteStandardSwitch",
                  "CreateDistributedSwitch", "DeleteDistributedSwitch", "ConfigureUplinkTeaming",
                  "ConfigureSecurity", "ConfigureTrafficShaping", "Report", "NetworkHealth", "VMNetworkInfo")]
     [string]$Operation,
@@ -142,7 +142,7 @@ $ErrorActionPreference = 'Stop'
 # Function to check and install PowerCLI if needed
 function Test-PowerCLIInstallation {
     Write-Host "Checking PowerCLI installation..." -ForegroundColor Yellow
-    
+
     try {
         $powerCLIModule = Get-Module -Name VMware.PowerCLI -ListAvailable
         if (-not $powerCLIModule) {
@@ -153,14 +153,14 @@ function Test-PowerCLIInstallation {
             $version = $powerCLIModule | Sort-Object Version -Descending | Select-Object -First 1
             Write-Host "PowerCLI version $($version.Version) found." -ForegroundColor Green
         }
-        
+
         # Import the module
         Import-Module VMware.PowerCLI -Force
-        
+
         # Disable certificate warnings for lab environments
         Set-PowerCLIConfiguration -InvalidCertificateAction Ignore -Confirm:$false -Scope User | Out-Null
         Set-PowerCLIConfiguration -ParticipateInCEIP $false -Confirm:$false -Scope User | Out-Null
-        
+
         return $true
     }
     catch {
@@ -172,17 +172,17 @@ function Test-PowerCLIInstallation {
 # Function to connect to vCenter
 function Connect-ToVCenter {
     param($Server)
-    
+
     try {
         Write-Host "Connecting to vCenter Server: $Server" -ForegroundColor Yellow
-        
+
         # Check if already connected
         $connection = $global:DefaultVIServers | Where-Object { $_.Name -eq $Server -and $_.IsConnected }
         if ($connection) {
             Write-Host "Already connected to $Server" -ForegroundColor Green
             return $connection
         }
-        
+
         # Connect to vCenter (will prompt for credentials if not cached)
         $connection = Connect-VIServer -Server $Server -Force
         Write-Host "Successfully connected to vCenter: $($connection.Name)" -ForegroundColor Green
@@ -202,10 +202,10 @@ function New-NetworkPortGroup {
         $PortGroupName,
         $VLANID
     )
-    
+
     try {
         Write-Host "  Creating port group '$PortGroupName' on switch '$SwitchName'..." -ForegroundColor Yellow
-        
+
         # Check if port group already exists
         $existingPG = Get-VirtualPortGroup -VMHost $VMHost -Name $PortGroupName -ErrorAction SilentlyContinue
         if ($existingPG) {
@@ -219,16 +219,16 @@ function New-NetworkPortGroup {
                 Message = "Port group already exists"
             }
         }
-        
+
         # Get the virtual switch
         $vswitch = Get-VirtualSwitch -VMHost $VMHost -Name $SwitchName -ErrorAction SilentlyContinue
         if (-not $vswitch) {
             throw "Virtual switch '$SwitchName' not found on host '$($VMHost.Name)'"
         }
-        
+
         # Create the port group
         $portGroup = New-VirtualPortGroup -VirtualSwitch $vswitch -Name $PortGroupName -VLanId $VLANID
-        
+
         Write-Host "    ✓ Port group created successfully" -ForegroundColor Green
         return @{
             Host = $VMHost.Name
@@ -258,10 +258,10 @@ function Remove-NetworkPortGroup {
         $PortGroupName,
         $Force
     )
-    
+
     try {
         Write-Host "  Removing port group '$PortGroupName'..." -ForegroundColor Yellow
-        
+
         # Get the port group
         $portGroup = Get-VirtualPortGroup -VMHost $VMHost -Name $PortGroupName -ErrorAction SilentlyContinue
         if (-not $portGroup) {
@@ -273,16 +273,16 @@ function Remove-NetworkPortGroup {
                 Message = "Port group not found"
             }
         }
-        
+
         # Check for connected VMs
         $connectedVMs = Get-VM | Get-NetworkAdapter | Where-Object { $_.NetworkName -eq $PortGroupName }
         if ($connectedVMs -and -not $Force) {
             throw "Port group has VMs connected. Use -Force to override: $($connectedVMs.Parent.Name -join ', ')"
         }
-        
+
         # Remove the port group
         Remove-VirtualPortGroup -VirtualPortGroup $portGroup -Confirm:$false
-        
+
         Write-Host "    ✓ Port group removed successfully" -ForegroundColor Green
         return @{
             Host = $VMHost.Name
@@ -310,10 +310,10 @@ function New-StandardVirtualSwitch {
         $MTU,
         $PhysicalAdapters
     )
-    
+
     try {
         Write-Host "  Creating standard virtual switch '$SwitchName'..." -ForegroundColor Yellow
-        
+
         # Check if switch already exists
         $existingSwitch = Get-VirtualSwitch -VMHost $VMHost -Name $SwitchName -ErrorAction SilentlyContinue
         if ($existingSwitch) {
@@ -325,7 +325,7 @@ function New-StandardVirtualSwitch {
                 Message = "Virtual switch already exists"
             }
         }
-        
+
         # Create the virtual switch
         $switchParams = @{
             VMHost = $VMHost
@@ -333,7 +333,7 @@ function New-StandardVirtualSwitch {
             NumPorts = $NumPorts
             Mtu = $MTU
         }
-        
+
         # Add physical adapters if specified
         if ($PhysicalAdapters) {
             $nics = @()
@@ -349,9 +349,9 @@ function New-StandardVirtualSwitch {
                 $switchParams.Nic = $nics
             }
         }
-        
+
         $vswitch = New-VirtualSwitch @switchParams
-        
+
         Write-Host "    ✓ Standard virtual switch created successfully" -ForegroundColor Green
         return @{
             Host = $VMHost.Name
@@ -381,10 +381,10 @@ function New-DistributedVirtualSwitch {
         $NumPorts,
         $MTU
     )
-    
+
     try {
         Write-Host "  Creating distributed virtual switch '$SwitchName'..." -ForegroundColor Yellow
-        
+
         # Check if switch already exists
         $existingSwitch = Get-VDSwitch -Name $SwitchName -ErrorAction SilentlyContinue
         if ($existingSwitch) {
@@ -396,7 +396,7 @@ function New-DistributedVirtualSwitch {
                 Message = "Distributed virtual switch already exists"
             }
         }
-        
+
         # Get the datacenter (required for distributed switch)
         if ($ClusterName) {
             $cluster = Get-Cluster -Name $ClusterName
@@ -404,10 +404,10 @@ function New-DistributedVirtualSwitch {
         } else {
             $datacenter = Get-Datacenter | Select-Object -First 1
         }
-        
+
         # Create the distributed virtual switch
         $vdswitch = New-VDSwitch -Name $SwitchName -Location $datacenter -NumUplinkPorts 4 -Mtu $MTU
-        
+
         # Add hosts to the distributed switch if cluster specified
         if ($ClusterName) {
             $clusterHosts = Get-VMHost -Location $cluster
@@ -421,7 +421,7 @@ function New-DistributedVirtualSwitch {
                 }
             }
         }
-        
+
         Write-Host "    ✓ Distributed virtual switch created successfully" -ForegroundColor Green
         return @{
             Cluster = $ClusterName
@@ -450,22 +450,22 @@ function Set-UplinkTeaming {
         $PhysicalAdapters,
         $NetworkPolicy
     )
-    
+
     try {
         Write-Host "  Configuring uplink teaming for switch '$SwitchName'..." -ForegroundColor Yellow
-        
+
         # Get the virtual switch
         $vswitch = Get-VirtualSwitch -VMHost $VMHost -Name $SwitchName -ErrorAction SilentlyContinue
         if (-not $vswitch) {
             throw "Virtual switch '$SwitchName' not found on host '$($VMHost.Name)'"
         }
-        
+
         # Configure NIC teaming policy
         $teamingPolicy = Get-NicTeamingPolicy -VirtualSwitch $vswitch
-        
+
         # Set load balancing policy
         $teamingPolicy | Set-NicTeamingPolicy -LoadBalancingPolicy $NetworkPolicy
-        
+
         # Add physical adapters if specified
         if ($PhysicalAdapters) {
             $activeNics = @()
@@ -477,7 +477,7 @@ function Set-UplinkTeaming {
                     Write-Warning "Physical adapter '$nicName' not found on host '$($VMHost.Name)'"
                 }
             }
-            
+
             if ($activeNics.Count -gt 0) {
                 # Remove existing NICs and add new ones
                 $currentNics = $vswitch.Nic
@@ -486,17 +486,17 @@ function Set-UplinkTeaming {
                         Remove-VirtualSwitchPhysicalNetworkAdapter -VMHostPhysicalNic $currentNic -VirtualSwitch $vswitch -Confirm:$false
                     }
                 }
-                
+
                 # Add new NICs
                 foreach ($nicName in $activeNics) {
                     $nic = Get-VMHostNetworkAdapter -VMHost $VMHost -Name $nicName -Physical
                     Add-VirtualSwitchPhysicalNetworkAdapter -VirtualSwitch $vswitch -VMHostPhysicalNic $nic -Confirm:$false
                 }
-                
+
                 Write-Host "      Added NICs: $($activeNics -join ', ')" -ForegroundColor Gray
             }
         }
-        
+
         Write-Host "    ✓ Uplink teaming configured successfully" -ForegroundColor Green
         return @{
             Host = $VMHost.Name
@@ -524,22 +524,22 @@ function Set-SecurityPolicy {
         $PortGroupName,
         $SecurityPolicy
     )
-    
+
     try {
         Write-Host "  Configuring security policy for port group '$PortGroupName'..." -ForegroundColor Yellow
-        
+
         # Get the port group
         $portGroup = Get-VirtualPortGroup -VMHost $VMHost -Name $PortGroupName -ErrorAction SilentlyContinue
         if (-not $portGroup) {
             throw "Port group '$PortGroupName' not found on host '$($VMHost.Name)'"
         }
-        
+
         # Get current security policy
         $secPolicy = Get-SecurityPolicy -VirtualPortGroup $portGroup
-        
+
         # Apply security settings
         $policyParams = @{}
-        
+
         foreach ($policy in $SecurityPolicy) {
             switch ($policy) {
                 "AllowPromiscuous" { $policyParams.AllowPromiscuous = $true }
@@ -550,12 +550,12 @@ function Set-SecurityPolicy {
                 "DenyForgedTransmits" { $policyParams.ForgedTransmits = $false }
             }
         }
-        
+
         if ($policyParams.Count -gt 0) {
             $secPolicy | Set-SecurityPolicy @policyParams
             Write-Host "      Applied security policies: $($SecurityPolicy -join ', ')" -ForegroundColor Gray
         }
-        
+
         Write-Host "    ✓ Security policy configured successfully" -ForegroundColor Green
         return @{
             Host = $VMHost.Name
@@ -578,16 +578,16 @@ function Set-SecurityPolicy {
 # Function to get network health check
 function Get-NetworkHealthCheck {
     param($VMHost)
-    
+
     try {
         Write-Host "  Performing network health check for host '$($VMHost.Name)'..." -ForegroundColor Yellow
-        
+
         $healthIssues = @()
         $healthStatus = "Healthy"
-        
+
         # Get all virtual switches
         $vSwitches = Get-VirtualSwitch -VMHost $VMHost
-        
+
         # Check each virtual switch
         foreach ($vswitch in $vSwitches) {
             # Check for physical adapters
@@ -595,7 +595,7 @@ function Get-NetworkHealthCheck {
                 $healthIssues += "Virtual switch '$($vswitch.Name)' has no physical adapters"
                 $healthStatus = "Warning"
             }
-            
+
             # Check for single point of failure
             if ($vswitch.Nic.Count -eq 1) {
                 $healthIssues += "Virtual switch '$($vswitch.Name)' has only one physical adapter (single point of failure)"
@@ -603,7 +603,7 @@ function Get-NetworkHealthCheck {
                     $healthStatus = "Warning"
                 }
             }
-            
+
             # Check for link state
             foreach ($nic in $vswitch.Nic) {
                 $nicAdapter = Get-VMHostNetworkAdapter -VMHost $VMHost -Name $nic -Physical
@@ -613,7 +613,7 @@ function Get-NetworkHealthCheck {
                 }
             }
         }
-        
+
         # Check for orphaned port groups
         $portGroups = Get-VirtualPortGroup -VMHost $VMHost
         foreach ($pg in $portGroups) {
@@ -625,7 +625,7 @@ function Get-NetworkHealthCheck {
                 }
             }
         }
-        
+
         # Check VMkernel network adapters
         $vmkernelAdapters = Get-VMHostNetworkAdapter -VMHost $VMHost -VMKernel
         foreach ($vmk in $vmkernelAdapters) {
@@ -634,7 +634,7 @@ function Get-NetworkHealthCheck {
                 $healthStatus = "Warning"
             }
         }
-        
+
         $result = @{
             Host = $VMHost.Name
             Status = $healthStatus
@@ -644,21 +644,21 @@ function Get-NetworkHealthCheck {
             VMKernelAdapters = $vmkernelAdapters.Count
             PhysicalAdapters = (Get-VMHostNetworkAdapter -VMHost $VMHost -Physical).Count
         }
-        
+
         $statusColor = switch ($healthStatus) {
             "Healthy" { "Green" }
             "Warning" { "Yellow" }
             "Critical" { "Red" }
             default { "White" }
         }
-        
+
         Write-Host "    Status: $healthStatus" -ForegroundColor $statusColor
         if ($healthIssues.Count -gt 0) {
             foreach ($issue in $healthIssues) {
                 Write-Host "      - $issue" -ForegroundColor Gray
             }
         }
-        
+
         return $result
     }
     catch {
@@ -673,18 +673,18 @@ function Get-NetworkHealthCheck {
 # Function to get VM network information
 function Get-VMNetworkInfo {
     param($VMHost)
-    
+
     try {
         Write-Host "  Gathering VM network information for host '$($VMHost.Name)'..." -ForegroundColor Yellow
-        
+
         $vmNetworkInfo = @()
         $vms = Get-VM -Location $VMHost
-        
+
         foreach ($vm in $vms) {
             $networkAdapters = Get-NetworkAdapter -VM $vm
             foreach ($adapter in $networkAdapters) {
                 $portGroup = Get-VirtualPortGroup -VMHost $VMHost -Name $adapter.NetworkName -ErrorAction SilentlyContinue
-                
+
                 $vmNetworkInfo += [PSCustomObject]@{
                     VMName = $vm.Name
                     PowerState = $vm.PowerState
@@ -698,7 +698,7 @@ function Get-VMNetworkInfo {
                 }
             }
         }
-        
+
         return $vmNetworkInfo
     }
     catch {
@@ -714,20 +714,20 @@ function Get-NetworkReport {
         $OutputFormat,
         $OutputPath
     )
-    
+
     Write-Host "Generating network configuration report..." -ForegroundColor Yellow
-    
+
     $reportData = @()
-    
+
     foreach ($vmHost in $Hosts) {
         try {
             # Get virtual switches
             $vSwitches = Get-VirtualSwitch -VMHost $vmHost
-            
+
             foreach ($vswitch in $vSwitches) {
                 # Get port groups for this switch
                 $portGroups = Get-VirtualPortGroup -VMHost $vmHost -VirtualSwitch $vswitch
-                
+
                 foreach ($pg in $portGroups) {
                     $reportItem = [PSCustomObject]@{
                         Host = $vmHost.Name
@@ -741,10 +741,10 @@ function Get-NetworkReport {
                         ConnectedVMs = (Get-VM | Get-NetworkAdapter | Where-Object { $_.NetworkName -eq $pg.Name }).Count
                         Timestamp = Get-Date
                     }
-                    
+
                     $reportData += $reportItem
                 }
-                
+
                 # If no port groups, still include the switch
                 if ($portGroups.Count -eq 0) {
                     $reportItem = [PSCustomObject]@{
@@ -759,7 +759,7 @@ function Get-NetworkReport {
                         ConnectedVMs = 0
                         Timestamp = Get-Date
                     }
-                    
+
                     $reportData += $reportItem
                 }
             }
@@ -768,7 +768,7 @@ function Get-NetworkReport {
             Write-Warning "Failed to get network data for host '$($vmHost.Name)': $($_.Exception.Message)"
         }
     }
-    
+
     # Export report
     switch ($OutputFormat) {
         "Console" {
@@ -790,7 +790,7 @@ function Get-NetworkReport {
             Write-Host "Report exported to: $OutputPath" -ForegroundColor Green
         }
     }
-    
+
     return $reportData
 }
 
@@ -800,18 +800,18 @@ function Show-NetworkOperationSummary {
         $Results,
         $Operation
     )
-    
+
     Write-Host "`n=== Network $Operation Summary ===" -ForegroundColor Cyan
-    
+
     $successful = $Results | Where-Object { $_.Status -eq "Success" }
     $failed = $Results | Where-Object { $_.Status -eq "Failed" }
     $warnings = $Results | Where-Object { $_.Status -in @("AlreadyExists", "NotFound") }
-    
+
     Write-Host "Total Operations: $($Results.Count)" -ForegroundColor White
     Write-Host "Successful: $($successful.Count)" -ForegroundColor Green
     Write-Host "Failed: $($failed.Count)" -ForegroundColor Red
     Write-Host "Warnings: $($warnings.Count)" -ForegroundColor Yellow
-    
+
     if ($failed.Count -gt 0) {
         Write-Host "`nFailed Operations:" -ForegroundColor Red
         foreach ($result in $failed) {
@@ -825,21 +825,21 @@ try {
     Write-Host "=== vSphere Network Operations ===" -ForegroundColor Cyan
     Write-Host "Target vCenter: $VCenterServer" -ForegroundColor White
     Write-Host "Operation: $Operation" -ForegroundColor White
-    
+
     if ($HostName) { Write-Host "Target Host: $HostName" -ForegroundColor White }
     if ($ClusterName) { Write-Host "Target Cluster: $ClusterName" -ForegroundColor White }
     if ($SwitchName) { Write-Host "Switch Name: $SwitchName" -ForegroundColor White }
     if ($PortGroupName) { Write-Host "Port Group: $PortGroupName" -ForegroundColor White }
     Write-Host ""
-    
+
     # Check and install PowerCLI
     if (-not (Test-PowerCLIInstallation)) {
         throw "PowerCLI installation failed"
     }
-    
+
     # Connect to vCenter
     $connection = Connect-ToVCenter -Server $VCenterServer
-    
+
     # Get target hosts based on operation
     $targetHosts = @()
     if ($HostName) {
@@ -850,102 +850,102 @@ try {
     } elseif ($Operation -in @("Report", "NetworkHealth", "VMNetworkInfo")) {
         $targetHosts = Get-VMHost
     }
-    
+
     # Perform the requested operation
     $results = @()
-    
+
     switch ($Operation) {
         "CreatePortGroup" {
             if (-not $HostName -or -not $SwitchName -or -not $PortGroupName) {
                 throw "HostName, SwitchName, and PortGroupName are required for CreatePortGroup operation"
             }
-            
+
             foreach ($vmHost in $targetHosts) {
                 $result = New-NetworkPortGroup -VMHost $vmHost -SwitchName $SwitchName -PortGroupName $PortGroupName -VLANID $VLANID
                 $results += $result
             }
         }
-        
+
         "DeletePortGroup" {
             if (-not $HostName -or -not $PortGroupName) {
                 throw "HostName and PortGroupName are required for DeletePortGroup operation"
             }
-            
+
             foreach ($vmHost in $targetHosts) {
                 $result = Remove-NetworkPortGroup -VMHost $vmHost -PortGroupName $PortGroupName -Force:$Force
                 $results += $result
             }
         }
-        
+
         "CreateStandardSwitch" {
             if (-not $HostName -or -not $SwitchName) {
                 throw "HostName and SwitchName are required for CreateStandardSwitch operation"
             }
-            
+
             foreach ($vmHost in $targetHosts) {
                 $result = New-StandardVirtualSwitch -VMHost $vmHost -SwitchName $SwitchName -NumPorts $NumPorts -MTU $MTU -PhysicalAdapters $PhysicalAdapters
                 $results += $result
             }
         }
-        
+
         "CreateDistributedSwitch" {
             if (-not $SwitchName) {
                 throw "SwitchName is required for CreateDistributedSwitch operation"
             }
-            
+
             $result = New-DistributedVirtualSwitch -ClusterName $ClusterName -SwitchName $SwitchName -NumPorts $NumPorts -MTU $MTU
             $results += $result
         }
-        
+
         "ConfigureUplinkTeaming" {
             if (-not $HostName -or -not $SwitchName) {
                 throw "HostName and SwitchName are required for ConfigureUplinkTeaming operation"
             }
-            
+
             foreach ($vmHost in $targetHosts) {
                 $result = Set-UplinkTeaming -VMHost $vmHost -SwitchName $SwitchName -PhysicalAdapters $PhysicalAdapters -NetworkPolicy $NetworkPolicy
                 $results += $result
             }
         }
-        
+
         "ConfigureSecurity" {
             if (-not $HostName -or -not $PortGroupName -or -not $SecurityPolicy) {
                 throw "HostName, PortGroupName, and SecurityPolicy are required for ConfigureSecurity operation"
             }
-            
+
             foreach ($vmHost in $targetHosts) {
                 $result = Set-SecurityPolicy -VMHost $vmHost -PortGroupName $PortGroupName -SecurityPolicy $SecurityPolicy
                 $results += $result
             }
         }
-        
+
         "NetworkHealth" {
             foreach ($vmHost in $targetHosts) {
                 $result = Get-NetworkHealthCheck -VMHost $vmHost
                 $results += $result
             }
-            
+
             # Display health summary
             $healthy = $results | Where-Object { $_.Status -eq "Healthy" }
             $warning = $results | Where-Object { $_.Status -eq "Warning" }
             $critical = $results | Where-Object { $_.Status -eq "Critical" }
-            
+
             Write-Host "`n=== Network Health Summary ===" -ForegroundColor Cyan
             Write-Host "Healthy: $($healthy.Count)" -ForegroundColor Green
             Write-Host "Warning: $($warning.Count)" -ForegroundColor Yellow
             Write-Host "Critical: $($critical.Count)" -ForegroundColor Red
         }
-        
+
         "VMNetworkInfo" {
             $allVMNetworkInfo = @()
             foreach ($vmHost in $targetHosts) {
                 $vmNetworkInfo = Get-VMNetworkInfo -VMHost $vmHost
                 $allVMNetworkInfo += $vmNetworkInfo
             }
-            
+
             Write-Host "`n=== VM Network Information ===" -ForegroundColor Cyan
             $allVMNetworkInfo | Format-Table VMName, NetworkName, MacAddress, VLANID, ConnectionState -AutoSize
-            
+
             if ($OutputPath) {
                 switch ($OutputFormat) {
                     "CSV" { $allVMNetworkInfo | Export-Csv -Path $OutputPath -NoTypeInformation }
@@ -954,17 +954,17 @@ try {
                 Write-Host "VM network information exported to: $OutputPath" -ForegroundColor Green
             }
         }
-        
+
         "Report" {
             $results = Get-NetworkReport -Hosts $targetHosts -OutputFormat $OutputFormat -OutputPath $OutputPath
         }
     }
-    
+
     # Display summary (except for operations that already display results)
     if ($Operation -notin @("Report", "NetworkHealth", "VMNetworkInfo")) {
         Show-NetworkOperationSummary -Results $results -Operation $Operation
     }
-    
+
     Write-Host "`n=== Operation Completed ===" -ForegroundColor Green
 }
 catch {

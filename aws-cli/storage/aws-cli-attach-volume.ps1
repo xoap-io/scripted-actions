@@ -144,7 +144,7 @@ try {
     # Perform the attachment
     Write-Host "Attaching volume $VolumeId to instance $InstanceId on device $Device..." -ForegroundColor Cyan
     $attachResult = aws ec2 attach-volume --volume-id $VolumeId --instance-id $InstanceId --device $Device @awsArgs --output json 2>&1
-    
+
     if ($LASTEXITCODE -ne 0) {
         throw "Failed to attach volume: $attachResult"
     }
@@ -156,7 +156,7 @@ try {
 
     if ($WaitForAttachment) {
         Write-Host "Waiting for attachment to complete..." -ForegroundColor Yellow
-        
+
         $timeout = 300 # 5 minutes
         $elapsed = 0
         $checkInterval = 10
@@ -169,11 +169,11 @@ try {
             if ($LASTEXITCODE -eq 0) {
                 $statusData = $statusResult | ConvertFrom-Json
                 $currentVolume = $statusData.Volumes[0]
-                
+
                 if ($currentVolume.Attachments.Count -gt 0) {
                     $attachmentState = $currentVolume.Attachments[0].State
                     Write-Host "Attachment state: $attachmentState (${elapsed}s elapsed)" -ForegroundColor Gray
-                    
+
                     if ($attachmentState -eq 'attached') {
                         Write-Host "✓ Volume successfully attached!" -ForegroundColor Green
                         Write-Host "Device: $($currentVolume.Attachments[0].Device)" -ForegroundColor Cyan

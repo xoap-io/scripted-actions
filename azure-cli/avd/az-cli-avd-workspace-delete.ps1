@@ -60,14 +60,14 @@ try {
     if (-not $azVersion) {
         throw "Azure CLI is not installed or not available in PATH"
     }
-    
+
     Write-Host "Checking Azure CLI login status..." -ForegroundColor Cyan
     $account = az account show --output json 2>$null | ConvertFrom-Json
     if (-not $account) {
         throw "Not logged in to Azure CLI. Please run 'az login' first"
     }
     Write-Host "Logged in as: $($account.user.name)" -ForegroundColor Green
-    
+
     if ($PSCmdlet.ParameterSetName -eq 'ByName') {
         Write-Host "Checking if Workspace exists..." -ForegroundColor Cyan
         $existingWorkspace = az desktopvirtualization workspace show --name $Name --resource-group $ResourceGroup --output json 2>$null
@@ -75,7 +75,7 @@ try {
             Write-Warning "Workspace '$Name' not found in resource group '$ResourceGroup'"
             exit 0
         }
-        
+
         $workspaceData = $existingWorkspace | ConvertFrom-Json
         Write-Host "Found Workspace: $($workspaceData.name)" -ForegroundColor Yellow
         Write-Host "  Location: $($workspaceData.location)" -ForegroundColor Yellow
@@ -83,7 +83,7 @@ try {
         if ($workspaceData.applicationGroupReferences -and $workspaceData.applicationGroupReferences.Count -gt 0) {
             Write-Host "  Associated Application Groups: $($workspaceData.applicationGroupReferences.Count)" -ForegroundColor Yellow
         }
-        
+
         if (-not $Force) {
             $confirmation = Read-Host "Are you sure you want to delete Workspace '$Name'? This action cannot be undone! (y/N)"
             if ($confirmation -ne 'y' -and $confirmation -ne 'Y') {
@@ -91,7 +91,7 @@ try {
                 exit 0
             }
         }
-        
+
         Write-Host "Deleting Azure Virtual Desktop Workspace..." -ForegroundColor Red
         $deleteParams = @(
             'desktopvirtualization', 'workspace', 'delete',
@@ -99,7 +99,7 @@ try {
             '--resource-group', $ResourceGroup,
             '--yes'
         )
-        
+
         $displayName = $Name
     } else {
         Write-Host "Deleting Workspace using resource IDs..." -ForegroundColor Red
@@ -108,18 +108,18 @@ try {
             '--ids', $IDs,
             '--yes'
         )
-        
+
         $displayName = $IDs
     }
-    
+
     & az @deleteParams
     if ($LASTEXITCODE -ne 0) {
         throw "Azure CLI command failed with exit code: $LASTEXITCODE"
     }
-    
+
     Write-Host "✓ Azure Virtual Desktop Workspace deleted successfully!" -ForegroundColor Green
     Write-Host "  Deleted: $displayName" -ForegroundColor White
-    
+
 } catch {
     Write-Error "Failed to delete Azure Virtual Desktop Workspace: $_"
     exit 1

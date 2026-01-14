@@ -92,7 +92,7 @@ try {
 
     # Build AWS CLI arguments
     $awsArgs = @('ec2', 'describe-internet-gateways')
-    
+
     if ($InternetGatewayIds) {
         $igwArray = $InternetGatewayIds -split ','
         $awsArgs += @('--internet-gateway-ids')
@@ -101,11 +101,11 @@ try {
 
     # Build filters array
     $filters = @()
-    
+
     if ($VpcId) {
         $filters += "Name=attachment.vpc-id,Values=$VpcId"
     }
-    
+
     if ($AttachmentState) {
         $filters += "Name=attachment.state,Values=$AttachmentState"
     }
@@ -114,18 +114,18 @@ try {
         $awsArgs += @('--filters')
         $awsArgs += $filters
     }
-    
+
     if ($Profile) {
         $awsArgs += @('--profile', $Profile)
     }
-    
+
     if ($Region) {
         $awsArgs += @('--region', $Region)
     }
 
     # Execute the AWS CLI command
     $result = & aws @awsArgs 2>&1
-    
+
     if ($LASTEXITCODE -ne 0) {
         throw "Failed to describe Internet Gateways: $result"
     }
@@ -163,7 +163,7 @@ try {
         Write-Host "`n" + "="*60 -ForegroundColor Gray
         Write-Host "Internet Gateway: $($gateway.InternetGatewayId)" -ForegroundColor Cyan
         Write-Host "  Owner ID: $($gateway.OwnerId)" -ForegroundColor White
-        
+
         # Attachment information
         if ($gateway.Attachments -and $gateway.Attachments.Count -gt 0) {
             Write-Host "  Attachments:" -ForegroundColor White
@@ -175,7 +175,7 @@ try {
                     'detaching' { 'Yellow' }
                     default { 'White' }
                 }
-                
+
                 Write-Host "    VPC ID: $($attachment.VpcId)" -ForegroundColor White
                 Write-Host "    State: $($attachment.State)" -ForegroundColor $stateColor
             }
@@ -194,33 +194,33 @@ try {
         # Show route analysis if requested and gateway is attached
         if ($ShowRoutes -and $gateway.Attachments -and $gateway.Attachments[0].State -eq 'attached') {
             Write-Host "`n  Route Table Analysis:" -ForegroundColor Yellow
-            
+
             # Find route tables that use this Internet Gateway
             $routeArgs = @('ec2', 'describe-route-tables', '--filters', "Name=route.gateway-id,Values=$($gateway.InternetGatewayId)")
-            
+
             if ($Profile) {
                 $routeArgs += @('--profile', $Profile)
             }
-            
+
             if ($Region) {
                 $routeArgs += @('--region', $Region)
             }
 
             $routeResult = & aws @routeArgs 2>&1
-            
+
             if ($LASTEXITCODE -eq 0) {
                 $routeInfo = $routeResult | ConvertFrom-Json
-                
+
                 if ($routeInfo.RouteTables.Count -gt 0) {
                     Write-Host "    Route tables using this gateway:" -ForegroundColor White
                     foreach ($routeTable in $routeInfo.RouteTables) {
                         Write-Host "      Route Table: $($routeTable.RouteTableId) (VPC: $($routeTable.VpcId))" -ForegroundColor Gray
-                        
+
                         # Find associations
                         if ($routeTable.Associations -and $routeTable.Associations.Count -gt 0) {
                             $mainAssoc = $routeTable.Associations | Where-Object { $_.Main -eq $true }
                             $subnetAssocs = $routeTable.Associations | Where-Object { $_.SubnetId }
-                            
+
                             if ($mainAssoc) {
                                 Write-Host "        Type: Main route table" -ForegroundColor Gray
                             }
@@ -228,7 +228,7 @@ try {
                                 Write-Host "        Associated subnets: $($subnetAssocs.Count)" -ForegroundColor Gray
                             }
                         }
-                        
+
                         # Show routes to this IGW
                         $igwRoutes = $routeTable.Routes | Where-Object { $_.GatewayId -eq $gateway.InternetGatewayId }
                         foreach ($route in $igwRoutes) {

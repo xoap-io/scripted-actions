@@ -139,12 +139,12 @@ try {
     # Function to validate instance profile
     function Test-InstanceProfile {
         param([string]$ProfileName)
-        
+
         Write-Output "🔍 Validating instance profile: $ProfileName"
-        
+
         # Check if instance profile exists
         $profileResult = aws iam get-instance-profile --instance-profile-name $ProfileName @awsArgs --output json 2>&1
-        
+
         if ($LASTEXITCODE -ne 0) {
             Write-Warning "Instance profile '$ProfileName' not found or not accessible"
             return $false
@@ -152,12 +152,12 @@ try {
 
         $profileData = $profileResult | ConvertFrom-Json
         $instanceProfile = $profileData.InstanceProfile
-        
+
         Write-Output "✅ Instance profile found:"
         Write-Output "  Name: $($instanceProfile.InstanceProfileName)"
         Write-Output "  ARN: $($instanceProfile.Arn)"
         Write-Output "  Created: $($instanceProfile.CreateDate)"
-        
+
         if ($instanceProfile.Roles -and $instanceProfile.Roles.Count -gt 0) {
             Write-Output "  Attached Roles: $($instanceProfile.Roles.Count)"
             foreach ($role in $instanceProfile.Roles) {
@@ -170,24 +170,24 @@ try {
         # Validate permissions if requested
         if ($ValidatePermissions -and $instanceProfile.Roles.Count -gt 0) {
             Write-Output "`n🔍 Validating role permissions..."
-            
+
             foreach ($role in $instanceProfile.Roles) {
                 $policiesResult = aws iam list-attached-role-policies --role-name $role.RoleName @awsArgs --output json 2>&1
-                
+
                 if ($LASTEXITCODE -eq 0) {
                     $policiesData = $policiesResult | ConvertFrom-Json
-                    
+
                     Write-Output "  Role: $($role.RoleName)"
                     Write-Output "    Attached Policies: $($policiesData.AttachedPolicies.Count)"
-                    
+
                     foreach ($policy in $policiesData.AttachedPolicies) {
                         Write-Output "      • $($policy.PolicyName)"
                     }
-                    
+
                     # Check for common EC2 policies
                     $commonPolicies = @('AmazonSSMManagedInstanceCore', 'CloudWatchAgentServerPolicy', 'AmazonEC2ReadOnlyAccess')
                     $foundPolicies = $policiesData.AttachedPolicies | Where-Object { $_.PolicyName -in $commonPolicies }
-                    
+
                     if ($foundPolicies.Count -gt 0) {
                         Write-Output "    ✅ Common EC2 policies found: $($foundPolicies.Count)"
                     } else {
@@ -203,37 +203,37 @@ try {
     # Function to get current instance profile association
     function Get-InstanceProfileAssociation {
         param([string]$InstanceId)
-        
+
         $associationResult = aws ec2 describe-iam-instance-profile-associations --filters "Name=instance-id,Values=$InstanceId" @awsArgs --output json 2>&1
-        
+
         if ($LASTEXITCODE -eq 0) {
             $associationData = $associationResult | ConvertFrom-Json
             if ($associationData.IamInstanceProfileAssociations.Count -gt 0) {
                 return $associationData.IamInstanceProfileAssociations[0]
             }
         }
-        
+
         return $null
     }
 
     # Function to wait for association completion
     function Wait-ForAssociation {
         param([string]$AssociationId, [string]$InstanceId)
-        
+
         Write-Output "⏳ Waiting for association to complete..."
         $waitTime = 0
         $checkInterval = 10
-        
+
         do {
             Start-Sleep -Seconds $checkInterval
             $waitTime += $checkInterval
-            
+
             $statusResult = aws ec2 describe-iam-instance-profile-associations --association-ids $AssociationId @awsArgs --query 'IamInstanceProfileAssociations[0].State' --output text 2>&1
-            
+
             if ($LASTEXITCODE -eq 0) {
                 $state = $statusResult.Trim()
                 Write-Output "[$([math]::Round($waitTime/60, 1)) min] Association state: $state"
-                
+
                 if ($state -eq 'associated') {
                     Write-Output "✅ Association completed successfully"
                     return $true
@@ -242,9 +242,9 @@ try {
                     return $false
                 }
             }
-            
+
         } while ($waitTime -lt $MaxWaitTime)
-        
+
         Write-Warning "⏰ Association monitoring timed out after $($MaxWaitTime/60) minutes"
         return $false
     }
@@ -268,7 +268,7 @@ try {
 
                 # Check if instance exists and get current state
                 $instanceResult = aws ec2 describe-instances --instance-ids $instanceId @awsArgs --query 'Reservations[0].Instances[0].[State.Name,InstanceType]' --output text 2>&1
-                
+
                 if ($LASTEXITCODE -ne 0) {
                     Write-Warning "Instance $instanceId not found or not accessible"
                     continue
@@ -280,12 +280,12 @@ try {
 
                 # Check for existing association
                 $existingAssociation = Get-InstanceProfileAssociation -InstanceId $instanceId
-                
+
                 if ($existingAssociation) {
                     Write-Warning "⚠️  Instance already has an instance profile attached:"
                     Write-Output "  Profile: $($existingAssociation.IamInstanceProfile.Arn)"
                     Write-Output "  State: $($existingAssociation.State)"
-                    
+
                     if (-not $Force) {
                         $confirmation = Read-Host "Replace existing profile? (y/N)"
                         if ($confirmation -ne 'y' -and $confirmation -ne 'Y') {
@@ -293,16 +293,16 @@ try {
                             continue
                         }
                     }
-                    
+
                     # Detach existing profile first
                     Write-Output "🔄 Replacing existing instance profile..."
                     $replaceResult = aws ec2 replace-iam-instance-profile-association --association-id $existingAssociation.AssociationId --iam-instance-profile Name=$IamInstanceProfile @awsArgs --output json 2>&1
-                    
+
                     if ($LASTEXITCODE -eq 0) {
                         $replaceData = $replaceResult | ConvertFrom-Json
                         Write-Output "✅ Instance profile replacement initiated"
                         Write-Output "Association ID: $($replaceData.IamInstanceProfileAssociation.AssociationId)"
-                        
+
                         if ($WaitForAssociation) {
                             Wait-ForAssociation -AssociationId $replaceData.IamInstanceProfileAssociation.AssociationId -InstanceId $instanceId
                         }
@@ -313,13 +313,13 @@ try {
                     # Attach new profile
                     Write-Output "🔗 Attaching instance profile..."
                     $attachResult = aws ec2 associate-iam-instance-profile --instance-id $instanceId --iam-instance-profile Name=$IamInstanceProfile @awsArgs --output json 2>&1
-                    
+
                     if ($LASTEXITCODE -eq 0) {
                         $attachData = $attachResult | ConvertFrom-Json
                         Write-Output "✅ Instance profile attachment initiated"
                         Write-Output "Association ID: $($attachData.IamInstanceProfileAssociation.AssociationId)"
                         Write-Output "State: $($attachData.IamInstanceProfileAssociation.State)"
-                        
+
                         if ($WaitForAssociation) {
                             Wait-ForAssociation -AssociationId $attachData.IamInstanceProfileAssociation.AssociationId -InstanceId $instanceId
                         }
@@ -339,7 +339,7 @@ try {
 
                 # Get current association
                 $association = Get-InstanceProfileAssociation -InstanceId $instanceId
-                
+
                 if (-not $association) {
                     Write-Output "ℹ️  No instance profile attached to instance $instanceId"
                     continue
@@ -352,7 +352,7 @@ try {
                 if (-not $Force) {
                     Write-Output "⚠️  You are about to detach the instance profile from instance: $instanceId"
                     $confirmation = Read-Host "Are you sure you want to continue? (y/N)"
-                    
+
                     if ($confirmation -ne 'y' -and $confirmation -ne 'Y') {
                         Write-Output "Skipping instance $instanceId"
                         continue
@@ -361,7 +361,7 @@ try {
 
                 # Detach the profile
                 $detachResult = aws ec2 disassociate-iam-instance-profile --association-id $association.AssociationId @awsArgs --output json 2>&1
-                
+
                 if ($LASTEXITCODE -eq 0) {
                     Write-Output "✅ Instance profile detachment initiated"
                     Write-Output "Association ID: $($association.AssociationId)"
@@ -389,17 +389,17 @@ try {
 
                 # Get current association
                 $association = Get-InstanceProfileAssociation -InstanceId $instanceId
-                
+
                 if (-not $association) {
                     Write-Output "ℹ️  No instance profile currently attached. Attaching new profile..."
-                    
+
                     $attachResult = aws ec2 associate-iam-instance-profile --instance-id $instanceId --iam-instance-profile Name=$IamInstanceProfile @awsArgs --output json 2>&1
-                    
+
                     if ($LASTEXITCODE -eq 0) {
                         $attachData = $attachResult | ConvertFrom-Json
                         Write-Output "✅ Instance profile attached"
                         Write-Output "Association ID: $($attachData.IamInstanceProfileAssociation.AssociationId)"
-                        
+
                         if ($WaitForAssociation) {
                             Wait-ForAssociation -AssociationId $attachData.IamInstanceProfileAssociation.AssociationId -InstanceId $instanceId
                         }
@@ -412,12 +412,12 @@ try {
 
                     # Replace the profile
                     $replaceResult = aws ec2 replace-iam-instance-profile-association --association-id $association.AssociationId --iam-instance-profile Name=$IamInstanceProfile @awsArgs --output json 2>&1
-                    
+
                     if ($LASTEXITCODE -eq 0) {
                         $replaceData = $replaceResult | ConvertFrom-Json
                         Write-Output "✅ Instance profile replacement initiated"
                         Write-Output "New Association ID: $($replaceData.IamInstanceProfileAssociation.AssociationId)"
-                        
+
                         if ($WaitForAssociation) {
                             Wait-ForAssociation -AssociationId $replaceData.IamInstanceProfileAssociation.AssociationId -InstanceId $instanceId
                         }
@@ -432,12 +432,12 @@ try {
             if ($targetInstances.Count -eq 0) {
                 # Describe all associations in the region
                 Write-Output "`n📋 Describing all IAM instance profile associations..."
-                
+
                 $allAssociationsResult = aws ec2 describe-iam-instance-profile-associations @awsArgs --output json 2>&1
-                
+
                 if ($LASTEXITCODE -eq 0) {
                     $allAssociationsData = $allAssociationsResult | ConvertFrom-Json
-                    
+
                     if ($allAssociationsData.IamInstanceProfileAssociations.Count -eq 0) {
                         Write-Output "No IAM instance profile associations found in this region"
                         exit 0
@@ -470,7 +470,7 @@ try {
 
                     # Get instance details
                     $instanceResult = aws ec2 describe-instances --instance-ids $instanceId @awsArgs --query 'Reservations[0].Instances[0].[State.Name,InstanceType,LaunchTime]' --output text 2>&1
-                    
+
                     if ($LASTEXITCODE -eq 0) {
                         $instanceInfo = $instanceResult.Trim() -split "`t"
                         Write-Output "State: $($instanceInfo[0])"
@@ -480,7 +480,7 @@ try {
 
                     # Get association details
                     $association = Get-InstanceProfileAssociation -InstanceId $instanceId
-                    
+
                     if ($association) {
                         Write-Output "`n🔐 IAM Instance Profile Association:"
                         Write-Output "Profile ARN: $($association.IamInstanceProfile.Arn)"

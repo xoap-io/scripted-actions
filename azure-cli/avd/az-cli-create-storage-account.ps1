@@ -5,7 +5,7 @@
 .DESCRIPTION
     This script creates a new Azure Storage Account with comprehensive configuration options using the Azure CLI.
     The script uses the Azure CLI command: az storage account create
-    
+
     The script supports all major storage account configuration options including:
     - Access tiers and account types
     - Security and encryption settings
@@ -205,12 +205,12 @@
 
 .EXAMPLE
     .\az-cli-create-storage-account.ps1 -Name "mystorageaccount" -ResourceGroup "myresourcegroup" -Location "eastus" -Sku "Standard_LRS"
-    
+
     Creates a basic storage account with locally redundant storage.
 
 .EXAMPLE
     .\az-cli-create-storage-account.ps1 -Name "mystorageaccount" -ResourceGroup "myresourcegroup" -Location "eastus" -Sku "Standard_LRS" -Kind "StorageV2" -AccessTier "Hot" -HttpsOnly -Tags "environment=production team=devops"
-    
+
     Creates a general-purpose v2 storage account with hot access tier and HTTPS-only access.
 
 .LINK
@@ -510,13 +510,13 @@ try {
     if ($SasExp) { $azParams += '--sas-exp', $SasExp }
 
     Write-Host "Creating storage account '$Name' in resource group '$ResourceGroup'..." -ForegroundColor Yellow
-    
+
     # Execute the Azure CLI command
     $result = & az @azParams --output json
-    
+
     if ($LASTEXITCODE -eq 0) {
         $storageAccount = $result | ConvertFrom-Json
-        
+
         Write-Host "✓ Storage account created successfully!" -ForegroundColor Green
         Write-Host "Storage Account Details:" -ForegroundColor Cyan
         Write-Host "  Name: $($storageAccount.name)" -ForegroundColor White
@@ -525,7 +525,7 @@ try {
         Write-Host "  SKU: $($storageAccount.sku.name)" -ForegroundColor White
         Write-Host "  Kind: $($storageAccount.kind)" -ForegroundColor White
         Write-Host "  Creation Time: $($storageAccount.creationTime)" -ForegroundColor White
-        
+
         if ($storageAccount.primaryEndpoints) {
             Write-Host "Primary Endpoints:" -ForegroundColor Cyan
             if ($storageAccount.primaryEndpoints.blob) {

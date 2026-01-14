@@ -6,7 +6,7 @@
     This script performs a comprehensive Azure security assessment using the Azure CLI and Security Center.
     Analyzes security posture, compliance status, recommendations, and vulnerabilities across subscriptions.
     Includes resource security analysis, policy compliance checking, and detailed reporting capabilities.
-    
+
     The script uses Azure CLI commands: az security and az policy
 
 .PARAMETER Scope
@@ -59,7 +59,7 @@
     Date: 2025-08-05
     Version: 1.0.0
     Requires: Azure CLI version 2.0 or later
-    
+
     Security Assessment Areas:
     - Identity and Access Management
     - Network Security
@@ -133,13 +133,13 @@ function Test-AzureCLI {
         if ($LASTEXITCODE -ne 0) {
             throw "Azure CLI is not installed or not functioning correctly"
         }
-        
+
         Write-Host "🔍 Checking Azure CLI authentication..." -ForegroundColor Cyan
         $null = az account show 2>$null
         if ($LASTEXITCODE -ne 0) {
             throw "Not authenticated to Azure CLI. Please run 'az login' first"
         }
-        
+
         Write-Host "✅ Azure CLI validation successful" -ForegroundColor Green
         return $true
     }
@@ -153,10 +153,10 @@ function Test-AzureCLI {
 function Test-SecurityCenter {
     try {
         Write-Host "🔍 Checking Azure Security Center availability..." -ForegroundColor Cyan
-        
+
         # Check if Security Center is available
         $pricing = az security pricing list --output json 2>$null | ConvertFrom-Json
-        
+
         if ($LASTEXITCODE -eq 0 -and $pricing) {
             Write-Host "✅ Azure Security Center is available" -ForegroundColor Green
             return $true
@@ -177,7 +177,7 @@ function Get-SubscriptionInfo {
     try {
         Write-Host "🔍 Getting subscription information..." -ForegroundColor Cyan
         $subscription = az account show --output json | ConvertFrom-Json
-        
+
         $info = @{
             SubscriptionId = $subscription.id
             SubscriptionName = $subscription.name
@@ -185,7 +185,7 @@ function Get-SubscriptionInfo {
             User = $subscription.user.name
             State = $subscription.state
         }
-        
+
         Write-Host "✅ Subscription: $($info.SubscriptionName) ($($info.SubscriptionId))" -ForegroundColor Green
         return $info
     }
@@ -198,13 +198,13 @@ function Get-SubscriptionInfo {
 # Function to assess Security Center recommendations
 function Get-SecurityRecommendations {
     param($ResourceGroupFilter)
-    
+
     try {
         Write-Host "🔍 Analyzing Security Center recommendations..." -ForegroundColor Cyan
-        
+
         $recommendations = @()
         $taskList = az security task list --output json 2>$null | ConvertFrom-Json
-        
+
         if ($LASTEXITCODE -eq 0 -and $taskList) {
             foreach ($task in $taskList) {
                 if (-not $ResourceGroupFilter -or $task.resourceGroup -eq $ResourceGroupFilter) {
@@ -219,7 +219,7 @@ function Get-SecurityRecommendations {
                 }
             }
         }
-        
+
         Write-Host "✅ Found $($recommendations.Count) recommendations" -ForegroundColor Green
         return $recommendations
     }
@@ -232,16 +232,16 @@ function Get-SecurityRecommendations {
 # Function to assess compliance posture
 function Get-ComplianceAssessment {
     param($ResourceGroupFilter)
-    
+
     try {
         Write-Host "🔍 Analyzing compliance posture..." -ForegroundColor Cyan
-        
+
         $compliance = @{
             PolicyAssignments = @()
             ComplianceState = @()
             NonCompliantResources = @()
         }
-        
+
         # Get policy assignments
         $assignments = az policy assignment list --output json 2>$null | ConvertFrom-Json
         if ($LASTEXITCODE -eq 0 -and $assignments) {
@@ -256,7 +256,7 @@ function Get-ComplianceAssessment {
                 }
             }
         }
-        
+
         # Get compliance states
         $states = az policy state list --output json 2>$null | ConvertFrom-Json
         if ($LASTEXITCODE -eq 0 -and $states) {
@@ -268,7 +268,7 @@ function Get-ComplianceAssessment {
                 }
             }
         }
-        
+
         Write-Host "✅ Compliance assessment completed" -ForegroundColor Green
         return $compliance
     }
@@ -281,18 +281,18 @@ function Get-ComplianceAssessment {
 # Function to assess security alerts
 function Get-SecurityAlerts {
     param($ResourceGroupFilter, $SeverityFilter)
-    
+
     try {
         Write-Host "🔍 Analyzing security alerts..." -ForegroundColor Cyan
-        
+
         $alerts = @()
         $alertList = az security alert list --output json 2>$null | ConvertFrom-Json
-        
+
         if ($LASTEXITCODE -eq 0 -and $alertList) {
             foreach ($alert in $alertList) {
                 if ((-not $ResourceGroupFilter -or $alert.resourceGroup -eq $ResourceGroupFilter) -and
                     ($SeverityFilter -contains $alert.severity)) {
-                    
+
                     $alerts += @{
                         Name = $alert.alertDisplayName
                         Severity = $alert.severity
@@ -305,7 +305,7 @@ function Get-SecurityAlerts {
                 }
             }
         }
-        
+
         Write-Host "✅ Found $($alerts.Count) security alerts" -ForegroundColor Green
         return $alerts
     }
@@ -318,29 +318,29 @@ function Get-SecurityAlerts {
 # Function to assess resource security
 function Get-ResourceSecurityAssessment {
     param($ResourceGroupFilter)
-    
+
     try {
         Write-Host "🔍 Analyzing resource security..." -ForegroundColor Cyan
-        
+
         $assessment = @{
             NetworkSecurity = @()
             StorageSecurity = @()
             ComputeSecurity = @()
             DatabaseSecurity = @()
         }
-        
+
         # Network Security Groups
         $nsgs = az network nsg list --output json 2>$null | ConvertFrom-Json
         if ($LASTEXITCODE -eq 0 -and $nsgs) {
             foreach ($nsg in $nsgs) {
                 if (-not $ResourceGroupFilter -or $nsg.resourceGroup -eq $ResourceGroupFilter) {
                     $rules = az network nsg rule list --resource-group $nsg.resourceGroup --nsg-name $nsg.name --output json 2>$null | ConvertFrom-Json
-                    
+
                     # Check for overly permissive rules
-                    $permissiveRules = $rules | Where-Object { 
+                    $permissiveRules = $rules | Where-Object {
                         $_.sourceAddressPrefix -eq "*" -and $_.access -eq "Allow" -and $_.direction -eq "Inbound"
                     }
-                    
+
                     $assessment.NetworkSecurity += @{
                         ResourceName = $nsg.name
                         ResourceGroup = $nsg.resourceGroup
@@ -349,33 +349,33 @@ function Get-ResourceSecurityAssessment {
                         PermissiveRules = $permissiveRules.Count
                         TotalRules = $rules.Count
                     }
-                    
+
                     if ($permissiveRules.Count -gt 0) {
                         $assessment.NetworkSecurity[-1].Issues += "Has $($permissiveRules.Count) overly permissive inbound rules"
                     }
                 }
             }
         }
-        
+
         # Storage Accounts
         $storageAccounts = az storage account list --output json 2>$null | ConvertFrom-Json
         if ($LASTEXITCODE -eq 0 -and $storageAccounts) {
             foreach ($account in $storageAccounts) {
                 if (-not $ResourceGroupFilter -or $account.resourceGroup -eq $ResourceGroupFilter) {
                     $issues = @()
-                    
+
                     if ($account.allowBlobPublicAccess) {
                         $issues += "Public blob access enabled"
                     }
-                    
+
                     if ($account.minimumTlsVersion -ne "TLS1_2") {
                         $issues += "TLS version less than 1.2"
                     }
-                    
+
                     if (-not $account.enableHttpsTrafficOnly) {
                         $issues += "HTTPS traffic not enforced"
                     }
-                    
+
                     $assessment.StorageSecurity += @{
                         ResourceName = $account.name
                         ResourceGroup = $account.resourceGroup
@@ -386,7 +386,7 @@ function Get-ResourceSecurityAssessment {
                 }
             }
         }
-        
+
         Write-Host "✅ Resource security assessment completed" -ForegroundColor Green
         return $assessment
     }
@@ -399,38 +399,38 @@ function Get-ResourceSecurityAssessment {
 # Function to generate security score
 function Get-SecurityScore {
     param($Recommendations, $Alerts, $Compliance, $ResourceAssessment)
-    
+
     $score = 100
     $findings = @()
-    
+
     # Deduct points for high/critical recommendations
     $criticalRecs = $Recommendations | Where-Object { $_.Severity -in @('High', 'Critical') }
     $score -= ($criticalRecs.Count * 5)
     if ($criticalRecs.Count -gt 0) {
         $findings += "Critical/High recommendations: $($criticalRecs.Count)"
     }
-    
+
     # Deduct points for active alerts
     $activeAlerts = $Alerts | Where-Object { $_.Status -eq 'Active' }
     $score -= ($activeAlerts.Count * 10)
     if ($activeAlerts.Count -gt 0) {
         $findings += "Active security alerts: $($activeAlerts.Count)"
     }
-    
+
     # Deduct points for non-compliant resources
     $nonCompliant = $Compliance.ComplianceState | Where-Object { $_.State -eq 'NonCompliant' }
     if ($nonCompliant) {
         $score -= ($nonCompliant.Count * 2)
         $findings += "Non-compliant resources: $($nonCompliant.Count)"
     }
-    
+
     # Deduct points for resource security issues
     $networkIssues = $ResourceAssessment.NetworkSecurity | Where-Object { $_.Issues.Count -gt 0 }
     $storageIssues = $ResourceAssessment.StorageSecurity | Where-Object { $_.Issues.Count -gt 0 }
     $score -= (($networkIssues.Count + $storageIssues.Count) * 3)
-    
+
     $score = [Math]::Max(0, $score)
-    
+
     return @{
         Score = $score
         Grade = if ($score -ge 90) { "A" } elseif ($score -ge 80) { "B" } elseif ($score -ge 70) { "C" } elseif ($score -ge 60) { "D" } else { "F" }
@@ -441,7 +441,7 @@ function Get-SecurityScore {
 # Function to format assessment results
 function Format-AssessmentResults {
     param($Results, $Format)
-    
+
     switch ($Format) {
         'Summary' {
             Write-Host "`n📊 Security Assessment Summary:" -ForegroundColor Yellow
@@ -453,14 +453,14 @@ function Format-AssessmentResults {
         }
         'Detailed' {
             Write-Host "`n📋 Detailed Assessment Results:" -ForegroundColor Yellow
-            
+
             # Security Score
             Write-Host "`n🎯 Security Score: $($Results.SecurityScore.Score)/100 (Grade: $($Results.SecurityScore.Grade))" -ForegroundColor Cyan
             if ($Results.SecurityScore.Findings.Count -gt 0) {
                 Write-Host "   Key Findings:" -ForegroundColor Yellow
                 $Results.SecurityScore.Findings | ForEach-Object { Write-Host "   - $_" -ForegroundColor White }
             }
-            
+
             # Top Recommendations
             if ($Results.Recommendations.Count -gt 0) {
                 Write-Host "`n💡 Top Security Recommendations:" -ForegroundColor Cyan
@@ -468,7 +468,7 @@ function Format-AssessmentResults {
                     Write-Host "   [$($_.Severity)] $($_.Name)" -ForegroundColor Yellow
                 }
             }
-            
+
             # Active Alerts
             if ($Results.Alerts.Count -gt 0) {
                 Write-Host "`n🚨 Active Security Alerts:" -ForegroundColor Cyan
@@ -500,7 +500,7 @@ function Format-AssessmentResults {
 # Function to generate HTML report
 function New-HtmlReport {
     param($Results, $FilePath)
-    
+
     $html = @"
 <!DOCTYPE html>
 <html>
@@ -526,11 +526,11 @@ function New-HtmlReport {
         <p>Generated: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")</p>
         <p>Subscription: $($Results.SubscriptionInfo.SubscriptionName)</p>
     </div>
-    
+
     <div class="score">
         Security Score: $($Results.SecurityScore.Score)/100 (Grade: $($Results.SecurityScore.Grade))
     </div>
-    
+
     <div class="section">
         <h2>Summary</h2>
         <ul>
@@ -542,7 +542,7 @@ function New-HtmlReport {
 </body>
 </html>
 "@
-    
+
     $html | Out-File -FilePath $FilePath -Encoding UTF8
     Write-Host "✅ HTML report generated: $FilePath" -ForegroundColor Green
 }
@@ -551,21 +551,21 @@ function New-HtmlReport {
 try {
     Write-Host "🚀 Starting Azure Security Assessment" -ForegroundColor Green
     Write-Host "====================================" -ForegroundColor Green
-    
+
     # Validate Azure CLI
     if (-not (Test-AzureCLI)) {
         exit 1
     }
-    
+
     # Check Security Center
     $securityCenterAvailable = Test-SecurityCenter
-    
+
     # Get subscription info
     $subscriptionInfo = Get-SubscriptionInfo
     if (-not $subscriptionInfo) {
         exit 1
     }
-    
+
     # Validate resource group if specified
     if ($ResourceGroup) {
         Write-Host "🔍 Validating resource group '$ResourceGroup'..." -ForegroundColor Cyan
@@ -575,7 +575,7 @@ try {
         }
         Write-Host "✅ Resource group validated" -ForegroundColor Green
     }
-    
+
     # Initialize results
     $assessmentResults = @{
         SubscriptionInfo = $subscriptionInfo
@@ -588,31 +588,31 @@ try {
         ResourceAssessment = @{}
         SecurityScore = @{}
     }
-    
+
     # Perform assessments based on type and flags
     if ($AssessmentType -in @('Standard', 'Full') -or $IncludeRecommendations) {
         $assessmentResults.Recommendations = Get-SecurityRecommendations -ResourceGroupFilter $ResourceGroup
     }
-    
+
     if ($AssessmentType -in @('Standard', 'Full') -or $IncludeAlerts) {
         $assessmentResults.Alerts = Get-SecurityAlerts -ResourceGroupFilter $ResourceGroup -SeverityFilter $Severity
     }
-    
+
     if ($AssessmentType -in @('Full', 'Compliance') -or $IncludeCompliance) {
         $assessmentResults.Compliance = Get-ComplianceAssessment -ResourceGroupFilter $ResourceGroup
     }
-    
+
     if ($AssessmentType -eq 'Full' -or $DetailLevel -eq 'Detailed') {
         $assessmentResults.ResourceAssessment = Get-ResourceSecurityAssessment -ResourceGroupFilter $ResourceGroup
     }
-    
+
     # Calculate security score
     $assessmentResults.SecurityScore = Get-SecurityScore -Recommendations $assessmentResults.Recommendations -Alerts $assessmentResults.Alerts -Compliance $assessmentResults.Compliance -ResourceAssessment $assessmentResults.ResourceAssessment
-    
+
     # Format and display results
     if ($OutputFormat -eq 'JSON' -or $ExportPath) {
         $output = Format-AssessmentResults -Results $assessmentResults -Format $OutputFormat
-        
+
         if ($ExportPath) {
             if ($OutputFormat -eq 'JSON') {
                 $output | Out-File -FilePath $ExportPath -Encoding UTF8
@@ -629,13 +629,13 @@ try {
     else {
         Format-AssessmentResults -Results $assessmentResults -Format $OutputFormat
     }
-    
+
     # Generate HTML report if requested
     if ($GenerateReport) {
         $reportPath = "security-assessment-report-$(Get-Date -Format 'yyyyMMdd-HHmmss').html"
         New-HtmlReport -Results $assessmentResults -FilePath $reportPath
     }
-    
+
     # Show recommendations based on score
     Write-Host "`n💡 Next Steps:" -ForegroundColor Yellow
     if ($assessmentResults.SecurityScore.Score -lt 70) {

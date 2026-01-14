@@ -6,7 +6,7 @@
     This script deletes an Azure Resource Group using the Azure CLI with comprehensive safety checks and validation.
     Includes resource inventory, dependency checking, and confirmation prompts to prevent accidental deletion.
     Supports force deletion for specific resource types and background operation modes.
-    
+
     The script uses the Azure CLI command: az group delete
 
 .PARAMETER ResourceGroup
@@ -29,17 +29,17 @@
 
 .EXAMPLE
     .\az-cli-delete-resource-group.ps1 -ResourceGroup "test-rg"
-    
+
     Deletes a Resource Group with safety checks and confirmation.
 
 .EXAMPLE
     .\az-cli-delete-resource-group.ps1 -ResourceGroup "dev-rg" -Force -NoWait
-    
+
     Forces deletion without confirmation and runs in background.
 
 .EXAMPLE
     .\az-cli-delete-resource-group.ps1 -ResourceGroup "vm-rg" -ForceDeletionTypes "Microsoft.Compute/virtualMachines,Microsoft.Compute/virtualMachineScaleSets" -ShowResources
-    
+
     Deletes Resource Group with force deletion for VMs and shows resource inventory.
 
 .NOTES
@@ -64,7 +64,7 @@ param(
     [Parameter(HelpMessage = "Comma-separated resource types to force delete")]
     [ValidateSet(
         "Microsoft.Compute/virtualMachineScaleSets",
-        "Microsoft.Compute/virtualMachines", 
+        "Microsoft.Compute/virtualMachines",
         "Microsoft.Databricks/workspaces",
         "Microsoft.HDInsight/clusters",
         "Microsoft.Kusto/clusters",
@@ -114,7 +114,7 @@ try {
     if (-not $rgCheck) {
         throw "Resource Group '$ResourceGroup' not found in subscription '$($azAccount.name)'"
     }
-    
+
     $rgInfo = $rgCheck | ConvertFrom-Json
     Write-Host "✓ Resource Group '$ResourceGroup' found" -ForegroundColor Green
 
@@ -139,10 +139,10 @@ try {
     Write-Host "Retrieving resource inventory..." -ForegroundColor Yellow
     $resources = az resource list --resource-group $ResourceGroup 2>$null | ConvertFrom-Json
     $resourceCount = if ($resources) { $resources.Count } else { 0 }
-    
+
     Write-Host "📊 Resource Inventory Summary:" -ForegroundColor Cyan
     Write-Host "  Total Resources: $resourceCount" -ForegroundColor White
-    
+
     if ($resourceCount -eq 0) {
         Write-Host "  🎉 Resource Group is empty" -ForegroundColor Green
     } else {
@@ -152,7 +152,7 @@ try {
         foreach ($group in $resourceGroups) {
             Write-Host "    • $($group.Name): $($group.Count)" -ForegroundColor White
         }
-        
+
         # Show detailed resource list if requested
         if ($ShowResources) {
             Write-Host ""
@@ -180,13 +180,13 @@ try {
     if (-not $SkipDependencyCheck) {
         Write-Host "Checking for resource locks..." -ForegroundColor Yellow
         $locks = az lock list --resource-group $ResourceGroup 2>$null | ConvertFrom-Json
-        
+
         if ($locks -and $locks.Count -gt 0) {
             Write-Host "🔒 Found $($locks.Count) resource lock(s):" -ForegroundColor Red
             foreach ($lock in $locks) {
                 Write-Host "  • $($lock.name) ($($lock.level)): $($lock.notes)" -ForegroundColor Red
             }
-            
+
             if (-not $Force) {
                 Write-Host ""
                 Write-Host "⚠ Resource locks prevent deletion. Remove locks first or use -Force to override." -ForegroundColor Red
@@ -221,7 +221,7 @@ try {
         Write-Host "and ALL $resourceCount resources it contains!" -ForegroundColor Red
         Write-Host "This action CANNOT be undone!" -ForegroundColor Red
         Write-Host ""
-        
+
         if ($resourceCount -gt 0) {
             Write-Host "Resources that will be deleted:" -ForegroundColor Yellow
             foreach ($group in $resourceGroups) {
@@ -229,13 +229,13 @@ try {
             }
             Write-Host ""
         }
-        
+
         if ($rgInfo.managedBy) {
             Write-Host "⚠ WARNING: This Resource Group is managed by: $($rgInfo.managedBy)" -ForegroundColor Red
             Write-Host "Deleting it may cause issues with the managing service!" -ForegroundColor Red
             Write-Host ""
         }
-        
+
         $confirmation = Read-Host "Type 'DELETE' to confirm permanent deletion of Resource Group '$ResourceGroup'"
         if ($confirmation -ne "DELETE") {
             Write-Host "Deletion cancelled by user. Resource Group was NOT deleted." -ForegroundColor Yellow
@@ -280,7 +280,7 @@ try {
 
     # Execute Azure CLI command
     $result = & az @azParams 2>&1
-    
+
     if ($LASTEXITCODE -eq 0) {
         if ($NoWait) {
             Write-Host "✓ Resource Group deletion initiated successfully!" -ForegroundColor Green
@@ -294,7 +294,7 @@ try {
             Write-Host "✓ Resource Group deleted successfully!" -ForegroundColor Green
             Write-Host "Resource Group '$ResourceGroup' and all $resourceCount resources have been permanently deleted." -ForegroundColor White
         }
-        
+
         Write-Host ""
         Write-Host "🏁 Deletion operation completed successfully" -ForegroundColor Green
     }

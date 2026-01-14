@@ -6,7 +6,7 @@
     This script creates an Azure Network Security Group rule using the Azure CLI with comprehensive validation and security best practices.
     Supports all NSG rule parameters including source/destination prefixes, ports, protocols, and Application Security Groups.
     Includes priority validation, rule conflict detection, and security compliance checks.
-    
+
     The script uses the Azure CLI command: az network nsg rule create
 
 .PARAMETER Name
@@ -68,7 +68,7 @@
     Date: 2025-08-05
     Version: 2.0.0
     Requires: Azure CLI version 2.0 or later
-    
+
     Priority ranges:
     - 100-999: High priority rules (critical services)
     - 1000-2999: Medium priority rules (standard services)
@@ -109,7 +109,7 @@ param(
     [Parameter(Mandatory = $false, HelpMessage = "Whether to allow or deny traffic")]
     [ValidateSet('Allow', 'Deny')]
     [string]$Access = 'Allow',
-    
+
     [Parameter(Mandatory = $false, HelpMessage = "Description of the NSG rule")]
     [ValidateLength(0, 140)]
     [string]$Description,
@@ -161,13 +161,13 @@ function Test-AzureCLI {
         if ($LASTEXITCODE -ne 0) {
             throw "Azure CLI is not installed or not functioning correctly"
         }
-        
+
         Write-Host "🔍 Checking Azure CLI authentication..." -ForegroundColor Cyan
         $null = az account show 2>$null
         if ($LASTEXITCODE -ne 0) {
             throw "Not authenticated to Azure CLI. Please run 'az login' first"
         }
-        
+
         Write-Host "✅ Azure CLI validation successful" -ForegroundColor Green
         return $true
     }
@@ -180,7 +180,7 @@ function Test-AzureCLI {
 # Function to validate NSG exists
 function Test-NSGExists {
     param($ResourceGroup, $NsgName)
-    
+
     try {
         Write-Host "🔍 Validating NSG '$NsgName' exists in resource group '$ResourceGroup'..." -ForegroundColor Cyan
         $nsg = az network nsg show --resource-group $ResourceGroup --name $NsgName --query "name" --output tsv 2>$null
@@ -199,22 +199,22 @@ function Test-NSGExists {
 # Function to check for existing rule with same name or priority
 function Test-NSGRuleConflict {
     param($ResourceGroup, $NsgName, $RuleName, $Priority)
-    
+
     try {
         Write-Host "🔍 Checking for existing rules with name '$RuleName' or priority '$Priority'..." -ForegroundColor Cyan
-        
+
         # Check for existing rule with same name
         $existingRuleByName = az network nsg rule show --resource-group $ResourceGroup --nsg-name $NsgName --name $RuleName --query "name" --output tsv 2>$null
         if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrEmpty($existingRuleByName)) {
             throw "A rule with name '$RuleName' already exists in NSG '$NsgName'"
         }
-        
+
         # Check for existing rule with same priority
         $existingRuleByPriority = az network nsg rule list --resource-group $ResourceGroup --nsg-name $NsgName --query "[?priority=='$Priority'].name" --output tsv 2>$null
         if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrEmpty($existingRuleByPriority)) {
             throw "A rule with priority '$Priority' already exists in NSG '$NsgName': $existingRuleByPriority"
         }
-        
+
         Write-Host "✅ No conflicts found" -ForegroundColor Green
         return $true
     }
@@ -227,11 +227,11 @@ function Test-NSGRuleConflict {
 # Function to validate port ranges
 function Test-PortRanges {
     param([string]$PortRanges)
-    
+
     if ([string]::IsNullOrEmpty($PortRanges) -or $PortRanges -eq '*') {
         return $true
     }
-    
+
     $ports = $PortRanges -split '\s+'
     foreach ($port in $ports) {
         if ($port -match '^\d+$') {
@@ -246,7 +246,7 @@ function Test-PortRanges {
             $range = $port -split '-'
             $startPort = [int]$range[0]
             $endPort = [int]$range[1]
-            
+
             if ($startPort -lt 1 -or $startPort -gt 65535 -or $endPort -lt 1 -or $endPort -gt 65535) {
                 throw "Invalid port range: $port (ports must be 1-65535)"
             }
@@ -264,21 +264,21 @@ function Test-PortRanges {
 # Function to validate CIDR notation
 function Test-CIDRNotation {
     param([string]$AddressPrefixes)
-    
+
     if ([string]::IsNullOrEmpty($AddressPrefixes) -or $AddressPrefixes -eq '*') {
         return $true
     }
-    
+
     $prefixes = $AddressPrefixes -split '\s+'
     foreach ($prefix in $prefixes) {
         if ($prefix -eq '*') {
             continue
         }
-        
+
         if ($prefix -notmatch '^(\d{1,3}\.){3}\d{1,3}(\/\d{1,2})?$') {
             throw "Invalid CIDR notation: $prefix (use format like '10.0.0.0/24' or '192.168.1.1/32')"
         }
-        
+
         # Validate IP address parts
         $ipPart = ($prefix -split '\/')[0]
         $octets = $ipPart -split '\.'
@@ -287,7 +287,7 @@ function Test-CIDRNotation {
                 throw "Invalid IP address in CIDR: $prefix (octets must be 0-255)"
             }
         }
-        
+
         # Validate subnet mask
         if ($prefix -contains '/') {
             $mask = ($prefix -split '\/')[1]
@@ -302,7 +302,7 @@ function Test-CIDRNotation {
 # Function to display rule summary
 function Show-RuleSummary {
     param($Parameters)
-    
+
     Write-Host "`n📋 NSG Rule Configuration Summary:" -ForegroundColor Yellow
     Write-Host "   Rule Name: $($Parameters.Name)" -ForegroundColor White
     Write-Host "   NSG Name: $($Parameters.NsgName)" -ForegroundColor White
@@ -310,7 +310,7 @@ function Show-RuleSummary {
     Write-Host "   Direction: $($Parameters.Direction)" -ForegroundColor White
     Write-Host "   Access: $($Parameters.Access)" -ForegroundColor White
     Write-Host "   Protocol: $($Parameters.Protocol)" -ForegroundColor White
-    
+
     if ($Parameters.SourceAddressPrefixes) {
         Write-Host "   Source IPs: $($Parameters.SourceAddressPrefixes)" -ForegroundColor White
     }
@@ -333,22 +333,22 @@ function Show-RuleSummary {
 try {
     Write-Host "🚀 Starting Azure NSG Rule Creation" -ForegroundColor Green
     Write-Host "=================================" -ForegroundColor Green
-    
+
     # Validate Azure CLI
     if (-not (Test-AzureCLI)) {
         exit 1
     }
-    
+
     # Validate NSG exists
     if (-not (Test-NSGExists -ResourceGroup $ResourceGroup -NsgName $NsgName)) {
         exit 1
     }
-    
+
     # Check for conflicts
     if (-not (Test-NSGRuleConflict -ResourceGroup $ResourceGroup -NsgName $NsgName -RuleName $Name -Priority $Priority)) {
         exit 1
     }
-    
+
     # Validate port ranges if provided
     if ($SourcePortRanges) {
         $null = Test-PortRanges -PortRanges $SourcePortRanges
@@ -356,7 +356,7 @@ try {
     if ($DestinationPortRanges) {
         $null = Test-PortRanges -PortRanges $DestinationPortRanges
     }
-    
+
     # Validate CIDR notation if provided
     if ($SourceAddressPrefixes) {
         $null = Test-CIDRNotation -AddressPrefixes $SourceAddressPrefixes
@@ -364,7 +364,7 @@ try {
     if ($DestinationAddressPrefixes) {
         $null = Test-CIDRNotation -AddressPrefixes $DestinationAddressPrefixes
     }
-    
+
     # Build parameters array
     $azParams = @(
         'network', 'nsg', 'rule', 'create',
@@ -376,7 +376,7 @@ try {
         '--direction', $Direction,
         '--protocol', $Protocol
     )
-    
+
     # Add optional parameters
     if ($Description) { $azParams += '--description', $Description }
     if ($SourceAddressPrefixes) { $azParams += '--source-address-prefixes', $SourceAddressPrefixes }
@@ -386,7 +386,7 @@ try {
     if ($SourceAsgs) { $azParams += '--source-asgs', $SourceAsgs }
     if ($DestinationAsgs) { $azParams += '--destination-asgs', $DestinationAsgs }
     if ($NoWait) { $azParams += '--no-wait' }
-    
+
     # Display configuration summary
     $paramSummary = @{
         Name = $Name
@@ -402,14 +402,14 @@ try {
         Description = $Description
     }
     Show-RuleSummary -Parameters $paramSummary
-    
+
     # Create the NSG rule
     Write-Host "🔧 Creating NSG rule '$Name'..." -ForegroundColor Cyan
     $null = az @azParams
-    
+
     if ($LASTEXITCODE -eq 0) {
         Write-Host "✅ NSG rule '$Name' created successfully!" -ForegroundColor Green
-        
+
         if (-not $NoWait) {
             # Display created rule details
             Write-Host "`n📝 Rule Details:" -ForegroundColor Yellow

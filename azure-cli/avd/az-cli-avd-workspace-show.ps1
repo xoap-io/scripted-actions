@@ -51,16 +51,16 @@ try {
     if (-not $azVersion) {
         throw "Azure CLI is not installed or not available in PATH"
     }
-    
+
     Write-Host "Checking Azure CLI login status..." -ForegroundColor Cyan
     $account = az account show --output json 2>$null | ConvertFrom-Json
     if (-not $account) {
         throw "Not logged in to Azure CLI. Please run 'az login' first"
     }
     Write-Host "Logged in as: $($account.user.name)" -ForegroundColor Green
-    
+
     Write-Host "Retrieving Workspace details..." -ForegroundColor Cyan
-    
+
     if ($PSCmdlet.ParameterSetName -eq 'ByName') {
         $azParams = @(
             'desktopvirtualization', 'workspace', 'show',
@@ -78,14 +78,14 @@ try {
         )
         Write-Host "  Using Resource IDs: $IDs" -ForegroundColor Yellow
     }
-    
+
     $result = & az @azParams
     if ($LASTEXITCODE -ne 0) {
         throw "Azure CLI command failed with exit code: $LASTEXITCODE"
     }
-    
+
     $workspace = $result | ConvertFrom-Json
-    
+
     Write-Host "✓ Workspace details retrieved successfully!" -ForegroundColor Green
     Write-Host "`nWorkspace Details:" -ForegroundColor Cyan
     Write-Host "  Name: $($workspace.name)" -ForegroundColor White
@@ -94,7 +94,7 @@ try {
     Write-Host "  Description: $($workspace.description)" -ForegroundColor White
     Write-Host "  Friendly Name: $($workspace.friendlyName)" -ForegroundColor White
     Write-Host "  ID: $($workspace.id)" -ForegroundColor DarkGray
-    
+
     # Show application group references if available
     if ($workspace.applicationGroupReferences -and $workspace.applicationGroupReferences.Count -gt 0) {
         Write-Host "`nAssociated Application Groups:" -ForegroundColor Cyan
@@ -104,7 +104,7 @@ try {
     } else {
         Write-Host "`nNo Application Groups associated with this Workspace" -ForegroundColor Yellow
     }
-    
+
     return $workspace
 } catch {
     Write-Error "Failed to retrieve Workspace details: $_"

@@ -228,17 +228,17 @@ try {
             Write-Host "Applying tags to file system..." -ForegroundColor Cyan
             $tagsData = $Tags | ConvertFrom-Json
             $tagSpecs = @()
-            
+
             foreach ($key in $tagsData.PSObject.Properties.Name) {
                 $tagSpecs += @{
                     Key = $key
                     Value = $tagsData.$key
                 }
             }
-            
+
             $tagJson = $tagSpecs | ConvertTo-Json -Compress
             $tagResult = aws efs tag-resource --resource-id $fileSystemId --tags $tagJson @awsArgs 2>&1
-            
+
             if ($LASTEXITCODE -eq 0) {
                 Write-Host "✓ Tags applied successfully" -ForegroundColor Green
             } else {
@@ -252,7 +252,7 @@ try {
     # Wait for file system to be available before creating mount targets
     if ($WaitForAvailable -or $subnetIdList.Count -gt 0) {
         Write-Host "Waiting for file system to become available..." -ForegroundColor Yellow
-        
+
         $timeout = $TimeoutMinutes * 60
         $elapsed = 0
         $checkInterval = 10
@@ -266,9 +266,9 @@ try {
                 $statusData = $statusResult | ConvertFrom-Json
                 $currentEfs = $statusData.FileSystems[0]
                 $state = $currentEfs.LifeCycleState
-                
+
                 Write-Host "File system state: $state (${elapsed}s elapsed)" -ForegroundColor Gray
-                
+
                 if ($state -eq 'available') {
                     Write-Host "✓ File system is now available" -ForegroundColor Green
                     break
@@ -288,7 +288,7 @@ try {
     # Create mount targets
     if ($subnetIdList.Count -gt 0) {
         Write-Host "Creating mount targets..." -ForegroundColor Cyan
-        
+
         $mountTargets = @()
         foreach ($subnetId in $subnetIdList) {
             try {

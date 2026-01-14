@@ -138,7 +138,7 @@ try {
     # Create the snapshot
     Write-Host "Creating snapshot for volume $VolumeId..." -ForegroundColor Cyan
     $snapshotResult = aws @createArgs 2>&1
-    
+
     if ($LASTEXITCODE -ne 0) {
         throw "Failed to create snapshot: $snapshotResult"
     }
@@ -157,14 +157,14 @@ try {
             Write-Host "Applying tags to snapshot..." -ForegroundColor Cyan
             $tagsData = $Tags | ConvertFrom-Json
             $tagSpecs = @()
-            
+
             foreach ($key in $tagsData.PSObject.Properties.Name) {
                 $tagSpecs += "Key=$key,Value=$($tagsData.$key)"
             }
-            
+
             $tagString = $tagSpecs -join ' '
             $tagResult = aws ec2 create-tags --resources $snapshotId --tags $tagString @awsArgs 2>&1
-            
+
             if ($LASTEXITCODE -eq 0) {
                 Write-Host "✓ Tags applied successfully" -ForegroundColor Green
             } else {
@@ -178,7 +178,7 @@ try {
     if ($WaitForCompletion) {
         Write-Host "Waiting for snapshot creation to complete..." -ForegroundColor Yellow
         Write-Host "This may take several minutes to hours depending on volume size and data changes." -ForegroundColor Gray
-        
+
         $timeout = $TimeoutMinutes * 60
         $elapsed = 0
         $checkInterval = 30
@@ -194,14 +194,14 @@ try {
                 $currentSnapshot = $statusData.Snapshots[0]
                 $state = $currentSnapshot.State
                 $progress = if ($currentSnapshot.Progress) { $currentSnapshot.Progress } else { "0%" }
-                
+
                 # Only show progress updates when progress changes
                 $progressInt = [int]($progress -replace '%', '')
                 if ($progressInt -ne $lastProgress) {
                     $lastProgress = $progressInt
                     Write-Host "Progress: $progress - State: $state (${elapsed}s elapsed)" -ForegroundColor Gray
                 }
-                
+
                 if ($state -eq 'completed') {
                     Write-Host "✓ Snapshot creation completed successfully!" -ForegroundColor Green
                     Write-Host "Final Details:" -ForegroundColor Cyan

@@ -108,7 +108,7 @@ try {
     if (-not $VpnGatewayId -and -not $TransitGatewayId) {
         throw "You must specify either VpnGatewayId or TransitGatewayId"
     }
-    
+
     if ($VpnGatewayId -and $TransitGatewayId) {
         throw "You cannot specify both VpnGatewayId and TransitGatewayId"
     }
@@ -133,15 +133,15 @@ try {
     $awsArgs = @('ec2', 'create-vpn-connection')
     $awsArgs += @('--customer-gateway-id', $CustomerGatewayId)
     $awsArgs += @('--type', $Type)
-    
+
     if ($VpnGatewayId) {
         $awsArgs += @('--vpn-gateway-id', $VpnGatewayId)
     }
-    
+
     if ($TransitGatewayId) {
         $awsArgs += @('--transit-gateway-id', $TransitGatewayId)
     }
-    
+
     # Add static routes if specified and valid
     if ($StaticRoutes -and $VpnGatewayId) {
         $routeArray = $StaticRoutes -split ','
@@ -150,14 +150,14 @@ try {
             break  # Only need to set this once
         }
     }
-    
+
     # Build tag specifications
     $tagSpecs = @()
-    
+
     if ($Name) {
         $tagSpecs += "Key=Name,Value=$Name"
     }
-    
+
     if ($Tags) {
         $tagPairs = $Tags -split ','
         foreach ($tagPair in $tagPairs) {
@@ -167,15 +167,15 @@ try {
             }
         }
     }
-    
+
     if ($tagSpecs.Count -gt 0) {
         $awsArgs += @('--tag-specifications', "ResourceType=vpn-connection,Tags=$($tagSpecs -join ',')")
     }
-    
+
     if ($Profile) {
         $awsArgs += @('--profile', $Profile)
     }
-    
+
     if ($Region) {
         $awsArgs += @('--region', $Region)
     }
@@ -183,23 +183,23 @@ try {
     # Display configuration summary
     Write-Host "`nVPN Connection Configuration:" -ForegroundColor Cyan
     Write-Host "  Customer Gateway: $CustomerGatewayId" -ForegroundColor White
-    
+
     if ($VpnGatewayId) {
         Write-Host "  VPN Gateway: $VpnGatewayId" -ForegroundColor White
         Write-Host "  Connection Type: Virtual Private Gateway" -ForegroundColor White
     }
-    
+
     if ($TransitGatewayId) {
         Write-Host "  Transit Gateway: $TransitGatewayId" -ForegroundColor White
         Write-Host "  Connection Type: Transit Gateway" -ForegroundColor White
     }
-    
+
     Write-Host "  Type: $Type" -ForegroundColor White
-    
+
     if ($StaticRoutes -and $VpnGatewayId) {
         Write-Host "  Static Routes: $StaticRoutes" -ForegroundColor White
     }
-    
+
     if ($Name) {
         Write-Host "  Name: $Name" -ForegroundColor White
     }
@@ -207,7 +207,7 @@ try {
     # Create the VPN connection
     Write-Host "`nCreating VPN connection..." -ForegroundColor Yellow
     $result = & aws @awsArgs 2>&1
-    
+
     if ($LASTEXITCODE -ne 0) {
         throw "Failed to create VPN connection: $result"
     }
@@ -220,11 +220,11 @@ try {
     Write-Host "  State: $($vpnConnection.State)" -ForegroundColor White
     Write-Host "  Type: $($vpnConnection.Type)" -ForegroundColor White
     Write-Host "  Customer Gateway: $($vpnConnection.CustomerGatewayId)" -ForegroundColor White
-    
+
     if ($vpnConnection.VpnGatewayId) {
         Write-Host "  VPN Gateway: $($vpnConnection.VpnGatewayId)" -ForegroundColor White
     }
-    
+
     if ($vpnConnection.TransitGatewayId) {
         Write-Host "  Transit Gateway: $($vpnConnection.TransitGatewayId)" -ForegroundColor White
     }
@@ -245,25 +245,25 @@ try {
     if ($StaticRoutes -and $VpnGatewayId) {
         Write-Host "`nAdding static routes..." -ForegroundColor Yellow
         $routeArray = $StaticRoutes -split ','
-        
+
         foreach ($route in $routeArray) {
             $route = $route.Trim()
             Write-Host "  Adding route: $route" -ForegroundColor Gray
-            
+
             $routeArgs = @('ec2', 'create-vpn-connection-route')
             $routeArgs += @('--vpn-connection-id', $vpnConnection.VpnConnectionId)
             $routeArgs += @('--destination-cidr-block', $route)
-            
+
             if ($Profile) {
                 $routeArgs += @('--profile', $Profile)
             }
-            
+
             if ($Region) {
                 $routeArgs += @('--region', $Region)
             }
-            
+
             $routeResult = & aws @routeArgs 2>&1
-            
+
             if ($LASTEXITCODE -ne 0) {
                 Write-Host "    Failed to add route $route`: $routeResult" -ForegroundColor Red
             } else {
@@ -275,19 +275,19 @@ try {
     # Wait for VPN connection if requested
     if ($Wait) {
         Write-Host "`nWaiting for VPN connection to become available..." -ForegroundColor Yellow
-        
+
         $waitArgs = @('ec2', 'wait', 'vpn-connection-available', '--vpn-connection-ids', $vpnConnection.VpnConnectionId)
-        
+
         if ($Profile) {
             $waitArgs += @('--profile', $Profile)
         }
-        
+
         if ($Region) {
             $waitArgs += @('--region', $Region)
         }
 
         & aws @waitArgs 2>&1
-        
+
         if ($LASTEXITCODE -eq 0) {
             Write-Host "VPN connection is now available!" -ForegroundColor Green
         } else {
@@ -299,16 +299,16 @@ try {
     Write-Host "`nNext Steps:" -ForegroundColor Cyan
     Write-Host "1. Download the VPN configuration:" -ForegroundColor White
     Write-Host "   aws ec2 describe-vpn-connections --vpn-connection-ids $($vpnConnection.VpnConnectionId)" -ForegroundColor Gray
-    
+
     Write-Host "`n2. Configure your on-premises VPN device with the provided settings" -ForegroundColor White
-    
+
     if ($VpnGatewayId) {
         Write-Host "`n3. Attach the VPN Gateway to your VPC:" -ForegroundColor White
         Write-Host "   aws ec2 attach-vpn-gateway --vpn-gateway-id $VpnGatewayId --vpc-id <vpc-id>" -ForegroundColor Gray
-        
+
         Write-Host "`n4. Update route tables to direct traffic through the VPN gateway" -ForegroundColor White
     }
-    
+
     if ($TransitGatewayId) {
         Write-Host "`n3. Configure Transit Gateway route tables as needed" -ForegroundColor White
         Write-Host "`n4. Update VPC route tables to direct traffic to the Transit Gateway" -ForegroundColor White

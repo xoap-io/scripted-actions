@@ -61,11 +61,11 @@ try {
 
     # Build AWS CLI arguments
     $awsArgs = @('ec2', 'describe-vpc-endpoints', '--vpc-endpoint-ids', $VpcEndpointId)
-    
+
     if ($Profile) {
         $awsArgs += @('--profile', $Profile)
     }
-    
+
     if ($Region) {
         $awsArgs += @('--region', $Region)
     }
@@ -73,19 +73,19 @@ try {
     # First, get endpoint details for confirmation
     Write-Host "Retrieving VPC endpoint details..." -ForegroundColor Yellow
     $endpointDetails = & aws @awsArgs 2>&1
-    
+
     if ($LASTEXITCODE -ne 0) {
         throw "Failed to retrieve VPC endpoint details: $endpointDetails"
     }
 
     $endpointInfo = $endpointDetails | ConvertFrom-Json
-    
+
     if ($endpointInfo.VpcEndpoints.Count -eq 0) {
         throw "VPC endpoint '$VpcEndpointId' not found"
     }
 
     $endpoint = $endpointInfo.VpcEndpoints[0]
-    
+
     # Display endpoint information
     Write-Host "`nVPC Endpoint Details:" -ForegroundColor Cyan
     Write-Host "  Endpoint ID: $($endpoint.VpcEndpointId)" -ForegroundColor White
@@ -94,15 +94,15 @@ try {
     Write-Host "  Type: $($endpoint.VpcEndpointType)" -ForegroundColor White
     Write-Host "  State: $($endpoint.State)" -ForegroundColor White
     Write-Host "  Creation Time: $($endpoint.CreationTimestamp)" -ForegroundColor White
-    
+
     if ($endpoint.RouteTableIds) {
         Write-Host "  Route Tables: $($endpoint.RouteTableIds -join ', ')" -ForegroundColor White
     }
-    
+
     if ($endpoint.SubnetIds) {
         Write-Host "  Subnets: $($endpoint.SubnetIds -join ', ')" -ForegroundColor White
     }
-    
+
     if ($endpoint.NetworkInterfaceIds) {
         Write-Host "  Network Interfaces: $($endpoint.NetworkInterfaceIds -join ', ')" -ForegroundColor White
     }
@@ -111,7 +111,7 @@ try {
     if (-not $Force) {
         Write-Host "`nWARNING: This action will permanently delete the VPC endpoint!" -ForegroundColor Red
         $confirmation = Read-Host "Are you sure you want to delete VPC endpoint '$VpcEndpointId'? (yes/no)"
-        
+
         if ($confirmation -ne 'yes') {
             Write-Host "Operation cancelled by user." -ForegroundColor Yellow
             exit 0
@@ -120,27 +120,27 @@ try {
 
     # Delete the VPC endpoint
     Write-Host "`nDeleting VPC endpoint..." -ForegroundColor Yellow
-    
+
     $deleteArgs = @('ec2', 'delete-vpc-endpoints', '--vpc-endpoint-ids', $VpcEndpointId)
-    
+
     if ($Profile) {
         $deleteArgs += @('--profile', $Profile)
     }
-    
+
     if ($Region) {
         $deleteArgs += @('--region', $Region)
     }
 
     $deleteResult = & aws @deleteArgs 2>&1
-    
+
     if ($LASTEXITCODE -ne 0) {
         throw "Failed to delete VPC endpoint: $deleteResult"
     }
 
     $deleteInfo = $deleteResult | ConvertFrom-Json
-    
+
     Write-Host "`nVPC endpoint deletion initiated successfully!" -ForegroundColor Green
-    
+
     if ($deleteInfo.Unsuccessful -and $deleteInfo.Unsuccessful.Count -gt 0) {
         Write-Host "`nFailed deletions:" -ForegroundColor Red
         foreach ($failed in $deleteInfo.Unsuccessful) {
@@ -148,7 +148,7 @@ try {
             Write-Host "  Error: $($failed.Error.Message)" -ForegroundColor Red
         }
     }
-    
+
     if ($deleteInfo.Successful -and $deleteInfo.Successful.Count -gt 0) {
         Write-Host "`nSuccessful deletions:" -ForegroundColor Green
         foreach ($success in $deleteInfo.Successful) {

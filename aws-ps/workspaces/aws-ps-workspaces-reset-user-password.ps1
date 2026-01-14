@@ -18,13 +18,13 @@ try {
     if (-not $directory) {
         throw "Directory $DirectoryId not found"
     }
-    
+
     Write-Host "Resetting password for user $UserName..." -ForegroundColor Cyan
-    
+
     $plainPassword = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($NewPassword))
-    
+
     Reset-WKSUserPassword -DirectoryId $DirectoryId -UserName $UserName -NewPassword $plainPassword
-    
+
     Write-Host "Password reset successfully for user $UserName in directory $DirectoryId" -ForegroundColor Green
 } catch {
     Write-Error "Failed to reset WorkSpaces user password: $_"

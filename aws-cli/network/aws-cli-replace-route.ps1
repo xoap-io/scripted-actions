@@ -165,11 +165,11 @@ try {
 
     # Count target parameters
     $targets = @($GatewayId, $NatGatewayId, $NetworkInterfaceId, $InstanceId, $VpcPeeringConnectionId, $TransitGatewayId, $LocalGatewayId, $CarrierGatewayId, $VpcEndpointId) | Where-Object { $_ }
-    
+
     if ($targets.Count -eq 0) {
         throw "At least one new target (Gateway, NAT Gateway, Network Interface, Instance, etc.) must be specified."
     }
-    
+
     if ($targets.Count -gt 1) {
         throw "Only one new target can be specified per route replacement."
     }
@@ -177,14 +177,14 @@ try {
     # Get route table details and verify route exists
     Write-Output "`n🔍 Verifying route table and existing route..."
     $rtbResult = aws ec2 describe-route-tables --route-table-ids $RouteTableId @awsArgs --output json 2>&1
-    
+
     if ($LASTEXITCODE -ne 0) {
         Write-Error "Route table $RouteTableId not found or not accessible: $rtbResult"
     }
 
     $rtbData = $rtbResult | ConvertFrom-Json
     $routeTable = $rtbData.RouteTables[0]
-    
+
     Write-Output "✅ Route table verified:"
     Write-Output "  VPC ID: $($routeTable.VpcId)"
     Write-Output "  Current routes: $($routeTable.Routes.Count)"
@@ -192,13 +192,13 @@ try {
     # Find the existing route
     $existingRoute = $null
     $destination = ""
-    
+
     if ($DestinationCidrBlock) {
         $existingRoute = $routeTable.Routes | Where-Object { $_.DestinationCidrBlock -eq $DestinationCidrBlock }
         $destination = $DestinationCidrBlock
         Write-Output "  Target destination: $DestinationCidrBlock (IPv4)"
     }
-    
+
     if ($DestinationIpv6CidrBlock) {
         $existingRoute = $routeTable.Routes | Where-Object { $_.DestinationIpv6CidrBlock -eq $DestinationIpv6CidrBlock }
         $destination = $DestinationIpv6CidrBlock
@@ -259,10 +259,10 @@ try {
     # Check for specific target type changes that might be disruptive
     $oldTarget = "$($existingRoute.GatewayId)$($existingRoute.NatGatewayId)$($existingRoute.NetworkInterfaceId)$($existingRoute.InstanceId)$($existingRoute.VpcPeeringConnectionId)$($existingRoute.TransitGatewayId)"
     $newTargetId = "$($GatewayId)$($NatGatewayId)$($NetworkInterfaceId)$($InstanceId)$($VpcPeeringConnectionId)$($TransitGatewayId)$($LocalGatewayId)$($CarrierGatewayId)$($VpcEndpointId)"
-    
+
     if ($oldTarget -ne $newTargetId) {
         $warningMessages += "⚠️  WARNING: Changing route target from $oldTarget to $newTargetId"
-        
+
         # Specific warnings for certain changes
         if ($existingRoute.GatewayId -and ($NatGatewayId -or $NetworkInterfaceId -or $InstanceId)) {
             $warningMessages += "   Changing from Internet Gateway to NAT/Instance - this may affect inbound connectivity"
@@ -340,15 +340,15 @@ try {
 
         if ($LASTEXITCODE -eq 0) {
             Write-Output "✅ Route replaced successfully!"
-            
+
             # Verify the route was replaced
             Write-Output "`n🔍 Verifying route replacement..."
             $verifyResult = aws ec2 describe-route-tables --route-table-ids $RouteTableId @awsArgs --output json 2>&1
-            
+
             if ($LASTEXITCODE -eq 0) {
                 $verifyData = $verifyResult | ConvertFrom-Json
                 $updatedRouteTable = $verifyData.RouteTables[0]
-                
+
                 # Find and display the updated route
                 $updatedRoute = $null
                 if ($DestinationCidrBlock) {
@@ -371,7 +371,7 @@ try {
             Write-Output "• Test connectivity to ensure the route change works as expected"
             Write-Output "• Monitor route state to ensure it becomes 'active'"
             Write-Output "• Use 'aws ec2 describe-route-tables --route-table-ids $RouteTableId' to view all routes"
-            
+
             if ($isDisruptive) {
                 Write-Output "• Verify that all affected resources maintain proper connectivity"
                 Write-Output "• Consider rolling back if issues are discovered"
@@ -384,7 +384,7 @@ try {
         Write-Output "`n✅ DRY RUN: Route replacement command validated successfully"
         Write-Output "Command that would be executed:"
         Write-Output "aws $($replaceArgs -join ' ')"
-        
+
         if ($isDisruptive) {
             Write-Output "`n⚠️  DRY RUN: This replacement would be disruptive - review warnings above"
         }

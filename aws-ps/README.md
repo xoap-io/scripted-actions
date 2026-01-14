@@ -27,13 +27,13 @@ Set-AWSCredential -ProfileName "default"
 
 ## Directory Structure
 
-| Folder | Description | Service Focus |
-|--------|-------------|---------------|
-| [`appstream/`](./appstream/) | AppStream 2.0 management | Virtual application streaming |
-| [`ec2/`](./ec2/) | EC2 instance management | Virtual machines, security groups |
-| [`nice-dcv/`](./nice-dcv/) | NICE DCV integration | Remote desktop sessions |
-| [`rds/`](./rds/) | RDS database management | Database instances and operations |
-| [`workspaces/`](./workspaces/) | Amazon WorkSpaces | Virtual desktop management |
+| Folder                         | Description              | Service Focus                     |
+| ------------------------------ | ------------------------ | --------------------------------- |
+| [`appstream/`](./appstream/)   | AppStream 2.0 management | Virtual application streaming     |
+| [`ec2/`](./ec2/)               | EC2 instance management  | Virtual machines, security groups |
+| [`nice-dcv/`](./nice-dcv/)     | NICE DCV integration     | Remote desktop sessions           |
+| [`rds/`](./rds/)               | RDS database management  | Database instances and operations |
+| [`workspaces/`](./workspaces/) | Amazon WorkSpaces        | Virtual desktop management        |
 
 ## Common Usage Patterns
 
@@ -44,7 +44,7 @@ Scripts automatically install required AWS.Tools modules:
 ```powershell
 function Test-AWSModule {
     param($ModuleName)
-    
+
     if (-not (Get-Module -Name $ModuleName -ListAvailable)) {
         Write-Host "Installing $ModuleName..." -ForegroundColor Yellow
         Install-Module -Name $ModuleName -Force -AllowClobber -Scope CurrentUser

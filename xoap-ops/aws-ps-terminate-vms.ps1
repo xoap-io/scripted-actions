@@ -50,7 +50,7 @@ try {
             Write-Host "Terminating instances: $($instanceIds -join ', ')"
             Stop-EC2Instance -InstanceId $instanceIds -Region $Region -Force
             Write-Host "Waiting for instances to terminate..."
-            $terminated = $instanceIds | ForEach-Object { 
+            $terminated = $instanceIds | ForEach-Object {
                 do {
                     $state = (Get-EC2Instance -InstanceId $_ -Region $Region).Instances.State.Name
                     Start-Sleep -Seconds 5

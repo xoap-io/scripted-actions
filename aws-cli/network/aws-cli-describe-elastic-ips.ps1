@@ -105,13 +105,13 @@ try {
 
     # Build AWS CLI arguments
     $awsArgs = @('ec2', 'describe-addresses')
-    
+
     if ($AllocationIds) {
         $allocationArray = $AllocationIds -split ','
         $awsArgs += @('--allocation-ids')
         $awsArgs += $allocationArray
     }
-    
+
     if ($PublicIps) {
         $ipArray = $PublicIps -split ','
         $awsArgs += @('--public-ips')
@@ -120,11 +120,11 @@ try {
 
     # Build filters array
     $filters = @()
-    
+
     if ($InstanceId) {
         $filters += "Name=instance-id,Values=$InstanceId"
     }
-    
+
     if ($AssociationStatus) {
         if ($AssociationStatus -eq 'associated') {
             $filters += "Name=association-id,Values=*"
@@ -132,7 +132,7 @@ try {
             # For unassociated, we'll filter after getting results
         }
     }
-    
+
     if ($Domain) {
         $filters += "Name=domain,Values=$Domain"
     }
@@ -141,18 +141,18 @@ try {
         $awsArgs += @('--filters')
         $awsArgs += $filters
     }
-    
+
     if ($Profile) {
         $awsArgs += @('--profile', $Profile)
     }
-    
+
     if ($Region) {
         $awsArgs += @('--region', $Region)
     }
 
     # Execute the AWS CLI command
     $result = & aws @awsArgs 2>&1
-    
+
     if ($LASTEXITCODE -ne 0) {
         throw "Failed to describe Elastic IP addresses: $result"
     }
@@ -203,38 +203,38 @@ try {
         Write-Host "Elastic IP: $($address.PublicIp)" -ForegroundColor Cyan
         Write-Host "  Allocation ID: $($address.AllocationId)" -ForegroundColor White
         Write-Host "  Domain: $($address.Domain)" -ForegroundColor White
-        
+
         # Association status
         if ($address.AssociationId) {
             Write-Host "  Status: Associated" -ForegroundColor Green
             Write-Host "  Association ID: $($address.AssociationId)" -ForegroundColor White
-            
+
             if ($address.InstanceId) {
                 Write-Host "  Instance ID: $($address.InstanceId)" -ForegroundColor White
                 Write-Host "  Private IP: $($address.PrivateIpAddress)" -ForegroundColor White
             }
-            
+
             if ($address.NetworkInterfaceId) {
                 Write-Host "  Network Interface: $($address.NetworkInterfaceId)" -ForegroundColor White
                 Write-Host "  Network Interface Owner: $($address.NetworkInterfaceOwnerId)" -ForegroundColor White
             }
-            
+
             Write-Host "  Cost Status: No charges (associated)" -ForegroundColor Green
         } else {
             Write-Host "  Status: Unassociated" -ForegroundColor Yellow
             Write-Host "  Cost Status: Incurring charges (~`$0.12/day)" -ForegroundColor Red
         }
-        
+
         # Additional information
         if ($address.NetworkBorderGroup) {
             Write-Host "  Network Border Group: $($address.NetworkBorderGroup)" -ForegroundColor White
         }
-        
+
         if ($address.CustomerOwnedIp) {
             Write-Host "  Customer Owned IP: Yes" -ForegroundColor White
             Write-Host "  Customer Owned IPv4 Pool: $($address.CustomerOwnedIpv4Pool)" -ForegroundColor White
         }
-        
+
         if ($address.CarrierIp) {
             Write-Host "  Carrier IP: $($address.CarrierIp)" -ForegroundColor White
         }
@@ -253,7 +253,7 @@ try {
     # Show cost analysis if requested or if there are unassociated IPs
     if ($ShowCostAnalysis -or $unassociated.Count -gt 0) {
         Write-Host "`nCost Optimization Analysis:" -ForegroundColor Cyan
-        
+
         if ($unassociated.Count -gt 0) {
             Write-Host "`nUnassociated Elastic IPs (incurring charges):" -ForegroundColor Red
             foreach ($unassoc in $unassociated) {
@@ -262,11 +262,11 @@ try {
                 Write-Host "    Monthly cost: ~`$3.65" -ForegroundColor Red
                 Write-Host "    Release command: aws ec2 release-address --allocation-id $($unassoc.AllocationId)" -ForegroundColor Gray
             }
-            
+
             $totalMonthlyCost = $unassociated.Count * 3.65
             Write-Host "`n  Total estimated monthly cost: ~`$$([math]::Round($totalMonthlyCost, 2))" -ForegroundColor Red
         }
-        
+
         if ($associated.Count -gt 0) {
             Write-Host "`nAssociated Elastic IPs (no additional charges):" -ForegroundColor Green
             foreach ($assoc in $associated) {

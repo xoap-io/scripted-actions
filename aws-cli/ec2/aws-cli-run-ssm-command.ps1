@@ -140,7 +140,7 @@ try {
         if ($instanceId -notmatch '^i-[a-zA-Z0-9]{8,}$') {
             throw "Invalid instance ID format: $instanceId"
         }
-        
+
         $instanceCheck = aws ec2 describe-instances --instance-ids $instanceId @awsArgs --output json 2>&1
         if ($LASTEXITCODE -ne 0) {
             throw "Instance $instanceId not found or not accessible: $instanceCheck"
@@ -171,7 +171,7 @@ try {
 
     # Build parameters
     $ssmParameters = @{}
-    
+
     if ($commandToExecute) {
         # Split commands by semicolon or newline
         $commandArray = $commandToExecute -split '[;\n]' | ForEach-Object { $_.Trim() } | Where-Object { $_ }
@@ -251,65 +251,65 @@ try {
 
         if ($WaitForCompletion) {
             Write-Output "`n⏳ Waiting for command completion..."
-            
+
             $waitTime = 0
             $checkInterval = 10
-            
+
             do {
                 Start-Sleep -Seconds $checkInterval
                 $waitTime += $checkInterval
-                
+
                 # Check command status
                 $statusResult = aws ssm get-command-invocation --command-id $commandId --instance-id $instanceList[0] @awsArgs --output json 2>&1
-                
+
                 if ($LASTEXITCODE -eq 0) {
                     $statusData = $statusResult | ConvertFrom-Json
                     $status = $statusData.Status
-                    
+
                     Write-Output "[$([math]::Round($waitTime/60, 1)) min] Command status: $status"
-                    
+
                     if ($status -eq 'Success' -or $status -eq 'Failed' -or $status -eq 'Cancelled' -or $status -eq 'TimedOut') {
                         break
                     }
                 } else {
                     Write-Output "[$([math]::Round($waitTime/60, 1)) min] Checking status..."
                 }
-                
+
             } while ($waitTime -lt $MaxWaitTime)
-            
+
             # Get final results for all instances
             Write-Output "`n📊 Command Results:"
             Write-Output "=" * 80
-            
+
             foreach ($instanceId in $instanceList) {
                 Write-Output "`nInstance: $instanceId"
                 Write-Output "-" * 40
-                
+
                 $invocationResult = aws ssm get-command-invocation --command-id $commandId --instance-id $instanceId @awsArgs --output json 2>&1
-                
+
                 if ($LASTEXITCODE -eq 0) {
                     $invocationData = $invocationResult | ConvertFrom-Json
-                    
+
                     Write-Output "Status: $($invocationData.Status)"
                     Write-Output "Status Details: $($invocationData.StatusDetails)"
                     Write-Output "Start Time: $($invocationData.ExecutionStartDateTime)"
                     Write-Output "End Time: $($invocationData.ExecutionEndDateTime)"
-                    
+
                     if ($invocationData.StandardOutputContent) {
                         Write-Output "`nStandard Output:"
                         Write-Output $invocationData.StandardOutputContent
                     }
-                    
+
                     if ($invocationData.StandardErrorContent) {
                         Write-Output "`nStandard Error:"
                         Write-Output $invocationData.StandardErrorContent
                     }
-                    
+
                 } else {
                     Write-Warning "Failed to get command invocation for $instanceId : $invocationResult"
                 }
             }
-            
+
             if ($waitTime -ge $MaxWaitTime) {
                 Write-Warning "`nCommand execution monitoring timed out after $MaxWaitTime seconds."
                 Write-Output "Command may still be running. Check status with:"

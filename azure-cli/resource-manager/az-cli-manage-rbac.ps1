@@ -6,7 +6,7 @@
     This script manages Azure RBAC assignments using the Azure CLI for Resource Groups, subscriptions, and resources.
     Supports creating, listing, and deleting role assignments with comprehensive reporting and bulk operations.
     Includes security auditing, custom role management, and access review capabilities.
-    
+
     The script uses the Azure CLI commands: az role assignment create, az role assignment list, az role assignment delete
 
 .PARAMETER Operation
@@ -53,22 +53,22 @@
 
 .EXAMPLE
     .\az-cli-manage-rbac.ps1 -Operation "assign" -PrincipalId "12345678-1234-1234-1234-123456789abc" -RoleName "Reader" -ResourceGroup "production-rg"
-    
+
     Assigns Reader role to user on Resource Group.
 
 .EXAMPLE
     .\az-cli-manage-rbac.ps1 -Operation "list" -ResourceGroup "dev-rg" -ShowInherited -ExportReport "rbac-report.json"
-    
+
     Lists all role assignments on Resource Group with inherited assignments.
 
 .EXAMPLE
     .\az-cli-manage-rbac.ps1 -Operation "remove" -PrincipalId "87654321-4321-4321-4321-210987654321" -RoleName "Contributor" -Scope "subscription"
-    
+
     Removes Contributor role from user at subscription level.
 
 .EXAMPLE
     .\az-cli-manage-rbac.ps1 -Operation "bulk-assign" -InputFile "rbac-assignments.csv" -ValidateAssignment
-    
+
     Performs bulk role assignments from CSV file with validation.
 
 .NOTES
@@ -204,7 +204,7 @@ try {
         if (-not $rgCheck) {
             throw "Resource Group '$ResourceGroup' not found in subscription '$($azAccount.name)'"
         }
-        
+
         $rgInfo = $rgCheck | ConvertFrom-Json
         Write-Host "✓ Resource Group '$ResourceGroup' found" -ForegroundColor Green
         Write-Host "  Location: $($rgInfo.location)" -ForegroundColor White
@@ -221,20 +221,20 @@ try {
     Write-Host "RBAC Operation Configuration:" -ForegroundColor Cyan
     Write-Host "  Operation: $Operation" -ForegroundColor White
     Write-Host "  Scope: $Scope" -ForegroundColor White
-    
+
     if ($PrincipalId) {
         Write-Host "  Principal ID: $PrincipalId" -ForegroundColor White
         Write-Host "  Principal Type: $PrincipalType" -ForegroundColor White
     }
-    
+
     if ($RoleName) {
         Write-Host "  Role: $RoleName" -ForegroundColor White
     }
-    
+
     if ($ResourceGroup) {
         Write-Host "  Resource Group: $ResourceGroup" -ForegroundColor White
     }
-    
+
     if ($Resource) {
         Write-Host "  Resource: $($Resource -split '/')[-1]" -ForegroundColor White
     }
@@ -245,7 +245,7 @@ try {
     switch ($Operation) {
         "assign" {
             Write-Host "👤 Creating role assignment..." -ForegroundColor Blue
-            
+
             # Validate principal exists
             if ($ValidateAssignment) {
                 Write-Host "Validating principal..." -ForegroundColor Yellow
@@ -257,7 +257,7 @@ try {
                     if (-not $principalInfo) {
                         $principalInfo = az ad sp show --id $PrincipalId 2>$null
                     }
-                    
+
                     if ($principalInfo) {
                         $principal = $principalInfo | ConvertFrom-Json
                         Write-Host "✓ Principal found: $($principal.displayName)" -ForegroundColor Green
@@ -269,16 +269,16 @@ try {
                     Write-Host "⚠ Warning: Could not validate principal: $($_.Exception.Message)" -ForegroundColor Yellow
                 }
             }
-            
+
             # Check if assignment already exists
             Write-Host "Checking for existing assignment..." -ForegroundColor Yellow
             $existingAssignment = az role assignment list --assignee $PrincipalId --role $RoleName --scope $scopeString | ConvertFrom-Json
-            
+
             if ($existingAssignment -and $existingAssignment.Count -gt 0) {
                 if (-not $Force) {
                     Write-Host "⚠ Role assignment already exists!" -ForegroundColor Yellow
                     Write-Host "Principal '$PrincipalId' already has role '$RoleName' at scope '$scopeString'" -ForegroundColor White
-                    
+
                     $confirmation = Read-Host "Do you want to continue anyway? (yes/no)"
                     if ($confirmation -ne "yes") {
                         Write-Host "Role assignment cancelled." -ForegroundColor Yellow
@@ -288,17 +288,17 @@ try {
                     Write-Host "⚠ Role assignment already exists but Force parameter specified" -ForegroundColor Yellow
                 }
             }
-            
+
             # Build role assignment command
             $azParams = @('role', 'assignment', 'create', '--assignee', $PrincipalId, '--role', $RoleName, '--scope', $scopeString)
-            
+
             if ($AssignmentDescription) {
                 $azParams += '--description', $AssignmentDescription
             }
-            
+
             # Execute role assignment
             $result = & az @azParams 2>&1
-            
+
             if ($LASTEXITCODE -eq 0) {
                 $assignmentInfo = $result | ConvertFrom-Json
                 Write-Host "✓ Role assignment created successfully!" -ForegroundColor Green
@@ -315,43 +315,43 @@ try {
                 throw "Failed to create role assignment: $($result -join "`n")"
             }
         }
-        
+
         "list" {
             Write-Host "📋 Listing role assignments..." -ForegroundColor Blue
-            
+
             # Build list command
             $azParams = @('role', 'assignment', 'list', '--scope', $scopeString, '--output', 'json')
-            
+
             if (-not $ShowInherited) {
                 $azParams += '--include-inherited', 'false'
             }
-            
+
             # Execute role assignment listing
             $result = & az @azParams 2>&1
-            
+
             if ($LASTEXITCODE -eq 0) {
                 $assignments = $result | ConvertFrom-Json
-                
+
                 if (-not $assignments) {
                     $assignments = @()
                 }
-                
+
                 Write-Host "✓ Found $($assignments.Count) role assignment(s)" -ForegroundColor Green
                 Write-Host ""
-                
+
                 if ($assignments.Count -eq 0) {
                     Write-Host "No role assignments found in the specified scope." -ForegroundColor Yellow
                 } else {
                     Write-Host "Role Assignments:" -ForegroundColor Blue
                     Write-Host $("-" * 100) -ForegroundColor Gray
-                    
+
                     # Group assignments by role
                     $roleGroups = $assignments | Group-Object -Property roleDefinitionName
-                    
+
                     foreach ($roleGroup in $roleGroups) {
                         Write-Host ""
                         Write-Host "🔑 $($roleGroup.Name) ($($roleGroup.Count) assignment(s))" -ForegroundColor Blue
-                        
+
                         foreach ($assignment in $roleGroup.Group) {
                             Write-Host "  • Principal: $($assignment.principalId)" -ForegroundColor White
                             Write-Host "    Type: $($assignment.principalType)" -ForegroundColor Gray
@@ -363,7 +363,7 @@ try {
                             Write-Host ""
                         }
                     }
-                    
+
                     # Summary statistics
                     Write-Host "Assignment Summary:" -ForegroundColor Cyan
                     $principalTypes = $assignments | Group-Object -Property principalType
@@ -371,7 +371,7 @@ try {
                         Write-Host "  $($typeGroup.Name): $($typeGroup.Count)" -ForegroundColor White
                     }
                 }
-                
+
                 # Export report if requested
                 if ($ExportReport) {
                     $reportData = @{
@@ -385,7 +385,7 @@ try {
                             principalTypeBreakdown = ($assignments | Group-Object -Property principalType | ForEach-Object { @{ type = $_.Name; count = $_.Count } })
                         }
                     }
-                    
+
                     $reportData | ConvertTo-Json -Depth 10 | Out-File -FilePath $ExportReport -Encoding UTF8
                     Write-Host ""
                     Write-Host "✓ RBAC report exported to: $ExportReport" -ForegroundColor Green
@@ -394,20 +394,20 @@ try {
                 throw "Failed to list role assignments: $($result -join "`n")"
             }
         }
-        
+
         "remove" {
             Write-Host "🗑️ Removing role assignment..." -ForegroundColor Red
-            
+
             # Check if assignment exists
             Write-Host "Verifying assignment exists..." -ForegroundColor Yellow
             $existingAssignment = az role assignment list --assignee $PrincipalId --role $RoleName --scope $scopeString | ConvertFrom-Json
-            
+
             if (-not $existingAssignment -or $existingAssignment.Count -eq 0) {
                 Write-Host "⚠ No matching role assignment found!" -ForegroundColor Yellow
                 Write-Host "Principal '$PrincipalId' does not have role '$RoleName' at scope '$scopeString'" -ForegroundColor White
                 return
             }
-            
+
             if (-not $Force) {
                 Write-Host ""
                 Write-Host "⚠ Role Assignment Removal Confirmation" -ForegroundColor Yellow
@@ -416,49 +416,49 @@ try {
                 Write-Host "  Role: $RoleName" -ForegroundColor Red
                 Write-Host "  Scope: $scopeString" -ForegroundColor Red
                 Write-Host ""
-                
+
                 $confirmation = Read-Host "Do you want to proceed with removal? (yes/no)"
                 if ($confirmation -ne "yes") {
                     Write-Host "Role assignment removal cancelled." -ForegroundColor Yellow
                     return
                 }
             }
-            
+
             # Build remove command
             $azParams = @('role', 'assignment', 'delete', '--assignee', $PrincipalId, '--role', $RoleName, '--scope', $scopeString)
-            
+
             # Execute role assignment removal
             $result = & az @azParams 2>&1
-            
+
             if ($LASTEXITCODE -eq 0) {
                 Write-Host "✓ Role assignment removed successfully!" -ForegroundColor Green
             } else {
                 throw "Failed to remove role assignment: $($result -join "`n")"
             }
         }
-        
+
         "audit" {
             Write-Host "🔍 Performing RBAC audit..." -ForegroundColor Blue
-            
+
             # Get all role assignments in scope
             $allAssignments = az role assignment list --scope $scopeString --include-inherited | ConvertFrom-Json
-            
+
             Write-Host "✓ Retrieved $($allAssignments.Count) role assignments for audit" -ForegroundColor Green
             Write-Host ""
-            
+
             # Audit analysis
             Write-Host "🔍 RBAC Audit Report:" -ForegroundColor Cyan
             Write-Host $("-" * 60) -ForegroundColor Gray
-            
+
             # Check for overprivileged assignments
             $ownerAssignments = $allAssignments | Where-Object { $_.roleDefinitionName -eq "Owner" }
             $contributorAssignments = $allAssignments | Where-Object { $_.roleDefinitionName -eq "Contributor" }
-            
+
             Write-Host ""
             Write-Host "🚨 High-Privilege Assignments:" -ForegroundColor Red
             Write-Host "  Owner assignments: $($ownerAssignments.Count)" -ForegroundColor Red
             Write-Host "  Contributor assignments: $($contributorAssignments.Count)" -ForegroundColor Yellow
-            
+
             if ($ownerAssignments.Count -gt 0) {
                 Write-Host ""
                 Write-Host "Owner Role Assignments:" -ForegroundColor Red
@@ -466,22 +466,22 @@ try {
                     Write-Host "  • $($owner.principalId) ($($owner.principalType))" -ForegroundColor Red
                 }
             }
-            
+
             # Check for service principal assignments
             $spAssignments = $allAssignments | Where-Object { $_.principalType -eq "ServicePrincipal" }
             Write-Host ""
             Write-Host "🤖 Service Principal Assignments: $($spAssignments.Count)" -ForegroundColor Blue
-            
+
             # Check for custom roles
             $customRoleAssignments = $allAssignments | Where-Object { $_.roleDefinitionId -notlike "*/providers/Microsoft.Authorization/roleDefinitions/*" }
             Write-Host "🎯 Custom Role Assignments: $($customRoleAssignments.Count)" -ForegroundColor Magenta
-            
+
             # Recent assignments (if available)
-            $recentAssignments = $allAssignments | Where-Object { 
-                $_.createdOn -and ([DateTime]$_.createdOn) -gt (Get-Date).AddDays(-30) 
+            $recentAssignments = $allAssignments | Where-Object {
+                $_.createdOn -and ([DateTime]$_.createdOn) -gt (Get-Date).AddDays(-30)
             }
             Write-Host "🕒 Recent Assignments (30 days): $($recentAssignments.Count)" -ForegroundColor Green
-            
+
             Write-Host ""
             Write-Host "📊 Role Distribution:" -ForegroundColor Cyan
             $roleDistribution = $allAssignments | Group-Object -Property roleDefinitionName | Sort-Object Count -Descending
@@ -489,28 +489,28 @@ try {
                 Write-Host "  $($role.Name): $($role.Count)" -ForegroundColor White
             }
         }
-        
+
         "bulk-assign" {
             if (-not $InputFile) {
                 throw "InputFile parameter is required for bulk operations"
             }
-            
+
             Write-Host "📁 Performing bulk role assignments..." -ForegroundColor Blue
             Write-Host "Input file: $InputFile" -ForegroundColor Yellow
-            
+
             # Load CSV file
             $assignments = Import-Csv -Path $InputFile
             Write-Host "✓ Loaded $($assignments.Count) assignments from CSV" -ForegroundColor Green
-            
+
             $successCount = 0
             $errorCount = 0
-            
+
             foreach ($assignment in $assignments) {
                 try {
                     Write-Host "Processing: $($assignment.PrincipalId) -> $($assignment.RoleName)" -ForegroundColor Yellow
-                    
+
                     $bulkParams = @('role', 'assignment', 'create', '--assignee', $assignment.PrincipalId, '--role', $assignment.RoleName, '--scope', $assignment.Scope)
-                    
+
                     & az @bulkParams | Out-Null
                     Write-Host "  ✓ Success" -ForegroundColor Green
                     $successCount++
@@ -520,7 +520,7 @@ try {
                     $errorCount++
                 }
             }
-            
+
             Write-Host ""
             Write-Host "Bulk Assignment Summary:" -ForegroundColor Cyan
             Write-Host "  Successful: $successCount" -ForegroundColor Green

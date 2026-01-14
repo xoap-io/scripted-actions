@@ -176,7 +176,7 @@ $ErrorActionPreference = 'Stop'
 # Function to check and install Nutanix PowerShell SDK if needed
 function Test-NutanixSDKInstallation {
     Write-Host "Checking Nutanix PowerShell SDK installation..." -ForegroundColor Yellow
-    
+
     try {
         $nutanixModule = Get-Module -Name Nutanix.PowerShell.SDK -ListAvailable
         if (-not $nutanixModule) {
@@ -187,10 +187,10 @@ function Test-NutanixSDKInstallation {
             $version = $nutanixModule | Sort-Object Version -Descending | Select-Object -First 1
             Write-Host "Nutanix PowerShell SDK version $($version.Version) found." -ForegroundColor Green
         }
-        
+
         # Import the module
         Import-Module Nutanix.PowerShell.SDK -Force
-        
+
         return $true
     }
     catch {
@@ -202,16 +202,16 @@ function Test-NutanixSDKInstallation {
 # Function to connect to Prism Central or Element
 function Connect-ToNutanix {
     param($Server, $ServerType)
-    
+
     try {
         Write-Host "Connecting to $ServerType`: $Server" -ForegroundColor Yellow
-        
+
         # Check if already connected
         if ($global:DefaultNTNXConnection -and $global:DefaultNTNXConnection.Server -eq $Server) {
             Write-Host "Already connected to $Server" -ForegroundColor Green
             return $global:DefaultNTNXConnection
         }
-        
+
         # Connect to Nutanix
         $connection = Connect-NTNXCluster -Server $Server -AcceptInvalidSSLCerts
         Write-Host "Successfully connected to $ServerType`: $($connection.Server)" -ForegroundColor Green
@@ -232,11 +232,11 @@ function Get-TargetProtectionDomains {
         $ProtectionDomainNames,
         $ProtectionDomainUUID
     )
-    
+
     try {
         $protectionDomains = @()
         $allPDs = Get-NTNXProtectionDomain
-        
+
         # Filter by cluster if specified
         if ($ClusterName) {
             $cluster = Get-NTNXCluster | Where-Object { $_.name -eq $ClusterName }
@@ -249,7 +249,7 @@ function Get-TargetProtectionDomains {
         elseif ($ClusterUUID) {
             # Similar filtering by cluster UUID
         }
-        
+
         # Filter by specific protection domain criteria
         if ($ProtectionDomainUUID) {
             $protectionDomains = $allPDs | Where-Object { $_.uuid -eq $ProtectionDomainUUID }
@@ -264,18 +264,18 @@ function Get-TargetProtectionDomains {
             # Return all protection domains
             $protectionDomains = $allPDs
         }
-        
+
         if ($Operation -ne "Create" -and -not $protectionDomains) {
             throw "No protection domains found matching the specified criteria"
         }
-        
+
         if ($protectionDomains) {
             Write-Host "Found $($protectionDomains.Count) protection domain(s) for processing:" -ForegroundColor Green
             foreach ($pd in $protectionDomains) {
                 Write-Host "  - $($pd.name) [$($pd.uuid)]" -ForegroundColor White
             }
         }
-        
+
         return $protectionDomains
     }
     catch {
@@ -287,16 +287,16 @@ function Get-TargetProtectionDomains {
 # Function to list protection domains
 function Get-ProtectionDomainList {
     param($ProtectionDomains)
-    
+
     try {
         Write-Host "  Listing protection domains..." -ForegroundColor Cyan
-        
+
         $pdList = @()
-        
+
         foreach ($pd in $ProtectionDomains) {
             $vmCount = if ($pd.vms) { $pd.vms.Count } else { 0 }
             $scheduleCount = if ($pd.cronSchedules) { $pd.cronSchedules.Count } else { 0 }
-            
+
             $pdInfo = @{
                 ProtectionDomainName = $pd.name
                 ProtectionDomainUUID = $pd.uuid
@@ -311,12 +311,12 @@ function Get-ProtectionDomainList {
                 Description = if ($pd.description) { $pd.description } else { "No description" }
                 LastUpdated = Get-Date
             }
-            
+
             $pdList += $pdInfo
         }
-        
+
         Write-Host "    ✓ Protection domain list compiled - $($pdList.Count) domains" -ForegroundColor Green
-        
+
         return $pdList
     }
     catch {
@@ -328,19 +328,19 @@ function Get-ProtectionDomainList {
 # Function to create a protection domain
 function New-NutanixProtectionDomain {
     param($ProtectionDomainName, $VMNames, $VMUUIDs)
-    
+
     try {
         Write-Host "  Creating protection domain: $ProtectionDomainName" -ForegroundColor Cyan
-        
+
         # Check if protection domain already exists
         $existingPD = Get-NTNXProtectionDomain | Where-Object { $_.name -eq $ProtectionDomainName }
         if ($existingPD) {
             throw "Protection domain '$ProtectionDomainName' already exists"
         }
-        
+
         # Get VMs to add
         $vmsToAdd = @()
-        
+
         if ($VMNames) {
             foreach ($vmName in $VMNames) {
                 $vm = Get-NTNXVM | Where-Object { $_.vmName -eq $vmName }
@@ -352,7 +352,7 @@ function New-NutanixProtectionDomain {
                 Write-Host "    Adding VM: $vmName" -ForegroundColor White
             }
         }
-        
+
         if ($VMUUIDs) {
             foreach ($vmUUID in $VMUUIDs) {
                 $vm = Get-NTNXVM | Where-Object { $_.uuid -eq $vmUUID }
@@ -364,11 +364,11 @@ function New-NutanixProtectionDomain {
                 Write-Host "    Adding VM: $($vm.vmName)" -ForegroundColor White
             }
         }
-        
+
         # Create the protection domain
         Write-Host "    Creating protection domain..." -ForegroundColor Yellow
         $result = New-NTNXProtectionDomain -Name $ProtectionDomainName
-        
+
         # Add VMs to the protection domain if specified
         if ($vmsToAdd.Count -gt 0) {
             Write-Host "    Adding $($vmsToAdd.Count) VMs to protection domain..." -ForegroundColor Yellow
@@ -376,9 +376,9 @@ function New-NutanixProtectionDomain {
                 Add-NTNXProtectionDomainVM -ProtectionDomainName $ProtectionDomainName -VmUuid $vmUUID
             }
         }
-        
+
         Write-Host "    ✓ Protection domain '$ProtectionDomainName' created successfully" -ForegroundColor Green
-        
+
         return @{
             ProtectionDomainName = $ProtectionDomainName
             ProtectionDomainUUID = $result.uuid
@@ -403,13 +403,13 @@ function New-NutanixProtectionDomain {
 # Function to delete a protection domain
 function Remove-NutanixProtectionDomain {
     param($ProtectionDomain, $Force)
-    
+
     try {
         Write-Host "  Deleting protection domain: $($ProtectionDomain.name)" -ForegroundColor Cyan
-        
+
         # Check if protection domain has VMs
         $vmCount = if ($ProtectionDomain.vms) { $ProtectionDomain.vms.Count } else { 0 }
-        
+
         if ($vmCount -gt 0 -and -not $Force) {
             Write-Warning "    Protection domain contains $vmCount VM(s). Use -Force to delete anyway."
             return @{
@@ -422,7 +422,7 @@ function Remove-NutanixProtectionDomain {
                 LastUpdated = Get-Date
             }
         }
-        
+
         # Confirm deletion
         if (-not $Force) {
             $confirmation = Read-Host "Are you sure you want to delete protection domain '$($ProtectionDomain.name)'? (y/N)"
@@ -437,13 +437,13 @@ function Remove-NutanixProtectionDomain {
                 }
             }
         }
-        
+
         # Delete the protection domain
         Write-Host "    Deleting protection domain..." -ForegroundColor Yellow
         Remove-NTNXProtectionDomain -ProtectionDomainUuid $ProtectionDomain.uuid
-        
+
         Write-Host "    ✓ Protection domain '$($ProtectionDomain.name)' deleted successfully" -ForegroundColor Green
-        
+
         return @{
             ProtectionDomainName = $ProtectionDomain.name
             ProtectionDomainUUID = $ProtectionDomain.uuid
@@ -468,13 +468,13 @@ function Remove-NutanixProtectionDomain {
 # Function to add VMs to protection domain
 function Add-VMsToProtectionDomain {
     param($ProtectionDomain, $VMNames, $VMUUIDs)
-    
+
     try {
         Write-Host "  Adding VMs to protection domain: $($ProtectionDomain.name)" -ForegroundColor Cyan
-        
+
         $vmsAdded = @()
         $errors = @()
-        
+
         # Process VM names
         if ($VMNames) {
             foreach ($vmName in $VMNames) {
@@ -484,13 +484,13 @@ function Add-VMsToProtectionDomain {
                         $errors += "VM '$vmName' not found"
                         continue
                     }
-                    
+
                     # Check if VM is already in protection domain
                     if ($ProtectionDomain.vms -and $ProtectionDomain.vms.vmUuid -contains $vm.uuid) {
                         Write-Warning "    VM '$vmName' is already in protection domain"
                         continue
                     }
-                    
+
                     Add-NTNXProtectionDomainVM -ProtectionDomainName $ProtectionDomain.name -VmUuid $vm.uuid
                     $vmsAdded += $vmName
                     Write-Host "    ✓ Added VM: $vmName" -ForegroundColor Green
@@ -500,7 +500,7 @@ function Add-VMsToProtectionDomain {
                 }
             }
         }
-        
+
         # Process VM UUIDs
         if ($VMUUIDs) {
             foreach ($vmUUID in $VMUUIDs) {
@@ -510,13 +510,13 @@ function Add-VMsToProtectionDomain {
                         $errors += "VM with UUID '$vmUUID' not found"
                         continue
                     }
-                    
+
                     # Check if VM is already in protection domain
                     if ($ProtectionDomain.vms -and $ProtectionDomain.vms.vmUuid -contains $vmUUID) {
                         Write-Warning "    VM '$($vm.vmName)' is already in protection domain"
                         continue
                     }
-                    
+
                     Add-NTNXProtectionDomainVM -ProtectionDomainName $ProtectionDomain.name -VmUuid $vmUUID
                     $vmsAdded += $vm.vmName
                     Write-Host "    ✓ Added VM: $($vm.vmName)" -ForegroundColor Green
@@ -526,7 +526,7 @@ function Add-VMsToProtectionDomain {
                 }
             }
         }
-        
+
         return @{
             ProtectionDomainName = $ProtectionDomain.name
             ProtectionDomainUUID = $ProtectionDomain.uuid
@@ -554,13 +554,13 @@ function Add-VMsToProtectionDomain {
 # Function to remove VMs from protection domain
 function Remove-VMsFromProtectionDomain {
     param($ProtectionDomain, $VMNames, $VMUUIDs)
-    
+
     try {
         Write-Host "  Removing VMs from protection domain: $($ProtectionDomain.name)" -ForegroundColor Cyan
-        
+
         $vmsRemoved = @()
         $errors = @()
-        
+
         # Process VM names
         if ($VMNames) {
             foreach ($vmName in $VMNames) {
@@ -570,13 +570,13 @@ function Remove-VMsFromProtectionDomain {
                         $errors += "VM '$vmName' not found"
                         continue
                     }
-                    
+
                     # Check if VM is in protection domain
                     if (-not ($ProtectionDomain.vms -and $ProtectionDomain.vms.vmUuid -contains $vm.uuid)) {
                         Write-Warning "    VM '$vmName' is not in protection domain"
                         continue
                     }
-                    
+
                     Remove-NTNXProtectionDomainVM -ProtectionDomainName $ProtectionDomain.name -VmUuid $vm.uuid
                     $vmsRemoved += $vmName
                     Write-Host "    ✓ Removed VM: $vmName" -ForegroundColor Green
@@ -586,7 +586,7 @@ function Remove-VMsFromProtectionDomain {
                 }
             }
         }
-        
+
         # Process VM UUIDs
         if ($VMUUIDs) {
             foreach ($vmUUID in $VMUUIDs) {
@@ -596,13 +596,13 @@ function Remove-VMsFromProtectionDomain {
                         $errors += "VM with UUID '$vmUUID' not found"
                         continue
                     }
-                    
+
                     # Check if VM is in protection domain
                     if (-not ($ProtectionDomain.vms -and $ProtectionDomain.vms.vmUuid -contains $vmUUID)) {
                         Write-Warning "    VM '$($vm.vmName)' is not in protection domain"
                         continue
                     }
-                    
+
                     Remove-NTNXProtectionDomainVM -ProtectionDomainName $ProtectionDomain.name -VmUuid $vmUUID
                     $vmsRemoved += $vm.vmName
                     Write-Host "    ✓ Removed VM: $($vm.vmName)" -ForegroundColor Green
@@ -612,7 +612,7 @@ function Remove-VMsFromProtectionDomain {
                 }
             }
         }
-        
+
         return @{
             ProtectionDomainName = $ProtectionDomain.name
             ProtectionDomainUUID = $ProtectionDomain.uuid
@@ -640,24 +640,24 @@ function Remove-VMsFromProtectionDomain {
 # Function to create backup schedule
 function New-ProtectionDomainSchedule {
     param($ProtectionDomain, $ScheduleName, $ScheduleType, $IntervalMinutes, $RetentionCount)
-    
+
     try {
         Write-Host "  Creating backup schedule for protection domain: $($ProtectionDomain.name)" -ForegroundColor Cyan
-        
+
         # Validate required parameters
         if (-not $ScheduleName -or -not $ScheduleType -or -not $IntervalMinutes -or -not $RetentionCount) {
             throw "ScheduleName, ScheduleType, IntervalMinutes, and RetentionCount are required for CreateSchedule operation"
         }
-        
+
         Write-Host "    Schedule Name: $ScheduleName" -ForegroundColor White
         Write-Host "    Schedule Type: $ScheduleType" -ForegroundColor White
         Write-Host "    Interval: $IntervalMinutes minutes" -ForegroundColor White
         Write-Host "    Retention: $RetentionCount snapshots" -ForegroundColor White
-        
+
         # Create schedule specification
         # Note: The exact API for creating schedules may vary based on SDK version
         # This is a conceptual implementation
-        
+
         $scheduleSpec = @{
             type = $ScheduleType.ToLower()
             intervalInSecs = $IntervalMinutes * 60
@@ -665,14 +665,14 @@ function New-ProtectionDomainSchedule {
                 numSnapshots = $RetentionCount
             }
         }
-        
+
         Write-Host "    Creating backup schedule..." -ForegroundColor Yellow
-        
+
         # Note: Actual schedule creation would use appropriate SDK method
         # Example: New-NTNXProtectionDomainSchedule or similar
-        
+
         Write-Host "    ✓ Backup schedule '$ScheduleName' created successfully" -ForegroundColor Green
-        
+
         return @{
             ProtectionDomainName = $ProtectionDomain.name
             ProtectionDomainUUID = $ProtectionDomain.uuid
@@ -702,14 +702,14 @@ function New-ProtectionDomainSchedule {
 # Function to get protection domain status
 function Get-ProtectionDomainStatus {
     param($ProtectionDomain)
-    
+
     try {
         Write-Host "  Getting protection domain status: $($ProtectionDomain.name)" -ForegroundColor Cyan
-        
+
         $vmCount = if ($ProtectionDomain.vms) { $ProtectionDomain.vms.Count } else { 0 }
         $scheduleCount = if ($ProtectionDomain.cronSchedules) { $ProtectionDomain.cronSchedules.Count } else { 0 }
         $replicationCount = if ($ProtectionDomain.replicationLinks) { $ProtectionDomain.replicationLinks.Count } else { 0 }
-        
+
         # Get VM details
         $vmDetails = @()
         if ($ProtectionDomain.vms) {
@@ -725,7 +725,7 @@ function Get-ProtectionDomainStatus {
                 }
             }
         }
-        
+
         $status = @{
             ProtectionDomainName = $ProtectionDomain.name
             ProtectionDomainUUID = $ProtectionDomain.uuid
@@ -738,9 +738,9 @@ function Get-ProtectionDomainStatus {
             Description = if ($ProtectionDomain.description) { $ProtectionDomain.description } else { "No description" }
             LastUpdated = Get-Date
         }
-        
+
         Write-Host "    ✓ Status collected - $vmCount VMs, $scheduleCount schedules, $replicationCount replications" -ForegroundColor Green
-        
+
         return $status
     }
     catch {
@@ -757,9 +757,9 @@ function Get-ProtectionDomainStatus {
 # Function to display results
 function Show-ProtectionDomainResults {
     param($Results, $Operation, $OutputFormat, $OutputPath)
-    
+
     Write-Host "`n=== Protection Domain $Operation Results ===" -ForegroundColor Cyan
-    
+
     switch ($Operation) {
         "List" {
             if ($OutputFormat -eq "Console") {
@@ -789,7 +789,7 @@ function Show-ProtectionDomainResults {
             }
         }
     }
-    
+
     # Export results if requested
     if ($OutputFormat -ne "Console") {
         switch ($OutputFormat) {
@@ -822,36 +822,36 @@ function Show-ProtectionDomainResults {
 # Main execution
 try {
     Write-Host "=== Nutanix Protection Domain Operations ===" -ForegroundColor Cyan
-    
+
     # Determine target server
     $targetServer = if ($PrismCentral) { $PrismCentral } else { $PrismElement }
     $serverType = if ($PrismCentral) { "Prism Central" } else { "Prism Element" }
-    
+
     if (-not $targetServer) {
         throw "Either PrismCentral or PrismElement parameter must be specified"
     }
-    
+
     Write-Host "Target $serverType`: $targetServer" -ForegroundColor White
     Write-Host "Operation: $Operation" -ForegroundColor White
     Write-Host ""
-    
+
     # Check and install Nutanix PowerShell SDK
     if (-not (Test-NutanixSDKInstallation)) {
         throw "Nutanix PowerShell SDK installation failed"
     }
-    
+
     # Connect to Nutanix
     $connection = Connect-ToNutanix -Server $targetServer -ServerType $serverType
-    
+
     # Get target protection domains (not needed for create operations)
     $targetProtectionDomains = @()
     if ($Operation -ne "Create") {
         $targetProtectionDomains = Get-TargetProtectionDomains -ClusterName $ClusterName -ClusterUUID $ClusterUUID -ProtectionDomainName $ProtectionDomainName -ProtectionDomainNames $ProtectionDomainNames -ProtectionDomainUUID $ProtectionDomainUUID
     }
-    
+
     # Perform operations
     $results = @()
-    
+
     switch ($Operation) {
         "List" {
             $results = Get-ProtectionDomainList -ProtectionDomains $targetProtectionDomains
@@ -920,10 +920,10 @@ try {
             }
         }
     }
-    
+
     # Display results
     Show-ProtectionDomainResults -Results $results -Operation $Operation -OutputFormat $OutputFormat -OutputPath $OutputPath
-    
+
     Write-Host "`n=== Protection Domain Operations Completed ===" -ForegroundColor Green
 }
 catch {

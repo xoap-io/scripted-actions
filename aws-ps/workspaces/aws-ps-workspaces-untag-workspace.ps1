@@ -17,11 +17,11 @@ try {
             Write-Warning "WorkSpace $id not found, skipping"
             continue
         }
-        
+
         Write-Host "Removing tags from WorkSpace $id..." -ForegroundColor Cyan
-        
+
         Remove-WKSWorkspaceTag -WorkspaceId $id -TagKeys $TagKeys
-        
+
         Write-Host "Tags removed successfully from WorkSpace ${id}:" -ForegroundColor Green
         foreach ($key in $TagKeys) {
             Write-Host "  $key" -ForegroundColor White

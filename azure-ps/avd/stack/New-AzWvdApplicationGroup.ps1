@@ -282,7 +282,7 @@ if ($Tags) {
 # Set Error Action to Stop
 $ErrorActionPreference = "Stop"
 
-try {    
+try {
     # Create the application group and capture the result
     $result = New-AzWvdApplicationGroup @parameters
 

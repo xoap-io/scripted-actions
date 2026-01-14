@@ -140,7 +140,7 @@ try {
 
         $volumeData = $volumeResult | ConvertFrom-Json
         $volumeInfo = $volumeData.Volumes[0]
-        
+
         Write-Output "Volume state: $($volumeInfo.State)"
         Write-Output "Volume size: $($volumeInfo.Size) GB"
         Write-Output "Volume type: $($volumeInfo.VolumeType)"
@@ -179,37 +179,37 @@ try {
 
             Write-Output "Attaching volume $volume to device $deviceName"
             $attachResult = aws ec2 attach-volume --volume-id $volume --instance-id $InstanceId --device $deviceName @awsArgs 2>&1
-            
+
             if ($LASTEXITCODE -eq 0) {
                 Write-Output "✅ Successfully initiated attachment of volume $volume to device $deviceName"
-                
+
                 # Wait for attachment to complete
                 Write-Output "Waiting for attachment to complete..."
                 $maxWait = 60
                 $waited = 0
-                
+
                 do {
                     Start-Sleep -Seconds 5
                     $waited += 5
-                    
+
                     $checkResult = aws ec2 describe-volumes --volume-ids $volume @awsArgs --output json 2>&1
                     if ($LASTEXITCODE -eq 0) {
                         $checkData = $checkResult | ConvertFrom-Json
                         $checkVolume = $checkData.Volumes[0]
-                        
+
                         if ($checkVolume.Attachments -and $checkVolume.Attachments[0].State -eq 'attached') {
                             Write-Output "✅ Volume $volume successfully attached"
                             break
                         }
-                        
+
                         Write-Output "Attachment state: $($checkVolume.Attachments[0].State)"
                     }
                 } while ($waited -lt $maxWait)
-                
+
                 if ($waited -ge $maxWait) {
                     Write-Warning "Attachment of volume $volume may still be in progress after $maxWait seconds"
                 }
-                
+
             } else {
                 Write-Warning "Failed to attach volume $volume : $attachResult"
             }
@@ -218,7 +218,7 @@ try {
             # Check if volume is attached to this instance
             $attachedToInstance = $false
             $attachmentState = 'unknown'
-            
+
             if ($volumeInfo.Attachments) {
                 foreach ($attachment in $volumeInfo.Attachments) {
                     if ($attachment.InstanceId -eq $InstanceId) {
@@ -249,39 +249,39 @@ try {
 
             Write-Output "Detaching volume $volume"
             $detachResult = & aws @detachArgs 2>&1
-            
+
             if ($LASTEXITCODE -eq 0) {
                 Write-Output "✅ Successfully initiated detachment of volume $volume"
-                
+
                 # Wait for detachment to complete
                 Write-Output "Waiting for detachment to complete..."
                 $maxWait = 60
                 $waited = 0
-                
+
                 do {
                     Start-Sleep -Seconds 5
                     $waited += 5
-                    
+
                     $checkResult = aws ec2 describe-volumes --volume-ids $volume @awsArgs --output json 2>&1
                     if ($LASTEXITCODE -eq 0) {
                         $checkData = $checkResult | ConvertFrom-Json
                         $checkVolume = $checkData.Volumes[0]
-                        
+
                         if ($checkVolume.State -eq 'available') {
                             Write-Output "✅ Volume $volume successfully detached and is now available"
                             break
                         }
-                        
+
                         if ($checkVolume.Attachments) {
                             Write-Output "Detachment state: $($checkVolume.Attachments[0].State)"
                         }
                     }
                 } while ($waited -lt $maxWait)
-                
+
                 if ($waited -ge $maxWait) {
                     Write-Warning "Detachment of volume $volume may still be in progress after $maxWait seconds"
                 }
-                
+
             } else {
                 Write-Warning "Failed to detach volume $volume : $detachResult"
             }

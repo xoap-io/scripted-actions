@@ -30,22 +30,22 @@
 
 .EXAMPLE
     .\azure-ps-stop-running-vms.ps1
-    
+
     Stops all running VMs in the current subscription with confirmation prompts.
 
 .EXAMPLE
     .\azure-ps-stop-running-vms.ps1 -ResourceGroupName "prod-rg" -WhatIf
-    
+
     Shows what VMs would be stopped in the 'prod-rg' resource group without actually stopping them.
 
 .EXAMPLE
     .\azure-ps-terminate-vms.ps1 -VMNamePattern "web-*" -Force -Parallel
-    
+
     Stops all running VMs with names starting with 'web-' without confirmation, using parallel execution.
 
 .EXAMPLE
     .\azure-ps-terminate-vms.ps1 -SubscriptionId "12345678-1234-1234-1234-123456789012" -IncludeDeallocated
-    
+
     Stops running VMs in a specific subscription and shows deallocated VMs for comparison.
 
 .NOTES
@@ -354,7 +354,7 @@ try {
     Write-Host "   🎯 Target VMs: $($runningVMs.Count)" -ForegroundColor Cyan
     Write-Host "   ✅ Successfully Stopped: $($successfulStops.Count)" -ForegroundColor Green
     Write-Host "   ❌ Failed: $($failedStops.Count)" -ForegroundColor Red
-    
+
     if ($successfulStops.Count -gt 0) {
         Write-Host "`n💰 Cost Savings: VMs are now deallocated and not incurring compute charges" -ForegroundColor Green
     }

@@ -6,7 +6,7 @@
     This script deletes an Azure Network Security Group rule using the Azure CLI with comprehensive safety checks and validation.
     Includes rule existence verification, dependency checking, backup options, compliance tagging, and notifications.
     Provides detailed confirmation prompts and rollback capabilities for safety.
-    
+
     The script uses the Azure CLI command: az network nsg rule delete
 
 .PARAMETER Name
@@ -114,13 +114,13 @@ function Test-AzureCLI {
         if ($LASTEXITCODE -ne 0) {
             throw "Azure CLI is not installed or not functioning correctly"
         }
-        
+
         Write-Host "🔍 Checking Azure CLI authentication..." -ForegroundColor Cyan
         $null = az account show 2>$null
         if ($LASTEXITCODE -ne 0) {
             throw "Not authenticated to Azure CLI. Please run 'az login' first"
         }
-        
+
         Write-Host "✅ Azure CLI validation successful" -ForegroundColor Green
         return $true
     }
@@ -133,7 +133,7 @@ function Test-AzureCLI {
 # Function to validate NSG exists
 function Test-NSGExists {
     param($ResourceGroup, $NsgName)
-    
+
     try {
         Write-Host "🔍 Validating NSG '$NsgName' exists in resource group '$ResourceGroup'..." -ForegroundColor Cyan
         $nsg = az network nsg show --resource-group $ResourceGroup --name $NsgName --query "name" --output tsv 2>$null
@@ -152,7 +152,7 @@ function Test-NSGExists {
 # Function to get rule details
 function Get-NSGRuleDetails {
     param($ResourceGroup, $NsgName, $RuleName)
-    
+
     try {
         Write-Host "🔍 Getting details for rule '$RuleName'..." -ForegroundColor Cyan
         $rule = az network nsg rule show --resource-group $ResourceGroup --nsg-name $NsgName --name $RuleName --output json | ConvertFrom-Json
@@ -171,40 +171,40 @@ function Get-NSGRuleDetails {
 # Function to check if rule is a default Azure rule
 function Test-IsDefaultRule {
     param($RuleName)
-    
+
     $defaultRules = @(
         'AllowVnetInBound',
-        'AllowAzureLoadBalancerInBound', 
+        'AllowAzureLoadBalancerInBound',
         'DenyAllInBound',
         'AllowVnetOutBound',
         'AllowInternetOutBound',
         'DenyAllOutBound'
     )
-    
+
     return $defaultRules -contains $RuleName
 }
 
 # Function to analyze rule dependencies
 function Get-RuleDependencies {
     param($ResourceGroup, $NsgName, $RuleToDelete)
-    
+
     Write-Host "🔍 Analyzing rule dependencies..." -ForegroundColor Cyan
     $dependencies = @()
-    
+
     try {
         # Get all rules in the NSG
         $allRules = az network nsg rule list --resource-group $ResourceGroup --nsg-name $NsgName --output json | ConvertFrom-Json
-        
+
         # Check for rules that might depend on this rule's order/priority
         $ruleToDeletePriority = $RuleToDelete.priority
-        
+
         # Find rules with lower priority (higher number) that might rely on this rule's block/allow
-        $dependentRules = $allRules | Where-Object { 
+        $dependentRules = $allRules | Where-Object {
             $_.priority -gt $ruleToDeletePriority -and
             $_.direction -eq $RuleToDelete.direction -and
             $_.access -ne $RuleToDelete.access
         }
-        
+
         foreach ($rule in $dependentRules) {
             $dependencies += @{
                 RuleName = $rule.name
@@ -212,7 +212,7 @@ function Get-RuleDependencies {
                 Reason = "Lower priority rule with opposite access type - deletion may affect traffic flow"
             }
         }
-        
+
         # Check for ASG dependencies if the rule uses ASGs
         if ($RuleToDelete.sourceApplicationSecurityGroups -or $RuleToDelete.destinationApplicationSecurityGroups) {
             $dependencies += @{
@@ -221,7 +221,7 @@ function Get-RuleDependencies {
                 Reason = "Rule uses Application Security Groups - verify ASG dependencies"
             }
         }
-        
+
         return $dependencies
     }
     catch {
@@ -233,15 +233,15 @@ function Get-RuleDependencies {
 # Function to create rule backup
 function Backup-NSGRule {
     param($Rule, $BackupPath)
-    
+
     try {
         if ([string]::IsNullOrEmpty($BackupPath)) {
             $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
             $BackupPath = "./nsg-rule-backup-$($Rule.name)-$timestamp.json"
         }
-        
+
         Write-Host "💾 Creating backup of rule '$($Rule.name)'..." -ForegroundColor Cyan
-        
+
         $backupData = @{
             Metadata = @{
                 BackupDate = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
@@ -252,7 +252,7 @@ function Backup-NSGRule {
             Rule = $Rule
             RestoreCommand = "az network nsg rule create --resource-group `"$($Rule.id.Split('/')[4])`" --nsg-name `"$($Rule.id.Split('/')[-3])`" --name `"$($Rule.name)`" --priority $($Rule.priority) --direction `"$($Rule.direction)`" --access `"$($Rule.access)`" --protocol `"$($Rule.protocol)`" --source-address-prefixes `"$($Rule.sourceAddressPrefix)`" --source-port-ranges `"$($Rule.sourcePortRange)`" --destination-address-prefixes `"$($Rule.destinationAddressPrefix)`" --destination-port-ranges `"$($Rule.destinationPortRange)`""
         }
-        
+
         $backupData | ConvertTo-Json -Depth 10 | Out-File -FilePath $BackupPath -Encoding UTF8
         Write-Host "✅ Backup created: $BackupPath" -ForegroundColor Green
         return $BackupPath
@@ -266,7 +266,7 @@ function Backup-NSGRule {
 # Function to show rule details
 function Show-RuleDetails {
     param($Rule)
-    
+
     Write-Host "`n📋 Rule Details:" -ForegroundColor Yellow
     Write-Host "   Name: $($Rule.name)" -ForegroundColor White
     Write-Host "   Priority: $($Rule.priority)" -ForegroundColor White
@@ -277,7 +277,7 @@ function Show-RuleDetails {
     Write-Host "   Source Ports: $($Rule.sourcePortRange)" -ForegroundColor White
     Write-Host "   Destination: $($Rule.destinationAddressPrefix)" -ForegroundColor White
     Write-Host "   Destination Ports: $($Rule.destinationPortRange)" -ForegroundColor White
-    
+
     if ($Rule.description) {
         Write-Host "   Description: $($Rule.description)" -ForegroundColor White
     }
@@ -287,7 +287,7 @@ function Show-RuleDetails {
 # Function to show dependencies
 function Show-Dependencies {
     param($Dependencies)
-    
+
     if ($Dependencies.Count -gt 0) {
         Write-Host "⚠️ Rule Dependencies Found:" -ForegroundColor Yellow
         foreach ($dep in $Dependencies) {
@@ -304,19 +304,19 @@ function Show-Dependencies {
 # Function to get confirmation
 function Get-UserConfirmation {
     param($Rule, $Dependencies)
-    
+
     Write-Host "`n❗ DELETION CONFIRMATION" -ForegroundColor Red
     Write-Host "You are about to delete the NSG rule:" -ForegroundColor Yellow
     Write-Host "   Rule: $($Rule.name)" -ForegroundColor White
     Write-Host "   NSG: $($Rule.id.Split('/')[-3])" -ForegroundColor White
     Write-Host "   Resource Group: $($Rule.id.Split('/')[4])" -ForegroundColor White
-    
+
     if ($Dependencies.Count -gt 0) {
         Write-Host "`n⚠️ This action may affect $($Dependencies.Count) dependent rule(s)" -ForegroundColor Yellow
     }
-    
+
     Write-Host "`n⚠️ This action cannot be undone!" -ForegroundColor Red
-    
+
     do {
         $confirmation = Read-Host "`nType 'DELETE' to confirm deletion, or 'CANCEL' to abort"
         if ($confirmation -eq 'CANCEL') {
@@ -335,23 +335,23 @@ function Get-UserConfirmation {
 try {
     Write-Host "🚀 Starting NSG Rule Deletion" -ForegroundColor Green
     Write-Host "=============================" -ForegroundColor Green
-    
+
     # Validate Azure CLI
     if (-not (Test-AzureCLI)) {
         exit 1
     }
-    
+
     # Validate NSG exists
     if (-not (Test-NSGExists -ResourceGroup $ResourceGroup -NsgName $NsgName)) {
         exit 1
     }
-    
+
     # Get rule details
     $rule = Get-NSGRuleDetails -ResourceGroup $ResourceGroup -NsgName $NsgName -RuleName $Name
     if (-not $rule) {
         exit 1
     }
-    
+
     # Check if it's a default Azure rule
     if (Test-IsDefaultRule -RuleName $Name) {
         Write-Warning "⚠️ '$Name' appears to be a default Azure security rule. Deletion may not be possible or recommended."
@@ -363,14 +363,14 @@ try {
             }
         }
     }
-    
+
     # Show rule details
     Show-RuleDetails -Rule $rule
-    
+
     # Analyze dependencies
     $dependencies = Get-RuleDependencies -ResourceGroup $ResourceGroup -NsgName $NsgName -RuleToDelete $rule
     Show-Dependencies -Dependencies $dependencies
-    
+
     # WhatIf mode
     if ($WhatIf) {
         Write-Host "🔍 WHAT-IF MODE: The following rule would be deleted:" -ForegroundColor Cyan
@@ -386,7 +386,7 @@ try {
         Write-Host "✅ WhatIf analysis completed - no changes made" -ForegroundColor Green
         exit 0
     }
-    
+
     # Create backup if requested
     $backupPath = $null
     if ($BackupRule) {
@@ -395,7 +395,7 @@ try {
             Write-Warning "Backup failed - continuing with deletion"
         }
     }
-    
+
     # Get confirmation unless Force is specified
     if (-not $Force) {
         if (-not (Get-UserConfirmation -Rule $rule -Dependencies $dependencies)) {
@@ -403,11 +403,11 @@ try {
             exit 0
         }
     }
-    
+
     # Delete the rule
     Write-Host "🔧 Deleting NSG rule '$Name'..." -ForegroundColor Cyan
     $null = az network nsg rule delete --resource-group $ResourceGroup --nsg-name $NsgName --name $Name
-    
+
     if ($LASTEXITCODE -eq 0) {
         Write-Host "✅ NSG rule '$Name' deleted successfully!" -ForegroundColor Green
         if ($ComplianceTag) {
@@ -422,12 +422,12 @@ try {
             Write-Host "💬 Slack notification sent" -ForegroundColor Cyan
             # In real implementation, send to Slack webhook
         }
-        
+
         if ($backupPath) {
             Write-Host "💾 Backup available at: $backupPath" -ForegroundColor Cyan
             Write-Host "📝 To restore, use the RestoreCommand from the backup file" -ForegroundColor Gray
         }
-        
+
         # Show remaining rules
         Write-Host "`n📋 Remaining Rules in NSG '$NsgName':" -ForegroundColor Yellow
         $remainingRules = az network nsg rule list --resource-group $ResourceGroup --nsg-name $NsgName --output table

@@ -3,8 +3,8 @@
     Deploy Azure VM for Azure Stack HCI nested virtualization testing.
 
 .DESCRIPTION
-    This script deploys a Windows Server 2022 virtual machine in Azure with nested virtualization 
-    capabilities for testing Azure Stack HCI. The VM includes Hyper-V role installation and 
+    This script deploys a Windows Server 2022 virtual machine in Azure with nested virtualization
+    capabilities for testing Azure Stack HCI. The VM includes Hyper-V role installation and
     configuration for running nested virtual machines.
 
     The script supports both DryRun mode for testing and actual deployment. In DryRun mode,
@@ -63,9 +63,9 @@
 
 .NOTES
     Requires Azure PowerShell module (Az) to be installed and authenticated.
-    VM sizes that support nested virtualization: Standard_D2s_v3, Standard_D4s_v3, Standard_D8s_v3, 
-    Standard_D16s_v3, Standard_D32s_v3, Standard_E2s_v3, Standard_E4s_v3, Standard_E8s_v3, 
-    Standard_E16s_v3, Standard_E32s_v3, Standard_F2s_v2, Standard_F4s_v2, Standard_F8s_v2, 
+    VM sizes that support nested virtualization: Standard_D2s_v3, Standard_D4s_v3, Standard_D8s_v3,
+    Standard_D16s_v3, Standard_D32s_v3, Standard_E2s_v3, Standard_E4s_v3, Standard_E8s_v3,
+    Standard_E16s_v3, Standard_E32s_v3, Standard_F2s_v2, Standard_F4s_v2, Standard_F8s_v2,
     Standard_F16s_v2, Standard_F32s_v2
 
     Author: Azure Infrastructure Team
@@ -143,7 +143,7 @@ function Write-ColorOutput {
         [string]$Message,
         [string]$Color = 'White'
     )
-    
+
     if ($DryRun) {
         Write-Host "[DRY RUN] $Message" -ForegroundColor Cyan
     } else {
@@ -184,7 +184,7 @@ try {
     Write-ColorOutput "Target Location: $Location" -Color White
     Write-ColorOutput "VM Size: $VmSize" -Color White
     Write-ColorOutput "Windows SKU: $WindowsSku" -Color White
-    
+
     if ($DryRun) {
         Write-ColorOutput "DRY RUN MODE - No actual resources will be created" -Color Yellow
     }
@@ -199,7 +199,7 @@ try {
 
     # Create or verify resource group
     Write-ColorOutput "Checking resource group '$ResourceGroup'..." -Color Yellow
-    
+
     if ($DryRun) {
         Write-ColorOutput "Would check/create resource group '$ResourceGroup' in '$Location'" -Color Cyan
     } else {
@@ -221,7 +221,7 @@ try {
 
     # Create virtual network
     Write-ColorOutput "Creating virtual network '$VNetName'..." -Color Yellow
-    
+
     if ($DryRun) {
         Write-ColorOutput "Would create VNet '$VNetName' with address space $VNetAddressPrefix" -Color Cyan
         Write-ColorOutput "Would create subnet '$SubnetName' with address space $SubnetAddressPrefix" -Color Cyan
@@ -239,7 +239,7 @@ try {
 
     # Create network security group
     Write-ColorOutput "Creating network security group '$NSGName'..." -Color Yellow
-    
+
     if ($DryRun) {
         Write-ColorOutput "Would create NSG '$NSGName' with RDP rule (port 3389)" -Color Cyan
     } else {
@@ -256,7 +256,7 @@ try {
 
     # Create public IP
     Write-ColorOutput "Creating public IP '$PublicIPName'..." -Color Yellow
-    
+
     if ($DryRun) {
         Write-ColorOutput "Would create public IP '$PublicIPName' with static allocation" -Color Cyan
     } else {
@@ -272,7 +272,7 @@ try {
 
     # Create network interface
     Write-ColorOutput "Creating network interface '$NICName'..." -Color Yellow
-    
+
     if ($DryRun) {
         Write-ColorOutput "Would create NIC '$NICName' and associate with subnet, NSG, and public IP" -Color Cyan
     } else {
@@ -281,7 +281,7 @@ try {
             $subnet = Get-AzVirtualNetworkSubnetConfig -VirtualNetwork $vnet -Name $SubnetName
             $nsg = Get-AzNetworkSecurityGroup -ResourceGroupName $ResourceGroup -Name $NSGName
             $pip = Get-AzPublicIpAddress -ResourceGroupName $ResourceGroup -Name $PublicIPName
-            
+
             $nic = New-AzNetworkInterface -ResourceGroupName $ResourceGroup -Location $Location -Name $NICName -SubnetId $subnet.Id -PublicIpAddressId $pip.Id -NetworkSecurityGroupId $nsg.Id
             Write-ColorOutput "Network interface created successfully" -Color Green
         }
@@ -293,7 +293,7 @@ try {
 
     # Create virtual machine
     Write-ColorOutput "Creating virtual machine '$VmName'..." -Color Yellow
-    
+
     if ($DryRun) {
         Write-ColorOutput "Would create VM '$VmName' with Windows Server $WindowsSku" -Color Cyan
         Write-ColorOutput "Would configure VM with size '$VmSize' and enable nested virtualization" -Color Cyan
@@ -301,19 +301,19 @@ try {
         try {
             # Create credential object
             $credential = New-Object System.Management.Automation.PSCredential ($AdminUser, $AdminPassword)
-            
+
             # Create VM configuration
             $vmConfig = New-AzVMConfig -VMName $VmName -VMSize $VmSize
             $vmConfig = Set-AzVMOperatingSystem -VM $vmConfig -Windows -ComputerName $VmName -Credential $credential -ProvisionVMAgent -EnableAutoUpdate
             $vmConfig = Set-AzVMSourceImage -VM $vmConfig -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Skus $WindowsSku -Version "latest"
-            
+
             # Get network interface
             $nic = Get-AzNetworkInterface -ResourceGroupName $ResourceGroup -Name $NICName
             $vmConfig = Add-AzVMNetworkInterface -VM $vmConfig -Id $nic.Id
-            
+
             # Set OS disk
             $vmConfig = Set-AzVMOSDisk -VM $vmConfig -CreateOption FromImage -StorageAccountType Premium_LRS
-            
+
             # Create the VM
             $vm = New-AzVM -ResourceGroupName $ResourceGroup -Location $Location -VM $vmConfig
             Write-ColorOutput "Virtual machine created successfully" -Color Green
@@ -326,7 +326,7 @@ try {
 
     # Configure nested virtualization and install Hyper-V
     Write-ColorOutput "Configuring nested virtualization and installing Hyper-V..." -Color Yellow
-    
+
     if ($DryRun) {
         Write-ColorOutput "Would stop VM to enable nested virtualization" -Color Cyan
         Write-ColorOutput "Would install Hyper-V role and management tools" -Color Cyan
@@ -336,36 +336,36 @@ try {
             # Stop VM to enable nested virtualization
             Write-ColorOutput "Stopping VM to enable nested virtualization..." -Color Yellow
             Stop-AzVM -ResourceGroupName $ResourceGroup -Name $VmName -Force
-            
+
             # Enable nested virtualization
             Write-ColorOutput "Enabling nested virtualization..." -Color Yellow
             $vm = Get-AzVM -ResourceGroupName $ResourceGroup -Name $VmName
             $vm.HardwareProfile.VmSize = $VmSize
             Update-AzVM -ResourceGroupName $ResourceGroup -VM $vm
-            
+
             # Start VM
             Write-ColorOutput "Starting VM..." -Color Yellow
             Start-AzVM -ResourceGroupName $ResourceGroup -Name $VmName
-            
+
             # Wait for VM to be ready
             Write-ColorOutput "Waiting for VM to be ready..." -Color Yellow
             Start-Sleep -Seconds 120
-            
+
             # Install Hyper-V role using Custom Script Extension
             Write-ColorOutput "Installing Hyper-V role..." -Color Yellow
-            
+
             $scriptContent = @"
 # Install Hyper-V role and management tools
 Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V -All -NoRestart
 Add-WindowsCapability -Online -Name 'Rsat.Hyper-V.Tools~~~~0.0.1.0' -ErrorAction SilentlyContinue
 Restart-Computer -Force
 "@
-            
+
             $scriptBytes = [System.Text.Encoding]::UTF8.GetBytes($scriptContent)
             $scriptBase64 = [System.Convert]::ToBase64String($scriptBytes)
-            
+
             Set-AzVMCustomScriptExtension -ResourceGroupName $ResourceGroup -VMName $VmName -Name "InstallHyperV" -FileUri @() -Run "powershell.exe" -Argument "-encodedCommand $scriptBase64" -Location $Location
-            
+
             Write-ColorOutput "Hyper-V installation initiated. VM will restart automatically." -Color Green
         }
         catch {
@@ -376,7 +376,7 @@ Restart-Computer -Force
 
     # Display deployment summary
     Write-ColorOutput "`n=== Deployment Summary ===" -Color Cyan
-    
+
     if ($DryRun) {
         Write-ColorOutput "DRY RUN COMPLETED - Resources that would be created:" -Color Yellow
         Write-ColorOutput "- Resource Group: $ResourceGroup" -Color White
@@ -400,7 +400,7 @@ Restart-Computer -Force
         Write-ColorOutput "- Public IP: $PublicIPName" -Color White
         Write-ColorOutput "- Network Interface: $NICName" -Color White
         Write-ColorOutput "- Virtual Machine: $VmName" -Color White
-        
+
         # Get public IP address - only if not in DryRun mode
         try {
             $publicIP = Get-AzPublicIpAddress -ResourceGroupName $ResourceGroup -Name $PublicIPName
@@ -414,7 +414,7 @@ Restart-Computer -Force
         catch {
             Write-Warning "Could not retrieve public IP address information"
         }
-        
+
         Write-ColorOutput "`nNote: Hyper-V installation is in progress. The VM will restart automatically to complete the installation." -Color Yellow
         Write-ColorOutput "After the restart, you can connect to the VM and start creating nested VMs for Azure Stack HCI testing." -Color Yellow
     }

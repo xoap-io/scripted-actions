@@ -58,7 +58,7 @@
 
 .NOTES
     Requires Azure PowerShell module (Az) to be installed and authenticated.
-    
+
     VM sizes that support nested virtualization: Standard_D8s_v5, Standard_D16s_v5, Standard_D32s_v5,
     Standard_E8s_v5, Standard_E16s_v5, Standard_E32s_v5, etc.
 
@@ -127,7 +127,7 @@ function Write-ColorOutput {
         [string]$Message,
         [string]$Color = 'White'
     )
-    
+
     if ($DryRun) {
         Write-Host "[DRY RUN] $Message" -ForegroundColor Cyan
     } else {
@@ -169,7 +169,7 @@ try {
     Write-ColorOutput "Naming Prefix: $NamingPrefix" -Color White
     Write-ColorOutput "VM Size: $VmSize" -Color White
     Write-ColorOutput "Deploy Bastion: $DeployBastion" -Color White
-    
+
     if ($DryRun) {
         Write-ColorOutput "DRY RUN MODE - No actual resources will be created" -Color Yellow
     } else {
@@ -200,7 +200,7 @@ try {
 
     # Provider registrations (best effort)
     Write-ColorOutput "Checking Azure resource provider registrations..." -Color Yellow
-    
+
     $providers = @(
         "Microsoft.Compute", "Microsoft.Network", "Microsoft.Storage", "Microsoft.KeyVault", "Microsoft.ManagedIdentity",
         "Microsoft.Automation", "Microsoft.OperationalInsights", "Microsoft.Monitor",
@@ -231,7 +231,7 @@ try {
 
     # Resource group
     Write-ColorOutput "Checking resource group '$ResourceGroup'..." -Color Yellow
-    
+
     if ($DryRun) {
         Write-ColorOutput "Would check/create resource group '$ResourceGroup' in '$Location'" -Color Cyan
     } else {
@@ -253,7 +253,7 @@ try {
 
     # Parameters for Bicep template
     Write-ColorOutput "Preparing deployment parameters..." -Color Yellow
-    
+
     if ($DryRun) {
         Write-ColorOutput "Would use the following deployment parameters:" -Color Cyan
         Write-ColorOutput "  - Location: $Location" -Color White
@@ -267,7 +267,7 @@ try {
     } else {
         # Convert SecureString to plain text for template parameter
         $PlainPwd = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($WinAdminPassword))
-        
+
         $Params = @{
             location              = $Location
             namingPrefix          = $NamingPrefix
@@ -282,7 +282,7 @@ try {
 
     # Deployment
     Write-ColorOutput "Starting LocalBox Bicep deployment..." -Color Yellow
-    
+
     if ($DryRun) {
         Write-ColorOutput "Would deploy LocalBox using Bicep template" -Color Cyan
         Write-ColorOutput "Template: $TemplateUri" -Color Cyan
@@ -293,7 +293,7 @@ try {
             $deploymentName = "localbox-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
             Write-ColorOutput "Deployment name: $deploymentName" -Color White
             Write-ColorOutput "This may take 60-90 minutes to complete..." -Color Yellow
-            
+
             $deployment = New-AzResourceGroupDeployment `
                 -ResourceGroupName $ResourceGroup `
                 -TemplateUri $TemplateUri `
@@ -318,7 +318,7 @@ try {
 
     # Display deployment summary
     Write-ColorOutput "`n=== Deployment Summary ===" -Color Cyan
-    
+
     if ($DryRun) {
         Write-ColorOutput "DRY RUN COMPLETED - LocalBox deployment that would be created:" -Color Yellow
         Write-ColorOutput "- Resource Group: $ResourceGroup" -Color White
@@ -332,7 +332,7 @@ try {
         Write-ColorOutput "To deploy for real, run the script again without the -DryRun parameter" -Color Yellow
     } else {
         Write-ColorOutput "LOCALBOX DEPLOYMENT INITIATED!" -Color Green
-        
+
         # Portal links
         $rg = Get-AzResourceGroup -Name $ResourceGroup
         $portalRgUrl = "https://portal.azure.com/#view/HubsExtension/BrowseResourceGroups/resourceType/Microsoft.Resources%2FResourceGroups"
@@ -341,13 +341,13 @@ try {
         Write-ColorOutput "`nResource Group: $($rg.ResourceGroupName) | Location: $Location" -Color White
         Write-ColorOutput "Portal - Resource Groups: $portalRgUrl" -Color White
         Write-ColorOutput "Portal - Deployments (open from the RG): $portalDeploymentsUrl" -Color White
-        
+
         Write-ColorOutput "`nIMPORTANT NEXT STEPS:" -Color Yellow
         Write-ColorOutput "1. Monitor the deployment in the Azure portal (60-90 minutes expected)" -Color White
         Write-ColorOutput "2. Once Bicep deployment completes, RDP/Bastion to the LocalBox client VM" -Color White
         Write-ColorOutput "3. Allow the managed identity and automated scripts to finish configuration" -Color White
         Write-ColorOutput "4. The LocalBox environment will be ready for Azure Stack HCI testing" -Color White
-        
+
         Write-ColorOutput "`nCOST WARNING: Remember to clean up resources when done testing!" -Color Red
     }
 }

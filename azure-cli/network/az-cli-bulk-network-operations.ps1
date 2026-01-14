@@ -6,7 +6,7 @@
     This script performs bulk operations on Azure network resources using the Azure CLI.
     Supports bulk creation, deletion, configuration, and management of network resources.
     Includes batch processing capabilities with error handling and progress tracking.
-    
+
     The script uses various Azure CLI network commands for bulk operations.
 
 .PARAMETER Operation
@@ -53,17 +53,17 @@
 
 .EXAMPLE
     .\az-cli-bulk-network-operations.ps1 -Operation "Create" -ResourceType "PublicIP" -ResourceGroup "bulk-rg" -Location "East US" -NamePrefix "bulk-pip" -Count 5
-    
+
     Creates 5 public IP addresses with sequential naming.
 
 .EXAMPLE
     .\az-cli-bulk-network-operations.ps1 -Operation "Delete" -ResourceType "NSG" -ResourceGroup "cleanup-rg" -TagsFilter '{"Environment":"Test"}' -Force
-    
+
     Deletes all NSGs tagged with Environment=Test.
 
 .EXAMPLE
     .\az-cli-bulk-network-operations.ps1 -Operation "Configure" -ConfigFile "network-config.json" -DryRun
-    
+
     Previews bulk configuration from JSON file without executing.
 
 .NOTES
@@ -181,7 +181,7 @@ try {
             [string]$Message,
             [hashtable]$Details = @{}
         )
-        
+
         $result = @{
             ResourceName = $ResourceName
             Status = $Status
@@ -189,10 +189,10 @@ try {
             Details = $Details
             Timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
         }
-        
+
         $bulkResults.Details += $result
         $bulkResults.TotalOperations++
-        
+
         if ($Status -eq "Success") {
             $bulkResults.SuccessfulOperations++
         } else {
@@ -205,7 +205,7 @@ try {
         if (-not (Test-Path $ConfigFile)) {
             throw "Configuration file not found: $ConfigFile"
         }
-        
+
         try {
             $config = Get-Content $ConfigFile -Raw | ConvertFrom-Json
             Write-Host "✓ Configuration loaded from file: $ConfigFile" -ForegroundColor Green
@@ -219,15 +219,15 @@ try {
     # Function to filter resources by tags
     function Get-FilteredResources {
         param([array]$Resources)
-        
+
         if (-not $TagsFilter) {
             return $Resources
         }
-        
+
         try {
             $tagFilter = $TagsFilter | ConvertFrom-Json
             $filtered = @()
-            
+
             foreach ($resource in $Resources) {
                 $match = $true
                 foreach ($key in $tagFilter.PSObject.Properties.Name) {
@@ -240,7 +240,7 @@ try {
                     $filtered += $resource
                 }
             }
-            
+
             Write-Host "✓ Filtered to $($filtered.Count) resources based on tags" -ForegroundColor Green
             return $filtered
         }
@@ -253,16 +253,16 @@ try {
     # Function to create multiple public IPs
     function New-BulkPublicIPs {
         Write-Host "Creating $Count public IP addresses..." -ForegroundColor Yellow
-        
+
         for ($i = 1; $i -le $Count; $i++) {
             $pipName = "$NamePrefix-pip-$($i.ToString('D3'))"
-            
+
             if ($DryRun) {
                 Write-Host "  [DRY RUN] Would create: $pipName" -ForegroundColor Blue
                 Add-OperationResult -ResourceName $pipName -Status "Success" -Message "Dry run - would create public IP"
                 continue
             }
-            
+
             try {
                 $azParams = @(
                     'network', 'public-ip', 'create',
@@ -272,10 +272,10 @@ try {
                     '--sku', 'Standard',
                     '--allocation-method', 'Static'
                 )
-                
+
                 Write-Host "  Creating: $pipName" -ForegroundColor Cyan
                 $result = & az @azParams 2>&1
-                
+
                 if ($LASTEXITCODE -eq 0) {
                     Write-Host "    ✓ Created successfully" -ForegroundColor Green
                     Add-OperationResult -ResourceName $pipName -Status "Success" -Message "Public IP created successfully"
@@ -294,9 +294,9 @@ try {
     # Function to delete resources by type
     function Remove-BulkResources {
         Write-Host "Retrieving $ResourceType resources for deletion..." -ForegroundColor Yellow
-        
+
         $azListParams = @('network')
-        
+
         switch ($ResourceType) {
             "VNet" { $azListParams += 'vnet', 'list' }
             "NSG" { $azListParams += 'nsg', 'list' }
@@ -305,21 +305,21 @@ try {
             "LoadBalancer" { $azListParams += 'lb', 'list' }
             default { throw "Bulk deletion not supported for resource type: $ResourceType" }
         }
-        
+
         if ($ResourceGroup) {
             $azListParams += '--resource-group', $ResourceGroup
         }
-        
+
         $resources = & az @azListParams | ConvertFrom-Json
         $filteredResources = Get-FilteredResources -Resources $resources
-        
+
         if ($filteredResources.Count -eq 0) {
             Write-Host "No resources found matching the criteria" -ForegroundColor Yellow
             return
         }
-        
+
         Write-Host "Found $($filteredResources.Count) $ResourceType resources for deletion" -ForegroundColor White
-        
+
         if (-not $Force -and -not $DryRun) {
             Write-Host ""
             Write-Host "⚠ WARNING: This will permanently delete $($filteredResources.Count) resources!" -ForegroundColor Red
@@ -333,17 +333,17 @@ try {
                 return
             }
         }
-        
+
         foreach ($resource in $filteredResources) {
             if ($DryRun) {
                 Write-Host "  [DRY RUN] Would delete: $($resource.name)" -ForegroundColor Blue
                 Add-OperationResult -ResourceName $resource.name -Status "Success" -Message "Dry run - would delete resource"
                 continue
             }
-            
+
             try {
                 $azDeleteParams = @('network')
-                
+
                 switch ($ResourceType) {
                     "VNet" { $azDeleteParams += 'vnet', 'delete' }
                     "NSG" { $azDeleteParams += 'nsg', 'delete' }
@@ -351,14 +351,14 @@ try {
                     "RouteTable" { $azDeleteParams += 'route-table', 'delete' }
                     "LoadBalancer" { $azDeleteParams += 'lb', 'delete' }
                 }
-                
+
                 $azDeleteParams += '--name', $resource.name
                 $azDeleteParams += '--resource-group', $resource.resourceGroup
                 $azDeleteParams += '--yes'
-                
+
                 Write-Host "  Deleting: $($resource.name)" -ForegroundColor Cyan
                 $result = & az @azDeleteParams 2>&1
-                
+
                 if ($LASTEXITCODE -eq 0) {
                     Write-Host "    ✓ Deleted successfully" -ForegroundColor Green
                     Add-OperationResult -ResourceName $resource.name -Status "Success" -Message "Resource deleted successfully"
@@ -377,31 +377,31 @@ try {
     # Function to configure resources from file
     function Set-BulkConfiguration {
         $config = Get-ConfigurationFromFile
-        
+
         if (-not $config.resources) {
             throw "Configuration file must contain a 'resources' array"
         }
-        
+
         Write-Host "Processing $($config.resources.Count) resources from configuration..." -ForegroundColor Yellow
-        
+
         foreach ($resourceConfig in $config.resources) {
             if ($DryRun) {
                 Write-Host "  [DRY RUN] Would configure: $($resourceConfig.name)" -ForegroundColor Blue
                 Add-OperationResult -ResourceName $resourceConfig.name -Status "Success" -Message "Dry run - would configure resource"
                 continue
             }
-            
+
             try {
                 # Build Azure CLI command based on resource configuration
                 $azParams = @('network', $resourceConfig.type.ToLower(), 'create')
-                
+
                 foreach ($property in $resourceConfig.properties.PSObject.Properties) {
                     $azParams += "--$($property.Name.Replace('_', '-'))", $property.Value
                 }
-                
+
                 Write-Host "  Configuring: $($resourceConfig.name)" -ForegroundColor Cyan
                 $result = & az @azParams 2>&1
-                
+
                 if ($LASTEXITCODE -eq 0) {
                     Write-Host "    ✓ Configured successfully" -ForegroundColor Green
                     Add-OperationResult -ResourceName $resourceConfig.name -Status "Success" -Message "Resource configured successfully"
@@ -420,9 +420,9 @@ try {
     # Function to list resources with details
     function Get-BulkResourceList {
         Write-Host "Listing $ResourceType resources..." -ForegroundColor Yellow
-        
+
         $azListParams = @('network')
-        
+
         switch ($ResourceType) {
             "VNet" { $azListParams += 'vnet', 'list' }
             "NSG" { $azListParams += 'nsg', 'list' }
@@ -431,18 +431,18 @@ try {
             "LoadBalancer" { $azListParams += 'lb', 'list' }
             default { $azListParams += $ResourceType.ToLower(), 'list' }
         }
-        
+
         if ($ResourceGroup) {
             $azListParams += '--resource-group', $ResourceGroup
         }
-        
+
         $resources = & az @azListParams | ConvertFrom-Json
         $filteredResources = Get-FilteredResources -Resources $resources
-        
+
         Write-Host "Resource List Summary:" -ForegroundColor Cyan
         Write-Host "  Total Resources: $($filteredResources.Count)" -ForegroundColor White
         Write-Host ""
-        
+
         foreach ($resource in $filteredResources) {
             Write-Host "  📋 $($resource.name)" -ForegroundColor Blue
             Write-Host "     Resource Group: $($resource.resourceGroup)" -ForegroundColor White
@@ -452,7 +452,7 @@ try {
                 Write-Host "     Tags: $($resource.tags | ConvertTo-Json -Compress)" -ForegroundColor White
             }
             Write-Host ""
-            
+
             Add-OperationResult -ResourceName $resource.name -Status "Success" -Message "Resource listed" -Details @{
                 ResourceGroup = $resource.resourceGroup
                 Location = $resource.location
@@ -499,7 +499,7 @@ try {
     Write-Host "Total Operations: $($bulkResults.TotalOperations)" -ForegroundColor White
     Write-Host "Successful: $($bulkResults.SuccessfulOperations)" -ForegroundColor Green
     Write-Host "Failed: $($bulkResults.FailedOperations)" -ForegroundColor Red
-    
+
     if ($bulkResults.FailedOperations -gt 0) {
         Write-Host ""
         Write-Host "Failed Operations:" -ForegroundColor Red

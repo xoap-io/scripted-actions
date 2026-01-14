@@ -176,7 +176,7 @@ try {
     # Function to build sync command
     function Build-SyncCommand {
         param($Source, $Destination, $Direction)
-        
+
         $syncArgs = @('s3', 'sync', $Source, $Destination)
         $syncArgs += $awsArgs
 
@@ -238,71 +238,71 @@ try {
         "Upload" {
             Write-Host "`nSyncing from local to S3..." -ForegroundColor Cyan
             $syncArgs = Build-SyncCommand -Source $LocalPath -Destination $S3Path -Direction "Upload"
-            
+
             Write-Host "Executing: aws $($syncArgs -join ' ')" -ForegroundColor Gray
             $result = aws @syncArgs 2>&1
-            
+
             if ($LASTEXITCODE -ne 0) {
                 throw "Upload sync failed: $result"
             }
-            
+
             Write-Host "✓ Upload sync completed" -ForegroundColor Green
             Write-Output $result
         }
-        
+
         "Download" {
             Write-Host "`nSyncing from S3 to local..." -ForegroundColor Cyan
-            
+
             # Create local directory if it doesn't exist
             if (-not (Test-Path $LocalPath)) {
                 New-Item -ItemType Directory -Path $LocalPath -Force | Out-Null
                 Write-Host "Created local directory: $LocalPath" -ForegroundColor Yellow
             }
-            
+
             $syncArgs = Build-SyncCommand -Source $S3Path -Destination $LocalPath -Direction "Download"
-            
+
             Write-Host "Executing: aws $($syncArgs -join ' ')" -ForegroundColor Gray
             $result = aws @syncArgs 2>&1
-            
+
             if ($LASTEXITCODE -ne 0) {
                 throw "Download sync failed: $result"
             }
-            
+
             Write-Host "✓ Download sync completed" -ForegroundColor Green
             Write-Output $result
         }
-        
+
         "Bidirectional" {
             Write-Host "`nPerforming bidirectional sync..." -ForegroundColor Cyan
             Write-Host "Note: Bidirectional sync requires careful consideration of file timestamps and conflicts" -ForegroundColor Yellow
-            
+
             # First sync: Local to S3
             Write-Host "`nStep 1: Syncing local changes to S3..." -ForegroundColor Cyan
             $uploadArgs = Build-SyncCommand -Source $LocalPath -Destination $S3Path -Direction "Upload"
-            
+
             Write-Host "Executing: aws $($uploadArgs -join ' ')" -ForegroundColor Gray
             $uploadResult = aws @uploadArgs 2>&1
-            
+
             if ($LASTEXITCODE -ne 0) {
                 throw "Upload sync failed: $uploadResult"
             }
-            
+
             Write-Host "✓ Upload sync completed" -ForegroundColor Green
-            
+
             # Second sync: S3 to Local (without delete to avoid conflicts)
             Write-Host "`nStep 2: Syncing S3 changes to local..." -ForegroundColor Cyan
             $downloadArgs = Build-SyncCommand -Source $S3Path -Destination $LocalPath -Direction "Download"
-            
+
             # Remove delete flag for download in bidirectional sync to avoid conflicts
             $downloadArgs = $downloadArgs | Where-Object { $_ -ne '--delete' }
-            
+
             Write-Host "Executing: aws $($downloadArgs -join ' ')" -ForegroundColor Gray
             $downloadResult = aws @downloadArgs 2>&1
-            
+
             if ($LASTEXITCODE -ne 0) {
                 throw "Download sync failed: $downloadResult"
             }
-            
+
             Write-Host "✓ Download sync completed" -ForegroundColor Green
             Write-Host "✓ Bidirectional sync completed" -ForegroundColor Green
         }
@@ -311,27 +311,27 @@ try {
     # Summary statistics if not dry run
     if (-not $DryRun) {
         Write-Host "`nGetting sync summary..." -ForegroundColor Cyan
-        
+
         # Get bucket size and object count
         $listResult = aws s3 ls $S3Path --recursive --summarize @awsArgs 2>&1
         if ($LASTEXITCODE -eq 0) {
             $lines = $listResult -split "`n"
             $totalObjects = ($lines | Where-Object { $_ -match "Total Objects:" }) -replace ".*Total Objects: ", ""
             $totalSize = ($lines | Where-Object { $_ -match "Total Size:" }) -replace ".*Total Size: ", ""
-            
+
             if ($totalObjects -and $totalSize) {
                 Write-Host "S3 Path Summary:" -ForegroundColor Cyan
                 Write-Host "  Total Objects: $totalObjects" -ForegroundColor White
                 Write-Host "  Total Size: $totalSize" -ForegroundColor White
             }
         }
-        
+
         # Get local directory info if syncing to local
         if ($Direction -in @("Download", "Bidirectional") -and (Test-Path $LocalPath)) {
             $localFiles = Get-ChildItem -Path $LocalPath -Recurse -File
             $localCount = $localFiles.Count
             $localSize = ($localFiles | Measure-Object -Property Length -Sum).Sum
-            
+
             Write-Host "Local Path Summary:" -ForegroundColor Cyan
             Write-Host "  Total Files: $localCount" -ForegroundColor White
             Write-Host "  Total Size: $([math]::Round($localSize / 1MB, 2)) MB" -ForegroundColor White

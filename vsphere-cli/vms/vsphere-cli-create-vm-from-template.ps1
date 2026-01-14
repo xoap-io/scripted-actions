@@ -114,7 +114,7 @@ $ErrorActionPreference = 'Stop'
 # Function to check and install PowerCLI if needed
 function Test-PowerCLIInstallation {
     Write-Host "Checking PowerCLI installation..." -ForegroundColor Yellow
-    
+
     try {
         $powerCLIModule = Get-Module -Name VMware.PowerCLI -ListAvailable
         if (-not $powerCLIModule) {
@@ -125,14 +125,14 @@ function Test-PowerCLIInstallation {
             $version = $powerCLIModule | Sort-Object Version -Descending | Select-Object -First 1
             Write-Host "PowerCLI version $($version.Version) found." -ForegroundColor Green
         }
-        
+
         # Import the module
         Import-Module VMware.PowerCLI -Force
-        
+
         # Disable certificate warnings for lab environments
         Set-PowerCLIConfiguration -InvalidCertificateAction Ignore -Confirm:$false -Scope User | Out-Null
         Set-PowerCLIConfiguration -ParticipateInCEIP $false -Confirm:$false -Scope User | Out-Null
-        
+
         return $true
     }
     catch {
@@ -144,17 +144,17 @@ function Test-PowerCLIInstallation {
 # Function to connect to vCenter
 function Connect-ToVCenter {
     param($Server)
-    
+
     try {
         Write-Host "Connecting to vCenter Server: $Server" -ForegroundColor Yellow
-        
+
         # Check if already connected
         $connection = $global:DefaultVIServers | Where-Object { $_.Name -eq $Server -and $_.IsConnected }
         if ($connection) {
             Write-Host "Already connected to $Server" -ForegroundColor Green
             return $connection
         }
-        
+
         # Connect to vCenter (will prompt for credentials if not cached)
         $connection = Connect-VIServer -Server $Server -Force
         Write-Host "Successfully connected to vCenter: $($connection.Name)" -ForegroundColor Green
@@ -177,16 +177,16 @@ function Test-VSphereObjects {
         $PortGroupName,
         $OSCustomizationSpec
     )
-    
+
     Write-Host "Validating vSphere objects..." -ForegroundColor Yellow
-    
+
     # Check template
     $template = Get-Template -Name $TemplateName -ErrorAction SilentlyContinue
     if (-not $template) {
         throw "Template '$TemplateName' not found"
     }
     Write-Host "✓ Template '$TemplateName' found" -ForegroundColor Green
-    
+
     # Check datastore
     $datastore = Get-Datastore -Name $DatastoreName -ErrorAction SilentlyContinue
     if (-not $datastore) {
@@ -194,14 +194,14 @@ function Test-VSphereObjects {
     }
     $freeSpaceGB = [math]::Round($datastore.FreeSpaceGB, 2)
     Write-Host "✓ Datastore '$DatastoreName' found (Free: $freeSpaceGB GB)" -ForegroundColor Green
-    
+
     # Check cluster
     $cluster = Get-Cluster -Name $ClusterName -ErrorAction SilentlyContinue
     if (-not $cluster) {
         throw "Cluster '$ClusterName' not found"
     }
     Write-Host "✓ Cluster '$ClusterName' found" -ForegroundColor Green
-    
+
     # Check resource pool if specified
     $resourcePool = $null
     if ($ResourcePoolName) {
@@ -214,7 +214,7 @@ function Test-VSphereObjects {
         $resourcePool = Get-ResourcePool -Location $cluster | Where-Object { $_.Name -eq "Resources" }
         Write-Host "✓ Using default resource pool" -ForegroundColor Green
     }
-    
+
     # Check folder if specified
     $folder = $null
     if ($FolderName) {
@@ -224,14 +224,14 @@ function Test-VSphereObjects {
         }
         Write-Host "✓ VM Folder '$FolderName' found" -ForegroundColor Green
     }
-    
+
     # Check port group
     $portGroup = Get-VirtualPortGroup -Name $PortGroupName -ErrorAction SilentlyContinue
     if (-not $portGroup) {
         throw "Port Group '$PortGroupName' not found"
     }
     Write-Host "✓ Port Group '$PortGroupName' found" -ForegroundColor Green
-    
+
     # Check OS customization spec if specified
     $osSpec = $null
     if ($OSCustomizationSpec) {
@@ -241,7 +241,7 @@ function Test-VSphereObjects {
         }
         Write-Host "✓ OS Customization Spec '$OSCustomizationSpec' found" -ForegroundColor Green
     }
-    
+
     return @{
         Template = $template
         Datastore = $datastore
@@ -263,15 +263,15 @@ function New-VMFromTemplate {
         $PowerOnAfterCreation,
         $WaitForCompletion
     )
-    
+
     # Set default for WaitForCompletion if not specified
     if (-not $PSBoundParameters.ContainsKey('WaitForCompletion')) {
         $WaitForCompletion = $true
     }
-    
+
     try {
         Write-Host "Creating VM '$VMName' from template '$($Objects.Template.Name)'..." -ForegroundColor Yellow
-        
+
         # Build VM creation parameters
         $vmParams = @{
             Name = $VMName
@@ -279,46 +279,46 @@ function New-VMFromTemplate {
             Datastore = $Objects.Datastore
             ResourcePool = $Objects.ResourcePool
         }
-        
+
         # Add folder if specified
         if ($Objects.Folder) {
             $vmParams.Location = $Objects.Folder
         }
-        
+
         # Add OS customization if specified
         if ($Objects.OSSpec) {
             $vmParams.OSCustomizationSpec = $Objects.OSSpec
         }
-        
+
         # Create the VM
         $vm = New-VM @vmParams
         Write-Host "✓ VM '$VMName' created successfully" -ForegroundColor Green
-        
+
         # Modify CPU count if specified
         if ($CPUCount) {
             Write-Host "Setting CPU count to $CPUCount..." -ForegroundColor Yellow
             $vm | Set-VM -NumCpu $CPUCount -Confirm:$false
             Write-Host "✓ CPU count set to $CPUCount" -ForegroundColor Green
         }
-        
+
         # Modify memory if specified
         if ($MemoryGB) {
             Write-Host "Setting memory to $MemoryGB GB..." -ForegroundColor Yellow
             $vm | Set-VM -MemoryGB $MemoryGB -Confirm:$false
             Write-Host "✓ Memory set to $MemoryGB GB" -ForegroundColor Green
         }
-        
+
         # Configure network adapter
         Write-Host "Configuring network adapter..." -ForegroundColor Yellow
         $networkAdapter = $vm | Get-NetworkAdapter
         $networkAdapter | Set-NetworkAdapter -Portgroup $Objects.PortGroup -Confirm:$false
         Write-Host "✓ Network adapter configured for port group '$($Objects.PortGroup.Name)'" -ForegroundColor Green
-        
+
         # Power on VM if requested
         if ($PowerOnAfterCreation) {
             Write-Host "Powering on VM..." -ForegroundColor Yellow
             $powerOnTask = $vm | Start-VM -RunAsync
-            
+
             if ($WaitForCompletion) {
                 Wait-Task -Task $powerOnTask
                 Write-Host "✓ VM '$VMName' powered on successfully" -ForegroundColor Green
@@ -326,7 +326,7 @@ function New-VMFromTemplate {
                 Write-Host "✓ VM '$VMName' power-on initiated (running asynchronously)" -ForegroundColor Green
             }
         }
-        
+
         # Display VM information
         $vmInfo = Get-VM -Name $VMName
         Write-Host "`nVM Creation Summary:" -ForegroundColor Cyan
@@ -336,7 +336,7 @@ function New-VMFromTemplate {
         Write-Host "Memory: $($vmInfo.MemoryGB) GB" -ForegroundColor White
         Write-Host "Guest OS: $($vmInfo.GuestId)" -ForegroundColor White
         Write-Host "VMware Tools: $($vmInfo.ExtensionData.Guest.ToolsStatus)" -ForegroundColor White
-        
+
         return $vmInfo
     }
     catch {
@@ -354,15 +354,15 @@ try {
     Write-Host "Datastore: $DatastoreName" -ForegroundColor White
     Write-Host "Cluster: $ClusterName" -ForegroundColor White
     Write-Host ""
-    
+
     # Check and install PowerCLI
     if (-not (Test-PowerCLIInstallation)) {
         throw "PowerCLI installation failed"
     }
-    
+
     # Connect to vCenter
     $connection = Connect-ToVCenter -Server $VCenterServer
-    
+
     # Check if VM already exists
     $existingVM = Get-VM -Name $VMName -ErrorAction SilentlyContinue
     if ($existingVM) {
@@ -373,13 +373,13 @@ try {
         Write-Host "  Guest OS: $($existingVM.GuestId)" -ForegroundColor White
         return
     }
-    
+
     # Validate vSphere objects
     $objects = Test-VSphereObjects -TemplateName $TemplateName -DatastoreName $DatastoreName -ClusterName $ClusterName -ResourcePoolName $ResourcePoolName -FolderName $FolderName -PortGroupName $PortGroupName -OSCustomizationSpec $OSCustomizationSpec
-    
+
     # Create VM from template
     New-VMFromTemplate -Objects $objects -VMName $VMName -CPUCount $CPUCount -MemoryGB $MemoryGB -PowerOnAfterCreation:$PowerOnAfterCreation -WaitForCompletion:$WaitForCompletion
-    
+
     Write-Host "`n=== VM Creation Completed Successfully ===" -ForegroundColor Green
 }
 catch {

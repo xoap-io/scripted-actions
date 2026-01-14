@@ -129,7 +129,7 @@ try {
     Write-Host "  Current Size: $($volume.Size) GiB" -ForegroundColor White
     Write-Host "  Current Type: $($volume.VolumeType)" -ForegroundColor White
     Write-Host "  Current State: $($volume.State)" -ForegroundColor White
-    
+
     if ($volume.Iops) {
         Write-Host "  Current IOPS: $($volume.Iops)" -ForegroundColor White
     }
@@ -147,7 +147,7 @@ try {
     if ($LASTEXITCODE -eq 0) {
         $modData = $modResult | ConvertFrom-Json
         $activeMods = $modData.VolumesModifications | Where-Object { $_.ModificationState -in @('modifying', 'optimizing') }
-        
+
         if ($activeMods.Count -gt 0) {
             Write-Warning "Volume has active modifications in progress:"
             foreach ($mod in $activeMods) {
@@ -155,7 +155,7 @@ try {
                 Write-Host "  Start Time: $($mod.StartTime)" -ForegroundColor Yellow
                 Write-Host "  Progress: $($mod.Progress)%" -ForegroundColor Yellow
             }
-            
+
             if (-not $Force) {
                 $confirm = Read-Host "Continue with new modification? (y/N)"
                 if ($confirm -notmatch '^[Yy]') {
@@ -168,7 +168,7 @@ try {
 
     # Validate parameters
     $changes = @()
-    
+
     if ($Size) {
         if ($Size -le $volume.Size) {
             throw "New size ($Size GiB) must be larger than current size ($($volume.Size) GiB)"
@@ -185,7 +185,7 @@ try {
     if ($Iops) {
         $currentIops = if ($volume.Iops) { $volume.Iops } else { "default" }
         $changes += "IOPS: $currentIops → $Iops"
-        
+
         # Validate IOPS for volume type
         $targetType = if ($VolumeType) { $VolumeType } else { $volume.VolumeType }
         if ($targetType -notin @('gp3', 'io1', 'io2')) {
@@ -196,7 +196,7 @@ try {
     if ($Throughput) {
         $currentThroughput = if ($volume.Throughput) { $volume.Throughput } else { "default" }
         $changes += "Throughput: $currentThroughput → $Throughput MB/s"
-        
+
         # Validate throughput for volume type
         $targetType = if ($VolumeType) { $VolumeType } else { $volume.VolumeType }
         if ($targetType -ne 'gp3') {
@@ -264,7 +264,7 @@ try {
     if ($WaitForCompletion) {
         Write-Host "Waiting for modification to complete..." -ForegroundColor Yellow
         Write-Host "This may take several minutes depending on the volume size and type." -ForegroundColor Gray
-        
+
         $timeout = $TimeoutMinutes * 60
         $elapsed = 0
         $checkInterval = 30
@@ -277,21 +277,21 @@ try {
             if ($LASTEXITCODE -eq 0) {
                 $statusData = $statusResult | ConvertFrom-Json
                 $currentMod = $statusData.VolumesModifications | Sort-Object StartTime -Descending | Select-Object -First 1
-                
+
                 $state = $currentMod.ModificationState
                 $progress = if ($currentMod.Progress) { $currentMod.Progress } else { 0 }
-                
+
                 Write-Host "State: $state - Progress: $progress% (${elapsed}s elapsed)" -ForegroundColor Gray
-                
+
                 if ($state -eq 'completed') {
                     Write-Host "✓ Volume modification completed successfully!" -ForegroundColor Green
-                    
+
                     # Get updated volume info
                     $updatedResult = aws ec2 describe-volumes --volume-ids $VolumeId @awsArgs --output json 2>&1
                     if ($LASTEXITCODE -eq 0) {
                         $updatedData = $updatedResult | ConvertFrom-Json
                         $updatedVolume = $updatedData.Volumes[0]
-                        
+
                         Write-Host "Updated Volume Configuration:" -ForegroundColor Cyan
                         Write-Host "  Size: $($updatedVolume.Size) GiB" -ForegroundColor White
                         Write-Host "  Type: $($updatedVolume.VolumeType)" -ForegroundColor White

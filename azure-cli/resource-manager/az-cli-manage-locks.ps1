@@ -6,7 +6,7 @@
     This script manages Azure resource locks using the Azure CLI to prevent accidental deletion or modification.
     Supports creating, listing, updating, and deleting locks at Resource Group, resource, and subscription levels.
     Includes bulk operations, lock inheritance analysis, and comprehensive reporting capabilities.
-    
+
     The script uses the Azure CLI commands: az lock create, az lock list, az lock delete
 
 .PARAMETER ResourceGroup
@@ -47,22 +47,22 @@
 
 .EXAMPLE
     .\az-cli-manage-locks.ps1 -Operation "create" -ResourceGroup "production-rg" -LockName "prod-protection" -LockType "CannotDelete" -Notes "Protect production resources"
-    
+
     Creates a delete protection lock on a Resource Group.
 
 .EXAMPLE
     .\az-cli-manage-locks.ps1 -Operation "list" -ResourceGroup "dev-rg" -ShowInherited
-    
+
     Lists all locks on Resource Group including inherited locks.
 
 .EXAMPLE
     .\az-cli-manage-locks.ps1 -Operation "delete" -ResourceGroup "test-rg" -LockName "temp-lock" -Force
-    
+
     Deletes a specific lock without confirmation.
 
 .EXAMPLE
     .\az-cli-manage-locks.ps1 -Operation "create" -Resource "/subscriptions/.../resourceGroups/rg/providers/Microsoft.Compute/virtualMachines/vm1" -LockType "ReadOnly" -LockName "vm-readonly"
-    
+
     Creates a read-only lock on specific virtual machine.
 
 .NOTES
@@ -180,7 +180,7 @@ try {
         if (-not $rgCheck) {
             throw "Resource Group '$ResourceGroup' not found in subscription '$($azAccount.name)'"
         }
-        
+
         $rgInfo = $rgCheck | ConvertFrom-Json
         Write-Host "✓ Resource Group '$ResourceGroup' found" -ForegroundColor Green
         Write-Host "  Location: $($rgInfo.location)" -ForegroundColor White
@@ -193,7 +193,7 @@ try {
         if (-not $resourceCheck) {
             throw "Resource '$Resource' not found or not accessible"
         }
-        
+
         $resourceInfo = $resourceCheck | ConvertFrom-Json
         Write-Host "✓ Resource found: $($resourceInfo.name)" -ForegroundColor Green
         Write-Host "  Type: $($resourceInfo.type)" -ForegroundColor White
@@ -211,23 +211,23 @@ try {
     Write-Host "Lock Operation Configuration:" -ForegroundColor Cyan
     Write-Host "  Operation: $Operation" -ForegroundColor White
     Write-Host "  Scope: $Scope" -ForegroundColor White
-    
+
     if ($ResourceGroup) {
         Write-Host "  Resource Group: $ResourceGroup" -ForegroundColor White
     }
-    
+
     if ($Resource) {
         Write-Host "  Resource: $($Resource -split '/')[-1]" -ForegroundColor White
     }
-    
+
     if ($LockName) {
         Write-Host "  Lock Name: $LockName" -ForegroundColor White
     }
-    
+
     if ($LockType) {
         Write-Host "  Lock Type: $LockType" -ForegroundColor White
     }
-    
+
     if ($Notes) {
         Write-Host "  Notes: $Notes" -ForegroundColor White
     }
@@ -238,14 +238,14 @@ try {
     switch ($Operation) {
         "create" {
             Write-Host "🔒 Creating resource lock..." -ForegroundColor Blue
-            
+
             # Build Azure CLI command
             $azParams = @('lock', 'create', '--name', $LockName, '--lock-type', $LockType)
-            
+
             if ($Notes) {
                 $azParams += '--notes', $Notes
             }
-            
+
             switch ($Scope) {
                 "subscription" {
                     # Subscription level lock
@@ -255,10 +255,10 @@ try {
                         # Apply to all Resource Groups
                         Write-Host "Creating locks on all Resource Groups..." -ForegroundColor Yellow
                         $allResourceGroups = az group list | ConvertFrom-Json
-                        
+
                         $successCount = 0
                         $errorCount = 0
-                        
+
                         foreach ($rg in $allResourceGroups) {
                             try {
                                 $rgLockName = "$LockName-$($rg.name)"
@@ -266,7 +266,7 @@ try {
                                 if ($Notes) {
                                     $rgLockParams += '--notes', "$Notes (Applied to $($rg.name))"
                                 }
-                                
+
                                 & az @rgLockParams | Out-Null
                                 Write-Host "  ✓ Lock created on: $($rg.name)" -ForegroundColor Green
                                 $successCount++
@@ -276,7 +276,7 @@ try {
                                 $errorCount++
                             }
                         }
-                        
+
                         Write-Host ""
                         Write-Host "Bulk lock creation completed:" -ForegroundColor Cyan
                         Write-Host "  Successful: $successCount" -ForegroundColor Green
@@ -290,10 +290,10 @@ try {
                     $azParams += '--resource', $Resource
                 }
             }
-            
+
             # Execute lock creation
             $result = & az @azParams 2>&1
-            
+
             if ($LASTEXITCODE -eq 0) {
                 $lockInfo = $result | ConvertFrom-Json
                 Write-Host "✓ Lock created successfully!" -ForegroundColor Green
@@ -307,13 +307,13 @@ try {
                 throw "Failed to create lock: $($result -join "`n")"
             }
         }
-        
+
         "list" {
             Write-Host "📋 Listing resource locks..." -ForegroundColor Blue
-            
+
             # Build Azure CLI command
             $azParams = @('lock', 'list')
-            
+
             switch ($Scope) {
                 "subscription" {
                     # List all locks in subscription
@@ -325,37 +325,37 @@ try {
                     $azParams += '--resource', $Resource
                 }
             }
-            
+
             if ($ShowInherited) {
                 $azParams += '--filter-string', 'atScope()'
             }
-            
+
             # Execute lock listing
             $result = & az @azParams 2>&1
-            
+
             if ($LASTEXITCODE -eq 0) {
                 $locks = $result | ConvertFrom-Json
-                
+
                 if (-not $locks) {
                     $locks = @()
                 }
-                
+
                 Write-Host "✓ Found $($locks.Count) lock(s)" -ForegroundColor Green
                 Write-Host ""
-                
+
                 if ($locks.Count -eq 0) {
                     Write-Host "No locks found in the specified scope." -ForegroundColor Yellow
                 } else {
                     Write-Host "Lock Details:" -ForegroundColor Blue
                     Write-Host $("-" * 80) -ForegroundColor Gray
-                    
+
                     foreach ($lock in $locks) {
                         $lockColor = switch ($lock.level) {
                             "CannotDelete" { "Red" }
                             "ReadOnly" { "Yellow" }
                             default { "White" }
                         }
-                        
+
                         Write-Host ""
                         Write-Host "🔒 $($lock.name)" -ForegroundColor Blue
                         Write-Host "   Type: $($lock.level)" -ForegroundColor $lockColor
@@ -365,7 +365,7 @@ try {
                         }
                         Write-Host "   ID: $($lock.id)" -ForegroundColor Gray
                     }
-                    
+
                     # Summary statistics
                     Write-Host ""
                     Write-Host "Lock Summary:" -ForegroundColor Cyan
@@ -379,7 +379,7 @@ try {
                         Write-Host "  $($lockType.Name): $($lockType.Count)" -ForegroundColor $typeColor
                     }
                 }
-                
+
                 # Export report if requested
                 if ($ExportReport) {
                     $reportData = @{
@@ -391,7 +391,7 @@ try {
                         lockCount = $locks.Count
                         locks = $locks
                     }
-                    
+
                     $reportData | ConvertTo-Json -Depth 10 | Out-File -FilePath $ExportReport -Encoding UTF8
                     Write-Host ""
                     Write-Host "✓ Lock report exported to: $ExportReport" -ForegroundColor Green
@@ -400,24 +400,24 @@ try {
                 throw "Failed to list locks: $($result -join "`n")"
             }
         }
-        
+
         "delete" {
             if ($BulkOperation) {
                 Write-Host "🗑️ Bulk deleting resource locks..." -ForegroundColor Red
-                
+
                 # Get all locks in scope
                 $listParams = @('lock', 'list')
                 if ($ResourceGroup) {
                     $listParams += '--resource-group', $ResourceGroup
                 }
-                
+
                 $locks = az @listParams | ConvertFrom-Json
-                
+
                 if (-not $locks -or $locks.Count -eq 0) {
                     Write-Host "No locks found to delete." -ForegroundColor Yellow
                     return
                 }
-                
+
                 if (-not $Force) {
                     Write-Host ""
                     Write-Host "⚠ ⚠ ⚠  BULK DELETE WARNING  ⚠ ⚠ ⚠" -ForegroundColor Red
@@ -431,17 +431,17 @@ try {
                         Write-Host "  • ... and $($locks.Count - 10) more locks" -ForegroundColor Gray
                     }
                     Write-Host ""
-                    
+
                     $confirmation = Read-Host "Type 'DELETE ALL LOCKS' to confirm bulk deletion"
                     if ($confirmation -ne "DELETE ALL LOCKS") {
                         Write-Host "Bulk deletion cancelled by user." -ForegroundColor Yellow
                         return
                     }
                 }
-                
+
                 $successCount = 0
                 $errorCount = 0
-                
+
                 foreach ($lock in $locks) {
                     try {
                         az lock delete --ids $lock.id --yes | Out-Null
@@ -453,17 +453,17 @@ try {
                         $errorCount++
                     }
                 }
-                
+
                 Write-Host ""
                 Write-Host "Bulk deletion completed:" -ForegroundColor Cyan
                 Write-Host "  Deleted: $successCount" -ForegroundColor Green
                 Write-Host "  Failed: $errorCount" -ForegroundColor $(if ($errorCount -gt 0) { 'Red' } else { 'Green' })
             } else {
                 Write-Host "🗑️ Deleting resource lock: $LockName" -ForegroundColor Red
-                
+
                 # Build Azure CLI command
                 $azParams = @('lock', 'delete', '--name', $LockName)
-                
+
                 switch ($Scope) {
                     "subscription" {
                         # Subscription level lock
@@ -475,7 +475,7 @@ try {
                         $azParams += '--resource', $Resource
                     }
                 }
-                
+
                 if ($Force) {
                     $azParams += '--yes'
                 } else {
@@ -484,7 +484,7 @@ try {
                     Write-Host "This will delete the lock '$LockName'" -ForegroundColor Red
                     Write-Host "Resources will no longer be protected from deletion/modification." -ForegroundColor Yellow
                     Write-Host ""
-                    
+
                     $confirmation = Read-Host "Do you want to proceed with lock deletion? (yes/no)"
                     if ($confirmation -ne "yes") {
                         Write-Host "Lock deletion cancelled by user." -ForegroundColor Yellow
@@ -492,10 +492,10 @@ try {
                     }
                     $azParams += '--yes'
                 }
-                
+
                 # Execute lock deletion
                 $result = & az @azParams 2>&1
-                
+
                 if ($LASTEXITCODE -eq 0) {
                     Write-Host "✓ Lock deleted successfully!" -ForegroundColor Green
                 } else {
@@ -503,13 +503,13 @@ try {
                 }
             }
         }
-        
+
         "show" {
             Write-Host "🔍 Showing lock details: $LockName" -ForegroundColor Blue
-            
+
             # Build Azure CLI command
             $azParams = @('lock', 'show', '--name', $LockName)
-            
+
             switch ($Scope) {
                 "subscription" {
                     # Subscription level lock
@@ -521,13 +521,13 @@ try {
                     $azParams += '--resource', $Resource
                 }
             }
-            
+
             # Execute lock show
             $result = & az @azParams 2>&1
-            
+
             if ($LASTEXITCODE -eq 0) {
                 $lockInfo = $result | ConvertFrom-Json
-                
+
                 Write-Host "✓ Lock found" -ForegroundColor Green
                 Write-Host ""
                 Write-Host "Lock Details:" -ForegroundColor Cyan

@@ -137,14 +137,14 @@ try {
     # Verify subnet exists and get details
     Write-Output "`n🔍 Verifying subnet..."
     $subnetResult = aws ec2 describe-subnets --subnet-ids $SubnetId @awsArgs --output json 2>&1
-    
+
     if ($LASTEXITCODE -ne 0) {
         Write-Error "Subnet $SubnetId not found or not accessible: $subnetResult"
     }
 
     $subnetData = $subnetResult | ConvertFrom-Json
     $subnet = $subnetData.Subnets[0]
-    
+
     Write-Output "✅ Subnet verified:"
     Write-Output "  VPC ID: $($subnet.VpcId)"
     Write-Output "  Availability Zone: $($subnet.AvailabilityZone)"
@@ -155,17 +155,17 @@ try {
     # For public NAT Gateways, verify the subnet is in a public subnet (has route to IGW)
     if ($ConnectivityType -eq 'public') {
         Write-Output "`n🔍 Verifying subnet is public (has route to Internet Gateway)..."
-        
+
         # Get route tables associated with this subnet
         $routeTablesResult = aws ec2 describe-route-tables --filters "Name=association.subnet-id,Values=$SubnetId" @awsArgs --output json 2>&1
-        
+
         if ($LASTEXITCODE -eq 0) {
             $routeTablesData = $routeTablesResult | ConvertFrom-Json
-            
+
             if ($routeTablesData.RouteTables.Count -eq 0) {
                 # Check main route table for the VPC
                 $mainRtbResult = aws ec2 describe-route-tables --filters "Name=vpc-id,Values=$($subnet.VpcId)" "Name=association.main,Values=true" @awsArgs --output json 2>&1
-                
+
                 if ($LASTEXITCODE -eq 0) {
                     $mainRtbData = $mainRtbResult | ConvertFrom-Json
                     $routeTablesData.RouteTables = $mainRtbData.RouteTables
@@ -193,18 +193,18 @@ try {
     if ($AllocationId) {
         Write-Output "`n🔍 Verifying Elastic IP..."
         $eipResult = aws ec2 describe-addresses --allocation-ids $AllocationId @awsArgs --output json 2>&1
-        
+
         if ($LASTEXITCODE -ne 0) {
             Write-Error "Elastic IP allocation $AllocationId not found or not accessible: $eipResult"
         }
 
         $eipData = $eipResult | ConvertFrom-Json
         $elasticIp = $eipData.Addresses[0]
-        
+
         Write-Output "✅ Elastic IP verified:"
         Write-Output "  Public IP: $($elasticIp.PublicIp)"
         Write-Output "  Domain: $($elasticIp.Domain)"
-        
+
         if ($elasticIp.AssociationId) {
             Write-Warning "⚠️  Elastic IP is currently associated with: $($elasticIp.InstanceId)$($elasticIp.NetworkInterfaceId)"
             throw "Elastic IP is already in use. Use an unassociated Elastic IP for NAT Gateway."
@@ -214,16 +214,16 @@ try {
     # Check for existing NAT Gateways in the subnet
     Write-Output "`n🔍 Checking for existing NAT Gateways in subnet..."
     $existingNatResult = aws ec2 describe-nat-gateways --filter "Name=subnet-id,Values=$SubnetId" "Name=state,Values=pending,available" @awsArgs --output json 2>&1
-    
+
     if ($LASTEXITCODE -eq 0) {
         $existingNatData = $existingNatResult | ConvertFrom-Json
-        
+
         if ($existingNatData.NatGateways.Count -gt 0) {
             Write-Warning "⚠️  Found $($existingNatData.NatGateways.Count) existing NAT Gateway(s) in this subnet:"
             foreach ($existingNat in $existingNatData.NatGateways) {
                 Write-Output "  • $($existingNat.NatGatewayId) (State: $($existingNat.State), Type: $($existingNat.ConnectivityType))"
             }
-            
+
             if (-not $DryRun) {
                 $confirmation = Read-Host "Continue with creating another NAT Gateway in this subnet? (y/N)"
                 if ($confirmation -ne 'y' -and $confirmation -ne 'Y') {
@@ -274,7 +274,7 @@ try {
         if ($LASTEXITCODE -eq 0) {
             $natData = $createResult | ConvertFrom-Json
             $natGateway = $natData.NatGateway
-            
+
             Write-Output "✅ NAT Gateway creation initiated!"
             Write-Output "  NAT Gateway ID: $($natGateway.NatGatewayId)"
             Write-Output "  State: $($natGateway.State)"
@@ -300,9 +300,9 @@ try {
                 try {
                     $tagsArray = $Tags | ConvertFrom-Json
                     $tagsJson = $tagsArray | ConvertTo-Json -Depth 3 -Compress
-                    
+
                     $tagResult = aws ec2 create-tags --resources $natGateway.NatGatewayId --tags $tagsJson @awsArgs 2>&1
-                    
+
                     if ($LASTEXITCODE -eq 0) {
                         Write-Output "✅ Tags applied successfully"
                     } else {
@@ -318,17 +318,17 @@ try {
                 Write-Output "`n⏳ Waiting for NAT Gateway to become available..."
                 $waitTime = 0
                 $checkInterval = 15
-                
+
                 do {
                     Start-Sleep -Seconds $checkInterval
                     $waitTime += $checkInterval
-                    
+
                     $statusResult = aws ec2 describe-nat-gateways --nat-gateway-ids $natGateway.NatGatewayId @awsArgs --query 'NatGateways[0].State' --output text 2>&1
-                    
+
                     if ($LASTEXITCODE -eq 0) {
                         $currentState = $statusResult.Trim()
                         Write-Output "[$([math]::Round($waitTime/60, 1)) min] NAT Gateway state: $currentState"
-                        
+
                         if ($currentState -eq 'available') {
                             Write-Output "✅ NAT Gateway is now available!"
                             break
@@ -337,9 +337,9 @@ try {
                             break
                         }
                     }
-                    
+
                 } while ($waitTime -lt $MaxWaitTime)
-                
+
                 if ($waitTime -ge $MaxWaitTime) {
                     Write-Warning "⏰ NAT Gateway monitoring timed out after $($MaxWaitTime/60) minutes"
                     Write-Output "Check NAT Gateway status manually: aws ec2 describe-nat-gateways --nat-gateway-ids $($natGateway.NatGatewayId)"

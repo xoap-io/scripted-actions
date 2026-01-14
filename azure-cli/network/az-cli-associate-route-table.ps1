@@ -5,7 +5,7 @@
 .DESCRIPTION
     This script associates an existing Route Table with a subnet in an Azure Virtual Network using the Azure CLI.
     Can also be used to remove route table association.
-    
+
     The script uses the Azure CLI command: az network vnet subnet update
 
 .PARAMETER VNetName
@@ -28,17 +28,17 @@
 
 .EXAMPLE
     .\az-cli-associate-route-table.ps1 -VNetName "MyVNet" -ResourceGroup "MyRG" -SubnetName "app-subnet" -RouteTableName "app-routes"
-    
+
     Associates a Route Table with a subnet.
 
 .EXAMPLE
     .\az-cli-associate-route-table.ps1 -VNetName "MyVNet" -ResourceGroup "MyRG" -SubnetName "app-subnet" -RouteTableName "app-routes" -RouteTableResourceGroup "network-rg"
-    
+
     Associates a Route Table from a different resource group.
 
 .EXAMPLE
     .\az-cli-associate-route-table.ps1 -VNetName "MyVNet" -ResourceGroup "MyRG" -SubnetName "app-subnet" -RemoveRouteTable
-    
+
     Removes the Route Table association from a subnet.
 
 .NOTES
@@ -102,7 +102,7 @@ try {
     if (-not $subnetCheck) {
         throw "Subnet '$SubnetName' not found in virtual network '$VNetName' in resource group '$ResourceGroup'"
     }
-    
+
     $subnetInfo = $subnetCheck | ConvertFrom-Json
     Write-Host "✓ Subnet '$SubnetName' found" -ForegroundColor Green
 
@@ -124,7 +124,7 @@ try {
 
         Write-Host "Removing Route Table association from subnet..." -ForegroundColor Yellow
         Write-Host "⚠ Subnet will revert to using Azure system routes" -ForegroundColor Yellow
-        
+
         $azParams = @(
             'network', 'vnet', 'subnet', 'update',
             '--vnet-name', $VNetName,
@@ -147,10 +147,10 @@ try {
         if (-not $rtCheck) {
             throw "Route Table '$RouteTableName' not found in resource group '$rtRG'"
         }
-        
+
         $rtInfo = $rtCheck | ConvertFrom-Json
         Write-Host "✓ Route Table '$RouteTableName' found" -ForegroundColor Green
-        
+
         if ($rtInfo.routes -and $rtInfo.routes.Count -gt 0) {
             Write-Host "Route Table contains $($rtInfo.routes.Count) custom route(s)" -ForegroundColor Cyan
         } else {
@@ -158,7 +158,7 @@ try {
         }
 
         Write-Host "Associating Route Table with subnet..." -ForegroundColor Yellow
-        
+
         $azParams = @(
             'network', 'vnet', 'subnet', 'update',
             '--vnet-name', $VNetName,
@@ -191,7 +191,7 @@ try {
 
     # Execute Azure CLI command
     $result = & az @azParams 2>&1
-    
+
     if ($LASTEXITCODE -eq 0) {
         if ($RemoveRouteTable) {
             Write-Host "✓ Route Table association removed successfully!" -ForegroundColor Green
@@ -207,7 +207,7 @@ try {
             Write-Host "Updated Subnet Details:" -ForegroundColor Cyan
             Write-Host "  Name: $($updatedSubnetInfo.name)" -ForegroundColor White
             Write-Host "  Address Prefix: $($updatedSubnetInfo.addressPrefix)" -ForegroundColor White
-            
+
             if ($updatedSubnetInfo.routeTable) {
                 Write-Host "  Route Table: $($updatedSubnetInfo.routeTable.id -split '/')[-1]" -ForegroundColor Green
             } else {

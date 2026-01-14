@@ -51,50 +51,50 @@ try {
     if (-not $azVersion) {
         throw "Azure CLI is not installed or not available in PATH"
     }
-    
+
     Write-Host "Checking Azure CLI login status..." -ForegroundColor Cyan
     $account = az account show --output json 2>$null | ConvertFrom-Json
     if (-not $account) {
         throw "Not logged in to Azure CLI. Please run 'az login' first"
     }
     Write-Host "Logged in as: $($account.user.name)" -ForegroundColor Green
-    
+
     if ($PSCmdlet.ParameterSetName -eq 'ByName') {
         Write-Host "Checking if Host Pool exists..." -ForegroundColor Cyan
         $existingHostPool = az desktopvirtualization hostpool show --name $Name --resource-group $ResourceGroup --output json 2>$null
         if (-not $existingHostPool) {
             throw "Host Pool '$Name' not found in resource group '$ResourceGroup'"
         }
-        
+
         $hostPoolData = $existingHostPool | ConvertFrom-Json
         Write-Host "Found Host Pool: $($hostPoolData.name)" -ForegroundColor Yellow
         Write-Host "  Type: $($hostPoolData.hostPoolType)" -ForegroundColor Yellow
         Write-Host "  Location: $($hostPoolData.location)" -ForegroundColor Yellow
-        
+
         Write-Host "Retrieving registration token for Host Pool '$Name'..." -ForegroundColor Cyan
         $result = az desktopvirtualization hostpool retrieve-registration-token --name $Name --resource-group $ResourceGroup --output json
     } else {
         Write-Host "Retrieving registration token using resource IDs..." -ForegroundColor Cyan
         $result = az desktopvirtualization hostpool retrieve-registration-token --ids $IDs --output json
     }
-    
+
     if ($LASTEXITCODE -ne 0) {
         throw "Azure CLI command failed with exit code: $LASTEXITCODE"
     }
-    
+
     $tokenData = $result | ConvertFrom-Json
-    
+
     Write-Host "✓ Registration token retrieved successfully!" -ForegroundColor Green
     Write-Host "Registration Token Details:" -ForegroundColor Cyan
     Write-Host "  Token: $($tokenData.token)" -ForegroundColor Green
     Write-Host "  Expiration Time: $($tokenData.expirationTime)" -ForegroundColor White
-    
+
     # Also display the token prominently for easy copying
     Write-Host "`n" -NoNewline
     Write-Host "REGISTRATION TOKEN (copy this for VM registration):" -ForegroundColor Yellow -BackgroundColor DarkBlue
     Write-Host "$($tokenData.token)" -ForegroundColor White -BackgroundColor DarkGreen
     Write-Host "`n" -NoNewline
-    
+
     return $tokenData
 } catch {
     Write-Error "Failed to retrieve Host Pool registration token: $_"

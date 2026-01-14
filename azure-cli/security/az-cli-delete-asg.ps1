@@ -6,7 +6,7 @@
     This script safely deletes Azure Application Security Groups using the Azure CLI with extensive validation and safety mechanisms.
     Includes dependency checking, usage analysis, backup capabilities, and confirmation prompts.
     Supports bulk deletion with filtering and provides detailed reporting of deletion operations.
-    
+
     The script uses the Azure CLI command: az network asg delete
 
 .PARAMETER Name
@@ -68,7 +68,7 @@
     Date: 2025-08-05
     Version: 1.0.0
     Requires: Azure CLI version 2.0 or later
-    
+
     Safety Features:
     - Usage checking in NSG rules before deletion
     - Backup capabilities for NSG rule configurations
@@ -163,13 +163,13 @@ function Test-AzureCLI {
         if ($LASTEXITCODE -ne 0) {
             throw "Azure CLI is not installed or not functioning correctly"
         }
-        
+
         Write-Host "🔍 Checking Azure CLI authentication..." -ForegroundColor Cyan
         $null = az account show 2>$null
         if ($LASTEXITCODE -ne 0) {
             throw "Not authenticated to Azure CLI. Please run 'az login' first"
         }
-        
+
         Write-Host "✅ Azure CLI validation successful" -ForegroundColor Green
         return $true
     }
@@ -182,7 +182,7 @@ function Test-AzureCLI {
 # Function to validate resource group exists
 function Test-ResourceGroupExists {
     param($ResourceGroup)
-    
+
     try {
         Write-Host "🔍 Validating resource group '$ResourceGroup'..." -ForegroundColor Cyan
         $null = az group show --name $ResourceGroup --query "name" --output tsv 2>$null
@@ -201,21 +201,21 @@ function Test-ResourceGroupExists {
 # Function to get ASGs to delete based on parameters
 function Get-ASGsToDelete {
     param($ResourceGroup, $Name, $BulkDelete, $NamePattern, $ExcludeNames)
-    
+
     try {
         Write-Host "🔍 Identifying ASGs to delete..." -ForegroundColor Cyan
-        
+
         $asgsToDelete = @()
         $excludeList = @()
-        
+
         if ($ExcludeNames) {
             $excludeList = $ExcludeNames -split ',' | ForEach-Object { $_.Trim() }
         }
-        
+
         if ($BulkDelete) {
             # Get all ASGs in resource group
             $allASGs = az network asg list --resource-group $ResourceGroup --output json | ConvertFrom-Json
-            
+
             if ($NamePattern) {
                 # Filter by pattern
                 $filteredASGs = $allASGs | Where-Object { $_.name -like $NamePattern }
@@ -223,18 +223,18 @@ function Get-ASGsToDelete {
             else {
                 $filteredASGs = $allASGs
             }
-            
+
             # Exclude specified ASGs
             if ($excludeList.Count -gt 0) {
                 $filteredASGs = $filteredASGs | Where-Object { $_.name -notin $excludeList }
             }
-            
+
             $asgsToDelete = $filteredASGs
         }
         elseif ($Name) {
             # Process specific ASG names
             $nameList = $Name -split ',' | ForEach-Object { $_.Trim() }
-            
+
             foreach ($asgName in $nameList) {
                 if ($asgName -notin $excludeList) {
                     try {
@@ -258,12 +258,12 @@ function Get-ASGsToDelete {
         else {
             throw "Either -Name or -BulkDelete with -NamePattern must be specified"
         }
-        
+
         if ($asgsToDelete.Count -eq 0) {
             Write-Warning "No ASGs found matching the specified criteria"
             return @()
         }
-        
+
         Write-Host "✅ Found $($asgsToDelete.Count) ASG(s) to delete" -ForegroundColor Green
         return $asgsToDelete
     }
@@ -276,29 +276,29 @@ function Get-ASGsToDelete {
 # Function to check ASG usage in NSG rules
 function Get-ASGUsage {
     param($ASG, $ResourceGroup)
-    
+
     try {
         Write-Host "🔍 Checking usage of ASG '$($ASG.name)' in NSG rules..." -ForegroundColor Cyan
-        
+
         $usage = @{
             NSGs = @()
             Rules = @()
             TotalReferences = 0
             HasUsage = $false
         }
-        
+
         # Get all NSGs in the resource group (and potentially other resource groups)
         $subscription = az account show --query "id" --output tsv
         $allNSGs = az network nsg list --output json | ConvertFrom-Json
-        
+
         foreach ($nsg in $allNSGs) {
             $nsgRules = @()
-            
+
             # Check security rules for ASG references
             foreach ($rule in $nsg.securityRules) {
                 $referencesASG = $false
                 $referenceLocations = @()
-                
+
                 # Check source ASGs
                 if ($rule.sourceApplicationSecurityGroups) {
                     foreach ($sourceAsg in $rule.sourceApplicationSecurityGroups) {
@@ -309,7 +309,7 @@ function Get-ASGUsage {
                         }
                     }
                 }
-                
+
                 # Check destination ASGs
                 if ($rule.destinationApplicationSecurityGroups) {
                     foreach ($destAsg in $rule.destinationApplicationSecurityGroups) {
@@ -320,7 +320,7 @@ function Get-ASGUsage {
                         }
                     }
                 }
-                
+
                 if ($referencesASG) {
                     $nsgRules += @{
                         Name = $rule.name
@@ -333,11 +333,11 @@ function Get-ASGUsage {
                         ReferenceLocations = $referenceLocations
                         FullRule = $rule
                     }
-                    
+
                     $usage.TotalReferences++
                 }
             }
-            
+
             if ($nsgRules.Count -gt 0) {
                 $usage.NSGs += @{
                     Name = $nsg.name
@@ -346,15 +346,15 @@ function Get-ASGUsage {
                     Rules = $nsgRules
                     NSGObject = $nsg
                 }
-                
+
                 $usage.Rules += $nsgRules
                 $usage.HasUsage = $true
             }
         }
-        
+
         if ($usage.HasUsage) {
             Write-Host "⚠️ ASG '$($ASG.name)' is referenced in $($usage.TotalReferences) rule(s) across $($usage.NSGs.Count) NSG(s):" -ForegroundColor Yellow
-            
+
             foreach ($nsgUsage in $usage.NSGs) {
                 Write-Host "   NSG: $($nsgUsage.Name) (RG: $($nsgUsage.ResourceGroup))" -ForegroundColor White
                 foreach ($rule in $nsgUsage.Rules) {
@@ -365,7 +365,7 @@ function Get-ASGUsage {
         else {
             Write-Host "✅ ASG '$($ASG.name)' is not referenced in any NSG rules" -ForegroundColor Green
         }
-        
+
         return $usage
     }
     catch {
@@ -377,23 +377,23 @@ function Get-ASGUsage {
 # Function to create backup of NSG rules that reference ASG
 function New-ASGReferenceBackup {
     param($ASG, $Usage, $BackupPath)
-    
+
     try {
         $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
-        
+
         if (-not $BackupPath) {
             $BackupPath = ".\asg-reference-backup-$timestamp"
         }
-        
+
         # Create backup directory
         if (-not (Test-Path $BackupPath)) {
             New-Item -ItemType Directory -Path $BackupPath -Force | Out-Null
         }
-        
+
         $backupFile = Join-Path $BackupPath "$($ASG.name)-references-backup-$timestamp.json"
-        
+
         Write-Host "💾 Creating backup of ASG references for '$($ASG.name)'..." -ForegroundColor Cyan
-        
+
         # Create backup data structure
         $backupData = @{
             ASG = $ASG
@@ -401,7 +401,7 @@ function New-ASGReferenceBackup {
             Usage = $Usage
             NSGRules = @()
         }
-        
+
         # Include full NSG rule definitions
         foreach ($nsgUsage in $Usage.NSGs) {
             foreach ($rule in $nsgUsage.Rules) {
@@ -413,10 +413,10 @@ function New-ASGReferenceBackup {
                 }
             }
         }
-        
+
         # Export backup
         $backupData | ConvertTo-Json -Depth 10 | Out-File -FilePath $backupFile -Encoding UTF8
-        
+
         # Create human-readable summary
         $summaryFile = Join-Path $BackupPath "$($ASG.name)-references-summary-$timestamp.txt"
         $summary = @"
@@ -454,14 +454,14 @@ Restoration Instructions:
 3. Re-create the ASG first, then update rules to reference it
 4. Test connectivity after restoration
 "@
-        
+
         $summary | Out-File -FilePath $summaryFile -Encoding UTF8
-        
+
         Write-Host "✅ Reference backup created: $backupFile" -ForegroundColor Green
         Write-Host "📄 Summary created: $summaryFile" -ForegroundColor Green
-        
+
         $global:DeletionReport.Summary.BackupsCreated++
-        
+
         return @{
             BackupFile = $backupFile
             SummaryFile = $summaryFile
@@ -482,23 +482,23 @@ Restoration Instructions:
 # Function to remove ASG from NSG rules
 function Remove-ASGFromRules {
     param($ASG, $Usage, $UpdateMode, $DryRun)
-    
+
     try {
         Write-Host "🔧 Removing ASG '$($ASG.name)' from NSG rules..." -ForegroundColor Cyan
-        
+
         $modificationResults = @()
-        
+
         foreach ($nsgUsage in $Usage.NSGs) {
             foreach ($ruleUsage in $nsgUsage.Rules) {
                 $rule = $ruleUsage.FullRule
                 $nsgName = $nsgUsage.Name
                 $nsgResourceGroup = $nsgUsage.ResourceGroup
-                
+
                 Write-Host "   Processing rule '$($rule.name)' in NSG '$nsgName'..." -ForegroundColor Gray
-                
+
                 if ($DryRun) {
                     Write-Host "   🎭 [DRY RUN] Would modify rule '$($rule.name)' with mode '$UpdateMode'" -ForegroundColor Magenta
-                    
+
                     $modificationResults += @{
                         NSGName = $nsgName
                         NSGResourceGroup = $nsgResourceGroup
@@ -508,16 +508,16 @@ function Remove-ASGFromRules {
                         Success = $true
                         DryRun = $true
                     }
-                    
+
                     continue
                 }
-                
+
                 try {
                     switch ($UpdateMode) {
                         'Disable' {
                             # Disable the rule by setting access to Deny
                             $result = az network nsg rule update --resource-group $nsgResourceGroup --nsg-name $nsgName --name $rule.name --access "Deny" --output json 2>$null | ConvertFrom-Json
-                            
+
                             if ($LASTEXITCODE -eq 0) {
                                 Write-Host "     ✅ Rule disabled" -ForegroundColor Green
                                 $modificationResults += @{
@@ -534,11 +534,11 @@ function Remove-ASGFromRules {
                                 throw "Failed to disable rule"
                             }
                         }
-                        
+
                         'Delete' {
                             # Delete the rule entirely
                             $null = az network nsg rule delete --resource-group $nsgResourceGroup --nsg-name $nsgName --name $rule.name --output none 2>$null
-                            
+
                             if ($LASTEXITCODE -eq 0) {
                                 Write-Host "     ✅ Rule deleted" -ForegroundColor Green
                                 $modificationResults += @{
@@ -555,11 +555,11 @@ function Remove-ASGFromRules {
                                 throw "Failed to delete rule"
                             }
                         }
-                        
+
                         'Convert' {
                             # Convert ASG references to IP address ranges (if possible)
                             Write-Host "     ⚠️ Convert mode requires manual intervention - rule marked for manual update" -ForegroundColor Yellow
-                            
+
                             $modificationResults += @{
                                 NSGName = $nsgName
                                 NSGResourceGroup = $nsgResourceGroup
@@ -572,12 +572,12 @@ function Remove-ASGFromRules {
                             }
                         }
                     }
-                    
+
                     $global:DeletionReport.Summary.RulesModified++
                 }
                 catch {
                     Write-Warning "     ❌ Failed to modify rule '$($rule.name)': $($_.Exception.Message)"
-                    
+
                     $modificationResults += @{
                         NSGName = $nsgName
                         NSGResourceGroup = $nsgResourceGroup
@@ -591,9 +591,9 @@ function Remove-ASGFromRules {
                 }
             }
         }
-        
+
         $global:DeletionReport.RuleModifications += $modificationResults
-        
+
         Write-Host "✅ ASG rule modifications completed" -ForegroundColor Green
         return $modificationResults
     }
@@ -606,13 +606,13 @@ function Remove-ASGFromRules {
 # Function to delete ASG
 function Remove-ASGResource {
     param($ASG, $ResourceGroup, $Timeout, $DryRun)
-    
+
     try {
         $operationStart = Get-Date
-        
+
         if ($DryRun) {
             Write-Host "🎭 [DRY RUN] Would delete ASG '$($ASG.name)'" -ForegroundColor Magenta
-            
+
             $global:DeletionReport.Operations += @{
                 ASGName = $ASG.name
                 Action = "DryRun"
@@ -622,36 +622,36 @@ function Remove-ASGResource {
                 Success = $true
                 DryRun = $true
             }
-            
+
             return @{
                 Success = $true
                 DryRun = $true
                 Message = "Dry run completed"
             }
         }
-        
+
         Write-Host "🗑️ Deleting ASG '$($ASG.name)'..." -ForegroundColor Yellow
-        
+
         # Start deletion with timeout
         $job = Start-Job -ScriptBlock {
             param($ResourceGroup, $ASGName)
             az network asg delete --resource-group $ResourceGroup --name $ASGName --yes --output none 2>&1
             return $LASTEXITCODE
         } -ArgumentList $ResourceGroup, $ASG.name
-        
+
         # Wait for completion with timeout
         $completed = Wait-Job -Job $job -Timeout $Timeout
-        
+
         if ($completed) {
             $result = Receive-Job -Job $job
             Remove-Job -Job $job
-            
+
             if ($result -eq 0) {
                 $operationEnd = Get-Date
                 $duration = $operationEnd - $operationStart
-                
+
                 Write-Host "✅ ASG '$($ASG.name)' deleted successfully in $($duration.TotalSeconds) seconds" -ForegroundColor Green
-                
+
                 $global:DeletionReport.Operations += @{
                     ASGName = $ASG.name
                     Action = "Delete"
@@ -661,9 +661,9 @@ function Remove-ASGResource {
                     Success = $true
                     DryRun = $false
                 }
-                
+
                 $global:DeletionReport.Summary.SuccessfulDeletions++
-                
+
                 return @{
                     Success = $true
                     DryRun = $false
@@ -682,7 +682,7 @@ function Remove-ASGResource {
     }
     catch {
         Write-Error "❌ Failed to delete ASG '$($ASG.name)': $($_.Exception.Message)"
-        
+
         $global:DeletionReport.Operations += @{
             ASGName = $ASG.name
             Action = "Delete"
@@ -693,9 +693,9 @@ function Remove-ASGResource {
             Error = $_.Exception.Message
             DryRun = $false
         }
-        
+
         $global:DeletionReport.Summary.FailedDeletions++
-        
+
         return @{
             Success = $false
             DryRun = $false
@@ -707,43 +707,43 @@ function Remove-ASGResource {
 # Function to show confirmation prompt
 function Show-DeletionConfirmation {
     param($ASGs, $Usages)
-    
+
     Write-Host "`n⚠️ ASG DELETION CONFIRMATION" -ForegroundColor Red -BackgroundColor Yellow
     Write-Host "=============================" -ForegroundColor Red -BackgroundColor Yellow
-    
+
     Write-Host "`nASGs to be deleted:" -ForegroundColor Yellow
     $ASGs | ForEach-Object {
         Write-Host "  - $($_.name) (Resource Group: $($_.resourceGroup))" -ForegroundColor White
     }
-    
+
     $totalReferences = ($Usages | ForEach-Object { $_.TotalReferences } | Measure-Object -Sum).Sum
     $totalNSGs = ($Usages | ForEach-Object { $_.NSGs.Count } | Measure-Object -Sum).Sum
-    
+
     if ($totalReferences -gt 0) {
         Write-Host "`n⚠️ Total rule references: $totalReferences across $totalNSGs NSG(s)" -ForegroundColor Red
         Write-Host "These references will be broken when ASGs are deleted!" -ForegroundColor Red
     }
-    
+
     Write-Host "`nThis action cannot be undone!" -ForegroundColor Red
     $confirmation = Read-Host "Type 'DELETE' to confirm deletion"
-    
+
     return $confirmation -eq "DELETE"
 }
 
 # Function to generate deletion report
 function New-DeletionReport {
     param($ReportPath)
-    
+
     try {
         $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
-        
+
         if (-not $ReportPath) {
             $ReportPath = ".\asg-deletion-report-$timestamp.html"
         }
-        
+
         $endTime = Get-Date
         $totalDuration = $endTime - $global:DeletionReport.StartTime
-        
+
         $html = @"
 <!DOCTYPE html>
 <html>
@@ -771,7 +771,7 @@ function New-DeletionReport {
         <p><strong>Generated:</strong> $endTime</p>
         <p><strong>Duration:</strong> $($totalDuration.TotalMinutes.ToString("F2")) minutes</p>
     </div>
-    
+
     <div class="summary">
         <h2>Summary</h2>
         <p><strong>Total Requested:</strong> $($global:DeletionReport.Summary.TotalRequested)</p>
@@ -781,7 +781,7 @@ function New-DeletionReport {
         <p><strong>Backups Created:</strong> $($global:DeletionReport.Summary.BackupsCreated)</p>
         <p><strong>Rules Modified:</strong> $($global:DeletionReport.Summary.RulesModified)</p>
     </div>
-    
+
     <h2>ASG Deletion Operations</h2>
     <table>
         <tr>
@@ -793,22 +793,22 @@ function New-DeletionReport {
             <th>Details</th>
         </tr>
 "@
-        
+
         foreach ($operation in $global:DeletionReport.Operations) {
-            $statusClass = if ($operation.Success) { 
+            $statusClass = if ($operation.Success) {
                 if ($operation.DryRun) { "operation-dryrun" } else { "operation-success" }
-            } else { 
-                "operation-error" 
+            } else {
+                "operation-error"
             }
-            
+
             $status = if ($operation.Success) {
                 if ($operation.DryRun) { "Dry Run" } else { "Success" }
             } else {
                 "Failed"
             }
-            
+
             $details = if ($operation.Error) { $operation.Error } else { "N/A" }
-            
+
             $html += @"
         <tr class="$statusClass">
             <td>$($operation.ASGName)</td>
@@ -820,10 +820,10 @@ function New-DeletionReport {
         </tr>
 "@
         }
-        
+
         $html += @"
     </table>
-    
+
     <h2>NSG Rule Modifications</h2>
     <table>
         <tr>
@@ -835,22 +835,22 @@ function New-DeletionReport {
             <th>Details</th>
         </tr>
 "@
-        
+
         foreach ($modification in $global:DeletionReport.RuleModifications) {
-            $statusClass = if ($modification.Success) { 
+            $statusClass = if ($modification.Success) {
                 if ($modification.DryRun) { "operation-dryrun" } else { "rule-modified" }
-            } else { 
-                "operation-error" 
+            } else {
+                "operation-error"
             }
-            
+
             $status = if ($modification.Success) {
                 if ($modification.DryRun) { "Dry Run" } else { "Success" }
             } else {
                 "Failed"
             }
-            
+
             $details = if ($modification.Error) { $modification.Error } elseif ($modification.Message) { $modification.Message } else { "N/A" }
-            
+
             $html += @"
         <tr class="$statusClass">
             <td>$($modification.NSGName)</td>
@@ -862,15 +862,15 @@ function New-DeletionReport {
         </tr>
 "@
         }
-        
+
         $html += @"
     </table>
 </body>
 </html>
 "@
-        
+
         $html | Out-File -FilePath $ReportPath -Encoding UTF8
-        
+
         Write-Host "📊 Deletion report generated: $ReportPath" -ForegroundColor Cyan
         return $ReportPath
     }
@@ -884,35 +884,35 @@ function New-DeletionReport {
 try {
     Write-Host "🗑️ Starting ASG Deletion Process" -ForegroundColor Red
     Write-Host "=================================" -ForegroundColor Red
-    
+
     # Validate Azure CLI
     if (-not (Test-AzureCLI)) {
         exit 1
     }
-    
+
     # Validate resource group
     if (-not (Test-ResourceGroupExists -ResourceGroup $ResourceGroup)) {
         exit 1
     }
-    
+
     # Get ASGs to delete
     $asgsToDelete = Get-ASGsToDelete -ResourceGroup $ResourceGroup -Name $Name -BulkDelete $BulkDelete -NamePattern $NamePattern -ExcludeNames $ExcludeNames
-    
+
     if ($asgsToDelete.Count -eq 0) {
         Write-Warning "No ASGs found to delete"
         exit 0
     }
-    
+
     $global:DeletionReport.Summary.TotalRequested = $asgsToDelete.Count
-    
+
     # Check usage and create backups
     $allUsages = @()
-    
+
     foreach ($asg in $asgsToDelete) {
         if ($CheckUsage) {
             $usage = Get-ASGUsage -ASG $asg -ResourceGroup $ResourceGroup
             $allUsages += $usage
-            
+
             # Create backup if requested and has usage
             if ($BackupReferences -and $usage.HasUsage -and -not $DryRun) {
                 $backup = New-ASGReferenceBackup -ASG $asg -Usage $usage -BackupPath $BackupPath
@@ -925,7 +925,7 @@ try {
             $allUsages += @{ HasUsage = $false; NSGs = @(); Rules = @(); TotalReferences = 0 }
         }
     }
-    
+
     # Show confirmation if not forced and not dry run
     if (-not $Force -and -not $DryRun) {
         $confirmed = Show-DeletionConfirmation -ASGs $asgsToDelete -Usages $allUsages
@@ -934,43 +934,43 @@ try {
             exit 0
         }
     }
-    
+
     # Process each ASG
     for ($i = 0; $i -lt $asgsToDelete.Count; $i++) {
         $asg = $asgsToDelete[$i]
         $usage = $allUsages[$i]
-        
+
         Write-Host "`n📋 Processing ASG $($i + 1) of $($asgsToDelete.Count): $($asg.name)" -ForegroundColor Cyan
-        
+
         # Remove from NSG rules if requested and has usage
         if ($RemoveFromRules -and $usage.HasUsage) {
             $ruleModifications = Remove-ASGFromRules -ASG $asg -Usage $usage -UpdateMode $UpdateRulesMode -DryRun $DryRun
         }
-        
+
         # Skip if has usage and not removing from rules and not forced
         if ($usage.HasUsage -and -not $RemoveFromRules -and -not $Force -and -not $DryRun) {
             Write-Warning "Skipping ASG '$($asg.name)' due to NSG rule usage. Use -RemoveFromRules or -Force to override."
             $global:DeletionReport.Summary.SkippedDeletions++
             continue
         }
-        
+
         # Delete the ASG
         $deleteResult = Remove-ASGResource -ASG $asg -ResourceGroup $ResourceGroup -Timeout $Timeout -DryRun $DryRun
-        
+
         if (-not $deleteResult.Success -and -not $DryRun) {
             Write-Host "❌ Failed to delete ASG '$($asg.name)'" -ForegroundColor Red
         }
     }
-    
+
     # Generate report if requested
     if ($OutputReport) {
         $reportFile = New-DeletionReport -ReportPath $ReportPath
     }
-    
+
     # Show final summary
     $endTime = Get-Date
     $totalDuration = $endTime - $global:DeletionReport.StartTime
-    
+
     Write-Host "`n📊 Deletion Summary:" -ForegroundColor Yellow
     Write-Host "   Total Duration: $($totalDuration.TotalMinutes.ToString("F2")) minutes" -ForegroundColor White
     Write-Host "   Requested: $($global:DeletionReport.Summary.TotalRequested)" -ForegroundColor White
@@ -979,7 +979,7 @@ try {
     Write-Host "   Skipped: $($global:DeletionReport.Summary.SkippedDeletions)" -ForegroundColor Yellow
     Write-Host "   Backups: $($global:DeletionReport.Summary.BackupsCreated)" -ForegroundColor Cyan
     Write-Host "   Rules Modified: $($global:DeletionReport.Summary.RulesModified)" -ForegroundColor Magenta
-    
+
     if ($DryRun) {
         Write-Host "`n🎭 This was a dry run. No actual deletions were performed." -ForegroundColor Magenta
     }

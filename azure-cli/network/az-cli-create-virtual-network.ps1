@@ -5,7 +5,7 @@
 .DESCRIPTION
     This script creates an Azure Virtual Network with a subnet using the Azure CLI.
     Supports advanced features like DDoS protection, encryption, BGP communities, and custom DNS servers.
-    
+
     The script uses the Azure CLI command: az network vnet create
 
 .PARAMETER Name
@@ -65,17 +65,17 @@
 
 .EXAMPLE
     .\az-cli-create-virtual-network.ps1 -Name "MyVNet" -ResourceGroup "MyRG" -AddressPrefixes "10.0.0.0/16" -Location "eastus" -SubnetName "default" -SubnetPrefixes "10.0.1.0/24"
-    
+
     Creates a basic virtual network with a default subnet.
 
 .EXAMPLE
     .\az-cli-create-virtual-network.ps1 -Name "SecureVNet" -ResourceGroup "MyRG" -AddressPrefixes "192.168.0.0/16" -Location "westus2" -SubnetName "web-subnet" -SubnetPrefixes "192.168.1.0/24" -DdosProtection -EnableEncryption -Tags "environment=production tier=web"
-    
+
     Creates a secure virtual network with DDoS protection and encryption enabled.
 
 .EXAMPLE
     .\az-cli-create-virtual-network.ps1 -Name "CustomVNet" -ResourceGroup "MyRG" -AddressPrefixes "172.16.0.0/12" -Location "eastus2" -SubnetName "app-subnet" -SubnetPrefixes "172.16.1.0/24" -DnsServers "8.8.8.8 8.8.4.4" -EncryptionEnforcementPolicy "DropUnencrypted"
-    
+
     Creates a virtual network with custom DNS servers and strict encryption policy.
 
 .NOTES
@@ -194,41 +194,41 @@ try {
     )
 
     # Add optional parameters
-    if ($DdosProtection) { 
-        $azParams += '--ddos-protection', 'true' 
+    if ($DdosProtection) {
+        $azParams += '--ddos-protection', 'true'
     }
-    if ($DdosProtectionPlan) { 
-        $azParams += '--ddos-protection-plan', $DdosProtectionPlan 
+    if ($DdosProtectionPlan) {
+        $azParams += '--ddos-protection-plan', $DdosProtectionPlan
     }
-    if ($EnableEncryption) { 
-        $azParams += '--enable-encryption', 'true' 
+    if ($EnableEncryption) {
+        $azParams += '--enable-encryption', 'true'
     }
-    if ($EncryptionEnforcementPolicy) { 
-        $azParams += '--encryption-enforcement-policy', $EncryptionEnforcementPolicy 
+    if ($EncryptionEnforcementPolicy) {
+        $azParams += '--encryption-enforcement-policy', $EncryptionEnforcementPolicy
     }
-    if ($BgpCommunity) { 
-        $azParams += '--bgp-community', $BgpCommunity 
+    if ($BgpCommunity) {
+        $azParams += '--bgp-community', $BgpCommunity
     }
-    if ($DnsServers) { 
-        $azParams += '--dns-servers', $DnsServers 
+    if ($DnsServers) {
+        $azParams += '--dns-servers', $DnsServers
     }
-    if ($NetworkSecurityGroup) { 
-        $azParams += '--network-security-group', $NetworkSecurityGroup 
+    if ($NetworkSecurityGroup) {
+        $azParams += '--network-security-group', $NetworkSecurityGroup
     }
-    if ($VmProtection) { 
-        $azParams += '--vm-protection', 'true' 
+    if ($VmProtection) {
+        $azParams += '--vm-protection', 'true'
     }
-    if ($EdgeZone) { 
-        $azParams += '--edge-zone', $EdgeZone 
+    if ($EdgeZone) {
+        $azParams += '--edge-zone', $EdgeZone
     }
-    if ($Flowtimeout) { 
-        $azParams += '--flowtimeout', $Flowtimeout 
+    if ($Flowtimeout) {
+        $azParams += '--flowtimeout', $Flowtimeout
     }
-    if ($Tags) { 
-        $azParams += '--tags', $Tags 
+    if ($Tags) {
+        $azParams += '--tags', $Tags
     }
-    if ($NoWait) { 
-        $azParams += '--no-wait' 
+    if ($NoWait) {
+        $azParams += '--no-wait'
     }
 
     Write-Host "Creating Azure Virtual Network..." -ForegroundColor Yellow
@@ -248,14 +248,14 @@ try {
 
     # Execute Azure CLI command
     $result = & az @azParams 2>&1
-    
+
     if ($LASTEXITCODE -eq 0) {
         if ($NoWait) {
             Write-Host "✓ Virtual Network creation started (asynchronous)" -ForegroundColor Green
         }
         else {
             Write-Host "✓ Azure Virtual Network created successfully!" -ForegroundColor Green
-            
+
             # Parse and display VNet information
             try {
                 $vnetInfo = $result | ConvertFrom-Json
@@ -264,14 +264,14 @@ try {
                 Write-Host "  Resource Group: $($vnetInfo.resourceGroup)" -ForegroundColor White
                 Write-Host "  Location: $($vnetInfo.location)" -ForegroundColor White
                 Write-Host "  Address Space: $($vnetInfo.addressSpace.addressPrefixes -join ', ')" -ForegroundColor White
-                
+
                 if ($vnetInfo.subnets -and $vnetInfo.subnets.Count -gt 0) {
                     Write-Host "  Subnets:" -ForegroundColor White
                     foreach ($subnet in $vnetInfo.subnets) {
                         Write-Host "    - $($subnet.name): $($subnet.addressPrefix)" -ForegroundColor White
                     }
                 }
-                
+
                 if ($vnetInfo.enableDdosProtection) {
                     Write-Host "  DDoS Protection: Enabled" -ForegroundColor Green
                 }

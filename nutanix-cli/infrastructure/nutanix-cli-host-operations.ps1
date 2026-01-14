@@ -156,7 +156,7 @@ $ErrorActionPreference = 'Stop'
 # Function to check and install Nutanix PowerShell SDK if needed
 function Test-NutanixSDKInstallation {
     Write-Host "Checking Nutanix PowerShell SDK installation..." -ForegroundColor Yellow
-    
+
     try {
         $nutanixModule = Get-Module -Name Nutanix.PowerShell.SDK -ListAvailable
         if (-not $nutanixModule) {
@@ -167,10 +167,10 @@ function Test-NutanixSDKInstallation {
             $version = $nutanixModule | Sort-Object Version -Descending | Select-Object -First 1
             Write-Host "Nutanix PowerShell SDK version $($version.Version) found." -ForegroundColor Green
         }
-        
+
         # Import the module
         Import-Module Nutanix.PowerShell.SDK -Force
-        
+
         return $true
     }
     catch {
@@ -182,16 +182,16 @@ function Test-NutanixSDKInstallation {
 # Function to connect to Prism Central or Element
 function Connect-ToNutanix {
     param($Server, $ServerType)
-    
+
     try {
         Write-Host "Connecting to $ServerType`: $Server" -ForegroundColor Yellow
-        
+
         # Check if already connected
         if ($global:DefaultNTNXConnection -and $global:DefaultNTNXConnection.Server -eq $Server) {
             Write-Host "Already connected to $Server" -ForegroundColor Green
             return $global:DefaultNTNXConnection
         }
-        
+
         # Connect to Nutanix
         $connection = Connect-NTNXCluster -Server $Server -AcceptInvalidSSLCerts
         Write-Host "Successfully connected to $ServerType`: $($connection.Server)" -ForegroundColor Green
@@ -213,11 +213,11 @@ function Get-TargetHosts {
         $HostUUID,
         $HostIP
     )
-    
+
     try {
         $hosts = @()
         $allHosts = Get-NTNXHost
-        
+
         # Filter by cluster first if specified
         if ($ClusterName) {
             $cluster = Get-NTNXCluster | Where-Object { $_.name -eq $ClusterName }
@@ -229,7 +229,7 @@ function Get-TargetHosts {
         elseif ($ClusterUUID) {
             $allHosts = $allHosts | Where-Object { $_.clusterUuid -eq $ClusterUUID }
         }
-        
+
         # Filter by specific host criteria
         if ($HostUUID) {
             $hosts = $allHosts | Where-Object { $_.uuid -eq $HostUUID }
@@ -247,16 +247,16 @@ function Get-TargetHosts {
             # Return all hosts (filtered by cluster if specified)
             $hosts = $allHosts
         }
-        
+
         if (-not $hosts) {
             throw "No hosts found matching the specified criteria"
         }
-        
+
         Write-Host "Found $($hosts.Count) host(s) for processing:" -ForegroundColor Green
         foreach ($host in $hosts) {
             Write-Host "  - $($host.name) [$($host.uuid)] - $($host.hypervisorAddress)" -ForegroundColor White
         }
-        
+
         return $hosts
     }
     catch {
@@ -268,36 +268,36 @@ function Get-TargetHosts {
 # Function to get host health information
 function Get-HostHealth {
     param($Host)
-    
+
     try {
         Write-Host "  Analyzing host health: $($Host.name)" -ForegroundColor Cyan
-        
+
         # Get host stats
         $hostStats = Get-NTNXHostStats -HostUuid $Host.uuid
-        
+
         # Calculate health metrics
-        $cpuUsage = if ($hostStats.statsSpecificEntries.cpuUsagePpm) { 
-            [math]::Round($hostStats.statsSpecificEntries.cpuUsagePpm / 10000, 2) 
+        $cpuUsage = if ($hostStats.statsSpecificEntries.cpuUsagePpm) {
+            [math]::Round($hostStats.statsSpecificEntries.cpuUsagePpm / 10000, 2)
         } else { 0 }
-        
-        $memoryUsage = if ($hostStats.statsSpecificEntries.memoryUsagePpm) { 
-            [math]::Round($hostStats.statsSpecificEntries.memoryUsagePpm / 10000, 2) 
+
+        $memoryUsage = if ($hostStats.statsSpecificEntries.memoryUsagePpm) {
+            [math]::Round($hostStats.statsSpecificEntries.memoryUsagePpm / 10000, 2)
         } else { 0 }
-        
+
         # Determine overall health status
         $healthStatus = "Healthy"
         $healthIssues = @()
-        
+
         if ($Host.state -ne "NORMAL") {
             $healthStatus = "Critical"
             $healthIssues += "Host state is $($Host.state)"
         }
-        
+
         if ($Host.inMaintenanceMode) {
             if ($healthStatus -eq "Healthy") { $healthStatus = "Warning" }
             $healthIssues += "Host is in maintenance mode"
         }
-        
+
         if ($cpuUsage -gt 90) {
             $healthStatus = "Critical"
             $healthIssues += "High CPU usage: $cpuUsage%"
@@ -305,7 +305,7 @@ function Get-HostHealth {
             if ($healthStatus -eq "Healthy") { $healthStatus = "Warning" }
             $healthIssues += "Elevated CPU usage: $cpuUsage%"
         }
-        
+
         if ($memoryUsage -gt 95) {
             $healthStatus = "Critical"
             $healthIssues += "High memory usage: $memoryUsage%"
@@ -313,7 +313,7 @@ function Get-HostHealth {
             if ($healthStatus -eq "Healthy") { $healthStatus = "Warning" }
             $healthIssues += "Elevated memory usage: $memoryUsage%"
         }
-        
+
         Write-Host "    ✓ Health analysis completed - Status: $healthStatus" -ForegroundColor $(
             switch ($healthStatus) {
                 "Healthy" { "Green" }
@@ -322,7 +322,7 @@ function Get-HostHealth {
                 default { "White" }
             }
         )
-        
+
         return @{
             HostName = $Host.name
             HostUUID = $Host.uuid
@@ -354,10 +354,10 @@ function Get-HostHealth {
 # Function to get detailed host status
 function Get-HostStatus {
     param($Host, $IncludeVMs, $IncludeHardware, $IncludePerformance)
-    
+
     try {
         Write-Host "  Getting host status: $($Host.name)" -ForegroundColor Cyan
-        
+
         $status = @{
             HostName = $Host.name
             HostUUID = $Host.uuid
@@ -373,12 +373,12 @@ function Get-HostStatus {
             MemoryCapacityGB = [math]::Round($Host.memoryCapacityBytes / 1GB, 2)
             LastUpdated = Get-Date
         }
-        
+
         # Include VM information
         if ($IncludeVMs) {
             $vms = Get-NTNXVM | Where-Object { $_.hostUuid -eq $Host.uuid }
             $poweredOnVMs = $vms | Where-Object { $_.powerState -eq "ON" }
-            
+
             $status.VMInfo = @{
                 TotalVMs = $vms.Count
                 PoweredOnVMs = $poweredOnVMs.Count
@@ -388,7 +388,7 @@ function Get-HostStatus {
                 VMNames = $vms | Select-Object -ExpandProperty vmName
             }
         }
-        
+
         # Include hardware information
         if ($IncludeHardware) {
             $status.HardwareInfo = @{
@@ -404,18 +404,18 @@ function Get-HostStatus {
                 BIOSVersion = if ($Host.biosVersion) { $Host.biosVersion } else { "Not Available" }
             }
         }
-        
+
         # Include performance information
         if ($IncludePerformance) {
             try {
                 $hostStats = Get-NTNXHostStats -HostUuid $Host.uuid
-                
+
                 $status.PerformanceInfo = @{
-                    CPUUsagePercent = if ($hostStats.statsSpecificEntries.cpuUsagePpm) { 
-                        [math]::Round($hostStats.statsSpecificEntries.cpuUsagePpm / 10000, 2) 
+                    CPUUsagePercent = if ($hostStats.statsSpecificEntries.cpuUsagePpm) {
+                        [math]::Round($hostStats.statsSpecificEntries.cpuUsagePpm / 10000, 2)
                     } else { 0 }
-                    MemoryUsagePercent = if ($hostStats.statsSpecificEntries.memoryUsagePpm) { 
-                        [math]::Round($hostStats.statsSpecificEntries.memoryUsagePpm / 10000, 2) 
+                    MemoryUsagePercent = if ($hostStats.statsSpecificEntries.memoryUsagePpm) {
+                        [math]::Round($hostStats.statsSpecificEntries.memoryUsagePpm / 10000, 2)
                     } else { 0 }
                     IOPSRead = if ($hostStats.statsSpecificEntries.readIOPS) { $hostStats.statsSpecificEntries.readIOPS } else { 0 }
                     IOPSWrite = if ($hostStats.statsSpecificEntries.writeIOPS) { $hostStats.statsSpecificEntries.writeIOPS } else { 0 }
@@ -429,9 +429,9 @@ function Get-HostStatus {
                 }
             }
         }
-        
+
         Write-Host "    ✓ Status information collected" -ForegroundColor Green
-        
+
         return $status
     }
     catch {
@@ -448,13 +448,13 @@ function Get-HostStatus {
 # Function to manage host maintenance mode
 function Set-HostMaintenanceMode {
     param($Host, $MaintenanceMode, $Force)
-    
+
     try {
         Write-Host "  Managing maintenance mode for host: $($Host.name)" -ForegroundColor Cyan
-        
+
         $currentMode = if ($Host.inMaintenanceMode) { "Enabled" } else { "Disabled" }
         Write-Host "    Current maintenance mode: $currentMode" -ForegroundColor White
-        
+
         if ($currentMode -eq $MaintenanceMode) {
             Write-Host "    Host is already in the requested maintenance mode" -ForegroundColor Yellow
             return @{
@@ -467,7 +467,7 @@ function Set-HostMaintenanceMode {
                 LastUpdated = Get-Date
             }
         }
-        
+
         # Check for VMs if entering maintenance mode
         if ($MaintenanceMode -eq "Enable") {
             $poweredOnVMs = Get-NTNXVM | Where-Object { $_.hostUuid -eq $Host.uuid -and $_.powerState -eq "ON" }
@@ -488,7 +488,7 @@ function Set-HostMaintenanceMode {
                 }
             }
         }
-        
+
         # Confirm operation
         if (-not $Force) {
             $confirmation = Read-Host "Are you sure you want to $MaintenanceMode maintenance mode for host '$($Host.name)'? (y/N)"
@@ -503,7 +503,7 @@ function Set-HostMaintenanceMode {
                 }
             }
         }
-        
+
         # Perform maintenance mode operation
         switch ($MaintenanceMode) {
             "Enable" {
@@ -517,7 +517,7 @@ function Set-HostMaintenanceMode {
                 Write-Host "    ✓ Host exited maintenance mode successfully" -ForegroundColor Green
             }
         }
-        
+
         return @{
             HostName = $Host.name
             HostUUID = $Host.uuid
@@ -544,23 +544,23 @@ function Set-HostMaintenanceMode {
 # Function to monitor host performance
 function Monitor-HostPerformance {
     param($Host, $AlertThresholds, $CPUThreshold, $MemoryThreshold)
-    
+
     try {
         Write-Host "  Monitoring host performance: $($Host.name)" -ForegroundColor Cyan
-        
+
         # Get performance stats
         $stats = Get-NTNXHostStats -HostUuid $Host.uuid
-        
+
         # Calculate performance metrics
         $metrics = @{
             HostName = $Host.name
             HostUUID = $Host.uuid
             HostIP = $Host.hypervisorAddress
-            CPUUsagePercent = if ($stats.statsSpecificEntries.cpuUsagePpm) { 
-                [math]::Round($stats.statsSpecificEntries.cpuUsagePpm / 10000, 2) 
+            CPUUsagePercent = if ($stats.statsSpecificEntries.cpuUsagePpm) {
+                [math]::Round($stats.statsSpecificEntries.cpuUsagePpm / 10000, 2)
             } else { 0 }
-            MemoryUsagePercent = if ($stats.statsSpecificEntries.memoryUsagePpm) { 
-                [math]::Round($stats.statsSpecificEntries.memoryUsagePpm / 10000, 2) 
+            MemoryUsagePercent = if ($stats.statsSpecificEntries.memoryUsagePpm) {
+                [math]::Round($stats.statsSpecificEntries.memoryUsagePpm / 10000, 2)
             } else { 0 }
             IOPSRead = if ($stats.statsSpecificEntries.readIOPS) { $stats.statsSpecificEntries.readIOPS } else { 0 }
             IOPSWrite = if ($stats.statsSpecificEntries.writeIOPS) { $stats.statsSpecificEntries.writeIOPS } else { 0 }
@@ -570,32 +570,32 @@ function Monitor-HostPerformance {
             InMaintenanceMode = $Host.inMaintenanceMode
             Timestamp = Get-Date
         }
-        
+
         # Check for alerts if thresholds are enabled
         if ($AlertThresholds) {
             $alerts = @()
-            
+
             if ($metrics.CPUUsagePercent -gt $CPUThreshold) {
                 $alerts += "CPU usage ($($metrics.CPUUsagePercent)%) exceeds threshold ($CPUThreshold%)"
                 Write-Host "    ⚠ ALERT: $($alerts[-1])" -ForegroundColor Red
             }
-            
+
             if ($metrics.MemoryUsagePercent -gt $MemoryThreshold) {
                 $alerts += "Memory usage ($($metrics.MemoryUsagePercent)%) exceeds threshold ($MemoryThreshold%)"
                 Write-Host "    ⚠ ALERT: $($alerts[-1])" -ForegroundColor Red
             }
-            
+
             if ($Host.state -ne "NORMAL") {
                 $alerts += "Host state is $($Host.state)"
                 Write-Host "    ⚠ ALERT: $($alerts[-1])" -ForegroundColor Red
             }
-            
+
             $metrics.Alerts = $alerts
             $metrics.AlertCount = $alerts.Count
         }
-        
+
         Write-Host "    ✓ Performance metrics collected - CPU: $($metrics.CPUUsagePercent)%, Memory: $($metrics.MemoryUsagePercent)%" -ForegroundColor Green
-        
+
         return $metrics
     }
     catch {
@@ -612,10 +612,10 @@ function Monitor-HostPerformance {
 # Function to get host hardware information
 function Get-HostHardware {
     param($Host)
-    
+
     try {
         Write-Host "  Getting hardware information: $($Host.name)" -ForegroundColor Cyan
-        
+
         $hardware = @{
             HostName = $Host.name
             HostUUID = $Host.uuid
@@ -633,14 +633,14 @@ function Get-HostHardware {
             HypervisorVersion = $Host.hypervisorFullName
             BMCVersion = if ($Host.bmcVersion) { $Host.bmcVersion } else { "Not Available" }
             BIOSVersion = if ($Host.biosVersion) { $Host.biosVersion } else { "Not Available" }
-            LastBootTime = if ($Host.bootTimeUsecs) { 
-                [DateTimeOffset]::FromUnixTimeMilliseconds($Host.bootTimeUsecs / 1000).DateTime 
+            LastBootTime = if ($Host.bootTimeUsecs) {
+                [DateTimeOffset]::FromUnixTimeMilliseconds($Host.bootTimeUsecs / 1000).DateTime
             } else { "Not Available" }
             LastUpdated = Get-Date
         }
-        
+
         Write-Host "    ✓ Hardware information collected" -ForegroundColor Green
-        
+
         return $hardware
     }
     catch {
@@ -657,12 +657,12 @@ function Get-HostHardware {
 # Function to get host VMs
 function Get-HostVMs {
     param($Host)
-    
+
     try {
         Write-Host "  Getting VMs for host: $($Host.name)" -ForegroundColor Cyan
-        
+
         $vms = Get-NTNXVM | Where-Object { $_.hostUuid -eq $Host.uuid }
-        
+
         $vmInfo = @{
             HostName = $Host.name
             HostUUID = $Host.uuid
@@ -674,9 +674,9 @@ function Get-HostVMs {
             VMs = $vms | Select-Object vmName, powerState, numVcpus, @{Name="MemoryGB";Expression={[math]::Round($_.memoryMb/1024,2)}}, description
             LastUpdated = Get-Date
         }
-        
+
         Write-Host "    ✓ VM information collected - $($vmInfo.TotalVMs) VMs ($($vmInfo.PoweredOnVMs) powered on)" -ForegroundColor Green
-        
+
         return $vmInfo
     }
     catch {
@@ -693,9 +693,9 @@ function Get-HostVMs {
 # Function to display results
 function Show-HostResults {
     param($Results, $Operation, $OutputFormat, $OutputPath)
-    
+
     Write-Host "`n=== Host $Operation Results ===" -ForegroundColor Cyan
-    
+
     switch ($Operation) {
         "Health" {
             if ($OutputFormat -eq "Console") {
@@ -720,7 +720,7 @@ function Show-HostResults {
             if ($OutputFormat -eq "Console") {
                 Write-Host "`nHost Performance Monitoring:" -ForegroundColor Green
                 $Results | Format-Table HostName, CPUUsagePercent, MemoryUsagePercent, State, InMaintenanceMode, IOPSRead, IOPSWrite -AutoSize
-                
+
                 # Show alerts if any
                 $alertResults = $Results | Where-Object { $_.AlertCount -gt 0 }
                 if ($alertResults) {
@@ -767,7 +767,7 @@ function Show-HostResults {
             }
         }
     }
-    
+
     # Export results if requested
     if ($OutputFormat -ne "Console") {
         switch ($OutputFormat) {
@@ -800,33 +800,33 @@ function Show-HostResults {
 # Main execution
 try {
     Write-Host "=== Nutanix Host Operations ===" -ForegroundColor Cyan
-    
+
     # Determine target server
     $targetServer = if ($PrismCentral) { $PrismCentral } else { $PrismElement }
     $serverType = if ($PrismCentral) { "Prism Central" } else { "Prism Element" }
-    
+
     if (-not $targetServer) {
         throw "Either PrismCentral or PrismElement parameter must be specified"
     }
-    
+
     Write-Host "Target $serverType`: $targetServer" -ForegroundColor White
     Write-Host "Operation: $Operation" -ForegroundColor White
     Write-Host ""
-    
+
     # Check and install Nutanix PowerShell SDK
     if (-not (Test-NutanixSDKInstallation)) {
         throw "Nutanix PowerShell SDK installation failed"
     }
-    
+
     # Connect to Nutanix
     $connection = Connect-ToNutanix -Server $targetServer -ServerType $serverType
-    
+
     # Get target hosts
     $targetHosts = Get-TargetHosts -ClusterName $ClusterName -ClusterUUID $ClusterUUID -HostName $HostName -HostNames $HostNames -HostUUID $HostUUID -HostIP $HostIP
-    
+
     # Perform operations
     $results = @()
-    
+
     foreach ($host in $targetHosts) {
         switch ($Operation) {
             "Health" {
@@ -866,10 +866,10 @@ try {
             }
         }
     }
-    
+
     # Display results
     Show-HostResults -Results $results -Operation $Operation -OutputFormat $OutputFormat -OutputPath $OutputPath
-    
+
     Write-Host "`n=== Host Operations Completed ===" -ForegroundColor Green
 }
 catch {

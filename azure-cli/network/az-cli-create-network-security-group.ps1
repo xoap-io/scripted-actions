@@ -5,7 +5,7 @@
 .DESCRIPTION
     This script creates an Azure Network Security Group (NSG) using the Azure CLI.
     NSGs contain security rules that allow or deny network traffic to resources connected to Azure Virtual Networks.
-    
+
     The script uses the Azure CLI command: az network nsg create
 
 .PARAMETER Name
@@ -22,12 +22,12 @@
 
 .EXAMPLE
     .\az-cli-create-network-security-group.ps1 -Name "web-nsg" -ResourceGroup "MyRG" -Location "eastus"
-    
+
     Creates a basic network security group.
 
 .EXAMPLE
     .\az-cli-create-network-security-group.ps1 -Name "app-nsg" -ResourceGroup "MyRG" -Location "westus2" -Tags "environment=production tier=application"
-    
+
     Creates a network security group with tags.
 
 .NOTES
@@ -92,8 +92,8 @@ try {
     )
 
     # Add optional parameters
-    if ($Tags) { 
-        $azParams += '--tags', $Tags 
+    if ($Tags) {
+        $azParams += '--tags', $Tags
     }
 
     Write-Host "Creating Network Security Group..." -ForegroundColor Yellow
@@ -103,10 +103,10 @@ try {
 
     # Execute Azure CLI command
     $result = & az @azParams 2>&1
-    
+
     if ($LASTEXITCODE -eq 0) {
         Write-Host "✓ Network Security Group created successfully!" -ForegroundColor Green
-        
+
         # Parse and display NSG information
         try {
             $nsgInfo = $result | ConvertFrom-Json
@@ -115,11 +115,11 @@ try {
             Write-Host "  Resource Group: $($nsgInfo.resourceGroup)" -ForegroundColor White
             Write-Host "  Location: $($nsgInfo.location)" -ForegroundColor White
             Write-Host "  Resource ID: $($nsgInfo.id)" -ForegroundColor White
-            
+
             if ($nsgInfo.defaultSecurityRules -and $nsgInfo.defaultSecurityRules.Count -gt 0) {
                 Write-Host "  Default Rules: $($nsgInfo.defaultSecurityRules.Count) rules created" -ForegroundColor White
             }
-            
+
             if ($nsgInfo.tags -and $nsgInfo.tags.PSObject.Properties.Count -gt 0) {
                 Write-Host "  Tags:" -ForegroundColor White
                 $nsgInfo.tags.PSObject.Properties | ForEach-Object {

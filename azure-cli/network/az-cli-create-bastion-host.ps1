@@ -5,7 +5,7 @@
 .DESCRIPTION
     This script creates an Azure Bastion host using the Azure CLI.
     Azure Bastion provides secure RDP/SSH connectivity to virtual machines without exposing them to the public internet.
-    
+
     The script uses the Azure CLI command: az network bastion create
 
 .PARAMETER Name
@@ -44,12 +44,12 @@
 
 .EXAMPLE
     .\az-cli-create-bastion-host.ps1 -Name "myBastion" -ResourceGroup "MyRG" -VNetName "myVNet" -Location "eastus" -PublicIPAddress "bastion-pip"
-    
+
     Creates a basic Azure Bastion host.
 
 .EXAMPLE
     .\az-cli-create-bastion-host.ps1 -Name "prodBastion" -ResourceGroup "prod-rg" -VNetName "prod-vnet" -Location "westus2" -PublicIPAddress "bastion-pip" -Sku "Standard" -EnableTunneling -EnableIpConnect -ScaleUnits 4
-    
+
     Creates a Standard SKU Bastion with advanced features.
 
 .NOTES
@@ -171,23 +171,23 @@ try {
 
     # Add Standard SKU features
     if ($Sku -eq "Standard") {
-        if ($EnableTunneling) { 
-            $azParams += '--enable-tunneling', 'true' 
+        if ($EnableTunneling) {
+            $azParams += '--enable-tunneling', 'true'
         }
-        if ($EnableIpConnect) { 
-            $azParams += '--enable-ip-connect', 'true' 
+        if ($EnableIpConnect) {
+            $azParams += '--enable-ip-connect', 'true'
         }
-        if ($EnableShareableLink) { 
-            $azParams += '--enable-shareable-link', 'true' 
+        if ($EnableShareableLink) {
+            $azParams += '--enable-shareable-link', 'true'
         }
-        if ($ScaleUnits) { 
-            $azParams += '--scale-units', $ScaleUnits 
+        if ($ScaleUnits) {
+            $azParams += '--scale-units', $ScaleUnits
         }
     }
 
     # Add optional parameters
-    if ($Tags) { 
-        $azParams += '--tags', $Tags 
+    if ($Tags) {
+        $azParams += '--tags', $Tags
     }
 
     Write-Host "Creating Azure Bastion host..." -ForegroundColor Yellow
@@ -218,10 +218,10 @@ try {
 
     # Execute Azure CLI command
     $result = & az @azParams 2>&1
-    
+
     if ($LASTEXITCODE -eq 0) {
         Write-Host "✓ Azure Bastion host created successfully!" -ForegroundColor Green
-        
+
         # Parse and display Bastion information
         try {
             $bastionInfo = $result | ConvertFrom-Json
@@ -231,17 +231,17 @@ try {
             Write-Host "  Location: $($bastionInfo.location)" -ForegroundColor White
             Write-Host "  SKU: $($bastionInfo.sku.name)" -ForegroundColor White
             Write-Host "  Provisioning State: $($bastionInfo.provisioningState)" -ForegroundColor White
-            
+
             if ($bastionInfo.ipConfigurations -and $bastionInfo.ipConfigurations.Count -gt 0) {
                 $ipConfig = $bastionInfo.ipConfigurations[0]
                 Write-Host "  Public IP: $($ipConfig.publicIPAddress.id -split '/')[-1]" -ForegroundColor White
                 Write-Host "  Subnet: $($ipConfig.subnet.id -split '/')[-1]" -ForegroundColor White
             }
-            
+
             if ($bastionInfo.scaleUnits) {
                 Write-Host "  Scale Units: $($bastionInfo.scaleUnits)" -ForegroundColor White
             }
-            
+
             Write-Host "" -ForegroundColor White
             Write-Host "✓ Bastion is ready for use!" -ForegroundColor Green
             Write-Host "You can now connect to VMs in the VNet via Azure Portal or native clients." -ForegroundColor White

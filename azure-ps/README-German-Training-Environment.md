@@ -10,14 +10,14 @@ Diese Dokumentation ergänzt die Hauptdokumentation für spezielle deutsche Schu
 
 Jeder Teilnehmer (Schüler oder Trainer) erhält folgende VM-Ausstattung:
 
-| VM-Typ | Anzahl | OS | CPU | RAM | HDD |
-|--------|--------|-----|-----|-----|-----|
-| Server DC | 1 | Windows Server 2022 | 2 | 4 GB | 50 GB |
-| Server TS | 1 | Windows Server 2019 | 2 | 4 GB | 50 GB |
-| Server01 | 1 | Windows Server 2022 | 2 | 4 GB | 50 GB |
-| Client01 | 1 | Windows 10 | 2 | 4 GB | 50 GB |
-| Client02 | 1 | Windows 11 | 2 | 4 GB | 50 GB |
-| **Jumphost** | 1 | Windows 10/11 | 2 | 4 GB | 50 GB |
+| VM-Typ       | Anzahl | OS                  | CPU | RAM  | HDD   |
+| ------------ | ------ | ------------------- | --- | ---- | ----- |
+| Server DC    | 1      | Windows Server 2022 | 2   | 4 GB | 50 GB |
+| Server TS    | 1      | Windows Server 2019 | 2   | 4 GB | 50 GB |
+| Server01     | 1      | Windows Server 2022 | 2   | 4 GB | 50 GB |
+| Client01     | 1      | Windows 10          | 2   | 4 GB | 50 GB |
+| Client02     | 1      | Windows 11          | 2   | 4 GB | 50 GB |
+| **Jumphost** | 1      | Windows 10/11       | 2   | 4 GB | 50 GB |
 
 **Gesamt pro Teilnehmer**: 6 VMs (5 Arbeits-VMs + 1 Jumphost)  
 **Gesamt für Schulung**: 36 VMs (6 Teilnehmer × 6 VMs)
@@ -98,11 +98,13 @@ Internet → Public IPs → VMs (2 NICs each)
 ### **Mit Jumphost (Empfohlen):**
 
 1. **RDP-Verbindung** zum zugewiesenen Jumphost
+
    - Jumphost-IP: wird vom Lab bereitgestellt
    - Benutzername: `trainer`
    - Passwort: `Training123!`
 
 2. **Vom Jumphost aus** zu den Arbeits-VMs verbinden:
+
    - Server DC: RDP zu `ServerDC-S01` (interne IP)
    - Server TS: RDP zu `ServerTS-S01` (interne IP)
    - Weitere VMs entsprechend
@@ -122,7 +124,7 @@ Internet → Public IPs → VMs (2 NICs each)
 ### **Automatische Richtlinien:**
 
 - **Auto-Shutdown**: 18:00 Uhr (nach Schulungsende)
-- **Auto-Startup**: 09:00 Uhr (vor Schulungsbeginn)  
+- **Auto-Startup**: 09:00 Uhr (vor Schulungsbeginn)
 - **Schulungszeit**: 9 Stunden täglich (09:00 - 18:00 Uhr)
 - **Zeitzone**: "W. Europe Standard Time"
 - **Schulungsdauer**: Konfigurierbar (Standard: 5 Tage)
@@ -131,55 +133,57 @@ Internet → Public IPs → VMs (2 NICs each)
 
 #### **VM-Größen und Stundenpreise (Germany West Central):**
 
-| VM-Typ | Größe | vCPUs | RAM | Preis/Stunde | Preis/9h Tag |
-|--------|-------|-------|-----|-------------|-------------|
-| Standard_B2s | B-Series | 2 | 4 GB | €0,042 | €0,38 |
-| Standard_B2ms | B-Series | 2 | 8 GB | €0,083 | €0,75 |
-| Standard_D2s_v3 | D-Series | 2 | 8 GB | €0,096 | €0,86 |
+| VM-Typ          | Größe    | vCPUs | RAM  | Preis/Stunde | Preis/9h Tag |
+| --------------- | -------- | ----- | ---- | ------------ | ------------ |
+| Standard_B2s    | B-Series | 2     | 4 GB | €0,042       | €0,38        |
+| Standard_B2ms   | B-Series | 2     | 8 GB | €0,083       | €0,75        |
+| Standard_D2s_v3 | D-Series | 2     | 8 GB | €0,096       | €0,86        |
 
 #### **Kostenaufschlüsselung pro Teilnehmer (9 Stunden/Tag):**
 
 **Standard_B2s VMs (empfohlen für Training):**
+
 - **5 Arbeits-VMs**: 5 × €0,38 = €1,90/Tag
-- **1 Jumphost**: 1 × €0,38 = €0,38/Tag  
+- **1 Jumphost**: 1 × €0,38 = €0,38/Tag
 - **Gesamt pro Teilnehmer**: €2,28/Tag
 
 #### **Gesamtkosten für 5 Schüler + 1 Trainer:**
 
-| Komponente | Anzahl | Kosten/Tag | Kosten/Woche (5 Tage) |
-|------------|--------|------------|---------------------|
-| Schüler-VMs | 30 VMs (5×6) | €11,40 | €57,00 |
-| Trainer-VMs | 6 VMs (1×6) | €2,28 | €11,40 |
-| **Gesamt** | **36 VMs** | **€13,68** | **€68,40** |
+| Komponente  | Anzahl       | Kosten/Tag | Kosten/Woche (5 Tage) |
+| ----------- | ------------ | ---------- | --------------------- |
+| Schüler-VMs | 30 VMs (5×6) | €11,40     | €57,00                |
+| Trainer-VMs | 6 VMs (1×6)  | €2,28      | €11,40                |
+| **Gesamt**  | **36 VMs**   | **€13,68** | **€68,40**            |
 
 #### **Zusätzliche Azure-Kosten:**
 
-| Service | Kosten/Tag | Beschreibung |
-|---------|------------|--------------|
-| Storage (OS Disks) | €3,60 | 36 × 50GB Standard SSD (€0,10/Tag) |
-| Network (Public IPs) | €2,16 | 6 Public IPs × €0,36/Tag |
-| DevTest Labs Service | €0,00 | Kostenlos |
-| **Storage & Network** | **€5,76** | **Zusätzlich zu VM-Kosten** |
+| Service               | Kosten/Tag | Beschreibung                       |
+| --------------------- | ---------- | ---------------------------------- |
+| Storage (OS Disks)    | €3,60      | 36 × 50GB Standard SSD (€0,10/Tag) |
+| Network (Public IPs)  | €2,16      | 6 Public IPs × €0,36/Tag           |
+| DevTest Labs Service  | €0,00      | Kostenlos                          |
+| **Storage & Network** | **€5,76**  | **Zusätzlich zu VM-Kosten**        |
 
 #### **Vollständige Kostenübersicht:**
 
-| Zeitraum | VM-Kosten | Storage & Network | **Gesamtkosten** |
-|----------|-----------|-------------------|----------------|
-| **Pro Tag (9h)** | €13,68 | €5,76 | **€19,44** |
-| **Pro Woche (5 Tage)** | €68,40 | €28,80 | **€97,20** |
-| **Pro Monat (20 Tage)** | €273,60 | €115,20 | **€388,80** |
+| Zeitraum                | VM-Kosten | Storage & Network | **Gesamtkosten** |
+| ----------------------- | --------- | ----------------- | ---------------- |
+| **Pro Tag (9h)**        | €13,68    | €5,76             | **€19,44**       |
+| **Pro Woche (5 Tage)**  | €68,40    | €28,80            | **€97,20**       |
+| **Pro Monat (20 Tage)** | €273,60   | €115,20           | **€388,80**      |
 
 ### **Kostenvergleich: 9h vs 24h Betrieb:**
 
-| Betriebszeit | Tägliche VM-Kosten | Wöchentliche Gesamtkosten |
-|--------------|-------------------|-------------------------|
-| **9 Stunden** (Training) | €13,68 | €97,20 |
-| **24 Stunden** (Dauerbetrieb) | €36,48 | €211,20 |
-| **Einsparung** | €22,80 (62%) | €114,00 (54%) |
+| Betriebszeit                  | Tägliche VM-Kosten | Wöchentliche Gesamtkosten |
+| ----------------------------- | ------------------ | ------------------------- |
+| **9 Stunden** (Training)      | €13,68             | €97,20                    |
+| **24 Stunden** (Dauerbetrieb) | €36,48             | €211,20                   |
+| **Einsparung**                | €22,80 (62%)       | €114,00 (54%)             |
 
 ### **Kostenoptimierungsstrategien:**
 
 #### **Automatische Zeitsteuerung:**
+
 ```powershell
 # 9-Stunden Schulungstag (09:00 - 18:00)
 -AutoStartupTime "0900" `
@@ -188,12 +192,14 @@ Internet → Public IPs → VMs (2 NICs each)
 ```
 
 #### **Weitere Einsparungen:**
+
 - **Wochenenden**: Automatisches Herunterfahren (keine Kosten)
 - **VM-Größe**: B2s für Training ausreichend (günstigste Option)
 - **Regionen**: Germany West Central oft günstiger als andere EU-Regionen
 - **Reserved Instances**: Bis zu 40% Rabatt bei längerfristiger Nutzung
 
 #### **Kostenkontrolle:**
+
 ```powershell
 # Budget-Alerts einrichten
 -CostThreshold 100 `  # Alert bei €100/Woche

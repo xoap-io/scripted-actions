@@ -6,7 +6,7 @@
     This script lists Azure resources using the Azure CLI with comprehensive filtering and display options.
     Supports filtering by resource group, location, resource type, tags, and provides detailed information about each resource.
     Includes resource inventory analysis, cost estimation hints, and export capabilities.
-    
+
     The script uses the Azure CLI command: az resource list
 
 .PARAMETER ResourceGroup
@@ -47,27 +47,27 @@
 
 .EXAMPLE
     .\az-cli-list-resources.ps1
-    
+
     Lists all resources in the current subscription.
 
 .EXAMPLE
     .\az-cli-list-resources.ps1 -ResourceGroup "production-rg" -ShowTags
-    
+
     Lists resources in specific Resource Group with tag information.
 
 .EXAMPLE
     .\az-cli-list-resources.ps1 -ResourceType "Microsoft.Compute/virtualMachines" -Location "East US"
-    
+
     Lists all Virtual Machines in East US region.
 
 .EXAMPLE
     .\az-cli-list-resources.ps1 -Tag "Environment=Production" -GroupBy "resourceGroup"
-    
+
     Lists Production resources grouped by Resource Group.
 
 .EXAMPLE
     .\az-cli-list-resources.ps1 -Name "*web*" -ExportToCsv "web-resources.csv"
-    
+
     Lists resources with 'web' in the name and exports to CSV.
 
 .NOTES
@@ -229,10 +229,10 @@ try {
 
     # Execute Azure CLI command
     $resourcesJson = & az @azParams 2>&1
-    
+
     if ($LASTEXITCODE -eq 0) {
         $resources = $resourcesJson | ConvertFrom-Json
-        
+
         if (-not $resources) {
             $resources = @()
         }
@@ -289,20 +289,20 @@ try {
         if ($GroupBy) {
             Write-Host "📋 Resources grouped by $GroupBy :" -ForegroundColor Blue
             Write-Host $("-" * 60) -ForegroundColor Gray
-            
+
             $groupProperty = switch ($GroupBy) {
                 "provisioningState" { { $_.properties.provisioningState } }
                 "tags" { { ($_.tags | ConvertTo-Json -Compress) } }
                 default { $GroupBy }
             }
-            
+
             $groups = $resources | Group-Object -Property $groupProperty | Sort-Object Count -Descending
-            
+
             foreach ($group in $groups) {
                 $groupName = if ($group.Name) { $group.Name } else { "(none)" }
                 Write-Host ""
                 Write-Host "🗂️  $groupName ($($group.Count) resources)" -ForegroundColor Blue
-                
+
                 foreach ($resource in ($group.Group | Select-Object -First 10)) {
                     $stateColor = switch ($resource.properties.provisioningState) {
                         "Succeeded" { "Green" }
@@ -310,17 +310,17 @@ try {
                         "Running" { "Yellow" }
                         default { "White" }
                     }
-                    
+
                     $displayLocation = ($locationMap.GetEnumerator() | Where-Object { $_.Value -eq $resource.location }).Key
                     if (-not $displayLocation) { $displayLocation = $resource.location }
-                    
+
                     Write-Host "  • $($resource.name)" -ForegroundColor White
                     Write-Host "    Type: $($resource.type)" -ForegroundColor Gray
                     Write-Host "    Location: $displayLocation" -ForegroundColor Gray
                     Write-Host "    RG: $($resource.resourceGroup)" -ForegroundColor Gray
                     Write-Host "    State: $($resource.properties.provisioningState)" -ForegroundColor $stateColor
                 }
-                
+
                 if ($group.Count -gt 10) {
                     Write-Host "  ... and $($group.Count - 10) more resources" -ForegroundColor Gray
                 }
@@ -329,7 +329,7 @@ try {
             # Display detailed resource list
             Write-Host "📋 Resource Details:" -ForegroundColor Blue
             Write-Host $("-" * 100) -ForegroundColor Gray
-            
+
             foreach ($resource in $resources) {
                 $stateColor = switch ($resource.properties.provisioningState) {
                     "Succeeded" { "Green" }
@@ -337,10 +337,10 @@ try {
                     "Running" { "Yellow" }
                     default { "White" }
                 }
-                
+
                 $displayLocation = ($locationMap.GetEnumerator() | Where-Object { $_.Value -eq $resource.location }).Key
                 if (-not $displayLocation) { $displayLocation = $resource.location }
-                
+
                 Write-Host ""
                 Write-Host "🔧 $($resource.name)" -ForegroundColor Blue
                 Write-Host "   Type: $($resource.type)" -ForegroundColor White
@@ -348,14 +348,14 @@ try {
                 Write-Host "   Location: $displayLocation" -ForegroundColor White
                 Write-Host "   State: $($resource.properties.provisioningState)" -ForegroundColor $stateColor
                 Write-Host "   ID: $($resource.id)" -ForegroundColor Gray
-                
+
                 if ($ShowTags -and $resource.tags) {
                     Write-Host "   Tags:" -ForegroundColor Cyan
                     foreach ($tag in $resource.tags.PSObject.Properties) {
                         Write-Host "     $($tag.Name): $($tag.Value)" -ForegroundColor Gray
                     }
                 }
-                
+
                 if ($ShowProperties -and $resource.properties) {
                     Write-Host "   Properties:" -ForegroundColor Cyan
                     $resource.properties.PSObject.Properties | ForEach-Object {
@@ -371,12 +371,12 @@ try {
         if ($ExportToCsv) {
             Write-Host ""
             Write-Host "💾 Exporting to CSV: $ExportToCsv" -ForegroundColor Yellow
-            
-            $csvData = $resources | Select-Object name, type, resourceGroup, location, 
+
+            $csvData = $resources | Select-Object name, type, resourceGroup, location,
                 @{Name='provisioningState'; Expression={$_.properties.provisioningState}},
                 @{Name='tags'; Expression={($_.tags | ConvertTo-Json -Compress)}},
                 id
-            
+
             $csvData | Export-Csv -Path $ExportToCsv -NoTypeInformation
             Write-Host "✓ Exported $($resources.Count) resources to $ExportToCsv" -ForegroundColor Green
         }
@@ -386,7 +386,7 @@ try {
             Write-Host ""
             Write-Host "📄 Raw output in $OutputFormat format:" -ForegroundColor Blue
             Write-Host $("-" * 40) -ForegroundColor Gray
-            
+
             $formatParams = @('resource', 'list') + $azParams[2..($azParams.Count-3)] + @('--output', $OutputFormat)
             & az @formatParams
         }

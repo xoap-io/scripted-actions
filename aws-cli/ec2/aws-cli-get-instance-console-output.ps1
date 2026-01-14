@@ -100,18 +100,18 @@ try {
     # Execute the console output retrieval
     Write-Output "Retrieving console output..."
     $result = & aws @consoleArgs --output json 2>&1
-    
+
     if ($LASTEXITCODE -eq 0) {
         $consoleData = $result | ConvertFrom-Json
-        
+
         if ($consoleData.Output) {
             # Decode the base64 output
             $decodedOutput = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($consoleData.Output))
-            
+
             Write-Output "`n📄 Console Output for Instance: $InstanceId"
             Write-Output "Timestamp: $($consoleData.Timestamp)"
             Write-Output "=" * 80
-            
+
             if ($OutputFile) {
                 # Save to file
                 $decodedOutput | Out-File -FilePath $OutputFile -Encoding UTF8
@@ -119,7 +119,7 @@ try {
                 Write-Output "`nFirst 20 lines of console output:"
                 $lines = $decodedOutput -split "`n"
                 $lines[0..([Math]::Min(19, $lines.Count - 1))] | ForEach-Object { Write-Output $_ }
-                
+
                 if ($lines.Count -gt 20) {
                     Write-Output "..."
                     Write-Output "📄 Complete output saved to file: $OutputFile"
@@ -128,15 +128,15 @@ try {
                 # Display to console
                 Write-Output $decodedOutput
             }
-            
+
             Write-Output "`n=" * 80
             Write-Output "✅ Console output retrieved successfully."
-            
+
             # Provide helpful information
             $lines = $decodedOutput -split "`n"
             Write-Output "`n📊 Output Summary:"
             Write-Output "Total lines: $($lines.Count)"
-            
+
             # Check for common issues
             $errors = $lines | Where-Object { $_ -match "error|failed|panic|fatal" -and $_ -notmatch "error.*0" }
             if ($errors) {
@@ -146,13 +146,13 @@ try {
                     Write-Output "  ... and $($errors.Count - 5) more error(s)"
                 }
             }
-            
+
             # Check for successful boot indicators
             $bootSuccess = $lines | Where-Object { $_ -match "login:|systemd.*Reached target|cloud-init.*finished|rc.local.*started" }
             if ($bootSuccess) {
                 Write-Output "✅ Boot completion indicators found"
             }
-            
+
         } else {
             Write-Output "ℹ️  No console output available for this instance."
             Write-Output "This could mean:"
@@ -160,7 +160,7 @@ try {
             Write-Output "  - Instance type doesn't support console output"
             Write-Output "  - Console output not yet generated"
         }
-        
+
     } else {
         throw "Failed to retrieve console output: $result"
     }

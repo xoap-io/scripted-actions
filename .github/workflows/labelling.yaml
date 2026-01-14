@@ -4,7 +4,7 @@ on:
     branches: [dev, master]
 jobs:
   size-label:
-    needs: pr-reviewer 
+    needs: pr-reviewer
     permissions:
       contents: read
       pull-requests: write
@@ -43,5 +43,5 @@ jobs:
         uses: necojackarc/auto-request-review@v0.13.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          config: .github/reviewers.yml 
+          config: .github/reviewers.yml
           use_local: true

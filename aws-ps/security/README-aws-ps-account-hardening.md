@@ -14,12 +14,14 @@ The script addresses critical security findings and implements:
 ### Core Security Controls
 
 - **Identity & Access Management (IAM)**
+
   - Hardware MFA enforcement for root user
   - IAM Access Analyzer deployment
   - Direct policy attachment remediation
   - Account contact information setup
 
 - **CloudTrail Logging**
+
   - Multi-region CloudTrail configuration
   - CloudWatch Logs integration
   - Log file validation
@@ -27,11 +29,13 @@ The script addresses critical security findings and implements:
   - Object-level logging for S3
 
 - **CloudWatch Monitoring**
+
   - Metric filters for security events
   - Security alerting via SNS
   - Log group retention policies
 
 - **S3 Security**
+
   - Bucket encryption (SSE-S3/KMS)
   - Public access blocking
   - MFA delete (manual guidance)
@@ -39,6 +43,7 @@ The script addresses critical security findings and implements:
   - SSL enforcement
 
 - **Network Security**
+
   - VPC Flow Logs
   - Security group auditing
   - VPC endpoints for ECR, SSM
@@ -83,74 +88,74 @@ The script requires extensive AWS permissions. Recommended approach:
 
 ### Mandatory Parameters
 
-| Parameter | Type | Description | Example |
-|-----------|------|-------------|---------|
-| `HomeRegion` | String | Primary AWS region for global services | `"eu-central-1"` |
-| `SecurityEmail` | String | Email for security notifications | `"security@company.com"` |
+| Parameter       | Type   | Description                            | Example                  |
+| --------------- | ------ | -------------------------------------- | ------------------------ |
+| `HomeRegion`    | String | Primary AWS region for global services | `"eu-central-1"`         |
+| `SecurityEmail` | String | Email for security notifications       | `"security@company.com"` |
 
 ### Optional Core Parameters
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `AccountAlias` | String | `"cis-hardened-account"` | AWS account alias |
-| `TargetRegions` | String[] | `@("eu-central-1","eu-west-1","us-east-1")` | Regions to harden |
-| `SecurityPhone` | String | `"+49-000-0000000"` | Security contact phone |
-| `SecurityFirstName` | String | `"Security"` | Security contact first name |
-| `SecurityLastName` | String | `"Team"` | Security contact last name |
-| `SecurityTitle` | String | `"Security Lead"` | Security contact title |
+| Parameter           | Type     | Default                                     | Description                 |
+| ------------------- | -------- | ------------------------------------------- | --------------------------- |
+| `AccountAlias`      | String   | `"cis-hardened-account"`                    | AWS account alias           |
+| `TargetRegions`     | String[] | `@("eu-central-1","eu-west-1","us-east-1")` | Regions to harden           |
+| `SecurityPhone`     | String   | `"+49-000-0000000"`                         | Security contact phone      |
+| `SecurityFirstName` | String   | `"Security"`                                | Security contact first name |
+| `SecurityLastName`  | String   | `"Team"`                                    | Security contact last name  |
+| `SecurityTitle`     | String   | `"Security Lead"`                           | Security contact title      |
 
 ### CloudTrail Parameters
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `TrailName` | String | `"cis-multi-region-trail"` | CloudTrail name |
-| `TrailBucketName` | String | `""` (auto-generated) | S3 bucket for CloudTrail logs |
-| `TrailKmsAlias` | String | `"alias/cis-cloudtrail"` | KMS key for CloudTrail encryption |
-| `TrailEnableLogFileValidation` | Switch | `$false` | Enable log file validation |
+| Parameter                      | Type   | Default                    | Description                       |
+| ------------------------------ | ------ | -------------------------- | --------------------------------- |
+| `TrailName`                    | String | `"cis-multi-region-trail"` | CloudTrail name                   |
+| `TrailBucketName`              | String | `""` (auto-generated)      | S3 bucket for CloudTrail logs     |
+| `TrailKmsAlias`                | String | `"alias/cis-cloudtrail"`   | KMS key for CloudTrail encryption |
+| `TrailEnableLogFileValidation` | Switch | `$false`                   | Enable log file validation        |
 
 ### Config Parameters
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `ConfigBucketName` | String | `""` (auto-generated) | S3 bucket for Config |
-| `ConfigDeliveryFrequency` | String | `"One_Hour"` | Config delivery frequency |
+| Parameter                 | Type   | Default               | Description               |
+| ------------------------- | ------ | --------------------- | ------------------------- |
+| `ConfigBucketName`        | String | `""` (auto-generated) | S3 bucket for Config      |
+| `ConfigDeliveryFrequency` | String | `"One_Hour"`          | Config delivery frequency |
 
 ### Security Parameters
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `EbsDefaultKmsAlias` | String | `"alias/cis-ebs-default"` | KMS key for EBS encryption |
-| `FlowLogGroupPrefix` | String | `"/aws/vpc/flowlogs/cis"` | VPC Flow Logs prefix |
-| `FlowLogRetentionDays` | Int | `365` | Flow log retention period |
-| `AdminPorts` | Int[] | `@(22,3389)` | Administrative ports to secure |
-| `SnsTopicName` | String | `"cis-security-alerts"` | SNS topic for alerts |
+| Parameter              | Type   | Default                   | Description                    |
+| ---------------------- | ------ | ------------------------- | ------------------------------ |
+| `EbsDefaultKmsAlias`   | String | `"alias/cis-ebs-default"` | KMS key for EBS encryption     |
+| `FlowLogGroupPrefix`   | String | `"/aws/vpc/flowlogs/cis"` | VPC Flow Logs prefix           |
+| `FlowLogRetentionDays` | Int    | `365`                     | Flow log retention period      |
+| `AdminPorts`           | Int[]  | `@(22,3389)`              | Administrative ports to secure |
+| `SnsTopicName`         | String | `"cis-security-alerts"`   | SNS topic for alerts           |
 
 ### Feature Toggles
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `EnableCloudWatchAlarms` | Switch | `$false` | Enable CloudWatch monitoring |
-| `EnableInspector` | Switch | `$false` | Enable AWS Inspector |
-| `EnableMacie` | Switch | `$false` | Enable Amazon Macie |
-| `EnableGuardDutyRuntimeMonitoring` | Switch | `$false` | Enable GuardDuty runtime features |
-| `EnableVpcEndpoints` | Switch | `$false` | Create VPC endpoints |
-| `EnableS3Lifecycle` | Switch | `$false` | Configure S3 lifecycle policies |
-| `EnforceS3RequireSSL` | Switch | `$false` | Enforce SSL for S3 buckets |
+| Parameter                             | Type   | Default  | Description                         |
+| ------------------------------------- | ------ | -------- | ----------------------------------- |
+| `EnableCloudWatchAlarms`              | Switch | `$false` | Enable CloudWatch monitoring        |
+| `EnableInspector`                     | Switch | `$false` | Enable AWS Inspector                |
+| `EnableMacie`                         | Switch | `$false` | Enable Amazon Macie                 |
+| `EnableGuardDutyRuntimeMonitoring`    | Switch | `$false` | Enable GuardDuty runtime features   |
+| `EnableVpcEndpoints`                  | Switch | `$false` | Create VPC endpoints                |
+| `EnableS3Lifecycle`                   | Switch | `$false` | Configure S3 lifecycle policies     |
+| `EnforceS3RequireSSL`                 | Switch | `$false` | Enforce SSL for S3 buckets          |
 | `EnsureCloudTrailManagementSelectors` | Switch | `$false` | Ensure CloudTrail management events |
-| `RemediateIamUserDirectPolicies` | Switch | `$false` | Remove direct IAM user policies |
+| `RemediateIamUserDirectPolicies`      | Switch | `$false` | Remove direct IAM user policies     |
 
 ### S3 Lifecycle Parameters
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `S3LifecycleTransitionDays` | Int | `90` | Days to transition to IA storage |
-| `S3LifecycleExpirationDays` | Int | `2555` | Days to expire objects |
+| Parameter                   | Type | Default | Description                      |
+| --------------------------- | ---- | ------- | -------------------------------- |
+| `S3LifecycleTransitionDays` | Int  | `90`    | Days to transition to IA storage |
+| `S3LifecycleExpirationDays` | Int  | `2555`  | Days to expire objects           |
 
 ### Safety Parameters
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `DryRun` | Switch | `$false` | Preview changes without applying |
+| Parameter | Type   | Default  | Description                      |
+| --------- | ------ | -------- | -------------------------------- |
+| `DryRun`  | Switch | `$false` | Preview changes without applying |
 
 ## Usage Examples
 
@@ -329,6 +334,7 @@ Check: Service availability in target regions
 ### Debug Mode
 
 Add `-Verbose` parameter for detailed output:
+
 ```powershell
 .\aws-ps-account-hardening.ps1 -HomeRegion "eu-central-1" -SecurityEmail "security@company.com" -Verbose
 ```

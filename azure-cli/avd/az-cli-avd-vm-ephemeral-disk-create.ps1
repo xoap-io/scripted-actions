@@ -5,7 +5,7 @@
 .DESCRIPTION
     This script creates an Azure Virtual Machine with ephemeral OS disk configuration using the Azure CLI.
     Ephemeral OS disks are stored on the local VM storage and provide faster performance for stateless workloads.
-    
+
     The script uses the Azure CLI command: az vm create
 
 .PARAMETER ResourceGroup
@@ -56,17 +56,17 @@
 
 .EXAMPLE
     .\az-cli-avd-vm-ephemeral-disk-create.ps1 -ResourceGroup "myRG" -VMName "myVM" -Image "Ubuntu2204" -Location "eastus"
-    
+
     Creates a basic Ubuntu VM with ephemeral OS disk using default settings.
 
 .EXAMPLE
     .\az-cli-avd-vm-ephemeral-disk-create.ps1 -ResourceGroup "myRG" -VMName "myVM" -Image "Win2022Datacenter" -Location "eastus" -Size "Standard_D2s_v3" -AuthenticationType "password" -AdminUsername "azureadmin" -AdminPassword "SecurePassword123!"
-    
+
     Creates a Windows VM with ephemeral OS disk using password authentication.
 
 .EXAMPLE
     .\az-cli-avd-vm-ephemeral-disk-create.ps1 -ResourceGroup "myRG" -VMName "myVM" -Image "Ubuntu2204" -Location "eastus" -EphemeralOSDiskPlacement "CacheDisk" -OSDiskCaching "ReadOnly" -GenerateSSHKeys -Tags "environment=test purpose=ephemeral"
-    
+
     Creates an Ubuntu VM with ephemeral OS disk on cache disk with specific caching and tags.
 
 .NOTES
@@ -205,10 +205,10 @@ try {
 
     # Execute Azure CLI command
     $result = & az @azParams 2>&1
-    
+
     if ($LASTEXITCODE -eq 0) {
         Write-Host "✓ Azure Virtual Machine created successfully!" -ForegroundColor Green
-        
+
         # Parse and display VM information
         try {
             $vmInfo = $result | ConvertFrom-Json

@@ -41,30 +41,30 @@ try {
     if (-not $azVersion) {
         throw "Azure CLI is not installed or not available in PATH"
     }
-    
+
     Write-Host "Checking Azure CLI login status..." -ForegroundColor Cyan
     $account = az account show --output json 2>$null | ConvertFrom-Json
     if (-not $account) {
         throw "Not logged in to Azure CLI. Please run 'az login' first"
     }
     Write-Host "Logged in as: $($account.user.name)" -ForegroundColor Green
-    
+
     Write-Host "Retrieving Application Group details..." -ForegroundColor Cyan
-    
+
     $azParams = @(
         'desktopvirtualization', 'applicationgroup', 'show',
         '--name', $Name,
         '--resource-group', $ResourceGroup,
         '--output', 'json'
     )
-    
+
     $result = & az @azParams
     if ($LASTEXITCODE -ne 0) {
         throw "Azure CLI command failed with exit code: $LASTEXITCODE"
     }
-    
+
     $appGroup = $result | ConvertFrom-Json
-    
+
     Write-Host "Application Group Details:" -ForegroundColor Green
     Write-Host "  Name: $($appGroup.name)" -ForegroundColor White
     Write-Host "  Resource Group: $($appGroup.resourceGroup)" -ForegroundColor White
@@ -74,7 +74,7 @@ try {
     Write-Host "  Description: $($appGroup.description)" -ForegroundColor White
     Write-Host "  Friendly Name: $($appGroup.friendlyName)" -ForegroundColor White
     Write-Host "  ID: $($appGroup.id)" -ForegroundColor White
-    
+
     return $appGroup
 } catch {
     Write-Error "Failed to retrieve Azure Virtual Desktop Application Group details: $_"

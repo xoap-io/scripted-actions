@@ -9,9 +9,9 @@ $ErrorActionPreference = 'Stop'
 
 try {
     Write-Host "Retrieving WorkSpace details for $WorkspaceId..." -ForegroundColor Cyan
-    
+
     $workspace = Get-WKSWorkspace -WorkspaceId $WorkspaceId
-    
+
     if ($workspace) {
         Write-Host "WorkSpace Details:" -ForegroundColor Green
         Write-Host "  WorkSpace ID: $($workspace.WorkspaceId)" -ForegroundColor White
@@ -24,7 +24,7 @@ try {
         Write-Host "  Subnet ID: $($workspace.SubnetId)" -ForegroundColor White
         Write-Host "  Error Code: $($workspace.ErrorCode)" -ForegroundColor White
         Write-Host "  Error Message: $($workspace.ErrorMessage)" -ForegroundColor White
-        
+
         if ($workspace.WorkspaceProperties) {
             Write-Host "  Properties:" -ForegroundColor White
             Write-Host "    Compute Type: $($workspace.WorkspaceProperties.ComputeTypeName)" -ForegroundColor White
@@ -35,14 +35,14 @@ try {
                 Write-Host "    Auto Stop Timeout: $($workspace.WorkspaceProperties.RunningModeAutoStopTimeoutInMinutes) minutes" -ForegroundColor White
             }
         }
-        
+
         if ($workspace.ModificationStates) {
             Write-Host "  Modification States:" -ForegroundColor White
             foreach ($state in $workspace.ModificationStates) {
                 Write-Host "    $($state.Resource): $($state.State)" -ForegroundColor White
             }
         }
-        
+
         return $workspace
     } else {
         Write-Error "WorkSpace $WorkspaceId not found"

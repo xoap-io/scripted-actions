@@ -5,7 +5,7 @@
 .DESCRIPTION
     This script creates a peering connection between two Azure Virtual Networks using the Azure CLI.
     VNet peering allows resources in different virtual networks to communicate with each other.
-    
+
     The script uses the Azure CLI command: az network vnet peering create
 
 .PARAMETER VNetName
@@ -34,17 +34,17 @@
 
 .EXAMPLE
     .\az-cli-create-vnet-peering.ps1 -VNetName "hub-vnet" -ResourceGroup "hub-rg" -PeeringName "hub-to-spoke1" -RemoteVNetId "/subscriptions/.../resourceGroups/spoke-rg/providers/Microsoft.Network/virtualNetworks/spoke1-vnet"
-    
+
     Creates a basic VNet peering connection.
 
 .EXAMPLE
     .\az-cli-create-vnet-peering.ps1 -VNetName "hub-vnet" -ResourceGroup "hub-rg" -PeeringName "hub-to-spoke1" -RemoteVNetId "/subscriptions/.../resourceGroups/spoke-rg/providers/Microsoft.Network/virtualNetworks/spoke1-vnet" -AllowGatewayTransit
-    
+
     Creates a VNet peering with gateway transit enabled (hub-spoke topology).
 
 .EXAMPLE
     .\az-cli-create-vnet-peering.ps1 -VNetName "spoke1-vnet" -ResourceGroup "spoke-rg" -PeeringName "spoke1-to-hub" -RemoteVNetId "/subscriptions/.../resourceGroups/hub-rg/providers/Microsoft.Network/virtualNetworks/hub-vnet" -UseRemoteGateways
-    
+
     Creates a spoke-to-hub peering that uses the hub's gateways.
 
 .NOTES
@@ -141,22 +141,22 @@ try {
     )
 
     # Add optional parameters (defaults are true for access, false for others)
-    if ($AllowVNetAccess) { 
-        $azParams += '--allow-vnet-access', 'true' 
+    if ($AllowVNetAccess) {
+        $azParams += '--allow-vnet-access', 'true'
     } else {
         $azParams += '--allow-vnet-access', 'false'
     }
-    
-    if ($AllowForwardedTraffic) { 
-        $azParams += '--allow-forwarded-traffic', 'true' 
+
+    if ($AllowForwardedTraffic) {
+        $azParams += '--allow-forwarded-traffic', 'true'
     }
-    
-    if ($AllowGatewayTransit) { 
-        $azParams += '--allow-gateway-transit', 'true' 
+
+    if ($AllowGatewayTransit) {
+        $azParams += '--allow-gateway-transit', 'true'
     }
-    
-    if ($UseRemoteGateways) { 
-        $azParams += '--use-remote-gateways', 'true' 
+
+    if ($UseRemoteGateways) {
+        $azParams += '--use-remote-gateways', 'true'
     }
 
     Write-Host "Creating VNet peering..." -ForegroundColor Yellow
@@ -164,7 +164,7 @@ try {
     Write-Host "Remote VNet: $remoteVNetName (Resource Group: $remoteRG)" -ForegroundColor Cyan
     Write-Host "Peering Name: $PeeringName" -ForegroundColor Cyan
     Write-Host "Allow VNet Access: $(if ($AllowVNetAccess) { 'Yes' } else { 'No' })" -ForegroundColor Cyan
-    
+
     if ($AllowForwardedTraffic) {
         Write-Host "Allow Forwarded Traffic: Yes" -ForegroundColor Green
     }
@@ -177,10 +177,10 @@ try {
 
     # Execute Azure CLI command
     $result = & az @azParams 2>&1
-    
+
     if ($LASTEXITCODE -eq 0) {
         Write-Host "✓ VNet peering created successfully!" -ForegroundColor Green
-        
+
         # Parse and display peering information
         try {
             $peeringInfo = $result | ConvertFrom-Json
@@ -192,7 +192,7 @@ try {
             Write-Host "  Allow Forwarded Traffic: $($peeringInfo.allowForwardedTraffic)" -ForegroundColor White
             Write-Host "  Allow Gateway Transit: $($peeringInfo.allowGatewayTransit)" -ForegroundColor White
             Write-Host "  Use Remote Gateways: $($peeringInfo.useRemoteGateways)" -ForegroundColor White
-            
+
             if ($peeringInfo.peeringState -eq "Initiated") {
                 Write-Host "" -ForegroundColor Yellow
                 Write-Host "⚠ Note: Peering state is 'Initiated'. You need to create the reverse peering" -ForegroundColor Yellow

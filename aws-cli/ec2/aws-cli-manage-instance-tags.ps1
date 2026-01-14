@@ -115,20 +115,20 @@ try {
 
     # Determine target instances
     $targetInstances = @()
-    
+
     if ($InstanceId) {
         $targetInstances += $InstanceId
     }
-    
+
     if ($InstanceIds) {
         $targetInstances += $InstanceIds -split ',' | ForEach-Object { $_.Trim() }
     }
-    
+
     if ($Filter) {
         Write-Output "Finding instances matching filter: $Filter"
         $filterArgs = @('ec2', 'describe-instances', '--filters', $Filter, '--query', 'Reservations[*].Instances[*].InstanceId', '--output', 'text')
         $filterArgs += $awsArgs
-        
+
         $filterResult = & aws @filterArgs 2>&1
         if ($LASTEXITCODE -eq 0) {
             $filteredInstances = $filterResult -split '\s+' | Where-Object { $_ -match '^i-' }
@@ -138,14 +138,14 @@ try {
             throw "Failed to filter instances: $filterResult"
         }
     }
-    
+
     if ($targetInstances.Count -eq 0) {
         throw "No instances specified. Use InstanceId, InstanceIds, or Filter parameter."
     }
-    
+
     # Remove duplicates
     $targetInstances = $targetInstances | Sort-Object -Unique
-    
+
     Write-Output "Target instances ($($targetInstances.Count)): $($targetInstances -join ', ')"
 
     # Handle tags from file
@@ -161,16 +161,16 @@ try {
     switch ($Action) {
         'List' {
             Write-Output "`n📋 Listing tags for instances..."
-            
+
             foreach ($instance in $targetInstances) {
                 Write-Output "`nInstance: $instance"
                 Write-Output "-" * 40
-                
+
                 $tagResult = aws ec2 describe-tags --filters "Name=resource-id,Values=$instance" @awsArgs --output json 2>&1
-                
+
                 if ($LASTEXITCODE -eq 0) {
                     $tagData = $tagResult | ConvertFrom-Json
-                    
+
                     if ($tagData.Tags.Count -gt 0) {
                         foreach ($tag in $tagData.Tags) {
                             Write-Output "  $($tag.Key): $($tag.Value)"
@@ -193,7 +193,7 @@ try {
 
             foreach ($instance in $targetInstances) {
                 Write-Output "Processing instance: $instance"
-                
+
                 # Verify instance exists
                 $instanceCheck = aws ec2 describe-instances --instance-ids $instance @awsArgs --output json 2>&1
                 if ($LASTEXITCODE -ne 0) {
@@ -205,9 +205,9 @@ try {
                     # Single tag
                     $tagArgs = @('ec2', 'create-tags', '--resources', $instance, '--tags', "Key=$TagKey,Value=$TagValue")
                     $tagArgs += $awsArgs
-                    
+
                     $result = & aws @tagArgs 2>&1
-                    
+
                     if ($LASTEXITCODE -eq 0) {
                         Write-Output "  ✅ Added tag: $TagKey = $TagValue"
                     } else {
@@ -217,12 +217,12 @@ try {
                     # Multiple tags from JSON
                     try {
                         $null = $tagsToApply | ConvertFrom-Json
-                        
+
                         $tagArgs = @('ec2', 'create-tags', '--resources', $instance, '--tags', $tagsToApply)
                         $tagArgs += $awsArgs
-                        
+
                         $result = & aws @tagArgs 2>&1
-                        
+
                         if ($LASTEXITCODE -eq 0) {
                             Write-Output "  ✅ Added multiple tags successfully"
                         } else {
@@ -244,12 +244,12 @@ try {
 
             foreach ($instance in $targetInstances) {
                 Write-Output "Processing instance: $instance"
-                
+
                 $tagArgs = @('ec2', 'delete-tags', '--resources', $instance, '--tags', "Key=$TagKey")
                 $tagArgs += $awsArgs
-                
+
                 $result = & aws @tagArgs 2>&1
-                
+
                 if ($LASTEXITCODE -eq 0) {
                     Write-Output "  ✅ Removed tag: $TagKey"
                 } else {
@@ -268,37 +268,37 @@ try {
 
             foreach ($instance in $targetInstances) {
                 Write-Output "Processing instance: $instance"
-                
+
                 # Get existing tags
                 $existingTagsResult = aws ec2 describe-tags --filters "Name=resource-id,Values=$instance" @awsArgs --output json 2>&1
-                
+
                 if ($LASTEXITCODE -eq 0) {
                     $existingTagsData = $existingTagsResult | ConvertFrom-Json
-                    
+
                     # Remove existing tags
                     if ($existingTagsData.Tags.Count -gt 0) {
                         Write-Output "  Removing $($existingTagsData.Tags.Count) existing tags..."
-                        
+
                         foreach ($tag in $existingTagsData.Tags) {
                             $removeArgs = @('ec2', 'delete-tags', '--resources', $instance, '--tags', "Key=$($tag.Key)")
                             $removeArgs += $awsArgs
-                            
+
                             $removeResult = & aws @removeArgs 2>&1
                             if ($LASTEXITCODE -ne 0) {
                                 Write-Warning "    Failed to remove tag $($tag.Key): $removeResult"
                             }
                         }
                     }
-                    
+
                     # Add new tags
                     try {
                         $null = $tagsToApply | ConvertFrom-Json
-                        
+
                         $addArgs = @('ec2', 'create-tags', '--resources', $instance, '--tags', $tagsToApply)
                         $addArgs += $awsArgs
-                        
+
                         $addResult = & aws @addArgs 2>&1
-                        
+
                         if ($LASTEXITCODE -eq 0) {
                             Write-Output "  ✅ Replaced tags successfully"
                         } else {

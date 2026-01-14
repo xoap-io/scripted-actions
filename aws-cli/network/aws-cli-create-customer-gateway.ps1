@@ -110,18 +110,18 @@ try {
     $awsArgs += @('--bgp-asn', $BgpAsn.ToString())
     $awsArgs += @('--public-ip', $IpAddress)
     $awsArgs += @('--type', $Type)
-    
+
     if ($DeviceName) {
         $awsArgs += @('--device-name', $DeviceName)
     }
-    
+
     # Build tag specifications
     $tagSpecs = @()
-    
+
     if ($Name) {
         $tagSpecs += "Key=Name,Value=$Name"
     }
-    
+
     if ($Tags) {
         $tagPairs = $Tags -split ','
         foreach ($tagPair in $tagPairs) {
@@ -131,15 +131,15 @@ try {
             }
         }
     }
-    
+
     if ($tagSpecs.Count -gt 0) {
         $awsArgs += @('--tag-specifications', "ResourceType=customer-gateway,Tags=$($tagSpecs -join ',')")
     }
-    
+
     if ($Profile) {
         $awsArgs += @('--profile', $Profile)
     }
-    
+
     if ($Region) {
         $awsArgs += @('--region', $Region)
     }
@@ -149,11 +149,11 @@ try {
     Write-Host "  BGP ASN: $BgpAsn" -ForegroundColor White
     Write-Host "  Public IP: $IpAddress" -ForegroundColor White
     Write-Host "  Type: $Type" -ForegroundColor White
-    
+
     if ($DeviceName) {
         Write-Host "  Device Name: $DeviceName" -ForegroundColor White
     }
-    
+
     if ($Name) {
         Write-Host "  Name: $Name" -ForegroundColor White
     }
@@ -168,7 +168,7 @@ try {
     # Create the customer gateway
     Write-Host "`nCreating customer gateway..." -ForegroundColor Yellow
     $result = & aws @awsArgs 2>&1
-    
+
     if ($LASTEXITCODE -ne 0) {
         throw "Failed to create customer gateway: $result"
     }
@@ -187,7 +187,7 @@ try {
     Write-Host "  BGP ASN: $($customerGateway.BgpAsn)" -ForegroundColor White
     Write-Host "  IP Address: $($customerGateway.IpAddress)" -ForegroundColor White
     Write-Host "  Type: $($customerGateway.Type)" -ForegroundColor White
-    
+
     if ($customerGateway.DeviceName) {
         Write-Host "  Device Name: $($customerGateway.DeviceName)" -ForegroundColor White
     }

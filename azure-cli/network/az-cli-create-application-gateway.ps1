@@ -6,7 +6,7 @@
     This script creates an Azure Application Gateway using the Azure CLI.
     Supports configuration of backend pools, HTTP settings, listeners, and routing rules.
     Includes options for SSL termination, Web Application Firewall (WAF), and autoscaling.
-    
+
     The script uses the Azure CLI command: az network application-gateway create
 
 .PARAMETER AppGatewayName
@@ -53,12 +53,12 @@
 
 .EXAMPLE
     .\az-cli-create-application-gateway.ps1 -AppGatewayName "web-appgw" -ResourceGroup "prod-rg" -Location "East US" -VNetName "hub-vnet" -SubnetName "appgw-subnet" -PublicIPName "appgw-pip"
-    
+
     Creates a basic Application Gateway with default settings.
 
 .EXAMPLE
     .\az-cli-create-application-gateway.ps1 -AppGatewayName "secure-appgw" -ResourceGroup "prod-rg" -Location "East US" -VNetName "hub-vnet" -SubnetName "appgw-subnet" -PublicIPName "appgw-pip" -SKU "WAF_v2" -EnableWAF -WAFMode "Prevention" -MinCapacity 2 -MaxCapacity 10
-    
+
     Creates an Application Gateway with WAF protection and autoscaling.
 
 .NOTES
@@ -254,19 +254,19 @@ try {
     Write-Host "  Virtual Network: $VNetName" -ForegroundColor White
     Write-Host "  Subnet: $SubnetName" -ForegroundColor White
     Write-Host "  Public IP: $PublicIPName" -ForegroundColor White
-    
+
     if ($SKU -like "*_v2") {
         Write-Host "  Autoscaling: Min=$MinCapacity, Max=$MaxCapacity instances" -ForegroundColor White
     } else {
         Write-Host "  Capacity: $Capacity instances" -ForegroundColor White
     }
-    
+
     if ($EnableWAF) {
         Write-Host "  WAF: Enabled (Mode: $WAFMode)" -ForegroundColor White
     } else {
         Write-Host "  WAF: Disabled" -ForegroundColor White
     }
-    
+
     Write-Host "  HTTP/2: $(if ($EnableHTTP2) { 'Enabled' } else { 'Disabled' })" -ForegroundColor White
 
     Write-Host "Creating Application Gateway..." -ForegroundColor Yellow
@@ -274,17 +274,17 @@ try {
 
     # Execute Azure CLI command
     $result = & az @azParams 2>&1
-    
+
     if ($LASTEXITCODE -eq 0) {
         $appGatewayInfo = $result | ConvertFrom-Json
-        
+
         Write-Host "✓ Application Gateway created successfully!" -ForegroundColor Green
         Write-Host "Application Gateway Details:" -ForegroundColor Cyan
         Write-Host "  Name: $($appGatewayInfo.name)" -ForegroundColor White
         Write-Host "  Resource ID: $($appGatewayInfo.id)" -ForegroundColor White
         Write-Host "  Provisioning State: $($appGatewayInfo.provisioningState)" -ForegroundColor White
         Write-Host "  Operational State: $($appGatewayInfo.operationalState)" -ForegroundColor White
-        
+
         if ($appGatewayInfo.frontendIPConfigurations) {
             $frontendIP = $appGatewayInfo.frontendIPConfigurations[0]
             if ($frontendIP.publicIPAddress) {
@@ -293,7 +293,7 @@ try {
                 Write-Host "  Public IP Address: $($pipInfo.ipAddress)" -ForegroundColor White
             }
         }
-        
+
         Write-Host "" -ForegroundColor White
         Write-Host "Next steps:" -ForegroundColor Yellow
         Write-Host "• Configure backend pools for your applications" -ForegroundColor White

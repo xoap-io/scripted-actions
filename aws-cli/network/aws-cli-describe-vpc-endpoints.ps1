@@ -110,7 +110,7 @@ try {
 
     # Build AWS CLI arguments
     $awsArgs = @('ec2', 'describe-vpc-endpoints')
-    
+
     if ($VpcEndpointIds) {
         $endpointArray = $VpcEndpointIds -split ','
         $awsArgs += @('--vpc-endpoint-ids')
@@ -119,19 +119,19 @@ try {
 
     # Build filters array
     $filters = @()
-    
+
     if ($VpcId) {
         $filters += "Name=vpc-id,Values=$VpcId"
     }
-    
+
     if ($ServiceName) {
         $filters += "Name=service-name,Values=$ServiceName"
     }
-    
+
     if ($VpcEndpointType) {
         $filters += "Name=vpc-endpoint-type,Values=$VpcEndpointType"
     }
-    
+
     if ($State) {
         $filters += "Name=state,Values=$State"
     }
@@ -140,18 +140,18 @@ try {
         $awsArgs += @('--filters')
         $awsArgs += $filters
     }
-    
+
     if ($Profile) {
         $awsArgs += @('--profile', $Profile)
     }
-    
+
     if ($Region) {
         $awsArgs += @('--region', $Region)
     }
 
     # Execute the AWS CLI command
     $result = & aws @awsArgs 2>&1
-    
+
     if ($LASTEXITCODE -ne 0) {
         throw "Failed to describe VPC endpoints: $result"
     }
@@ -188,30 +188,30 @@ try {
         Write-Host "  Type: $($endpoint.VpcEndpointType)" -ForegroundColor White
         Write-Host "  State: $($endpoint.State)" -ForegroundColor White
         Write-Host "  Creation Time: $($endpoint.CreationTimestamp)" -ForegroundColor White
-        
+
         if ($endpoint.PolicyDocument) {
             Write-Host "  Policy Document: Present" -ForegroundColor White
         }
-        
+
         if ($endpoint.RouteTableIds -and $endpoint.RouteTableIds.Count -gt 0) {
             Write-Host "  Route Tables: $($endpoint.RouteTableIds -join ', ')" -ForegroundColor White
         }
-        
+
         if ($endpoint.SubnetIds -and $endpoint.SubnetIds.Count -gt 0) {
             Write-Host "  Subnets: $($endpoint.SubnetIds -join ', ')" -ForegroundColor White
         }
-        
+
         if ($endpoint.Groups -and $endpoint.Groups.Count -gt 0) {
             Write-Host "  Security Groups:" -ForegroundColor White
             foreach ($group in $endpoint.Groups) {
                 Write-Host "    - $($group.GroupId) ($($group.GroupName))" -ForegroundColor Gray
             }
         }
-        
+
         if ($endpoint.NetworkInterfaceIds -and $endpoint.NetworkInterfaceIds.Count -gt 0) {
             Write-Host "  Network Interfaces: $($endpoint.NetworkInterfaceIds -join ', ')" -ForegroundColor White
         }
-        
+
         if ($null -ne $endpoint.PrivateDnsEnabled) {
             Write-Host "  Private DNS Enabled: $($endpoint.PrivateDnsEnabled)" -ForegroundColor White
         }
@@ -224,13 +224,13 @@ try {
                     Write-Host "    - $($dns.DnsName) (Hosted Zone: $($dns.HostedZoneId))" -ForegroundColor Gray
                 }
             }
-            
+
             if ($endpoint.PolicyDocument) {
                 Write-Host "  Policy Document:" -ForegroundColor White
                 $policy = $endpoint.PolicyDocument | ConvertFrom-Json | ConvertTo-Json -Depth 10
                 Write-Host $policy -ForegroundColor Gray
             }
-            
+
             if ($endpoint.Tags -and $endpoint.Tags.Count -gt 0) {
                 Write-Host "  Tags:" -ForegroundColor White
                 foreach ($tag in $endpoint.Tags) {

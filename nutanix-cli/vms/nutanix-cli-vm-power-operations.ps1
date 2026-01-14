@@ -176,7 +176,7 @@ $ErrorActionPreference = 'Stop'
 # Function to check and install Nutanix PowerShell SDK if needed
 function Test-NutanixSDKInstallation {
     Write-Host "Checking Nutanix PowerShell SDK installation..." -ForegroundColor Yellow
-    
+
     try {
         $nutanixModule = Get-Module -Name Nutanix.PowerShell.SDK -ListAvailable
         if (-not $nutanixModule) {
@@ -187,10 +187,10 @@ function Test-NutanixSDKInstallation {
             $version = $nutanixModule | Sort-Object Version -Descending | Select-Object -First 1
             Write-Host "Nutanix PowerShell SDK version $($version.Version) found." -ForegroundColor Green
         }
-        
+
         # Import the module
         Import-Module Nutanix.PowerShell.SDK -Force
-        
+
         return $true
     }
     catch {
@@ -202,16 +202,16 @@ function Test-NutanixSDKInstallation {
 # Function to connect to Prism Central or Element
 function Connect-ToNutanix {
     param($Server, $ServerType)
-    
+
     try {
         Write-Host "Connecting to $ServerType`: $Server" -ForegroundColor Yellow
-        
+
         # Check if already connected
         if ($global:DefaultNTNXConnection -and $global:DefaultNTNXConnection.Server -eq $Server) {
             Write-Host "Already connected to $Server" -ForegroundColor Green
             return $global:DefaultNTNXConnection
         }
-        
+
         # Connect to Nutanix (will prompt for credentials if not provided)
         $connection = Connect-NTNXCluster -Server $Server -AcceptInvalidSSLCerts
         Write-Host "Successfully connected to $ServerType`: $($connection.Server)" -ForegroundColor Green
@@ -234,12 +234,12 @@ function Get-TargetVMs {
         $ClusterUUID,
         $ExcludeVMs
     )
-    
+
     Write-Host "Identifying target VMs..." -ForegroundColor Yellow
-    
+
     try {
         $targetVMs = @()
-        
+
         if ($VMUUID) {
             # Single VM by UUID
             $targetVMs = Get-NTNXVM | Where-Object { $_.uuid -eq $VMUUID }
@@ -278,23 +278,23 @@ function Get-TargetVMs {
             Write-Warning "No specific VM criteria provided. Getting all VMs..."
             $targetVMs = Get-NTNXVM
         }
-        
+
         # Exclude specified VMs
         if ($ExcludeVMs) {
             $targetVMs = $targetVMs | Where-Object { $_.vmName -notin $ExcludeVMs }
             Write-Host "Excluded $($ExcludeVMs.Count) VM(s) from operation" -ForegroundColor Gray
         }
-        
+
         if (-not $targetVMs) {
             throw "No VMs found matching the specified criteria"
         }
-        
+
         Write-Host "Found $($targetVMs.Count) VM(s) matching criteria:" -ForegroundColor Green
         foreach ($vm in $targetVMs) {
             $ngtStatus = if ($vm.nutanixGuestTools.toolsInstalled) { "Installed" } else { "Not Installed" }
             Write-Host "  - $($vm.vmName) [$($vm.powerState)] [NGT: $ngtStatus]" -ForegroundColor White
         }
-        
+
         return $targetVMs
     }
     catch {
@@ -306,10 +306,10 @@ function Get-TargetVMs {
 # Function to check Nutanix Guest Tools status
 function Test-NGTStatus {
     param($VM)
-    
+
     $ngtInstalled = $VM.nutanixGuestTools.toolsInstalled
     $ngtEnabled = $VM.nutanixGuestTools.enabled
-    
+
     return @{
         IsInstalled = $ngtInstalled
         IsEnabled = $ngtEnabled
@@ -325,28 +325,28 @@ function New-PowerOperationSnapshot {
         $SnapshotName,
         $Operation
     )
-    
+
     try {
         if (-not $SnapshotName) {
             $SnapshotName = "Before$Operation-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
         }
-        
+
         Write-Host "      Creating snapshot '$SnapshotName'..." -ForegroundColor Gray
-        
+
         # Check if snapshot already exists
-        $existingSnapshots = Get-NTNXSnapshot | Where-Object { 
-            $_.vmUuid -eq $VM.uuid -and $_.snapshotName -eq $SnapshotName 
+        $existingSnapshots = Get-NTNXSnapshot | Where-Object {
+            $_.vmUuid -eq $VM.uuid -and $_.snapshotName -eq $SnapshotName
         }
         if ($existingSnapshots) {
             Write-Warning "      Snapshot '$SnapshotName' already exists"
             return $existingSnapshots[0]
         }
-        
+
         # Create snapshot
         $snapshotSpec = New-Object Nutanix.Prism.Model.SnapshotSpec
         $snapshotSpec.snapshotName = $SnapshotName
         $snapshotSpec.vmUuid = $VM.uuid
-        
+
         $snapshot = New-NTNXSnapshot -SnapshotSpecs $snapshotSpec
         Write-Host "      ✓ Snapshot created: $($snapshot.snapshotName)" -ForegroundColor Green
         return $snapshot
@@ -368,16 +368,16 @@ function Start-VMPowerOperation {
         $CreateSnapshot,
         $SnapshotName
     )
-    
+
     Write-Host "Starting $($VMs.Count) VM(s)..." -ForegroundColor Yellow
-    
+
     $results = @()
     $startTasks = @()
-    
+
     foreach ($vm in $VMs) {
         try {
             Write-Host "  Processing VM: $($vm.vmName)" -ForegroundColor Cyan
-            
+
             # Check current power state
             if ($vm.powerState -eq "ON") {
                 Write-Host "    VM is already powered on" -ForegroundColor Yellow
@@ -391,12 +391,12 @@ function Start-VMPowerOperation {
                 }
                 continue
             }
-            
+
             # Create snapshot if requested
             if ($CreateSnapshot) {
                 New-PowerOperationSnapshot -VM $vm -SnapshotName $SnapshotName -Operation "Start" | Out-Null
             }
-            
+
             # Start the VM
             $task = Set-NTNXVMPowerState -Vmid $vm.uuid -Transition "ON"
             $startTasks += @{
@@ -404,9 +404,9 @@ function Start-VMPowerOperation {
                 VM = $vm
                 StartTime = Get-Date
             }
-            
+
             Write-Host "    ✓ Start task initiated" -ForegroundColor Green
-            
+
             # Sequential startup with delay
             if ($SequentialStartup -and $vm -ne $VMs[-1]) {
                 Write-Host "    Waiting $StartupDelay seconds before next VM..." -ForegroundColor Gray
@@ -425,17 +425,17 @@ function Start-VMPowerOperation {
             Write-Host "    ✗ Failed to start: $($_.Exception.Message)" -ForegroundColor Red
         }
     }
-    
+
     # Wait for completion if requested
     if ($WaitForCompletion -and $startTasks.Count -gt 0) {
         Write-Host "`nWaiting for VM start operations to complete..." -ForegroundColor Yellow
-        
+
         foreach ($taskInfo in $startTasks) {
             try {
                 $timeoutSeconds = $TimeoutMinutes * 60
                 $startTime = Get-Date
                 $taskCompleted = $false
-                
+
                 while ((Get-Date).Subtract($startTime).TotalSeconds -lt $timeoutSeconds -and -not $taskCompleted) {
                     Start-Sleep -Seconds 5
                     $vm = Get-NTNXVM | Where-Object { $_.uuid -eq $taskInfo.VM.uuid }
@@ -443,10 +443,10 @@ function Start-VMPowerOperation {
                         $taskCompleted = $true
                     }
                 }
-                
+
                 if ($taskCompleted) {
                     $duration = [math]::Round((Get-Date).Subtract($taskInfo.StartTime).TotalSeconds, 1)
-                    
+
                     $results += @{
                         VM = $vm.vmName
                         UUID = $vm.uuid
@@ -456,7 +456,7 @@ function Start-VMPowerOperation {
                         PowerState = $vm.powerState
                         Duration = "$duration seconds"
                     }
-                    
+
                     Write-Host "  ✓ $($vm.vmName) started successfully ($duration seconds)" -ForegroundColor Green
                 } else {
                     $results += @{
@@ -496,7 +496,7 @@ function Start-VMPowerOperation {
             }
         }
     }
-    
+
     return $results
 }
 
@@ -510,17 +510,17 @@ function Stop-VMPowerOperation {
         $CreateSnapshot,
         $SnapshotName
     )
-    
+
     $operation = if ($GracefulShutdown) { "GracefulShutdown" } else { "Stop" }
     Write-Host "Stopping $($VMs.Count) VM(s) [Method: $operation]..." -ForegroundColor Yellow
-    
+
     $results = @()
     $stopTasks = @()
-    
+
     foreach ($vm in $VMs) {
         try {
             Write-Host "  Processing VM: $($vm.vmName)" -ForegroundColor Cyan
-            
+
             # Check current power state
             if ($vm.powerState -eq "OFF") {
                 Write-Host "    VM is already powered off" -ForegroundColor Yellow
@@ -534,16 +534,16 @@ function Stop-VMPowerOperation {
                 }
                 continue
             }
-            
+
             # Create snapshot if requested
             if ($CreateSnapshot) {
                 New-PowerOperationSnapshot -VM $vm -SnapshotName $SnapshotName -Operation $operation | Out-Null
             }
-            
+
             # Check NGT for graceful shutdown
             $transition = "OFF"
             $method = "Hard"
-            
+
             if ($GracefulShutdown) {
                 $ngtStatus = Test-NGTStatus -VM $vm
                 if ($ngtStatus.IsReady) {
@@ -554,7 +554,7 @@ function Stop-VMPowerOperation {
                     Write-Warning "    NGT not ready, falling back to hard power off"
                 }
             }
-            
+
             $task = Set-NTNXVMPowerState -Vmid $vm.uuid -Transition $transition
             $stopTasks += @{
                 Task = $task
@@ -562,7 +562,7 @@ function Stop-VMPowerOperation {
                 StartTime = Get-Date
                 Method = $method
             }
-            
+
             Write-Host "    ✓ Stop task initiated" -ForegroundColor Green
         }
         catch {
@@ -577,17 +577,17 @@ function Stop-VMPowerOperation {
             Write-Host "    ✗ Failed to stop: $($_.Exception.Message)" -ForegroundColor Red
         }
     }
-    
+
     # Wait for completion if requested
     if ($WaitForCompletion -and $stopTasks.Count -gt 0) {
         Write-Host "`nWaiting for VM stop operations to complete..." -ForegroundColor Yellow
-        
+
         foreach ($taskInfo in $stopTasks) {
             try {
                 $timeoutSeconds = $TimeoutMinutes * 60
                 $startTime = Get-Date
                 $taskCompleted = $false
-                
+
                 while ((Get-Date).Subtract($startTime).TotalSeconds -lt $timeoutSeconds -and -not $taskCompleted) {
                     Start-Sleep -Seconds 5
                     $vm = Get-NTNXVM | Where-Object { $_.uuid -eq $taskInfo.VM.uuid }
@@ -595,10 +595,10 @@ function Stop-VMPowerOperation {
                         $taskCompleted = $true
                     }
                 }
-                
+
                 if ($taskCompleted) {
                     $duration = [math]::Round((Get-Date).Subtract($taskInfo.StartTime).TotalSeconds, 1)
-                    
+
                     $results += @{
                         VM = $vm.vmName
                         UUID = $vm.uuid
@@ -609,7 +609,7 @@ function Stop-VMPowerOperation {
                         Duration = "$duration seconds"
                         Method = $taskInfo.Method
                     }
-                    
+
                     Write-Host "  ✓ $($vm.vmName) stopped successfully [$($taskInfo.Method), $duration seconds]" -ForegroundColor Green
                 } else {
                     $results += @{
@@ -652,7 +652,7 @@ function Stop-VMPowerOperation {
             }
         }
     }
-    
+
     return $results
 }
 
@@ -666,16 +666,16 @@ function Restart-VMPowerOperation {
         $CreateSnapshot,
         $SnapshotName
     )
-    
+
     Write-Host "Rebooting $($VMs.Count) VM(s)..." -ForegroundColor Yellow
-    
+
     $results = @()
     $rebootTasks = @()
-    
+
     foreach ($vm in $VMs) {
         try {
             Write-Host "  Processing VM: $($vm.vmName)" -ForegroundColor Cyan
-            
+
             # Check current power state
             if ($vm.powerState -eq "OFF") {
                 Write-Host "    VM is powered off, starting instead of rebooting" -ForegroundColor Yellow
@@ -688,16 +688,16 @@ function Restart-VMPowerOperation {
                 }
                 continue
             }
-            
+
             # Create snapshot if requested
             if ($CreateSnapshot) {
                 New-PowerOperationSnapshot -VM $vm -SnapshotName $SnapshotName -Operation "Reboot" | Out-Null
             }
-            
+
             # Check NGT for graceful reboot
             $transition = "RESET"
             $operation = "Reboot"
-            
+
             if ($GracefulShutdown) {
                 $ngtStatus = Test-NGTStatus -VM $vm
                 if ($ngtStatus.IsReady) {
@@ -708,7 +708,7 @@ function Restart-VMPowerOperation {
                     Write-Warning "    NGT not ready, falling back to hard reboot"
                 }
             }
-            
+
             $task = Set-NTNXVMPowerState -Vmid $vm.uuid -Transition $transition
             $rebootTasks += @{
                 Task = $task
@@ -716,7 +716,7 @@ function Restart-VMPowerOperation {
                 StartTime = Get-Date
                 Operation = $operation
             }
-            
+
             Write-Host "    ✓ Reboot task initiated" -ForegroundColor Green
         }
         catch {
@@ -731,17 +731,17 @@ function Restart-VMPowerOperation {
             Write-Host "    ✗ Failed to reboot: $($_.Exception.Message)" -ForegroundColor Red
         }
     }
-    
+
     # Wait for completion if requested
     if ($WaitForCompletion -and $rebootTasks.Count -gt 0) {
         Write-Host "`nWaiting for VM reboot operations to complete..." -ForegroundColor Yellow
-        
+
         foreach ($taskInfo in $rebootTasks) {
             try {
                 $timeoutSeconds = $TimeoutMinutes * 60
                 $startTime = Get-Date
                 $taskCompleted = $false
-                
+
                 # For reboot operations, we need to wait for the VM to be back online
                 while ((Get-Date).Subtract($startTime).TotalSeconds -lt $timeoutSeconds -and -not $taskCompleted) {
                     Start-Sleep -Seconds 10
@@ -750,10 +750,10 @@ function Restart-VMPowerOperation {
                         $taskCompleted = $true
                     }
                 }
-                
+
                 if ($taskCompleted) {
                     $duration = [math]::Round((Get-Date).Subtract($taskInfo.StartTime).TotalSeconds, 1)
-                    
+
                     $results += @{
                         VM = $vm.vmName
                         UUID = $vm.uuid
@@ -763,7 +763,7 @@ function Restart-VMPowerOperation {
                         PowerState = $vm.powerState
                         Duration = "$duration seconds"
                     }
-                    
+
                     Write-Host "  ✓ $($vm.vmName) rebooted successfully ($duration seconds)" -ForegroundColor Green
                 } else {
                     $results += @{
@@ -803,7 +803,7 @@ function Restart-VMPowerOperation {
             }
         }
     }
-    
+
     return $results
 }
 
@@ -814,26 +814,26 @@ function Get-VMPowerStatus {
         $OutputFormat,
         $OutputPath
     )
-    
+
     Write-Host "Getting power status for $($VMs.Count) VM(s)..." -ForegroundColor Yellow
-    
+
     $statusData = @()
-    
+
     foreach ($vm in $VMs) {
         try {
             $ngtStatus = Test-NGTStatus -VM $vm
             $uptime = "N/A"
-            
+
             # Calculate uptime if VM is running
             if ($vm.powerState -eq "ON" -and $vm.vmLogicalTimestamp) {
                 # Note: Nutanix doesn't directly provide boot time, using logical timestamp as approximation
                 $uptimeSpan = New-TimeSpan -Seconds ([int64]$vm.vmLogicalTimestamp / 1000000)
                 $uptime = "$([math]::Floor($uptimeSpan.TotalDays))d $($uptimeSpan.Hours)h $($uptimeSpan.Minutes)m"
             }
-            
+
             $cluster = Get-NTNXCluster | Where-Object { $_.clusterUuid -eq $vm.clusterUuid }
             $clusterName = if ($cluster) { $cluster.name } else { "Unknown" }
-            
+
             $statusItem = [PSCustomObject]@{
                 VMName = $vm.vmName
                 UUID = $vm.uuid
@@ -853,14 +853,14 @@ function Get-VMPowerStatus {
                 HostUUID = $vm.hostUuid
                 Timestamp = Get-Date
             }
-            
+
             $statusData += $statusItem
         }
         catch {
             Write-Warning "Failed to get status for VM '$($vm.vmName)': $($_.Exception.Message)"
         }
     }
-    
+
     # Export status
     switch ($OutputFormat) {
         "Console" {
@@ -882,7 +882,7 @@ function Get-VMPowerStatus {
             Write-Host "Status report exported to: $OutputPath" -ForegroundColor Green
         }
     }
-    
+
     return $statusData
 }
 
@@ -892,41 +892,41 @@ function Show-PowerOperationSummary {
         $Results,
         $Operation
     )
-    
+
     Write-Host "`n=== Power $Operation Summary ===" -ForegroundColor Cyan
-    
+
     $successful = $Results | Where-Object { $_.Status -eq "Success" }
     $failed = $Results | Where-Object { $_.Status -eq "Failed" }
     $inProgress = $Results | Where-Object { $_.Status -eq "InProgress" }
     $skipped = $Results | Where-Object { $_.Status -in @("AlreadyRunning", "AlreadyStopped", "InvalidState") }
     $timeout = $Results | Where-Object { $_.Status -eq "Timeout" }
-    
+
     Write-Host "Total VMs: $($Results.Count)" -ForegroundColor White
     Write-Host "Successful: $($successful.Count)" -ForegroundColor Green
     Write-Host "Failed: $($failed.Count)" -ForegroundColor Red
     Write-Host "In Progress: $($inProgress.Count)" -ForegroundColor Yellow
     Write-Host "Skipped: $($skipped.Count)" -ForegroundColor Yellow
     Write-Host "Timed Out: $($timeout.Count)" -ForegroundColor Red
-    
+
     if ($failed.Count -gt 0) {
         Write-Host "`nFailed Operations:" -ForegroundColor Red
         foreach ($result in $failed) {
             Write-Host "  - $($result.VM): $($result.Message)" -ForegroundColor White
         }
     }
-    
+
     if ($timeout.Count -gt 0) {
         Write-Host "`nTimed Out Operations:" -ForegroundColor Red
         foreach ($result in $timeout) {
             Write-Host "  - $($result.VM): $($result.Message)" -ForegroundColor White
         }
     }
-    
+
     # Show average duration if available
     $withDuration = $successful | Where-Object { $_.Duration }
     if ($withDuration.Count -gt 0) {
-        $avgDuration = ($withDuration | ForEach-Object { 
-            [double]($_.Duration -replace ' seconds', '') 
+        $avgDuration = ($withDuration | ForEach-Object {
+            [double]($_.Duration -replace ' seconds', '')
         } | Measure-Object -Average).Average
         Write-Host "`nAverage operation time: $([math]::Round($avgDuration, 1)) seconds" -ForegroundColor Cyan
     }
@@ -935,18 +935,18 @@ function Show-PowerOperationSummary {
 # Main execution
 try {
     Write-Host "=== Nutanix AHV VM Power Operations ===" -ForegroundColor Cyan
-    
+
     # Determine target server
     $targetServer = if ($PrismCentral) { $PrismCentral } else { $PrismElement }
     $serverType = if ($PrismCentral) { "Prism Central" } else { "Prism Element" }
-    
+
     if (-not $targetServer) {
         throw "Either PrismCentral or PrismElement parameter must be specified"
     }
-    
+
     Write-Host "Target $serverType`: $targetServer" -ForegroundColor White
     Write-Host "Operation: $Operation" -ForegroundColor White
-    
+
     if ($VMName) { Write-Host "Target VM Pattern: $VMName" -ForegroundColor White }
     if ($VMNames) { Write-Host "Target VMs: $($VMNames -join ', ')" -ForegroundColor White }
     if ($VMUUID) { Write-Host "Target VM UUID: $VMUUID" -ForegroundColor White }
@@ -956,18 +956,18 @@ try {
     if ($GracefulShutdown) { Write-Host "Using graceful shutdown/reboot" -ForegroundColor White }
     if ($CreateSnapshot) { Write-Host "Creating snapshots before operations" -ForegroundColor White }
     Write-Host ""
-    
+
     # Check and install Nutanix PowerShell SDK
     if (-not (Test-NutanixSDKInstallation)) {
         throw "Nutanix PowerShell SDK installation failed"
     }
-    
+
     # Connect to Nutanix
     $connection = Connect-ToNutanix -Server $targetServer -ServerType $serverType
-    
+
     # Get target VMs
     $targetVMs = Get-TargetVMs -VMName $VMName -VMNames $VMNames -VMUUID $VMUUID -VMUUIDs $VMUUIDs -ClusterName $ClusterName -ClusterUUID $ClusterUUID -ExcludeVMs $ExcludeVMs
-    
+
     # Confirm operation if not using Force and operation is potentially disruptive
     if (-not $Force -and $Operation -in @("Stop", "Reboot", "Suspend", "Reset", "GracefulShutdown") -and $targetVMs.Count -gt 1) {
         $confirmation = Read-Host "`nProceed with $Operation operation on $($targetVMs.Count) VM(s)? (y/N)"
@@ -976,7 +976,7 @@ try {
             exit 0
         }
     }
-    
+
     # Perform the power operation
     $results = @()
     switch ($Operation) {
@@ -1029,12 +1029,12 @@ try {
             $results = Get-VMPowerStatus -VMs $targetVMs -OutputFormat $OutputFormat -OutputPath $OutputPath
         }
     }
-    
+
     # Display summary (except for Status operation which already displays results)
     if ($Operation -ne "Status") {
         Show-PowerOperationSummary -Results $results -Operation $Operation
     }
-    
+
     Write-Host "`n=== Operation Completed ===" -ForegroundColor Green
 }
 catch {

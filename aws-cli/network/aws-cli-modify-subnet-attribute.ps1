@@ -123,19 +123,19 @@ try {
     # Get current subnet details
     Write-Output "`n🔍 Retrieving current subnet information..."
     $subnetResult = aws ec2 describe-subnets --subnet-ids $SubnetId @awsArgs --output json 2>&1
-    
+
     if ($LASTEXITCODE -ne 0) {
         Write-Error "Subnet $SubnetId not found or not accessible: $subnetResult"
     }
 
     $subnetData = $subnetResult | ConvertFrom-Json
-    
+
     if ($subnetData.Subnets.Count -eq 0) {
         Write-Error "Subnet $SubnetId not found"
     }
 
     $subnet = $subnetData.Subnets[0]
-    
+
     # Display current subnet details
     Write-Output "✅ Subnet found:"
     Write-Output "  Subnet ID: $($subnet.SubnetId)"
@@ -164,27 +164,27 @@ try {
     if ($ShowCurrent -or $parameterCount -eq 0) {
         Write-Output "`n📋 Current Subnet Attributes:"
         Write-Output "  Map Public IP on Launch: $($subnet.MapPublicIpOnLaunch)"
-        
+
         if ($null -ne $subnet.MapCustomerOwnedIpOnLaunch) {
             Write-Output "  Map Customer Owned IP on Launch: $($subnet.MapCustomerOwnedIpOnLaunch)"
         }
-        
+
         if ($subnet.CustomerOwnedIpv4Pool) {
             Write-Output "  Customer Owned IPv4 Pool: $($subnet.CustomerOwnedIpv4Pool)"
         }
-        
+
         if ($null -ne $subnet.EnableDns64) {
             Write-Output "  DNS64 Enabled: $($subnet.EnableDns64)"
         }
-        
+
         if ($null -ne $subnet.EnableResourceNameDnsARecord) {
             Write-Output "  Resource Name DNS A Record: $($subnet.EnableResourceNameDnsARecord)"
         }
-        
+
         if ($null -ne $subnet.EnableResourceNameDnsAAAARecord) {
             Write-Output "  Resource Name DNS AAAA Record: $($subnet.EnableResourceNameDnsAAAARecord)"
         }
-        
+
         if ($subnet.PrivateDnsHostnameTypeOnLaunch) {
             Write-Output "  Private DNS Hostname Type: $($subnet.PrivateDnsHostnameTypeOnLaunch)"
         }
@@ -209,23 +209,23 @@ try {
     }
 
     # Validate VPC settings for certain attributes
-    if ($PSBoundParameters.ContainsKey('EnableDns64') -or 
-        $PSBoundParameters.ContainsKey('EnableResourceNameDnsARecord') -or 
-        $PSBoundParameters.ContainsKey('EnableResourceNameDnsAAAARecord') -or 
+    if ($PSBoundParameters.ContainsKey('EnableDns64') -or
+        $PSBoundParameters.ContainsKey('EnableResourceNameDnsARecord') -or
+        $PSBoundParameters.ContainsKey('EnableResourceNameDnsAAAARecord') -or
         $PSBoundParameters.ContainsKey('PrivateDnsHostnameType')) {
-        
+
         Write-Output "`n🔍 Checking VPC DNS settings..."
         $vpcResult = aws ec2 describe-vpc-attribute --vpc-id $($subnet.VpcId) --attribute enableDnsHostnames @awsArgs --output json 2>&1
-        
+
         if ($LASTEXITCODE -eq 0) {
             $vpcDnsData = $vpcResult | ConvertFrom-Json
             if (-not $vpcDnsData.EnableDnsHostnames.Value) {
                 Write-Warning "⚠️  VPC DNS hostnames are disabled. Some subnet DNS attributes may not function properly."
             }
         }
-        
+
         $vpcDnsResult = aws ec2 describe-vpc-attribute --vpc-id $($subnet.VpcId) --attribute enableDnsSupport @awsArgs --output json 2>&1
-        
+
         if ($LASTEXITCODE -eq 0) {
             $vpcDnsSupportData = $vpcDnsResult | ConvertFrom-Json
             if (-not $vpcDnsSupportData.EnableDnsSupport.Value) {
@@ -370,10 +370,10 @@ try {
     # Apply modifications
     if (-not $DryRun) {
         Write-Output "`n⚙️  Applying subnet attribute modifications..."
-        
+
         foreach ($mod in $modifications) {
             Write-Output "  Modifying $($mod.Attribute)..."
-            
+
             $modifyArgs = $mod.Command + $awsArgs + @('--output', 'json')
             $result = aws @modifyArgs 2>&1
 
@@ -387,11 +387,11 @@ try {
         # Verify changes
         Write-Output "`n🔍 Verifying attribute changes..."
         $verifyResult = aws ec2 describe-subnets --subnet-ids $SubnetId @awsArgs --output json 2>&1
-        
+
         if ($LASTEXITCODE -eq 0) {
             $verifyData = $verifyResult | ConvertFrom-Json
             $updatedSubnet = $verifyData.Subnets[0]
-            
+
             Write-Output "✅ Updated Subnet Attributes:"
             foreach ($mod in $modifications) {
                 $verifiedValue = switch ($mod.Attribute) {
@@ -403,9 +403,9 @@ try {
                     "EnableResourceNameDnsAAAARecord" { $updatedSubnet.EnableResourceNameDnsAAAARecord }
                     "PrivateDnsHostnameType" { $updatedSubnet.PrivateDnsHostnameTypeOnLaunch }
                 }
-                
+
                 Write-Output "  $($mod.Attribute): $verifiedValue"
-                
+
                 if ($verifiedValue -eq $mod.NewValue) {
                     Write-Output "    ✅ Successfully updated"
                 } else {
@@ -418,7 +418,7 @@ try {
         Write-Output "• Changes apply to new instances launched after the modification"
         Write-Output "• Existing instances are not affected by these attribute changes"
         Write-Output "• DNS-related changes may take a few minutes to fully propagate"
-        
+
         if ($hasPublicIpChange) {
             Write-Output "• Review security groups to ensure appropriate access controls"
             Write-Output "• Monitor costs if enabling public IP assignment"
@@ -427,7 +427,7 @@ try {
     } else {
         Write-Output "`n✅ DRY RUN: Subnet attribute modifications validated successfully"
         Write-Output "Commands that would be executed:"
-        
+
         foreach ($mod in $modifications) {
             $commandStr = ($mod.Command + $awsArgs) -join ' '
             Write-Output "aws $commandStr"

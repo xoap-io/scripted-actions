@@ -6,7 +6,7 @@
     This script creates an Azure Network Watcher using the Azure CLI.
     Network Watcher provides monitoring, diagnostics, and analytics for Azure network resources.
     Includes capabilities for connection monitoring, packet capture, flow logs, and network topology visualization.
-    
+
     The script uses the Azure CLI command: az network watcher configure
 
 .PARAMETER Location
@@ -38,12 +38,12 @@
 
 .EXAMPLE
     .\az-cli-create-network-watcher.ps1 -Location "East US" -ResourceGroup "NetworkWatcherRG"
-    
+
     Creates Network Watcher in the specified region with automatic resource group.
 
 .EXAMPLE
     .\az-cli-create-network-watcher.ps1 -Location "East US" -ResourceGroup "NetworkWatcherRG" -StorageAccountName "nwstorage" -EnableFlowLogs -FlowLogNSGName "web-nsg" -FlowLogNSGResourceGroup "prod-rg"
-    
+
     Creates Network Watcher and enables flow logs for a specific NSG.
 
 .NOTES
@@ -121,7 +121,7 @@ try {
     Write-Host "Checking Network Watcher status..." -ForegroundColor Yellow
     $nwList = az network watcher list 2>$null | ConvertFrom-Json
     $existingNW = $nwList | Where-Object { $_.location -eq $Location.Replace(' ', '').ToLower() }
-    
+
     if ($existingNW) {
         Write-Host "ℹ Network Watcher already exists in $Location" -ForegroundColor Blue
         Write-Host "  Name: $($existingNW.name)" -ForegroundColor White
@@ -132,7 +132,7 @@ try {
     } else {
         # Create or configure Network Watcher
         Write-Host "Configuring Network Watcher for $Location..." -ForegroundColor Yellow
-        
+
         # Create resource group if it doesn't exist
         $rgExists = az group show --name $ResourceGroup 2>$null
         if (-not $rgExists) {
@@ -150,7 +150,7 @@ try {
         )
 
         $result = & az @azParams 2>&1
-        
+
         if ($LASTEXITCODE -eq 0) {
             Write-Host "✓ Network Watcher configured successfully" -ForegroundColor Green
             $networkWatcherName = "NetworkWatcher_$($Location.Replace(' ', '').ToLower())"
@@ -163,10 +163,10 @@ try {
     # Create storage account if specified and flow logs are enabled
     if ($EnableFlowLogs -and $StorageAccountName) {
         $storageRG = if ($StorageAccountResourceGroup) { $StorageAccountResourceGroup } else { $actualResourceGroup }
-        
+
         Write-Host "Checking storage account for flow logs..." -ForegroundColor Yellow
         $storageExists = az storage account show --name $StorageAccountName --resource-group $storageRG 2>$null
-        
+
         if (-not $storageExists) {
             Write-Host "Creating storage account for flow logs..." -ForegroundColor Yellow
             $null = az storage account create `
@@ -175,7 +175,7 @@ try {
                 --location $Location `
                 --sku Standard_LRS `
                 --kind StorageV2 2>&1
-            
+
             if ($LASTEXITCODE -eq 0) {
                 Write-Host "✓ Storage account created" -ForegroundColor Green
             } else {
@@ -189,9 +189,9 @@ try {
     # Enable flow logs if requested
     if ($EnableFlowLogs -and $FlowLogNSGName) {
         Write-Host "Configuring NSG flow logs..." -ForegroundColor Yellow
-        
+
         $nsgRG = if ($FlowLogNSGResourceGroup) { $FlowLogNSGResourceGroup } else { $actualResourceGroup }
-        
+
         # Verify NSG exists
         $nsgExists = az network nsg show --name $FlowLogNSGName --resource-group $nsgRG 2>$null
         if (-not $nsgExists) {
@@ -210,7 +210,7 @@ try {
             )
 
             $flowLogResult = & az @flowLogParams 2>&1
-            
+
             if ($LASTEXITCODE -eq 0) {
                 Write-Host "✓ NSG flow logs configured" -ForegroundColor Green
             } else {
@@ -221,7 +221,7 @@ try {
 
     # Display Network Watcher information
     $nwInfo = az network watcher show --name $networkWatcherName --resource-group $actualResourceGroup | ConvertFrom-Json
-    
+
     Write-Host "Network Watcher Configuration:" -ForegroundColor Cyan
     Write-Host "  Name: $($nwInfo.name)" -ForegroundColor White
     Write-Host "  Resource Group: $($nwInfo.resourceGroup)" -ForegroundColor White
@@ -252,7 +252,7 @@ try {
     if ($EnableFlowLogs) {
         Write-Host "• Flow Logs - Analyze network traffic patterns" -ForegroundColor Green
     }
-    
+
     Write-Host "" -ForegroundColor White
     Write-Host "Common Network Watcher commands:" -ForegroundColor Cyan
     Write-Host "# Test connectivity" -ForegroundColor Gray

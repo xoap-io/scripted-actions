@@ -134,32 +134,32 @@ try {
     if (-not $azVersion) {
         throw "Azure CLI is not installed or not available in PATH"
     }
-    
+
     Write-Host "Checking Azure CLI login status..." -ForegroundColor Cyan
     $account = az account show --output json 2>$null | ConvertFrom-Json
     if (-not $account) {
         throw "Not logged in to Azure CLI. Please run 'az login' first"
     }
     Write-Host "Logged in as: $($account.user.name)" -ForegroundColor Green
-    
+
     # Validate parameter combinations
     if ($HostPoolType -eq 'Pooled' -and $PersonalDesktopAssignmentType) {
         Write-Warning "PersonalDesktopAssignmentType is only valid for Personal host pools. Ignoring parameter."
         $PersonalDesktopAssignmentType = $null
     }
-    
+
     if ($HostPoolType -eq 'Personal' -and $MaxSessionLimit) {
         Write-Warning "MaxSessionLimit is only valid for Pooled host pools. Ignoring parameter."
         $MaxSessionLimit = $null
     }
-    
+
     if ($HostPoolType -eq 'Personal' -and $LoadBalancerType -ne 'Persistent') {
         Write-Warning "Personal host pools should use Persistent load balancer type. Changing to Persistent."
         $LoadBalancerType = 'Persistent'
     }
-    
+
     Write-Host "Creating Azure Virtual Desktop Host Pool..." -ForegroundColor Cyan
-    
+
     $azParams = @(
         'desktopvirtualization', 'hostpool', 'create',
         '--name', $Name,
@@ -169,48 +169,48 @@ try {
         '--preferred-app-group-type', $PreferredAppGroupType,
         '--location', $Location
     )
-    
+
     if ($MaxSessionLimit -and $HostPoolType -eq 'Pooled') {
         $azParams += '--max-session-limit', $MaxSessionLimit.ToString()
     }
-    
+
     if ($PersonalDesktopAssignmentType -and $HostPoolType -eq 'Personal') {
         $azParams += '--personal-desktop-assignment-type', $PersonalDesktopAssignmentType
     }
-    
+
     if ($Description) {
         $azParams += '--description', $Description
     }
-    
+
     if ($FriendlyName) {
         $azParams += '--friendly-name', $FriendlyName
     }
-    
+
     if ($CustomRdpProperty) {
         $azParams += '--custom-rdp-property', $CustomRdpProperty
     }
-    
+
     if ($StartVmOnConnect) {
         $azParams += '--start-vm-on-connect', 'true'
     }
-    
+
     if ($ValidationEnvironment) {
         $azParams += '--validation-environment', 'true'
     }
-    
+
     if ($Tags) {
         $azParams += '--tags', $Tags
     }
-    
+
     $azParams += '--output', 'json'
-    
+
     $result = & az @azParams
     if ($LASTEXITCODE -ne 0) {
         throw "Azure CLI command failed with exit code: $LASTEXITCODE"
     }
-    
+
     $hostPool = $result | ConvertFrom-Json
-    
+
     Write-Host "Azure Virtual Desktop Host Pool created successfully:" -ForegroundColor Green
     Write-Host "  Name: $($hostPool.name)" -ForegroundColor White
     Write-Host "  Resource Group: $($hostPool.resourceGroup)" -ForegroundColor White
@@ -219,15 +219,15 @@ try {
     Write-Host "  Load Balancer Type: $($hostPool.loadBalancerType)" -ForegroundColor White
     Write-Host "  Preferred App Group Type: $($hostPool.preferredAppGroupType)" -ForegroundColor White
     Write-Host "  ID: $($hostPool.id)" -ForegroundColor White
-    
+
     if ($hostPool.maxSessionLimit) {
         Write-Host "  Max Session Limit: $($hostPool.maxSessionLimit)" -ForegroundColor White
     }
-    
+
     if ($hostPool.personalDesktopAssignmentType) {
         Write-Host "  Personal Desktop Assignment: $($hostPool.personalDesktopAssignmentType)" -ForegroundColor White
     }
-    
+
     return $hostPool
 } catch {
     Write-Error "Failed to create Azure Virtual Desktop Host Pool: $_"

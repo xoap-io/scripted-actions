@@ -37,22 +37,22 @@
 
 .EXAMPLE
     .\gce-cli-delete-running-vms.ps1 -Project "my-project-123" -Zone "us-central1-a"
-    
+
     Delete all running VMs in the specified zone with confirmation prompts.
 
 .EXAMPLE
     .\gce-cli-delete-running-vms.ps1 -Project "my-project-123" -Zone "us-central1-a,us-west1-b" -Force
-    
+
     Delete all running VMs in multiple zones without confirmation prompts.
 
 .EXAMPLE
     .\gce-cli-delete-running-vms.ps1 -Project "my-project-123" -Zone "us-central1-a" -Filter "labels.environment=dev" -WhatIf
-    
+
     Show what dev environment VMs would be deleted without actually deleting them.
 
 .EXAMPLE
     .\gce-cli-delete-running-vms.ps1 -Project "my-project-123" -Zone "us-central1-a" -DeleteSnapshots -DeleteStaticIPs -Force
-    
+
     Delete VMs and all associated resources including snapshots and static IPs.
 
 .NOTES
@@ -60,7 +60,7 @@
     - Google Cloud CLI (gcloud) must be installed and authenticated
     - User must have compute.instances.delete permission in the target project
     - This is a DESTRUCTIVE operation - use with caution!
-    
+
     Author: XOAP
     Date: 2025-08-06
     Version: 2.0
@@ -122,26 +122,26 @@ function Get-VMInstances {
         [string[]]$Zones,
         [string]$FilterExpression
     )
-    
+
     $allInstances = @()
-    
+
     foreach ($currentZone in $Zones) {
         try {
             Write-Output "Scanning zone: $currentZone"
-            
+
             $arguments = @(
                 'compute', 'instances', 'list',
                 '--project', $ProjectId,
                 '--zones', $currentZone,
                 '--format', 'csv(name,zone,status,machineType)'
             )
-            
+
             if ($FilterExpression) {
                 $arguments += '--filter', $FilterExpression
             }
-            
+
             $result = & gcloud @arguments 2>&1
-            
+
             if ($LASTEXITCODE -eq 0 -and $result.Count -gt 1) {
                 # Skip header row
                 $instances = $result | Select-Object -Skip 1 | ForEach-Object {
@@ -162,7 +162,7 @@ function Get-VMInstances {
             Write-Warning "Failed to list instances in zone $currentZone : $($_.Exception.Message)"
         }
     }
-    
+
     return $allInstances
 }
 
@@ -173,7 +173,7 @@ function Get-InstanceDisks {
         [string]$Zone,
         [string]$InstanceName
     )
-    
+
     try {
         $result = & gcloud compute instances describe $InstanceName --project $ProjectId --zone $Zone --format="value(disks[].source)" 2>$null
         if ($LASTEXITCODE -eq 0 -and $result) {
@@ -183,7 +183,7 @@ function Get-InstanceDisks {
     catch {
         Write-Warning "Failed to get disks for instance $InstanceName : $($_.Exception.Message)"
     }
-    
+
     return @()
 }
 
@@ -193,7 +193,7 @@ function Get-InstanceStaticIPs {
         [string]$ProjectId,
         [string]$InstancePattern
     )
-    
+
     try {
         $result = & gcloud compute addresses list --project $ProjectId --filter="name~$InstancePattern" --format="csv(name,region)" 2>$null
         if ($LASTEXITCODE -eq 0 -and $result.Count -gt 1) {
@@ -211,7 +211,7 @@ function Get-InstanceStaticIPs {
     catch {
         Write-Warning "Failed to get static IPs for pattern $InstancePattern : $($_.Exception.Message)"
     }
-    
+
     return @()
 }
 
@@ -221,7 +221,7 @@ function Get-InstanceSnapshots {
         [string]$ProjectId,
         [string]$InstancePattern
     )
-    
+
     try {
         $result = & gcloud compute snapshots list --project $ProjectId --filter="name~$InstancePattern" --format="value(name)" 2>$null
         if ($LASTEXITCODE -eq 0 -and $result) {
@@ -231,7 +231,7 @@ function Get-InstanceSnapshots {
     catch {
         Write-Warning "Failed to get snapshots for pattern $InstancePattern : $($_.Exception.Message)"
     }
-    
+
     return @()
 }
 
@@ -245,7 +245,7 @@ function Remove-GCPResources {
         [bool]$RemoveStaticIPs,
         [bool]$WhatIfMode
     )
-    
+
     $deletionSummary = @{
         DeletedInstances = @()
         DeletedDisks = @()
@@ -253,18 +253,18 @@ function Remove-GCPResources {
         DeletedStaticIPs = @()
         Errors = @()
     }
-    
+
     foreach ($instance in $Instances) {
         $instanceName = $instance.Name
         $instanceZone = $instance.Zone
-        
+
         try {
             if ($WhatIfMode) {
                 Write-Output "WHATIF: Would delete VM instance: $instanceName in zone $instanceZone"
             } else {
                 Write-Output "Deleting VM instance: $instanceName in zone $instanceZone"
                 $result = & gcloud compute instances delete $instanceName --project $ProjectId --zone $instanceZone --quiet 2>&1
-                
+
                 if ($LASTEXITCODE -eq 0) {
                     $deletionSummary.DeletedInstances += "$instanceName ($instanceZone)"
                     Write-Output "Successfully deleted instance: $instanceName"
@@ -272,7 +272,7 @@ function Remove-GCPResources {
                     throw "Failed to delete instance. Error: $($result -join '; ')"
                 }
             }
-            
+
             # Handle attached disks
             if ($RemoveDisks) {
                 $disks = Get-InstanceDisks -ProjectId $ProjectId -Zone $instanceZone -InstanceName $instanceName
@@ -283,7 +283,7 @@ function Remove-GCPResources {
                         } else {
                             Write-Output "Deleting disk: $disk"
                             $result = & gcloud compute disks delete $disk --project $ProjectId --zone $instanceZone --quiet 2>&1
-                            
+
                             if ($LASTEXITCODE -eq 0) {
                                 $deletionSummary.DeletedDisks += "$disk ($instanceZone)"
                                 Write-Output "Successfully deleted disk: $disk"
@@ -298,7 +298,7 @@ function Remove-GCPResources {
                     }
                 }
             }
-            
+
             # Handle static IP addresses
             if ($RemoveStaticIPs) {
                 $staticIPs = Get-InstanceStaticIPs -ProjectId $ProjectId -InstancePattern $instanceName
@@ -309,7 +309,7 @@ function Remove-GCPResources {
                         } else {
                             Write-Output "Releasing static IP: $($ip.Name) in region $($ip.Region)"
                             $result = & gcloud compute addresses delete $ip.Name --region $ip.Region --project $ProjectId --quiet 2>&1
-                            
+
                             if ($LASTEXITCODE -eq 0) {
                                 $deletionSummary.DeletedStaticIPs += "$($ip.Name) ($($ip.Region))"
                                 Write-Output "Successfully released static IP: $($ip.Name)"
@@ -324,7 +324,7 @@ function Remove-GCPResources {
                     }
                 }
             }
-            
+
             # Handle snapshots
             if ($RemoveSnapshots) {
                 $snapshots = Get-InstanceSnapshots -ProjectId $ProjectId -InstancePattern $instanceName
@@ -335,7 +335,7 @@ function Remove-GCPResources {
                         } else {
                             Write-Output "Deleting snapshot: $snapshot"
                             $result = & gcloud compute snapshots delete $snapshot --project $ProjectId --quiet 2>&1
-                            
+
                             if ($LASTEXITCODE -eq 0) {
                                 $deletionSummary.DeletedSnapshots += $snapshot
                                 Write-Output "Successfully deleted snapshot: $snapshot"
@@ -356,49 +356,49 @@ function Remove-GCPResources {
             Write-Error "Failed to delete instance $instanceName : $($_.Exception.Message)"
         }
     }
-    
+
     return $deletionSummary
 }
 
 try {
     Write-Output "Starting Google Cloud VM deletion process..."
-    
+
     # Test gcloud authentication
     Test-GCloudAuth
-    
+
     # Set the active project
     Write-Output "Setting active project to: $Project"
     $setProjectResult = & gcloud config set project $Project 2>&1
     if ($LASTEXITCODE -ne 0) {
         throw "Failed to set project '$Project'. Error: $setProjectResult"
     }
-    
+
     # Parse zones
     $zones = $Zone -split ',' | ForEach-Object { $_.Trim() }
     Write-Output "Target zones: $($zones -join ', ')"
-    
+
     # Get list of VM instances
     Write-Output "Scanning for VM instances..."
     $instances = Get-VMInstances -ProjectId $Project -Zones $zones -FilterExpression $Filter
-    
+
     if (-not $instances -or $instances.Count -eq 0) {
         Write-Output "No VM instances found matching the criteria."
         exit 0
     }
-    
+
     # Display what will be affected
     Write-Output "Found $($instances.Count) VM instance(s) to process:"
     $instances | ForEach-Object {
         Write-Output "  • $($_.Name) ($($_.Zone)) - $($_.Status) - $($_.MachineType)"
     }
-    
+
     # Configuration summary
     Write-Output "Configuration:"
     Write-Output "  • Delete attached disks: $DeleteDisks"
     Write-Output "  • Delete snapshots: $DeleteSnapshots"
     Write-Output "  • Delete static IPs: $DeleteStaticIPs"
     if ($Filter) { Write-Output "  • Filter applied: $Filter" }
-    
+
     # Confirmation (unless Force or WhatIf)
     if (-not $Force -and -not $WhatIf) {
         Write-Output "WARNING: This operation is DESTRUCTIVE and cannot be undone!"
@@ -408,38 +408,38 @@ try {
             exit 0
         }
     }
-    
+
     # Perform deletion
     $summary = Remove-GCPResources -Instances $instances -ProjectId $Project -RemoveDisks $DeleteDisks -RemoveSnapshots $DeleteSnapshots -RemoveStaticIPs $DeleteStaticIPs -WhatIfMode $WhatIf.IsPresent
-    
+
     # Display summary
     Write-Output "Operation Summary:"
-    
+
     if ($summary.DeletedInstances.Count -gt 0) {
         Write-Output "Deleted VM Instances ($($summary.DeletedInstances.Count)):"
         $summary.DeletedInstances | ForEach-Object { Write-Output "  • $_" }
     }
-    
+
     if ($summary.DeletedDisks.Count -gt 0) {
         Write-Output "Deleted Disks ($($summary.DeletedDisks.Count)):"
         $summary.DeletedDisks | ForEach-Object { Write-Output "  • $_" }
     }
-    
+
     if ($summary.DeletedStaticIPs.Count -gt 0) {
         Write-Output "Released Static IPs ($($summary.DeletedStaticIPs.Count)):"
         $summary.DeletedStaticIPs | ForEach-Object { Write-Output "  • $_" }
     }
-    
+
     if ($summary.DeletedSnapshots.Count -gt 0) {
         Write-Output "Deleted Snapshots ($($summary.DeletedSnapshots.Count)):"
         $summary.DeletedSnapshots | ForEach-Object { Write-Output "  • $_" }
     }
-    
+
     if ($summary.Errors.Count -gt 0) {
         Write-Output "Errors encountered ($($summary.Errors.Count)):"
         $summary.Errors | ForEach-Object { Write-Output "  • $_" }
     }
-    
+
     if ($WhatIf) {
         Write-Output "his was a simulation. No resources were actually deleted."
     } else {

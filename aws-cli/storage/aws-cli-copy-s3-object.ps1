@@ -207,7 +207,7 @@ try {
     } else {
         $copyArgs = @('s3', 'cp', $SourceS3Path, $DestinationS3Path)
     }
-    
+
     $copyArgs += $awsArgs
 
     if ($DryRun) {
@@ -267,15 +267,15 @@ try {
     # Execute copy
     Write-Host "`nExecuting copy operation..." -ForegroundColor Cyan
     Write-Host "Command: aws $($copyArgs -join ' ')" -ForegroundColor Gray
-    
+
     $result = aws @copyArgs 2>&1
-    
+
     if ($LASTEXITCODE -ne 0) {
         throw "Copy operation failed: $result"
     }
 
     Write-Host "✓ Copy operation completed successfully" -ForegroundColor Green
-    
+
     # Display results
     if ($result) {
         Write-Host "`nCopy Results:" -ForegroundColor Cyan
@@ -285,14 +285,14 @@ try {
     # Get summary information if not dry run
     if (-not $DryRun) {
         Write-Host "`nVerifying copied objects..." -ForegroundColor Cyan
-        
+
         if ($Recursive) {
             $verifyResult = aws s3 ls $DestinationS3Path --recursive --summarize @awsArgs 2>&1
             if ($LASTEXITCODE -eq 0) {
                 $lines = $verifyResult -split "`n"
                 $totalObjects = ($lines | Where-Object { $_ -match "Total Objects:" }) -replace ".*Total Objects: ", ""
                 $totalSize = ($lines | Where-Object { $_ -match "Total Size:" }) -replace ".*Total Size: ", ""
-                
+
                 if ($totalObjects -and $totalSize) {
                     Write-Host "Destination Summary:" -ForegroundColor Cyan
                     Write-Host "  Total Objects: $totalObjects" -ForegroundColor White

@@ -6,7 +6,7 @@
     This script deploys ARM templates to Azure using the Azure CLI with comprehensive validation and monitoring.
     Supports deployment to Resource Groups, subscriptions, management groups, and tenants.
     Includes parameter validation, deployment monitoring, rollback capabilities, and detailed reporting.
-    
+
     The script uses the Azure CLI commands: az deployment group create, az deployment sub create
 
 .PARAMETER TemplateFile
@@ -56,22 +56,22 @@
 
 .EXAMPLE
     .\az-cli-deploy-template.ps1 -TemplateFile "vm-template.json" -ParametersFile "vm-parameters.json" -ResourceGroup "production-rg"
-    
+
     Deploys ARM template to Resource Group with parameters file.
 
 .EXAMPLE
     .\az-cli-deploy-template.ps1 -TemplateUri "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/quickstarts/microsoft.compute/vm-simple-linux/azuredeploy.json" -ResourceGroup "test-rg" -ValidateOnly
-    
+
     Validates ARM template from URI without deploying.
 
 .EXAMPLE
     .\az-cli-deploy-template.ps1 -TemplateFile "subscription-template.json" -DeploymentScope "subscription" -Location "East US" -Parameters @{"budgetAmount"="1000"}
-    
+
     Deploys template at subscription scope with parameter override.
 
 .EXAMPLE
     .\az-cli-deploy-template.ps1 -TemplateFile "infrastructure.json" -ResourceGroup "infra-rg" -WhatIf -MonitorProgress
-    
+
     Shows what would be deployed and monitors progress during actual deployment.
 
 .NOTES
@@ -232,7 +232,7 @@ try {
         if (-not $rgCheck) {
             throw "Resource Group '$ResourceGroup' not found in subscription '$($azAccount.name)'"
         }
-        
+
         $rgInfo = $rgCheck | ConvertFrom-Json
         Write-Host "✓ Resource Group '$ResourceGroup' found" -ForegroundColor Green
         Write-Host "  Location: $($rgInfo.location)" -ForegroundColor White
@@ -246,10 +246,10 @@ try {
 
     # Load and validate template
     Write-Host "Loading ARM template..." -ForegroundColor Yellow
-    
+
     if ($TemplateFile) {
         Write-Host "  Template file: $TemplateFile" -ForegroundColor Blue
-        
+
         # Validate JSON syntax
         try {
             $null = Get-Content -Path $TemplateFile -Raw | ConvertFrom-Json
@@ -260,7 +260,7 @@ try {
         }
     } else {
         Write-Host "  Template URI: $TemplateUri" -ForegroundColor Blue
-        
+
         # Test URI accessibility
         try {
             $null = Invoke-WebRequest -Uri $TemplateUri -Method Head -UseBasicParsing
@@ -273,12 +273,12 @@ try {
 
     # Load parameters if specified
     $allParameters = @{}
-    
+
     if ($ParametersFile) {
         Write-Host "Loading parameters file: $ParametersFile" -ForegroundColor Yellow
         try {
             $parametersContent = Get-Content -Path $ParametersFile -Raw | ConvertFrom-Json
-            
+
             # Handle both parameter file formats
             if ($parametersContent.parameters) {
                 foreach ($param in $parametersContent.parameters.PSObject.Properties) {
@@ -289,7 +289,7 @@ try {
                     $allParameters[$param.Name] = $param.Value
                 }
             }
-            
+
             Write-Host "✓ Loaded $($allParameters.Count) parameters from file" -ForegroundColor Green
         }
         catch {
@@ -311,16 +311,16 @@ try {
     Write-Host "Deployment Configuration:" -ForegroundColor Cyan
     Write-Host "  Deployment Name: $DeploymentName" -ForegroundColor White
     Write-Host "  Scope: $DeploymentScope" -ForegroundColor White
-    
+
     if ($ResourceGroup) {
         Write-Host "  Resource Group: $ResourceGroup" -ForegroundColor White
         Write-Host "  Mode: $Mode" -ForegroundColor White
     }
-    
+
     if ($Location) {
         Write-Host "  Location: $Location" -ForegroundColor White
     }
-    
+
     Write-Host "  Template: $(if ($TemplateFile) { $TemplateFile } else { $TemplateUri })" -ForegroundColor White
     Write-Host "  Parameters: $($allParameters.Count)" -ForegroundColor White
     Write-Host "  Operation: $(if ($ValidateOnly) { 'Validation only' } elseif ($WhatIf) { 'What-If analysis' } else { 'Deploy' })" -ForegroundColor White
@@ -329,10 +329,10 @@ try {
         Write-Host ""
         Write-Host "Parameters:" -ForegroundColor Blue
         foreach ($param in $allParameters.GetEnumerator()) {
-            $value = if ($param.Value.ToString().Length -gt 50) { 
-                $param.Value.ToString().Substring(0, 47) + "..." 
-            } else { 
-                $param.Value 
+            $value = if ($param.Value.ToString().Length -gt 50) {
+                $param.Value.ToString().Substring(0, 47) + "..."
+            } else {
+                $param.Value
             }
             Write-Host "  $($param.Key): $value" -ForegroundColor White
         }
@@ -401,7 +401,7 @@ try {
         Write-Host "  Deployment mode: $Mode" -ForegroundColor White
         Write-Host "  Template: $(if ($TemplateFile) { Split-Path $TemplateFile -Leaf } else { $TemplateUri })" -ForegroundColor White
         Write-Host ""
-        
+
         $confirmation = Read-Host "Do you want to proceed with the deployment? (yes/no)"
         if ($confirmation -ne "yes") {
             Write-Host "Deployment cancelled by user." -ForegroundColor Yellow
@@ -423,11 +423,11 @@ try {
     }
 
     $startTime = Get-Date
-    
+
     # Execute the command
     $result = & az @azCommand 2>&1
     $exitCode = $LASTEXITCODE
-    
+
     $endTime = Get-Date
     $duration = $endTime - $startTime
 
@@ -444,10 +444,10 @@ try {
             Write-Host ($result -join "`n") -ForegroundColor White
         } else {
             Write-Host "✓ Deployment completed successfully!" -ForegroundColor Green
-            
+
             # Parse deployment results
             $deploymentResult = $result | ConvertFrom-Json -ErrorAction SilentlyContinue
-            
+
             if ($deploymentResult) {
                 Write-Host ""
                 Write-Host "Deployment Details:" -ForegroundColor Cyan
@@ -455,7 +455,7 @@ try {
                 Write-Host "  State: $($deploymentResult.properties.provisioningState)" -ForegroundColor Green
                 Write-Host "  Mode: $($deploymentResult.properties.mode)" -ForegroundColor White
                 Write-Host "  Timestamp: $($deploymentResult.properties.timestamp)" -ForegroundColor White
-                
+
                 if ($deploymentResult.properties.outputs -and $OutputResults) {
                     Write-Host ""
                     Write-Host "Deployment Outputs:" -ForegroundColor Blue
@@ -465,7 +465,7 @@ try {
                 }
             }
         }
-        
+
         Write-Host ""
         Write-Host "Operation Summary:" -ForegroundColor Cyan
         Write-Host "  Duration: $([math]::Round($duration.TotalMinutes, 2)) minutes" -ForegroundColor White
@@ -474,7 +474,7 @@ try {
             Write-Host "  Resource Group: $ResourceGroup" -ForegroundColor White
         }
         Write-Host "  Template: $(if ($TemplateFile) { Split-Path $TemplateFile -Leaf } else { $TemplateUri })" -ForegroundColor White
-        
+
         Write-Host ""
         Write-Host "🏁 ARM template operation completed successfully" -ForegroundColor Green
     }
@@ -491,7 +491,7 @@ try {
         Write-Host "• Check resource quotas and limits" -ForegroundColor White
         Write-Host ""
         Write-Host "Use -ValidateOnly to check for template issues" -ForegroundColor Blue
-        
+
         throw "Azure CLI command failed with exit code $exitCode"
     }
 }

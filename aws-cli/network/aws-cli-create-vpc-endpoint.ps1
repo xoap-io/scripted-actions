@@ -149,14 +149,14 @@ try {
     # Validate VPC exists
     Write-Output "`n🔍 Verifying VPC..."
     $vpcResult = aws ec2 describe-vpcs --vpc-ids $VpcId @awsArgs --output json 2>&1
-    
+
     if ($LASTEXITCODE -ne 0) {
         Write-Error "VPC $VpcId not found or not accessible: $vpcResult"
     }
 
     $vpcData = $vpcResult | ConvertFrom-Json
     $vpc = $vpcData.Vpcs[0]
-    
+
     Write-Output "✅ VPC verified:"
     Write-Output "  VPC ID: $($vpc.VpcId)"
     Write-Output "  State: $($vpc.State)"
@@ -165,14 +165,14 @@ try {
     # Validate service availability
     Write-Output "`n🔍 Checking service availability..."
     $serviceResult = aws ec2 describe-vpc-endpoint-services @awsArgs --output json 2>&1
-    
+
     if ($LASTEXITCODE -eq 0) {
         $serviceData = $serviceResult | ConvertFrom-Json
         $availableService = $serviceData.ServiceNames | Where-Object { $_ -eq $ServiceName }
-        
+
         if ($availableService) {
             Write-Output "✅ Service $ServiceName is available in this region"
-            
+
             # Get service details
             $serviceDetails = $serviceData.ServiceDetails | Where-Object { $_.ServiceName -eq $ServiceName }
             if ($serviceDetails) {
@@ -195,42 +195,42 @@ try {
         if (-not $SubnetId -or $SubnetId.Count -eq 0) {
             Write-Error "Interface endpoints require at least one subnet ID"
         }
-        
+
         Write-Output "`n🔍 Validating subnets for interface endpoint..."
         foreach ($subnet in $SubnetId) {
             $subnetResult = aws ec2 describe-subnets --subnet-ids $subnet @awsArgs --output json 2>&1
-            
+
             if ($LASTEXITCODE -ne 0) {
                 Write-Error "Subnet $subnet not found or not accessible: $subnetResult"
             }
-            
+
             $subnetData = $subnetResult | ConvertFrom-Json
             $subnetInfo = $subnetData.Subnets[0]
-            
+
             if ($subnetInfo.VpcId -ne $VpcId) {
                 Write-Error "Subnet $subnet is not in VPC $VpcId (found in $($subnetInfo.VpcId))"
             }
-            
+
             Write-Output "  ✅ Subnet $subnet validated (AZ: $($subnetInfo.AvailabilityZone))"
         }
-        
+
         # Validate security groups if provided
         if ($SecurityGroupId -and $SecurityGroupId.Count -gt 0) {
             Write-Output "`n🔍 Validating security groups..."
             foreach ($sg in $SecurityGroupId) {
                 $sgResult = aws ec2 describe-security-groups --group-ids $sg @awsArgs --output json 2>&1
-                
+
                 if ($LASTEXITCODE -ne 0) {
                     Write-Error "Security group $sg not found or not accessible: $sgResult"
                 }
-                
+
                 $sgData = $sgResult | ConvertFrom-Json
                 $sgInfo = $sgData.SecurityGroups[0]
-                
+
                 if ($sgInfo.VpcId -ne $VpcId) {
                     Write-Error "Security group $sg is not in VPC $VpcId (found in $($sgInfo.VpcId))"
                 }
-                
+
                 Write-Output "  ✅ Security group $sg validated"
             }
         }
@@ -241,18 +241,18 @@ try {
             Write-Output "`n🔍 Validating route tables for gateway endpoint..."
             foreach ($rtb in $RouteTableId) {
                 $rtbResult = aws ec2 describe-route-tables --route-table-ids $rtb @awsArgs --output json 2>&1
-                
+
                 if ($LASTEXITCODE -ne 0) {
                     Write-Error "Route table $rtb not found or not accessible: $rtbResult"
                 }
-                
+
                 $rtbData = $rtbResult | ConvertFrom-Json
                 $rtbInfo = $rtbData.RouteTables[0]
-                
+
                 if ($rtbInfo.VpcId -ne $VpcId) {
                     Write-Error "Route table $rtb is not in VPC $VpcId (found in $($rtbInfo.VpcId))"
                 }
-                
+
                 Write-Output "  ✅ Route table $rtb validated"
             }
         } else {
@@ -270,7 +270,7 @@ try {
             Write-Output "`n📄 Using provided policy document"
             $policyJson = $PolicyDocument
         }
-        
+
         # Validate JSON
         try {
             $null = ConvertFrom-Json $policyJson
@@ -283,7 +283,7 @@ try {
     # Check for existing endpoints for this service
     Write-Output "`n🔍 Checking for existing endpoints for this service..."
     $existingResult = aws ec2 describe-vpc-endpoints --filters "Name=vpc-id,Values=$VpcId" "Name=service-name,Values=$ServiceName" @awsArgs --output json 2>&1
-    
+
     if ($LASTEXITCODE -eq 0) {
         $existingData = $existingResult | ConvertFrom-Json
         if ($existingData.VpcEndpoints.Count -gt 0) {
@@ -313,18 +313,18 @@ try {
             $createArgs += @('--subnet-ids')
             $createArgs += $SubnetId
         }
-        
+
         if ($SecurityGroupId -and $SecurityGroupId.Count -gt 0) {
             $createArgs += @('--security-group-ids')
             $createArgs += $SecurityGroupId
         }
-        
+
         $createArgs += @('--private-dns-enabled', $PrivateDnsEnabled.ToString().ToLower())
-        
+
         if ($DnsRecordIpType) {
             $createArgs += @('--ip-address-type', $DnsRecordIpType)
         }
-        
+
         if ($DnsOptions) {
             $createArgs += @('--dns-options', $DnsOptions)
         }
@@ -356,7 +356,7 @@ try {
         $hourlyPerEndpoint = 0.01  # Approximate cost per hour per interface endpoint
         $subnetCount = if ($SubnetId) { $SubnetId.Count } else { 1 }
         $totalHourly = $hourlyPerEndpoint * $subnetCount
-        
+
         Write-Output "  Interface endpoint cost: ~`$$hourlyPerEndpoint/hour per subnet"
         Write-Output "  Estimated hourly cost: ~`$$totalHourly (for $subnetCount subnet(s))"
         Write-Output "  Estimated monthly cost: ~`$$([math]::Round($totalHourly * 24 * 30, 2))"
@@ -374,7 +374,7 @@ try {
         if ($LASTEXITCODE -eq 0) {
             $endpointData = $result | ConvertFrom-Json
             $endpoint = $endpointData.VpcEndpoint
-            
+
             Write-Output "✅ VPC endpoint created successfully!"
             Write-Output "  Endpoint ID: $($endpoint.VpcEndpointId)"
             Write-Output "  Service Name: $($endpoint.ServiceName)"
@@ -402,24 +402,24 @@ try {
                 Write-Output "`n🔄 Monitoring endpoint state..."
                 $maxAttempts = 10
                 $attempt = 0
-                
+
                 do {
                     Start-Sleep -Seconds 30
                     $attempt++
-                    
+
                     $statusResult = aws ec2 describe-vpc-endpoints --vpc-endpoint-ids $($endpoint.VpcEndpointId) @awsArgs --output json 2>&1
-                    
+
                     if ($LASTEXITCODE -eq 0) {
                         $statusData = $statusResult | ConvertFrom-Json
                         if ($statusData.VpcEndpoints.Count -gt 0) {
                             $currentState = $statusData.VpcEndpoints[0].State
                             Write-Output "  Status check $attempt/$maxAttempts - State: $currentState"
-                            
+
                             if ($currentState -eq "Available") {
                                 Write-Output "✅ VPC endpoint is now available!"
                                 break
                             }
-                            
+
                             if ($currentState -eq "Failed") {
                                 Write-Warning "⚠️  VPC endpoint creation failed"
                                 if ($statusData.VpcEndpoints[0].FailureReason) {
@@ -429,9 +429,9 @@ try {
                             }
                         }
                     }
-                    
+
                 } while ($attempt -lt $maxAttempts)
-                
+
                 if ($attempt -eq $maxAttempts) {
                     Write-Warning "⚠️  Monitoring timeout reached. Check endpoint status manually."
                 }
@@ -442,12 +442,12 @@ try {
             Write-Output "• Update application configurations to use endpoint DNS names if needed"
             Write-Output "• Monitor endpoint usage and costs in CloudWatch"
             Write-Output "• Consider adding additional subnets for high availability (interface endpoints)"
-            
+
             if ($VpcEndpointType -eq "Interface") {
                 Write-Output "• Review security group rules for endpoint access"
                 Write-Output "• Verify private DNS resolution is working correctly"
             }
-            
+
             if ($VpcEndpointType -eq "Gateway") {
                 Write-Output "• Check route tables to ensure endpoint routes are added"
                 Write-Output "• Verify S3 or DynamoDB access through the endpoint"

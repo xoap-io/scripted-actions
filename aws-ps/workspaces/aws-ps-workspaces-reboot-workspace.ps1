@@ -15,12 +15,12 @@ try {
             Write-Warning "WorkSpace $id not found, skipping"
             continue
         }
-        
+
         if ($workspace.State -ne 'AVAILABLE' -and $workspace.State -ne 'STOPPED') {
             Write-Warning "WorkSpace $id is in state '$($workspace.State)' and cannot be rebooted, skipping"
             continue
         }
-        
+
         Write-Host "Rebooting WorkSpace $id..." -ForegroundColor Cyan
         Restart-WKSWorkspace -WorkspaceId $id
         Write-Host "WorkSpace $id reboot initiated successfully" -ForegroundColor Green

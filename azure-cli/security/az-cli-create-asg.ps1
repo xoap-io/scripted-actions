@@ -6,7 +6,7 @@
     This script creates an Azure Application Security Group using the Azure CLI with comprehensive validation and best practices.
     Application Security Groups enable micro-segmentation within virtual networks and simplify NSG rule management.
     Includes location validation, tagging, and automatic resource association capabilities.
-    
+
     The script uses the Azure CLI command: az network asg create
 
 .PARAMETER Name
@@ -38,7 +38,7 @@
     Date: 2025-08-05
     Version: 1.0.0
     Requires: Azure CLI version 2.0 or later
-    
+
     Application Security Groups:
     - Enable micro-segmentation within VNets
     - Simplify NSG rule management
@@ -89,13 +89,13 @@ function Test-AzureCLI {
         if ($LASTEXITCODE -ne 0) {
             throw "Azure CLI is not installed or not functioning correctly"
         }
-        
+
         Write-Host "🔍 Checking Azure CLI authentication..." -ForegroundColor Cyan
         $null = az account show 2>$null
         if ($LASTEXITCODE -ne 0) {
             throw "Not authenticated to Azure CLI. Please run 'az login' first"
         }
-        
+
         Write-Host "✅ Azure CLI validation successful" -ForegroundColor Green
         return $true
     }
@@ -108,7 +108,7 @@ function Test-AzureCLI {
 # Function to validate resource group exists
 function Test-ResourceGroupExists {
     param($ResourceGroup)
-    
+
     try {
         Write-Host "🔍 Validating resource group '$ResourceGroup' exists..." -ForegroundColor Cyan
         $rg = az group show --name $ResourceGroup --query "name" --output tsv 2>$null
@@ -127,7 +127,7 @@ function Test-ResourceGroupExists {
 # Function to validate location
 function Test-AzureLocation {
     param($Location)
-    
+
     try {
         Write-Host "🔍 Validating Azure location '$Location'..." -ForegroundColor Cyan
         $validLocations = az account list-locations --query "[].name" --output tsv
@@ -146,7 +146,7 @@ function Test-AzureLocation {
 # Function to check if ASG already exists
 function Test-ASGExists {
     param($ResourceGroup, $AsgName)
-    
+
     try {
         Write-Host "🔍 Checking if ASG '$AsgName' already exists..." -ForegroundColor Cyan
         $asg = az network asg show --resource-group $ResourceGroup --name $AsgName --query "name" --output tsv 2>$null
@@ -165,42 +165,42 @@ function Test-ASGExists {
 # Function to parse and validate tags
 function Get-ValidatedTags {
     param($TagString)
-    
+
     if ([string]::IsNullOrEmpty($TagString)) {
         return @()
     }
-    
+
     $tagPairs = $TagString -split '\s+'
     $azTags = @()
-    
+
     foreach ($pair in $tagPairs) {
         if ($pair -match '^([^=]+)=(.+)$') {
             $key = $Matches[1]
             $value = $Matches[2]
-            
+
             # Validate tag key and value
             if ($key.Length -gt 512 -or $value.Length -gt 256) {
                 throw "Tag key must be ≤ 512 chars and value ≤ 256 chars: $pair"
             }
-            
+
             $azTags += $pair
         }
         else {
             throw "Invalid tag format: $pair (use key=value format)"
         }
     }
-    
+
     return $azTags
 }
 
 # Function to get VNets in the resource group for reference
 function Get-VirtualNetworks {
     param($ResourceGroup)
-    
+
     try {
         Write-Host "🔍 Getting Virtual Networks in resource group for reference..." -ForegroundColor Cyan
         $vnets = az network vnet list --resource-group $ResourceGroup --query "[].{name:name, addressSpace:addressSpace.addressPrefixes[0], subnets:length(subnets)}" --output json | ConvertFrom-Json
-        
+
         if ($vnets.Count -gt 0) {
             Write-Host "📋 Found $($vnets.Count) VNet(s) in resource group:" -ForegroundColor Yellow
             foreach ($vnet in $vnets) {
@@ -210,7 +210,7 @@ function Get-VirtualNetworks {
         else {
             Write-Host "ℹ️ No Virtual Networks found in resource group" -ForegroundColor Gray
         }
-        
+
         return $vnets
     }
     catch {
@@ -222,7 +222,7 @@ function Get-VirtualNetworks {
 # Function to show ASG usage recommendations
 function Show-ASGRecommendations {
     param($AsgName)
-    
+
     Write-Host "`n💡 ASG Usage Recommendations:" -ForegroundColor Yellow
     Write-Host "   1. Associate VMs/NICs with this ASG using:" -ForegroundColor White
     Write-Host "      az network nic ip-config update --resource-group $ResourceGroup --nic-name <NIC_NAME> --name ipconfig1 --application-security-groups $AsgName" -ForegroundColor Gray
@@ -246,16 +246,16 @@ function Show-ASGRecommendations {
 # Function to display ASG summary
 function Show-ASGSummary {
     param($Parameters)
-    
+
     Write-Host "`n📋 ASG Configuration Summary:" -ForegroundColor Yellow
     Write-Host "   ASG Name: $($Parameters.Name)" -ForegroundColor White
     Write-Host "   Resource Group: $($Parameters.ResourceGroup)" -ForegroundColor White
     Write-Host "   Location: $($Parameters.Location)" -ForegroundColor White
-    
+
     if ($Parameters.Tags) {
         Write-Host "   Tags: $($Parameters.Tags)" -ForegroundColor White
     }
-    
+
     if ($Parameters.Description) {
         Write-Host "   Description: $($Parameters.Description)" -ForegroundColor White
     }
@@ -266,36 +266,36 @@ function Show-ASGSummary {
 try {
     Write-Host "🚀 Starting Azure ASG Creation" -ForegroundColor Green
     Write-Host "==============================" -ForegroundColor Green
-    
+
     # Validate Azure CLI
     if (-not (Test-AzureCLI)) {
         exit 1
     }
-    
+
     # Validate resource group exists
     if (-not (Test-ResourceGroupExists -ResourceGroup $ResourceGroup)) {
         exit 1
     }
-    
+
     # Validate location
     if (-not (Test-AzureLocation -Location $Location)) {
         exit 1
     }
-    
+
     # Check if ASG already exists
     if (-not (Test-ASGExists -ResourceGroup $ResourceGroup -AsgName $Name)) {
         exit 1
     }
-    
+
     # Get VNets for reference
     $vnets = Get-VirtualNetworks -ResourceGroup $ResourceGroup
-    
+
     # Validate and process tags
     $validatedTags = @()
     if ($Tags) {
         $validatedTags = Get-ValidatedTags -TagString $Tags
     }
-    
+
     # Display configuration summary
     $paramSummary = @{
         Name = $Name
@@ -305,7 +305,7 @@ try {
         Description = $Description
     }
     Show-ASGSummary -Parameters $paramSummary
-    
+
     # Build parameters array
     $azParams = @(
         'network', 'asg', 'create',
@@ -313,20 +313,20 @@ try {
         '--name', $Name,
         '--location', $Location
     )
-    
+
     # Add optional parameters
     if ($validatedTags.Count -gt 0) {
         $azParams += '--tags'
         $azParams += $validatedTags
     }
-    
+
     # Create the ASG
     Write-Host "🔧 Creating Application Security Group '$Name'..." -ForegroundColor Cyan
     $null = az @azParams
-    
+
     if ($LASTEXITCODE -eq 0) {
         Write-Host "✅ ASG '$Name' created successfully!" -ForegroundColor Green
-        
+
         # Add description if provided (separate command as create doesn't support description)
         if ($Description) {
             Write-Host "📝 Adding description..." -ForegroundColor Cyan
@@ -342,15 +342,15 @@ try {
                 Write-Warning "Could not add description: $($_.Exception.Message)"
             }
         }
-        
+
         # Display created ASG details
         Write-Host "`n📝 ASG Details:" -ForegroundColor Yellow
         $asgDetails = az network asg show --resource-group $ResourceGroup --name $Name --output table
         Write-Host $asgDetails -ForegroundColor White
-        
+
         # Show usage recommendations
         Show-ASGRecommendations -AsgName $Name
-        
+
         # Show related ASGs in the resource group
         Write-Host "📋 Other ASGs in Resource Group:" -ForegroundColor Yellow
         $otherAsgs = az network asg list --resource-group $ResourceGroup --query "[].name" --output tsv

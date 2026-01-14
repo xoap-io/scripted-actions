@@ -36,7 +36,7 @@ try {
     if (-not $directory) {
         throw "Directory $DirectoryId not found"
     }
-    
+
     Write-Host "Validating bundle exists..." -ForegroundColor Cyan
     $bundle = Get-WKSWorkspaceBundle -BundleId $BundleId
     if (-not $bundle) {
@@ -44,7 +44,7 @@ try {
     }
 
     Write-Host "Creating WorkSpace for user $UserName..." -ForegroundColor Cyan
-    
+
     $workspaceRequest = @{
         DirectoryId = $DirectoryId
         UserName = $UserName
@@ -54,23 +54,23 @@ try {
         WorkspaceProperties_UserVolumeSizeGib = $UserVolumeSizeGib
         WorkspaceProperties_RunningMode = $RunningMode
     }
-    
+
     if ($RunningMode -eq 'AUTO_STOP') {
         $workspaceRequest['WorkspaceProperties_RunningModeAutoStopTimeoutInMinutes'] = $RunningModeAutoStopTimeoutInMinutes
     }
-    
+
     if ($Tags.Count -gt 0) {
         $workspaceRequest['Tags'] = $Tags.GetEnumerator() | ForEach-Object { @{Key=$_.Key; Value=$_.Value} }
     }
 
     $workspace = New-WKSWorkspace @workspaceRequest
-    
+
     Write-Host "WorkSpace created successfully:" -ForegroundColor Green
     Write-Host "  WorkSpace ID: $($workspace.WorkspaceId)" -ForegroundColor Green
     Write-Host "  State: $($workspace.State)" -ForegroundColor Green
     Write-Host "  User Name: $($workspace.UserName)" -ForegroundColor Green
     Write-Host "  Bundle ID: $($workspace.BundleId)" -ForegroundColor Green
-    
+
     return $workspace
 } catch {
     Write-Error "Failed to create WorkSpace: $_"

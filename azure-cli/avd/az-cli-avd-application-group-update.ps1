@@ -125,27 +125,27 @@ try {
     if (-not $azVersion) {
         throw "Azure CLI is not installed or not available in PATH"
     }
-    
+
     Write-Host "Checking Azure CLI login status..." -ForegroundColor Cyan
     $account = az account show --output json 2>$null | ConvertFrom-Json
     if (-not $account) {
         throw "Not logged in to Azure CLI. Please run 'az login' first"
     }
     Write-Host "Logged in as: $($account.user.name)" -ForegroundColor Green
-    
+
     Write-Host "Checking if Application Group exists..." -ForegroundColor Cyan
     $existingAppGroup = az desktopvirtualization applicationgroup show --name $Name --resource-group $ResourceGroup --output json 2>$null
     if (-not $existingAppGroup) {
         throw "Application Group '$Name' not found in resource group '$ResourceGroup'"
     }
-    
+
     $currentAppGroup = $existingAppGroup | ConvertFrom-Json
     Write-Host "Found Application Group: $($currentAppGroup.name)" -ForegroundColor Yellow
     Write-Host "  Current Type: $($currentAppGroup.applicationGroupType)" -ForegroundColor Yellow
     Write-Host "  Current Description: $($currentAppGroup.description)" -ForegroundColor Yellow
     Write-Host "  Current Friendly Name: $($currentAppGroup.friendlyName)" -ForegroundColor Yellow
     Write-Host "  Current Host Pool ARM Path: $($currentAppGroup.hostPoolArmPath)" -ForegroundColor Yellow
-    
+
     # Check if there are any updates to make
     $hasUpdates = $false
     $updateParams = @(
@@ -153,79 +153,79 @@ try {
         '--name', $Name,
         '--resource-group', $ResourceGroup
     )
-    
+
     if ($Description -and $Description -ne $currentAppGroup.description) {
         $updateParams += '--description', $Description
         $hasUpdates = $true
         Write-Host "  Will update description to: $Description" -ForegroundColor Green
     }
-    
+
     if ($FriendlyName -and $FriendlyName -ne $currentAppGroup.friendlyName) {
         $updateParams += '--friendly-name', $FriendlyName
         $hasUpdates = $true
         Write-Host "  Will update friendly name to: $FriendlyName" -ForegroundColor Green
     }
-    
+
     if ($HostPoolArmPath -and $HostPoolArmPath -ne $currentAppGroup.hostPoolArmPath) {
         $updateParams += '--host-pool-arm-path', $HostPoolArmPath
         $hasUpdates = $true
         Write-Host "  Will update host pool ARM path to: $HostPoolArmPath" -ForegroundColor Green
     }
-    
+
     if ($Tags) {
         $updateParams += '--tags', $Tags
         $hasUpdates = $true
         Write-Host "  Will update tags to: $Tags" -ForegroundColor Green
     }
-    
+
     if (-not $hasUpdates) {
         Write-Host "No updates specified or no changes detected" -ForegroundColor Yellow
         exit 0
     }
-    
+
     Write-Host "Updating Azure Virtual Desktop Application Group..." -ForegroundColor Cyan
-    
+
     # Add output format
     $updateParams += '--output', 'json'
-    
+
     # Add optional parameters if provided
     if ($Add) {
         $updateParams += '--add', $Add
         Write-Host "  Will add: $Add" -ForegroundColor Green
     }
-    
+
     if ($ApplicationGroupType -and $ApplicationGroupType -ne $currentAppGroup.applicationGroupType) {
         $updateParams += '--application-group-type', $ApplicationGroupType
         Write-Host "  Will update application group type to: $ApplicationGroupType" -ForegroundColor Green
     }
-    
+
     if ($ForceString) {
         $updateParams += '--force-string', $ForceString
         Write-Host "  Will apply force-string: $ForceString" -ForegroundColor Green
     }
-    
+
     if ($IDs) {
         $updateParams += '--ids', $IDs
         Write-Host "  Will use resource IDs: $IDs" -ForegroundColor Green
     }
-    
+
     if ($Remove) {
         $updateParams += '--remove', $Remove
         Write-Host "  Will remove: $Remove" -ForegroundColor Green
     }
-    
+
     if ($Set) {
         $updateParams += '--set', $Set
         Write-Host "  Will set: $Set" -ForegroundColor Green
     }
-    
+
     $result = & az @updateParams
     if ($LASTEXITCODE -ne 0) {
         throw "Azure CLI command failed with exit code: $LASTEXITCODE"
     }
-    
+
     $updatedAppGroup = $result | ConvertFrom-Json
-    
+
     Write-Host "Azure Virtual Desktop Application Group updated successfully:" -ForegroundColor Green
     Write-Host "  Name: $($updatedAppGroup.name)" -ForegroundColor White
     Write-Host "  Resource Group: $($updatedAppGroup.resourceGroup)" -ForegroundColor White
@@ -234,7 +234,7 @@ try {
     Write-Host "  Friendly Name: $($updatedAppGroup.friendlyName)" -ForegroundColor White
     Write-Host "  Host Pool ARM Path: $($updatedAppGroup.hostPoolArmPath)" -ForegroundColor White
     Write-Host "  ID: $($updatedAppGroup.id)" -ForegroundColor White
-    
+
     return $updatedAppGroup
 } catch {
     Write-Error "Failed to update Azure Virtual Desktop Application Group: $_"

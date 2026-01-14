@@ -103,14 +103,14 @@ try {
     # Get route table details and verify route exists
     Write-Output "`n🔍 Verifying route table and target route..."
     $rtbResult = aws ec2 describe-route-tables --route-table-ids $RouteTableId @awsArgs --output json 2>&1
-    
+
     if ($LASTEXITCODE -ne 0) {
         Write-Error "Route table $RouteTableId not found or not accessible: $rtbResult"
     }
 
     $rtbData = $rtbResult | ConvertFrom-Json
     $routeTable = $rtbData.RouteTables[0]
-    
+
     Write-Output "✅ Route table verified:"
     Write-Output "  VPC ID: $($routeTable.VpcId)"
     Write-Output "  Current routes: $($routeTable.Routes.Count)"
@@ -118,13 +118,13 @@ try {
     # Find the target route
     $targetRoute = $null
     $destination = ""
-    
+
     if ($DestinationCidrBlock) {
         $targetRoute = $routeTable.Routes | Where-Object { $_.DestinationCidrBlock -eq $DestinationCidrBlock }
         $destination = $DestinationCidrBlock
         Write-Output "  Target destination: $DestinationCidrBlock (IPv4)"
     }
-    
+
     if ($DestinationIpv6CidrBlock) {
         $targetRoute = $routeTable.Routes | Where-Object { $_.DestinationIpv6CidrBlock -eq $DestinationIpv6CidrBlock }
         $destination = $DestinationIpv6CidrBlock
@@ -212,18 +212,18 @@ try {
 
         if ($LASTEXITCODE -eq 0) {
             Write-Output "✅ Route deleted successfully!"
-            
+
             # Verify the route was deleted
             Write-Output "`n🔍 Verifying route deletion..."
             $verifyResult = aws ec2 describe-route-tables --route-table-ids $RouteTableId @awsArgs --output json 2>&1
-            
+
             if ($LASTEXITCODE -eq 0) {
                 $verifyData = $verifyResult | ConvertFrom-Json
                 $updatedRouteTable = $verifyData.RouteTables[0]
-                
+
                 Write-Output "✅ Route table updated:"
                 Write-Output "  Total routes: $($updatedRouteTable.Routes.Count)"
-                
+
                 # Verify the route is gone
                 $deletedRoute = $null
                 if ($DestinationCidrBlock) {
@@ -244,7 +244,7 @@ try {
             Write-Output "• Monitor connectivity to ensure no unintended impacts"
             Write-Output "• Use 'aws ec2 describe-route-tables --route-table-ids $RouteTableId' to view remaining routes"
             Write-Output "• Create replacement routes if needed with 'aws ec2 create-route'"
-            
+
             if ($isDisruptive) {
                 Write-Output "• Test connectivity to affected resources"
                 Write-Output "• Consider creating alternative routes if connectivity is lost"
@@ -257,7 +257,7 @@ try {
         Write-Output "`n✅ DRY RUN: Route deletion command validated successfully"
         Write-Output "Command that would be executed:"
         Write-Output "aws $($deleteArgs -join ' ')"
-        
+
         if ($isDisruptive) {
             Write-Output "`n⚠️  DRY RUN: This deletion would be disruptive - review warnings above"
         }

@@ -5,7 +5,7 @@
 .DESCRIPTION
     This script adds a security rule to an existing Azure Network Security Group using the Azure CLI.
     Security rules control inbound and outbound traffic for network interfaces and subnets.
-    
+
     The script uses the Azure CLI command: az network nsg rule create
 
 .PARAMETER NSGName
@@ -49,12 +49,12 @@
 
 .EXAMPLE
     .\az-cli-add-nsg-rule.ps1 -NSGName "web-nsg" -ResourceGroup "MyRG" -RuleName "AllowHTTP" -Priority 100 -Direction "Inbound" -Access "Allow" -Protocol "Tcp" -SourceAddressPrefix "*" -SourcePortRange "*" -DestinationAddressPrefix "*" -DestinationPortRange "80"
-    
+
     Creates a rule to allow HTTP traffic from anywhere.
 
 .EXAMPLE
     .\az-cli-add-nsg-rule.ps1 -NSGName "app-nsg" -ResourceGroup "MyRG" -RuleName "AllowSSH" -Priority 200 -Direction "Inbound" -Access "Allow" -Protocol "Tcp" -SourceAddressPrefix "10.0.0.0/16" -SourcePortRange "*" -DestinationAddressPrefix "*" -DestinationPortRange "22" -Description "Allow SSH from VNet"
-    
+
     Creates a rule to allow SSH from the virtual network with a description.
 
 .NOTES
@@ -166,8 +166,8 @@ try {
     )
 
     # Add optional parameters
-    if ($Description) { 
-        $azParams += '--description', $Description 
+    if ($Description) {
+        $azParams += '--description', $Description
     }
 
     Write-Host "Creating NSG security rule..." -ForegroundColor Yellow
@@ -182,10 +182,10 @@ try {
 
     # Execute Azure CLI command
     $result = & az @azParams 2>&1
-    
+
     if ($LASTEXITCODE -eq 0) {
         Write-Host "✓ NSG security rule created successfully!" -ForegroundColor Green
-        
+
         # Parse and display rule information
         try {
             $ruleInfo = $result | ConvertFrom-Json
@@ -197,7 +197,7 @@ try {
             Write-Host "  Protocol: $($ruleInfo.protocol)" -ForegroundColor White
             Write-Host "  Source: $($ruleInfo.sourceAddressPrefix):$($ruleInfo.sourcePortRange)" -ForegroundColor White
             Write-Host "  Destination: $($ruleInfo.destinationAddressPrefix):$($ruleInfo.destinationPortRange)" -ForegroundColor White
-            
+
             if ($ruleInfo.description) {
                 Write-Host "  Description: $($ruleInfo.description)" -ForegroundColor White
             }

@@ -72,7 +72,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $true)]
-    [ValidateNotNullOrEmpty()]   
+    [ValidateNotNullOrEmpty()]
     [string]$ResourceGroup,
 
     [Parameter(Mandatory = $true)]

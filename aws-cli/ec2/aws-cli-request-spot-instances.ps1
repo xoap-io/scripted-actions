@@ -229,12 +229,12 @@ try {
             }
 
             if ($KeyName) { $launchSpec.KeyName = $KeyName }
-            if ($SecurityGroupIds) { 
+            if ($SecurityGroupIds) {
                 $launchSpec.SecurityGroupIds = $SecurityGroupIds -split ',' | ForEach-Object { $_.Trim() }
             }
             if ($SubnetId) { $launchSpec.SubnetId = $SubnetId }
             if ($userData) { $launchSpec.UserData = $userData }
-            if ($IamInstanceProfile) { 
+            if ($IamInstanceProfile) {
                 $launchSpec.IamInstanceProfile = @{ Name = $IamInstanceProfile }
             }
 
@@ -266,7 +266,7 @@ try {
 
                 if ($LASTEXITCODE -eq 0) {
                     $spotData = $requestResult | ConvertFrom-Json
-                    
+
                     Write-Output "`n✅ Spot instance request submitted successfully:"
                     foreach ($request in $spotData.SpotInstanceRequests) {
                         Write-Output "  • Request ID: $($request.SpotInstanceRequestId)"
@@ -275,16 +275,16 @@ try {
                         if ($request.SpotPrice) {
                             Write-Output "    Spot Price: $($request.SpotPrice)"
                         }
-                        
+
                         # Apply tags if provided
                         if ($Tags) {
                             Write-Output "    Applying tags..."
                             try {
                                 $tagsArray = $Tags | ConvertFrom-Json
                                 $tagsJson = $tagsArray | ConvertTo-Json -Depth 3 -Compress
-                                
+
                                 $tagResult = aws ec2 create-tags --resources $request.SpotInstanceRequestId --tags $tagsJson @awsArgs 2>&1
-                                
+
                                 if ($LASTEXITCODE -eq 0) {
                                     Write-Output "    ✅ Tags applied"
                                 } else {
@@ -317,17 +317,17 @@ try {
             }
 
             Write-Output "`n❌ Cancelling spot request: $SpotRequestId"
-            
+
             # Get current request details
             $describeResult = aws ec2 describe-spot-instance-requests --spot-instance-request-ids $SpotRequestId @awsArgs --output json 2>&1
-            
+
             if ($LASTEXITCODE -eq 0) {
                 $requestData = $describeResult | ConvertFrom-Json
                 $request = $requestData.SpotInstanceRequests[0]
-                
+
                 Write-Output "Current state: $($request.State)"
                 Write-Output "Current status: $($request.Status.Code)"
-                
+
                 if ($request.InstanceId) {
                     Write-Output "⚠️  Instance launched: $($request.InstanceId)"
                     Write-Output "Note: Cancelling the spot request will not terminate the running instance."
@@ -340,7 +340,7 @@ try {
             if ($LASTEXITCODE -eq 0) {
                 $cancelData = $cancelResult | ConvertFrom-Json
                 Write-Output "✅ Spot request cancelled successfully"
-                
+
                 foreach ($cancelled in $cancelData.CancelledSpotInstanceRequests) {
                     Write-Output "  • Request ID: $($cancelled.SpotInstanceRequestId)"
                     Write-Output "    State: $($cancelled.State)"
@@ -352,9 +352,9 @@ try {
 
         'Describe' {
             Write-Output "`n📋 Describing spot instance requests..."
-            
+
             $describeArgs = @('ec2', 'describe-spot-instance-requests') + $awsArgs
-            
+
             if ($SpotRequestId) {
                 $describeArgs += @('--spot-instance-request-ids', $SpotRequestId)
                 Write-Output "Specific request: $SpotRequestId"
@@ -364,7 +364,7 @@ try {
 
             if ($LASTEXITCODE -eq 0) {
                 $requestData = $describeResult | ConvertFrom-Json
-                
+
                 if ($requestData.SpotInstanceRequests.Count -eq 0) {
                     Write-Output "No spot instance requests found"
                     exit 0
@@ -381,13 +381,13 @@ try {
                     Write-Output "Spot Price: $($request.SpotPrice)"
                     Write-Output "Instance Type: $($request.LaunchSpecification.InstanceType)"
                     Write-Output "AMI ID: $($request.LaunchSpecification.ImageId)"
-                    
+
                     if ($request.InstanceId) {
                         Write-Output "Instance ID: $($request.InstanceId)"
-                        
+
                         # Get instance details
                         $instanceResult = aws ec2 describe-instances --instance-ids $request.InstanceId @awsArgs --query 'Reservations[0].Instances[0].[State.Name,PublicIpAddress,PrivateIpAddress]' --output text 2>&1
-                        
+
                         if ($LASTEXITCODE -eq 0) {
                             $instanceInfo = $instanceResult.Trim() -split "`t"
                             Write-Output "Instance State: $($instanceInfo[0])"
@@ -399,14 +399,14 @@ try {
                             }
                         }
                     }
-                    
+
                     if ($request.ValidFrom) {
                         Write-Output "Valid From: $($request.ValidFrom)"
                     }
                     if ($request.ValidUntil) {
                         Write-Output "Valid Until: $($request.ValidUntil)"
                     }
-                    
+
                     if ($request.Tags -and $request.Tags.Count -gt 0) {
                         Write-Output "Tags:"
                         foreach ($tag in $request.Tags) {
@@ -429,7 +429,7 @@ try {
 
         'GetPrices' {
             Write-Output "`n💰 Getting spot price history..."
-            
+
             $priceArgs = @(
                 'ec2', 'describe-spot-price-history',
                 '--start-time', (Get-Date).AddDays(-1).ToString("yyyy-MM-ddTHH:mm:ss.fffZ"),
@@ -444,7 +444,7 @@ try {
                 $priceArgs += @('--availability-zone', $AvailabilityZone)
                 Write-Output "Availability Zone: $AvailabilityZone"
             }
-            
+
             Write-Output "Product Description: $ProductDescription"
             Write-Output "Time Range: Last 24 hours"
 
@@ -452,7 +452,7 @@ try {
 
             if ($LASTEXITCODE -eq 0) {
                 $priceData = $priceResult | ConvertFrom-Json
-                
+
                 if ($priceData.SpotPriceHistory.Count -eq 0) {
                     Write-Output "No spot price history found for the specified criteria"
                     exit 0
@@ -464,7 +464,7 @@ try {
                 Write-Output "-" * 80
 
                 # Group by instance type and AZ to get latest prices
-                $latestPrices = $priceData.SpotPriceHistory | 
+                $latestPrices = $priceData.SpotPriceHistory |
                     Group-Object {$_.InstanceType + ":" + $_.AvailabilityZone} |
                     ForEach-Object {
                         $_.Group | Sort-Object Timestamp -Descending | Select-Object -First 1
@@ -483,12 +483,12 @@ try {
                         $minPrice = ($instancePrices | Measure-Object -Property SpotPrice -Minimum).Minimum
                         $maxPrice = ($instancePrices | Measure-Object -Property SpotPrice -Maximum).Maximum
                         $avgPrice = ($instancePrices | Measure-Object -Property SpotPrice -Average).Average
-                        
+
                         Write-Output "`n📈 Price Analysis for $InstanceType :"
                         Write-Output "Minimum Price: $minPrice"
                         Write-Output "Maximum Price: $maxPrice"
                         Write-Output "Average Price: $([math]::Round($avgPrice, 4))"
-                        
+
                         $cheapestAZ = $instancePrices | Sort-Object SpotPrice | Select-Object -First 1
                         Write-Output "Cheapest AZ: $($cheapestAZ.AvailabilityZone) at $($cheapestAZ.SpotPrice)"
                     }
@@ -585,7 +585,7 @@ try {
             }
 
             Write-Output "`n❌ Cancelling spot fleet: $SpotFleetRequestId"
-            
+
             $cancelResult = aws ec2 cancel-spot-fleet-requests --spot-fleet-request-ids $SpotFleetRequestId --terminate-instances @awsArgs --output json 2>&1
 
             if ($LASTEXITCODE -eq 0) {

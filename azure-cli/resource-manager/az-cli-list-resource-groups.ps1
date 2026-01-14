@@ -6,7 +6,7 @@
     This script lists Azure Resource Groups using the Azure CLI with flexible filtering and display options.
     Supports filtering by location, tags, managed status, and provides detailed information about each Resource Group.
     Outputs can be formatted as table, JSON, or TSV for integration with other tools.
-    
+
     The script uses the Azure CLI command: az group list
 
 .PARAMETER Location
@@ -35,22 +35,22 @@
 
 .EXAMPLE
     .\az-cli-list-resource-groups.ps1
-    
+
     Lists all Resource Groups in the current subscription.
 
 .EXAMPLE
     .\az-cli-list-resource-groups.ps1 -Location "East US" -ShowTags
-    
+
     Lists Resource Groups in East US region with tag information.
 
 .EXAMPLE
     .\az-cli-list-resource-groups.ps1 -Tag "Environment=Production" -OutputFormat "json"
-    
+
     Lists Production Resource Groups in JSON format.
 
 .EXAMPLE
     .\az-cli-list-resource-groups.ps1 -ShowManagedBy -SortBy "location"
-    
+
     Lists all Resource Groups sorted by location, showing managed Resource Groups.
 
 .NOTES
@@ -137,7 +137,7 @@ try {
 
     # Build query filter
     $queryParts = @()
-    
+
     if ($Location) {
         # Convert display name to location code
         $locationMap = @{
@@ -170,11 +170,11 @@ try {
 
     # Build output columns
     $outputColumns = @("name", "location", "properties.provisioningState")
-    
+
     if ($ShowManagedBy) {
         $outputColumns += "managedBy"
     }
-    
+
     if ($ShowTags) {
         $outputColumns += "tags"
     }
@@ -206,12 +206,12 @@ try {
 
     # Execute Azure CLI command
     $result = & az @azParams 2>&1
-    
+
     if ($LASTEXITCODE -eq 0) {
         if ($OutputFormat -eq "table" -or $OutputFormat -eq "none") {
             # Parse and enhance table output
             $resourceGroups = az group list | ConvertFrom-Json
-            
+
             # Apply manual filtering if needed (for complex scenarios)
             if ($Location) {
                 $locationCode = $locationMap[$Location]
@@ -235,7 +235,7 @@ try {
             Write-Host ""
             Write-Host "📊 Resource Groups Summary:" -ForegroundColor Cyan
             Write-Host "  Total found: $($resourceGroups.Count)" -ForegroundColor White
-            
+
             if ($resourceGroups.Count -gt 0) {
                 # Group by location
                 $locationGroups = $resourceGroups | Group-Object -Property location
@@ -262,7 +262,7 @@ try {
                 Write-Host ""
                 Write-Host "Resource Groups Details:" -ForegroundColor Blue
                 Write-Host $("-" * 80) -ForegroundColor Gray
-                
+
                 foreach ($rg in $resourceGroups) {
                     $stateColor = switch ($rg.properties.provisioningState) {
                         "Succeeded" { "Green" }
@@ -270,29 +270,29 @@ try {
                         "Creating" { "Yellow" }
                         default { "White" }
                     }
-                    
+
                     $displayLocation = ($locationMap.GetEnumerator() | Where-Object { $_.Value -eq $rg.location }).Key
                     if (-not $displayLocation) { $displayLocation = $rg.location }
-                    
+
                     Write-Host "🗂️  $($rg.name)" -ForegroundColor Blue
                     Write-Host "    Location: $displayLocation" -ForegroundColor White
                     Write-Host "    State: $($rg.properties.provisioningState)" -ForegroundColor $stateColor
-                    
+
                     if ($rg.managedBy) {
                         Write-Host "    Managed By: $($rg.managedBy)" -ForegroundColor Yellow
                     }
-                    
+
                     if ($ShowTags -and $rg.tags) {
                         Write-Host "    Tags:" -ForegroundColor Cyan
                         foreach ($tag in $rg.tags.PSObject.Properties) {
                             Write-Host "      $($tag.Name): $($tag.Value)" -ForegroundColor Gray
                         }
                     }
-                    
+
                     if ($rg.ResourceCount) {
                         Write-Host "    Resources: $($rg.ResourceCount)" -ForegroundColor Blue
                     }
-                    
+
                     Write-Host ""
                 }
             } else {
@@ -302,7 +302,7 @@ try {
             # For JSON/YAML/TSV output, display the raw result
             Write-Host $result
         }
-        
+
         Write-Host ""
         Write-Host "🏁 Resource Groups listing completed successfully" -ForegroundColor Green
     }

@@ -158,17 +158,17 @@ try {
     $resolvedAmiId = $AmiId
     if ($AmiId -eq 'latest') {
         Write-Output "Resolving latest Amazon Linux 2 AMI..."
-        
-        $amiArgs = @('ec2', 'describe-images', 
+
+        $amiArgs = @('ec2', 'describe-images',
                     '--owners', 'amazon',
                     '--filters', 'Name=name,Values=amzn2-ami-hvm-*-x86_64-gp2',
                               'Name=state,Values=available',
                     '--query', 'Images | sort_by(@, &CreationDate) | [-1].ImageId',
                     '--output', 'text')
         $amiArgs += $awsArgs
-        
+
         $latestAmi = & aws @amiArgs 2>&1
-        
+
         if ($LASTEXITCODE -eq 0 -and $latestAmi -match '^ami-') {
             $resolvedAmiId = $latestAmi.Trim()
             Write-Output "Latest AMI resolved to: $resolvedAmiId"

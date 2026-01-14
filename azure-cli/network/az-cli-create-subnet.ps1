@@ -5,7 +5,7 @@
 .DESCRIPTION
     This script creates a subnet within an existing Azure Virtual Network using the Azure CLI.
     Supports advanced subnet features like service endpoints, delegations, and security configurations.
-    
+
     The script uses the Azure CLI command: az network vnet subnet create
 
 .PARAMETER VNetName
@@ -43,17 +43,17 @@
 
 .EXAMPLE
     .\az-cli-create-subnet.ps1 -VNetName "MyVNet" -ResourceGroup "MyRG" -SubnetName "web-subnet" -AddressPrefix "10.0.1.0/24"
-    
+
     Creates a basic subnet in an existing virtual network.
 
 .EXAMPLE
     .\az-cli-create-subnet.ps1 -VNetName "MyVNet" -ResourceGroup "MyRG" -SubnetName "app-subnet" -AddressPrefix "10.0.2.0/24" -NetworkSecurityGroup "app-nsg" -ServiceEndpoints "Microsoft.Storage Microsoft.KeyVault"
-    
+
     Creates a subnet with NSG and service endpoints for storage and key vault.
 
 .EXAMPLE
     .\az-cli-create-subnet.ps1 -VNetName "MyVNet" -ResourceGroup "MyRG" -SubnetName "private-subnet" -AddressPrefix "10.0.3.0/24" -DisablePrivateEndpointNetworkPolicies
-    
+
     Creates a subnet optimized for private endpoints.
 
 .NOTES
@@ -151,26 +151,26 @@ try {
     )
 
     # Add optional parameters
-    if ($NetworkSecurityGroup) { 
-        $azParams += '--network-security-group', $NetworkSecurityGroup 
+    if ($NetworkSecurityGroup) {
+        $azParams += '--network-security-group', $NetworkSecurityGroup
     }
-    if ($RouteTable) { 
-        $azParams += '--route-table', $RouteTable 
+    if ($RouteTable) {
+        $azParams += '--route-table', $RouteTable
     }
-    if ($ServiceEndpoints) { 
-        $azParams += '--service-endpoints', $ServiceEndpoints 
+    if ($ServiceEndpoints) {
+        $azParams += '--service-endpoints', $ServiceEndpoints
     }
-    if ($Delegations) { 
-        $azParams += '--delegations', $Delegations 
+    if ($Delegations) {
+        $azParams += '--delegations', $Delegations
     }
-    if ($DisablePrivateEndpointNetworkPolicies) { 
-        $azParams += '--disable-private-endpoint-network-policies', 'true' 
+    if ($DisablePrivateEndpointNetworkPolicies) {
+        $azParams += '--disable-private-endpoint-network-policies', 'true'
     }
-    if ($DisablePrivateLinkServiceNetworkPolicies) { 
-        $azParams += '--disable-private-link-service-network-policies', 'true' 
+    if ($DisablePrivateLinkServiceNetworkPolicies) {
+        $azParams += '--disable-private-link-service-network-policies', 'true'
     }
-    if ($NatGateway) { 
-        $azParams += '--nat-gateway', $NatGateway 
+    if ($NatGateway) {
+        $azParams += '--nat-gateway', $NatGateway
     }
 
     Write-Host "Creating subnet in virtual network..." -ForegroundColor Yellow
@@ -188,10 +188,10 @@ try {
 
     # Execute Azure CLI command
     $result = & az @azParams 2>&1
-    
+
     if ($LASTEXITCODE -eq 0) {
         Write-Host "✓ Subnet created successfully!" -ForegroundColor Green
-        
+
         # Parse and display subnet information
         try {
             $subnetInfo = $result | ConvertFrom-Json
@@ -199,7 +199,7 @@ try {
             Write-Host "  Name: $($subnetInfo.name)" -ForegroundColor White
             Write-Host "  Address Prefix: $($subnetInfo.addressPrefix)" -ForegroundColor White
             Write-Host "  Resource Group: $($subnetInfo.resourceGroup)" -ForegroundColor White
-            
+
             if ($subnetInfo.networkSecurityGroup) {
                 Write-Host "  Network Security Group: $($subnetInfo.networkSecurityGroup.id -split '/')[-1]" -ForegroundColor White
             }

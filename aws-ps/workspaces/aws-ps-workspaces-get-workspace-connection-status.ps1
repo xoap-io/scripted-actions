@@ -10,15 +10,15 @@ $ErrorActionPreference = 'Stop'
 try {
     foreach ($id in $WorkspaceId) {
         Write-Host "Retrieving connection status for WorkSpace $id..." -ForegroundColor Cyan
-        
+
         $workspace = Get-WKSWorkspace -WorkspaceId $id
         if (-not $workspace) {
             Write-Warning "WorkSpace $id not found, skipping"
             continue
         }
-        
+
         $connectionStatus = Get-WKSWorkspaceConnectionStatus -WorkspaceId $id
-        
+
         if ($connectionStatus) {
             Write-Host "Connection Status for WorkSpace ${id}:" -ForegroundColor Green
             Write-Host "  WorkSpace ID: $($connectionStatus.WorkspaceId)" -ForegroundColor White

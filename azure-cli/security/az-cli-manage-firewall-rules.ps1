@@ -6,7 +6,7 @@
     This script manages Azure Firewall application, network, and NAT rules using the Azure CLI.
     Supports creating, updating, listing, and deleting firewall rules with extensive validation and safety mechanisms.
     Includes rule conflict detection, backup capabilities, and comprehensive reporting.
-    
+
     The script uses Azure CLI commands: az network firewall application-rule, az network firewall network-rule, etc.
 
 .PARAMETER FirewallName
@@ -89,7 +89,7 @@
     Date: 2025-08-05
     Version: 1.0.0
     Requires: Azure CLI version 2.0 or later
-    
+
     Features:
     - Support for Application, Network, and NAT rules
     - Rule conflict detection and validation
@@ -213,13 +213,13 @@ function Test-AzureCLI {
         if ($LASTEXITCODE -ne 0) {
             throw "Azure CLI is not installed or not functioning correctly"
         }
-        
+
         Write-Host "🔍 Checking Azure CLI authentication..." -ForegroundColor Cyan
         $null = az account show 2>$null
         if ($LASTEXITCODE -ne 0) {
             throw "Not authenticated to Azure CLI. Please run 'az login' first"
         }
-        
+
         Write-Host "✅ Azure CLI validation successful" -ForegroundColor Green
         return $true
     }
@@ -232,7 +232,7 @@ function Test-AzureCLI {
 # Function to validate firewall exists
 function Test-FirewallExists {
     param($ResourceGroup, $FirewallName)
-    
+
     try {
         Write-Host "🔍 Validating Azure Firewall '$FirewallName'..." -ForegroundColor Cyan
         $firewall = az network firewall show --name $FirewallName --resource-group $ResourceGroup --output json 2>$null | ConvertFrom-Json
@@ -251,12 +251,12 @@ function Test-FirewallExists {
 # Function to get existing rules
 function Get-FirewallRules {
     param($ResourceGroup, $FirewallName, $RuleType)
-    
+
     try {
         Write-Host "🔍 Retrieving existing $RuleType rules..." -ForegroundColor Cyan
-        
+
         $rules = @()
-        
+
         switch ($RuleType) {
             'Application' {
                 $collections = az network firewall application-rule collection list --firewall-name $FirewallName --resource-group $ResourceGroup --output json 2>$null | ConvertFrom-Json
@@ -300,7 +300,7 @@ function Get-FirewallRules {
                 }
             }
         }
-        
+
         Write-Host "✅ Retrieved $($rules.Count) $RuleType rule collection(s)" -ForegroundColor Green
         return $rules
     }
@@ -313,28 +313,28 @@ function Get-FirewallRules {
 # Function to validate rule parameters
 function Test-RuleParameters {
     param($RuleType, $Parameters)
-    
+
     try {
         Write-Host "🔍 Validating rule parameters..." -ForegroundColor Cyan
-        
+
         $issues = @()
-        
+
         # Common validations
         if (-not $Parameters.CollectionName) {
             $issues += "Collection name is required"
         }
-        
+
         if (-not $Parameters.SourceAddresses) {
             $issues += "Source addresses are required"
         }
-        
+
         # Type-specific validations
         switch ($RuleType) {
             'Application' {
                 if (-not $Parameters.TargetFqdns -and -not $Parameters.FqdnTags) {
                     $issues += "Application rules require either Target FQDNs or FQDN tags"
                 }
-                
+
                 if ($Parameters.TargetFqdns -and $Parameters.FqdnTags) {
                     $issues += "Application rules cannot have both Target FQDNs and FQDN tags"
                 }
@@ -343,11 +343,11 @@ function Test-RuleParameters {
                 if (-not $Parameters.DestinationAddresses) {
                     $issues += "Network rules require destination addresses"
                 }
-                
+
                 if (-not $Parameters.DestinationPorts) {
                     $issues += "Network rules require destination ports"
                 }
-                
+
                 # Validate protocols
                 $validProtocols = @('TCP', 'UDP', 'ICMP', 'Any')
                 $protocols = $Parameters.Protocols -split ','
@@ -360,21 +360,21 @@ function Test-RuleParameters {
                 if (-not $Parameters.DestinationAddresses) {
                     $issues += "NAT rules require destination addresses"
                 }
-                
+
                 if (-not $Parameters.DestinationPorts) {
                     $issues += "NAT rules require destination ports"
                 }
-                
+
                 if (-not $Parameters.TranslatedAddress) {
                     $issues += "NAT rules require translated address"
                 }
-                
+
                 if (-not $Parameters.TranslatedPort) {
                     $issues += "NAT rules require translated port"
                 }
             }
         }
-        
+
         # Validate IP addresses and ranges
         if ($Parameters.SourceAddresses) {
             $sourceIPs = $Parameters.SourceAddresses -split ','
@@ -385,7 +385,7 @@ function Test-RuleParameters {
                 }
             }
         }
-        
+
         if ($Parameters.DestinationAddresses) {
             $destIPs = $Parameters.DestinationAddresses -split ','
             foreach ($ip in $destIPs) {
@@ -395,7 +395,7 @@ function Test-RuleParameters {
                 }
             }
         }
-        
+
         # Validate ports
         if ($Parameters.DestinationPorts) {
             $ports = $Parameters.DestinationPorts -split ','
@@ -409,13 +409,13 @@ function Test-RuleParameters {
                 }
             }
         }
-        
+
         if ($issues.Count -gt 0) {
             Write-Host "❌ Parameter validation failed:" -ForegroundColor Red
             $issues | ForEach-Object { Write-Host "   - $_" -ForegroundColor Red }
             return $false
         }
-        
+
         Write-Host "✅ Parameter validation successful" -ForegroundColor Green
         return $true
     }
@@ -428,12 +428,12 @@ function Test-RuleParameters {
 # Function to check for rule conflicts
 function Test-RuleConflicts {
     param($NewRule, $ExistingRules, $RuleType)
-    
+
     try {
         Write-Host "🔍 Checking for rule conflicts..." -ForegroundColor Cyan
-        
+
         $conflicts = @()
-        
+
         foreach ($existingCollection in $ExistingRules) {
             # Check priority conflicts
             if ($existingCollection.Priority -eq $NewRule.Priority -and $existingCollection.Collection -ne $NewRule.CollectionName) {
@@ -444,7 +444,7 @@ function Test-RuleConflicts {
                     ExistingCollection = $existingCollection.Collection
                 }
             }
-            
+
             # Check for overlapping rules within same priority range
             $priorityDiff = [Math]::Abs($existingCollection.Priority - $NewRule.Priority)
             if ($priorityDiff -le 10 -and $existingCollection.Collection -ne $NewRule.CollectionName) {
@@ -481,7 +481,7 @@ function Test-RuleConflicts {
                 }
             }
         }
-        
+
         if ($conflicts.Count -gt 0) {
             Write-Host "⚠️ Rule conflicts detected:" -ForegroundColor Yellow
             $conflicts | ForEach-Object {
@@ -497,7 +497,7 @@ function Test-RuleConflicts {
         else {
             Write-Host "✅ No rule conflicts detected" -ForegroundColor Green
         }
-        
+
         return $conflicts
     }
     catch {
@@ -509,23 +509,23 @@ function Test-RuleConflicts {
 # Function to test network rule overlap
 function Test-NetworkRuleOverlap {
     param($NewRule, $ExistingRule)
-    
+
     try {
         # Simple overlap detection - can be enhanced for more sophisticated checking
         $newSources = $NewRule.SourceAddresses -split ',' | ForEach-Object { $_.Trim() }
         $existingSources = $ExistingRule.sourceAddresses
-        
+
         $newDests = $NewRule.DestinationAddresses -split ',' | ForEach-Object { $_.Trim() }
         $existingDests = $ExistingRule.destinationAddresses
-        
+
         $newPorts = $NewRule.DestinationPorts -split ',' | ForEach-Object { $_.Trim() }
         $existingPorts = $ExistingRule.destinationPorts
-        
+
         # Check for any overlapping sources, destinations, and ports
         $sourceOverlap = ($newSources | Where-Object { $_ -in $existingSources -or $_ -eq "*" -or $existingSources -contains "*" }).Count -gt 0
         $destOverlap = ($newDests | Where-Object { $_ -in $existingDests -or $_ -eq "*" -or $existingDests -contains "*" }).Count -gt 0
         $portOverlap = ($newPorts | Where-Object { $_ -in $existingPorts -or $_ -eq "*" -or $existingPorts -contains "*" }).Count -gt 0
-        
+
         return $sourceOverlap -and $destOverlap -and $portOverlap
     }
     catch {
@@ -536,22 +536,22 @@ function Test-NetworkRuleOverlap {
 # Function to test application rule overlap
 function Test-ApplicationRuleOverlap {
     param($NewRule, $ExistingRule)
-    
+
     try {
         # Simple overlap detection for application rules
         $newSources = $NewRule.SourceAddresses -split ',' | ForEach-Object { $_.Trim() }
         $existingSources = $ExistingRule.sourceAddresses
-        
+
         if ($NewRule.TargetFqdns) {
             $newTargets = $NewRule.TargetFqdns -split ',' | ForEach-Object { $_.Trim() }
             $existingTargets = $ExistingRule.targetFqdns
-            
+
             $sourceOverlap = ($newSources | Where-Object { $_ -in $existingSources -or $_ -eq "*" -or $existingSources -contains "*" }).Count -gt 0
             $targetOverlap = ($newTargets | Where-Object { $_ -in $existingTargets }).Count -gt 0
-            
+
             return $sourceOverlap -and $targetOverlap
         }
-        
+
         return $false
     }
     catch {
@@ -562,29 +562,29 @@ function Test-ApplicationRuleOverlap {
 # Function to create backup
 function New-FirewallBackup {
     param($ResourceGroup, $FirewallName, $BackupPath)
-    
+
     try {
         $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
-        
+
         if (-not $BackupPath) {
             $BackupPath = ".\firewall-backup-$FirewallName-$timestamp"
         }
-        
+
         # Create backup directory
         if (-not (Test-Path $BackupPath)) {
             New-Item -ItemType Directory -Path $BackupPath -Force | Out-Null
         }
-        
+
         Write-Host "💾 Creating firewall configuration backup..." -ForegroundColor Cyan
-        
+
         # Get complete firewall configuration
         $firewall = az network firewall show --name $FirewallName --resource-group $ResourceGroup --output json | ConvertFrom-Json
-        
+
         # Get all rule collections
         $appRules = az network firewall application-rule collection list --firewall-name $FirewallName --resource-group $ResourceGroup --output json 2>$null | ConvertFrom-Json
         $netRules = az network firewall network-rule collection list --firewall-name $FirewallName --resource-group $ResourceGroup --output json 2>$null | ConvertFrom-Json
         $natRules = az network firewall nat-rule collection list --firewall-name $FirewallName --resource-group $ResourceGroup --output json 2>$null | ConvertFrom-Json
-        
+
         $backupData = @{
             Metadata = @{
                 BackupDate = Get-Date
@@ -597,10 +597,10 @@ function New-FirewallBackup {
             NetworkRules = $netRules
             NatRules = $natRules
         }
-        
+
         $backupFile = Join-Path $BackupPath "firewall-config-$timestamp.json"
         $backupData | ConvertTo-Json -Depth 10 | Out-File -FilePath $backupFile -Encoding UTF8
-        
+
         # Create human-readable summary
         $summaryFile = Join-Path $BackupPath "firewall-summary-$timestamp.txt"
         $summary = @"
@@ -624,14 +624,14 @@ $(if ($netRules) { $netRules | ForEach-Object { "  - $($_.name) (Priority: $($_.
 NAT Rules:
 $(if ($natRules) { $natRules | ForEach-Object { "  - $($_.name) (Priority: $($_.priority))" } | Out-String } else { "  None" })
 "@
-        
+
         $summary | Out-File -FilePath $summaryFile -Encoding UTF8
-        
+
         Write-Host "✅ Backup created: $backupFile" -ForegroundColor Green
         Write-Host "📄 Summary created: $summaryFile" -ForegroundColor Green
-        
+
         $global:OperationResults.BackupCreated = $true
-        
+
         return @{
             BackupFile = $backupFile
             SummaryFile = $summaryFile
@@ -652,13 +652,13 @@ $(if ($natRules) { $natRules | ForEach-Object { "  - $($_.name) (Priority: $($_.
 # Function to create firewall rule
 function New-FirewallRule {
     param($ResourceGroup, $FirewallName, $RuleType, $Parameters, $DryRun)
-    
+
     try {
         $operationStart = Get-Date
-        
+
         if ($DryRun) {
             Write-Host "🎭 [DRY RUN] Would create $RuleType rule in collection '$($Parameters.CollectionName)'" -ForegroundColor Magenta
-            
+
             $global:OperationResults.Operations += @{
                 Action = "Create"
                 RuleType = $RuleType
@@ -669,19 +669,19 @@ function New-FirewallRule {
                 Success = $true
                 DryRun = $true
             }
-            
+
             return @{
                 Success = $true
                 DryRun = $true
                 Message = "Dry run completed"
             }
         }
-        
+
         Write-Host "🔧 Creating $RuleType rule..." -ForegroundColor Cyan
-        
+
         # Build Azure CLI command based on rule type
         $azParams = @()
-        
+
         switch ($RuleType) {
             'Application' {
                 $azParams = @(
@@ -694,23 +694,23 @@ function New-FirewallRule {
                     '--resource-group', $ResourceGroup,
                     '--source-addresses', $Parameters.SourceAddresses
                 )
-                
+
                 if ($Parameters.TargetFqdns) {
                     $azParams += '--target-fqdns'
                     $azParams += $Parameters.TargetFqdns
                 }
-                
+
                 if ($Parameters.FqdnTags) {
                     $azParams += '--fqdn-tags'
                     $azParams += $Parameters.FqdnTags
                 }
-                
+
                 if ($Parameters.Protocols) {
                     $azParams += '--protocols'
                     $azParams += $Parameters.Protocols
                 }
             }
-            
+
             'Network' {
                 $azParams = @(
                     'network', 'firewall', 'network-rule', 'create',
@@ -726,7 +726,7 @@ function New-FirewallRule {
                     '--protocols', $Parameters.Protocols
                 )
             }
-            
+
             'NAT' {
                 $azParams = @(
                     'network', 'firewall', 'nat-rule', 'create',
@@ -744,16 +744,16 @@ function New-FirewallRule {
                 )
             }
         }
-        
+
         # Execute the command
         $result = az @azParams --output json 2>&1
-        
+
         if ($LASTEXITCODE -eq 0) {
             $operationEnd = Get-Date
             $duration = $operationEnd - $operationStart
-            
+
             Write-Host "✅ $RuleType rule '$($Parameters.RuleName)' created successfully in $($duration.TotalSeconds) seconds" -ForegroundColor Green
-            
+
             $global:OperationResults.Operations += @{
                 Action = "Create"
                 RuleType = $RuleType
@@ -765,9 +765,9 @@ function New-FirewallRule {
                 Success = $true
                 DryRun = $false
             }
-            
+
             $global:OperationResults.Summary.SuccessfulOperations++
-            
+
             return @{
                 Success = $true
                 DryRun = $false
@@ -782,7 +782,7 @@ function New-FirewallRule {
     }
     catch {
         Write-Error "❌ Failed to create $RuleType rule: $($_.Exception.Message)"
-        
+
         $global:OperationResults.Operations += @{
             Action = "Create"
             RuleType = $RuleType
@@ -794,9 +794,9 @@ function New-FirewallRule {
             Error = $_.Exception.Message
             DryRun = $false
         }
-        
+
         $global:OperationResults.Summary.FailedOperations++
-        
+
         return @{
             Success = $false
             DryRun = $false
@@ -808,17 +808,17 @@ function New-FirewallRule {
 # Function to delete firewall rule
 function Remove-FirewallRule {
     param($ResourceGroup, $FirewallName, $RuleType, $CollectionName, $RuleName, $DryRun)
-    
+
     try {
         $operationStart = Get-Date
-        
+
         if ($DryRun) {
             Write-Host "🎭 [DRY RUN] Would delete $RuleType rule '$RuleName' from collection '$CollectionName'" -ForegroundColor Magenta
             return @{ Success = $true; DryRun = $true; Message = "Dry run completed" }
         }
-        
+
         Write-Host "🗑️ Deleting $RuleType rule '$RuleName'..." -ForegroundColor Yellow
-        
+
         # Build delete command based on rule type
         switch ($RuleType) {
             'Application' {
@@ -846,16 +846,16 @@ function Remove-FirewallRule {
                 }
             }
         }
-        
+
         if ($LASTEXITCODE -eq 0) {
             $operationEnd = Get-Date
             $duration = $operationEnd - $operationStart
-            
+
             $target = if ($RuleName) { "rule '$RuleName'" } else { "collection '$CollectionName'" }
             Write-Host "✅ $RuleType $target deleted successfully in $($duration.TotalSeconds) seconds" -ForegroundColor Green
-            
+
             $global:OperationResults.Summary.SuccessfulOperations++
-            
+
             return @{
                 Success = $true
                 DryRun = $false
@@ -870,7 +870,7 @@ function Remove-FirewallRule {
     catch {
         Write-Error "❌ Failed to delete $RuleType rule: $($_.Exception.Message)"
         $global:OperationResults.Summary.FailedOperations++
-        
+
         return @{
             Success = $false
             DryRun = $false
@@ -882,13 +882,13 @@ function Remove-FirewallRule {
 # Function to display rules
 function Show-FirewallRules {
     param($Rules, $Format)
-    
+
     switch ($Format) {
         'Table' {
             foreach ($collection in $Rules) {
                 Write-Host "`n📋 $($collection.Type) Rules - Collection: $($collection.Collection)" -ForegroundColor Yellow
                 Write-Host "   Priority: $($collection.Priority), Action: $($collection.Action)" -ForegroundColor Gray
-                
+
                 if ($collection.Rules) {
                     $collection.Rules | Format-Table -Property name, @{Label="Source"; Expression={$_.sourceAddresses -join ', '}}, @{Label="Destination"; Expression={$_.destinationAddresses -join ', '}}, @{Label="Ports"; Expression={$_.destinationPorts -join ', '}} -AutoSize
                 }
@@ -916,21 +916,21 @@ function Show-FirewallRules {
 # Function to export firewall configuration
 function Export-FirewallConfig {
     param($ResourceGroup, $FirewallName, $Path)
-    
+
     try {
         $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
         if (-not $Path) {
             $Path = ".\firewall-export-$FirewallName-$timestamp.json"
         }
-        
+
         Write-Host "📤 Exporting firewall configuration..." -ForegroundColor Cyan
-        
+
         # Get all configurations
         $firewall = az network firewall show --name $FirewallName --resource-group $ResourceGroup --output json | ConvertFrom-Json
         $appRules = Get-FirewallRules -ResourceGroup $ResourceGroup -FirewallName $FirewallName -RuleType "Application"
         $netRules = Get-FirewallRules -ResourceGroup $ResourceGroup -FirewallName $FirewallName -RuleType "Network"
         $natRules = Get-FirewallRules -ResourceGroup $ResourceGroup -FirewallName $FirewallName -RuleType "NAT"
-        
+
         $exportData = @{
             ExportDate = Get-Date
             Firewall = $firewall
@@ -940,10 +940,10 @@ function Export-FirewallConfig {
                 NAT = $natRules
             }
         }
-        
+
         $exportData | ConvertTo-Json -Depth 10 | Out-File -FilePath $Path -Encoding UTF8
         Write-Host "✅ Configuration exported to: $Path" -ForegroundColor Green
-        
+
         return $Path
     }
     catch {
@@ -956,18 +956,18 @@ function Export-FirewallConfig {
 try {
     Write-Host "🔥 Starting Azure Firewall Rule Management" -ForegroundColor Green
     Write-Host "=========================================" -ForegroundColor Green
-    
+
     # Validate Azure CLI
     if (-not (Test-AzureCLI)) {
         exit 1
     }
-    
+
     # Validate firewall exists
     $firewall = Test-FirewallExists -ResourceGroup $ResourceGroup -FirewallName $FirewallName
     if (-not $firewall) {
         exit 1
     }
-    
+
     # Create backup if requested
     if ($BackupRules -and -not $DryRun) {
         $backup = New-FirewallBackup -ResourceGroup $ResourceGroup -FirewallName $FirewallName -BackupPath $BackupPath
@@ -975,7 +975,7 @@ try {
             Write-Warning "Backup failed but continuing with operation"
         }
     }
-    
+
     # Prepare rule parameters
     $ruleParameters = @{
         CollectionName = $CollectionName
@@ -991,7 +991,7 @@ try {
         TranslatedAddress = $TranslatedAddress
         TranslatedPort = $TranslatedPort
     }
-    
+
     # Execute action
     switch ($Action) {
         'Create' {
@@ -999,26 +999,26 @@ try {
             if (-not (Test-RuleParameters -RuleType $RuleType -Parameters $ruleParameters)) {
                 exit 1
             }
-            
+
             # Check for conflicts if validation requested
             if ($ValidateRules) {
                 $existingRules = Get-FirewallRules -ResourceGroup $ResourceGroup -FirewallName $FirewallName -RuleType $RuleType
                 $conflicts = Test-RuleConflicts -NewRule $ruleParameters -ExistingRules $existingRules -RuleType $RuleType
             }
-            
+
             # Create the rule
             $result = New-FirewallRule -ResourceGroup $ResourceGroup -FirewallName $FirewallName -RuleType $RuleType -Parameters $ruleParameters -DryRun $DryRun
         }
-        
+
         'Delete' {
             $result = Remove-FirewallRule -ResourceGroup $ResourceGroup -FirewallName $FirewallName -RuleType $RuleType -CollectionName $CollectionName -RuleName $RuleName -DryRun $DryRun
         }
-        
+
         'List' {
             $rules = Get-FirewallRules -ResourceGroup $ResourceGroup -FirewallName $FirewallName -RuleType $RuleType
             Show-FirewallRules -Rules $rules -Format $OutputFormat
         }
-        
+
         'Show' {
             if ($CollectionName) {
                 # Show specific collection
@@ -1037,32 +1037,32 @@ try {
                 Show-FirewallRules -Rules $rules -Format $OutputFormat
             }
         }
-        
+
         'Validate' {
             $allRules = @()
             $allRules += Get-FirewallRules -ResourceGroup $ResourceGroup -FirewallName $FirewallName -RuleType "Application"
             $allRules += Get-FirewallRules -ResourceGroup $ResourceGroup -FirewallName $FirewallName -RuleType "Network"
             $allRules += Get-FirewallRules -ResourceGroup $ResourceGroup -FirewallName $FirewallName -RuleType "NAT"
-            
+
             Write-Host "🔍 Validating all firewall rules..." -ForegroundColor Cyan
             Write-Host "✅ Validation completed - found $($allRules.Count) rule collection(s)" -ForegroundColor Green
-            
+
             Show-FirewallRules -Rules $allRules -Format $OutputFormat
         }
     }
-    
+
     # Export configuration if requested
     if ($ExportConfig) {
         $exportPath = Export-FirewallConfig -ResourceGroup $ResourceGroup -FirewallName $FirewallName
     }
-    
+
     # Show operation summary
     Write-Host "`n📊 Operation Summary:" -ForegroundColor Yellow
     Write-Host "   Successful Operations: $($global:OperationResults.Summary.SuccessfulOperations)" -ForegroundColor Green
     Write-Host "   Failed Operations: $($global:OperationResults.Summary.FailedOperations)" -ForegroundColor Red
     Write-Host "   Conflicts Detected: $($global:OperationResults.Summary.ConflictsDetected)" -ForegroundColor Yellow
     Write-Host "   Backup Created: $($global:OperationResults.BackupCreated)" -ForegroundColor Cyan
-    
+
     if ($DryRun) {
         Write-Host "`n🎭 This was a dry run. No actual changes were made." -ForegroundColor Magenta
     }

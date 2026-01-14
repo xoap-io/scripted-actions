@@ -6,7 +6,7 @@
     This script creates Azure Managed Identities using the Azure CLI with comprehensive configuration and security best practices.
     Supports both User-Assigned and System-Assigned managed identities with role assignments and resource associations.
     Includes scope validation, role assignment automation, and identity lifecycle management.
-    
+
     The script uses the Azure CLI command: az identity create
 
 .PARAMETER Name
@@ -62,7 +62,7 @@
     Date: 2025-08-05
     Version: 1.0.0
     Requires: Azure CLI version 2.0 or later
-    
+
     Managed Identity Best Practices:
     - Use User-Assigned for multiple resources
     - Use System-Assigned for single resources
@@ -139,13 +139,13 @@ function Test-AzureCLI {
         if ($LASTEXITCODE -ne 0) {
             throw "Azure CLI is not installed or not functioning correctly"
         }
-        
+
         Write-Host "🔍 Checking Azure CLI authentication..." -ForegroundColor Cyan
         $null = az account show 2>$null
         if ($LASTEXITCODE -ne 0) {
             throw "Not authenticated to Azure CLI. Please run 'az login' first"
         }
-        
+
         Write-Host "✅ Azure CLI validation successful" -ForegroundColor Green
         return $true
     }
@@ -158,7 +158,7 @@ function Test-AzureCLI {
 # Function to validate resource group exists
 function Test-ResourceGroupExists {
     param($ResourceGroup)
-    
+
     try {
         Write-Host "🔍 Validating resource group '$ResourceGroup' exists..." -ForegroundColor Cyan
         $null = az group show --name $ResourceGroup --query "name" --output tsv 2>$null
@@ -177,7 +177,7 @@ function Test-ResourceGroupExists {
 # Function to validate location
 function Test-AzureLocation {
     param($Location)
-    
+
     try {
         Write-Host "🔍 Validating Azure location '$Location'..." -ForegroundColor Cyan
         $validLocations = az account list-locations --query "[].name" --output tsv
@@ -196,7 +196,7 @@ function Test-AzureLocation {
 # Function to check if identity already exists
 function Test-IdentityExists {
     param($ResourceGroup, $IdentityName)
-    
+
     try {
         Write-Host "🔍 Checking if identity '$IdentityName' already exists..." -ForegroundColor Cyan
         $identity = az identity show --resource-group $ResourceGroup --name $IdentityName --query "name" --output tsv 2>$null
@@ -215,60 +215,60 @@ function Test-IdentityExists {
 # Function to parse and validate tags
 function Get-ValidatedTags {
     param($TagString)
-    
+
     if ([string]::IsNullOrEmpty($TagString)) {
         return @()
     }
-    
+
     $tagPairs = $TagString -split '\s+'
     $azTags = @()
-    
+
     foreach ($pair in $tagPairs) {
         if ($pair -match '^([^=]+)=(.+)$') {
             $key = $Matches[1]
             $value = $Matches[2]
-            
+
             # Validate tag key and value
             if ($key.Length -gt 512 -or $value.Length -gt 256) {
                 throw "Tag key must be ≤ 512 chars and value ≤ 256 chars: $pair"
             }
-            
+
             $azTags += $pair
         }
         else {
             throw "Invalid tag format: $pair (use key=value format)"
         }
     }
-    
+
     return $azTags
 }
 
 # Function to validate role definitions
 function Test-RoleDefinitions {
     param($RoleList)
-    
+
     try {
         Write-Host "🔍 Validating role definitions..." -ForegroundColor Cyan
-        
+
         $validRoles = @()
         $roleNames = $RoleList -split ','
-        
+
         foreach ($roleName in $roleNames) {
             $roleName = $roleName.Trim()
-            
+
             # Check if role exists
             $role = az role definition list --name $roleName --output json | ConvertFrom-Json
             if (-not $role -or $role.Count -eq 0) {
                 throw "Role definition '$roleName' not found"
             }
-            
+
             $validRoles += @{
                 Name = $role.roleName
                 Id = $role.id
                 Description = $role.description
             }
         }
-        
+
         Write-Host "✅ All role definitions validated" -ForegroundColor Green
         return $validRoles
     }
@@ -281,7 +281,7 @@ function Test-RoleDefinitions {
 # Function to build scope for role assignments
 function Get-RoleAssignmentScope {
     param($Scope, $TargetResourceGroup)
-    
+
     try {
         if ($Scope) {
             Write-Host "🔍 Validating provided scope..." -ForegroundColor Cyan
@@ -291,11 +291,11 @@ function Get-RoleAssignmentScope {
             }
             return $Scope
         }
-        
+
         # Build scope from subscription and resource group
         $subscription = az account show --query "id" --output tsv
         $builtScope = "/subscriptions/$subscription"
-        
+
         if ($TargetResourceGroup) {
             # Validate target resource group exists
             $null = az group show --name $TargetResourceGroup --query "name" --output tsv 2>$null
@@ -304,7 +304,7 @@ function Get-RoleAssignmentScope {
             }
             $builtScope += "/resourceGroups/$TargetResourceGroup"
         }
-        
+
         Write-Host "✅ Built scope: $builtScope" -ForegroundColor Green
         return $builtScope
     }
@@ -317,16 +317,16 @@ function Get-RoleAssignmentScope {
 # Function to assign roles to identity
 function Set-IdentityRoleAssignments {
     param($IdentityId, $Roles, $Scope)
-    
+
     try {
         Write-Host "🔧 Assigning roles to managed identity..." -ForegroundColor Cyan
-        
+
         $assignments = @()
         foreach ($role in $Roles) {
             Write-Host "   Assigning role: $($role.Name)" -ForegroundColor Gray
-            
+
             $assignment = az role assignment create --assignee $IdentityId --role $role.Name --scope $Scope --output json | ConvertFrom-Json
-            
+
             if ($LASTEXITCODE -eq 0) {
                 Write-Host "   ✅ Role '$($role.Name)' assigned successfully" -ForegroundColor Green
                 $assignments += $assignment
@@ -335,7 +335,7 @@ function Set-IdentityRoleAssignments {
                 Write-Warning "   ⚠️ Failed to assign role '$($role.Name)'"
             }
         }
-        
+
         return $assignments
     }
     catch {
@@ -347,30 +347,30 @@ function Set-IdentityRoleAssignments {
 # Function to associate identity with resources
 function Set-ResourceAssociations {
     param($IdentityId, $ResourceNames, $ResourceTypes, $ResourceGroup)
-    
+
     try {
         Write-Host "🔧 Associating identity with resources..." -ForegroundColor Cyan
-        
+
         $nameArray = $ResourceNames -split ','
         $typeArray = $ResourceTypes -split ','
-        
+
         if ($nameArray.Count -ne $typeArray.Count) {
             throw "Number of resource names must match number of resource types"
         }
-        
+
         $associations = @()
         for ($i = 0; $i -lt $nameArray.Count; $i++) {
             $resourceName = $nameArray[$i].Trim()
             $resourceType = $typeArray[$i].Trim()
-            
+
             Write-Host "   Associating with: $resourceName ($resourceType)" -ForegroundColor Gray
-            
+
             try {
                 # The specific association method depends on the resource type
                 # For VMs, we would use: az vm identity assign
                 # For App Services: az webapp identity assign
                 # This is a generic approach for demonstration
-                
+
                 switch -Wildcard ($resourceType) {
                     "*VirtualMachines*" {
                         $result = az vm identity assign --name $resourceName --resource-group $ResourceGroup --identities $IdentityId --output json 2>$null | ConvertFrom-Json
@@ -388,7 +388,7 @@ function Set-ResourceAssociations {
                         $result = @{ Status = "Manual configuration may be required" }
                     }
                 }
-                
+
                 if ($result) {
                     $associations += @{
                         ResourceName = $resourceName
@@ -409,7 +409,7 @@ function Set-ResourceAssociations {
                 }
             }
         }
-        
+
         return $associations
     }
     catch {
@@ -421,18 +421,18 @@ function Set-ResourceAssociations {
 # Function to generate client scripts
 function New-ClientScripts {
     param($Identity, $OutputPath)
-    
+
     try {
         Write-Host "📝 Generating client usage scripts..." -ForegroundColor Cyan
-        
+
         $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
         $scriptPath = if ($OutputPath) { $OutputPath } else { "./managed-identity-scripts-$timestamp" }
-        
+
         # Create directory
         if (-not (Test-Path $scriptPath)) {
             New-Item -ItemType Directory -Path $scriptPath -Force | Out-Null
         }
-        
+
         # PowerShell script
         $psScript = @"
 # PowerShell script to use Managed Identity: $($Identity.name)
@@ -455,9 +455,9 @@ Connect-AzAccount -Identity
 
 Write-Host "Managed Identity authentication successful"
 "@
-        
+
         $psScript | Out-File -FilePath "$scriptPath/use-identity.ps1" -Encoding UTF8
-        
+
         # Python script
         $pyScript = @"
 #!/usr/bin/env python3
@@ -477,7 +477,7 @@ def get_access_token(resource='https://management.azure.com/', client_id='$($Ide
         'client_id': client_id
     }
     headers = {'Metadata': 'true'}
-    
+
     try:
         response = requests.get(url, params=params, headers=headers)
         response.raise_for_status()
@@ -499,9 +499,9 @@ if __name__ == "__main__":
     else:
         print("Failed to get access token")
 "@
-        
+
         $pyScript | Out-File -FilePath "$scriptPath/use-identity.py" -Encoding UTF8
-        
+
         # Bash script
         $bashScript = @"
 #!/bin/bash
@@ -513,10 +513,10 @@ if __name__ == "__main__":
 get_access_token() {
     local resource=`${1:-"https://management.azure.com/"}
     local client_id="$($Identity.clientId)"
-    
+
     local url="http://169.254.169.254/metadata/identity/oauth2/token"
     local response=`$(curl -s -H "Metadata: true" "`${url}?api-version=2018-02-01&resource=`${resource}&client_id=`${client_id}")
-    
+
     echo `$response | jq -r '.access_token'
 }
 
@@ -531,9 +531,9 @@ else
     echo "Failed to get access token"
 fi
 "@
-        
+
         $bashScript | Out-File -FilePath "$scriptPath/use-identity.sh" -Encoding UTF8
-        
+
         # README file
         $readme = @"
 # Managed Identity Usage Scripts
@@ -581,9 +581,9 @@ This directory contains sample scripts for using the Managed Identity: **$($Iden
 - Implement proper error handling and retry logic
 - Monitor identity usage through Azure Activity Log
 "@
-        
+
         $readme | Out-File -FilePath "$scriptPath/README.md" -Encoding UTF8
-        
+
         Write-Host "✅ Client scripts generated in: $scriptPath" -ForegroundColor Green
         return $scriptPath
     }
@@ -596,7 +596,7 @@ This directory contains sample scripts for using the Managed Identity: **$($Iden
 # Function to display identity summary
 function Show-IdentitySummary {
     param($Identity, $RoleAssignments, $ResourceAssociations, $Format)
-    
+
     switch ($Format) {
         'Summary' {
             Write-Host "`n📋 Managed Identity Summary:" -ForegroundColor Yellow
@@ -606,14 +606,14 @@ function Show-IdentitySummary {
             Write-Host "   Client ID: $($Identity.clientId)" -ForegroundColor White
             Write-Host "   Principal ID: $($Identity.principalId)" -ForegroundColor White
             Write-Host "   Tenant ID: $($Identity.tenantId)" -ForegroundColor White
-            
+
             if ($RoleAssignments.Count -gt 0) {
                 Write-Host "`n🔐 Role Assignments:" -ForegroundColor Yellow
                 $RoleAssignments | ForEach-Object {
                     Write-Host "   - $($_.roleDefinitionName) at $($_.scope)" -ForegroundColor White
                 }
             }
-            
+
             if ($ResourceAssociations.Count -gt 0) {
                 Write-Host "`n🔗 Resource Associations:" -ForegroundColor Yellow
                 $ResourceAssociations | ForEach-Object {
@@ -640,33 +640,33 @@ function Show-IdentitySummary {
 try {
     Write-Host "🚀 Starting Azure Managed Identity Creation" -ForegroundColor Green
     Write-Host "=========================================" -ForegroundColor Green
-    
+
     # Validate Azure CLI
     if (-not (Test-AzureCLI)) {
         exit 1
     }
-    
+
     # Validate resource group exists
     if (-not (Test-ResourceGroupExists -ResourceGroup $ResourceGroup)) {
         exit 1
     }
-    
+
     # Validate location
     if (-not (Test-AzureLocation -Location $Location)) {
         exit 1
     }
-    
+
     # Check if identity already exists
     if (-not (Test-IdentityExists -ResourceGroup $ResourceGroup -IdentityName $Name)) {
         exit 1
     }
-    
+
     # Validate tags
     $validatedTags = @()
     if ($Tags) {
         $validatedTags = Get-ValidatedTags -TagString $Tags
     }
-    
+
     # Validate roles if assignment is requested
     $validatedRoles = @()
     if ($AssignRoles) {
@@ -675,7 +675,7 @@ try {
             exit 1
         }
     }
-    
+
     # Build scope for role assignments if needed
     $assignmentScope = $null
     if ($AssignRoles) {
@@ -684,7 +684,7 @@ try {
             exit 1
         }
     }
-    
+
     # Build parameters array
     $azParams = @(
         'identity', 'create',
@@ -692,36 +692,36 @@ try {
         '--resource-group', $ResourceGroup,
         '--location', $Location
     )
-    
+
     # Add tags if provided
     if ($validatedTags.Count -gt 0) {
         $azParams += '--tags'
         $azParams += $validatedTags
     }
-    
+
     # Create the managed identity
     Write-Host "🔧 Creating managed identity '$Name'..." -ForegroundColor Cyan
     $identity = az @azParams --output json | ConvertFrom-Json
-    
+
     if ($LASTEXITCODE -eq 0) {
         Write-Host "✅ Managed identity '$Name' created successfully!" -ForegroundColor Green
-        
+
         # Wait a moment for identity to propagate
         Write-Host "⏳ Waiting for identity propagation..." -ForegroundColor Cyan
         Start-Sleep -Seconds 10
-        
+
         # Assign roles if requested
         $roleAssignments = @()
         if ($AssignRoles -and $validatedRoles.Count -gt 0) {
             $roleAssignments = Set-IdentityRoleAssignments -IdentityId $identity.principalId -Roles $validatedRoles -Scope $assignmentScope
         }
-        
+
         # Associate with resources if requested
         $resourceAssociations = @()
         if ($AssociateWithResources -and $ResourceNames -and $ResourceTypes) {
             $resourceAssociations = Set-ResourceAssociations -IdentityId $identity.id -ResourceNames $ResourceNames -ResourceTypes $ResourceTypes -ResourceGroup $ResourceGroup
         }
-        
+
         # Generate client scripts if requested
         if ($GenerateClientScript) {
             $scriptPath = New-ClientScripts -Identity $identity
@@ -729,7 +729,7 @@ try {
                 Write-Host "📝 Client scripts available at: $scriptPath" -ForegroundColor Cyan
             }
         }
-        
+
         # Display results
         if ($OutputFormat -eq 'JSON') {
             $output = Show-IdentitySummary -Identity $identity -RoleAssignments $roleAssignments -ResourceAssociations $resourceAssociations -Format $OutputFormat
@@ -738,7 +738,7 @@ try {
         else {
             Show-IdentitySummary -Identity $identity -RoleAssignments $roleAssignments -ResourceAssociations $resourceAssociations -Format $OutputFormat
         }
-        
+
         # Show next steps
         Write-Host "`n💡 Next Steps:" -ForegroundColor Yellow
         Write-Host "   1. Assign the identity to your Azure resources" -ForegroundColor White

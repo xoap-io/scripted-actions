@@ -3,7 +3,7 @@
     Modify EC2 instance attributes using AWS CLI.
 
 .DESCRIPTION
-    This script modifies various EC2 instance attributes including instance type, security groups, 
+    This script modifies various EC2 instance attributes including instance type, security groups,
     source/destination check, user data, monitoring, and termination protection using AWS CLI.
 
 .PARAMETER InstanceId
@@ -155,7 +155,7 @@ try {
         Write-Output "Modifying security groups..."
         $sgArray = $SecurityGroupIds -split ','
         $sgList = ($sgArray | ForEach-Object { $_.Trim() }) -join ' '
-        
+
         $result = aws ec2 modify-instance-attribute --instance-id $InstanceId --groups $sgList @awsArgs 2>&1
         if ($LASTEXITCODE -eq 0) {
             Write-Output "✅ Security groups updated: $SecurityGroupIds"
@@ -214,7 +214,7 @@ try {
         if ($UserDataFile) {
             $userData = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes((Get-Content $UserDataFile -Raw)))
         }
-        
+
         Write-Output "Modifying user data..."
         $result = aws ec2 modify-instance-attribute --instance-id $InstanceId --user-data Value=$userData @awsArgs 2>&1
         if ($LASTEXITCODE -eq 0) {

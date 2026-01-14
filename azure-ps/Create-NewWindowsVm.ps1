@@ -264,7 +264,7 @@ param(
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
-    [string]$HostGroupId,   
+    [string]$HostGroupId,
 
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]

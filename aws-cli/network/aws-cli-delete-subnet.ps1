@@ -79,19 +79,19 @@ try {
     # Get subnet details
     Write-Output "`n🔍 Retrieving subnet information..."
     $subnetResult = aws ec2 describe-subnets --subnet-ids $SubnetId @awsArgs --output json 2>&1
-    
+
     if ($LASTEXITCODE -ne 0) {
         Write-Error "Subnet $SubnetId not found or not accessible: $subnetResult"
     }
 
     $subnetData = $subnetResult | ConvertFrom-Json
-    
+
     if ($subnetData.Subnets.Count -eq 0) {
         Write-Error "Subnet $SubnetId not found"
     }
 
     $subnet = $subnetData.Subnets[0]
-    
+
     # Display subnet details
     Write-Output "✅ Subnet found:"
     Write-Output "  Subnet ID: $($subnet.SubnetId)"
@@ -117,11 +117,11 @@ try {
     # Check for EC2 instances in the subnet
     Write-Output "`n🔍 Checking for EC2 instances in subnet..."
     $instanceResult = aws ec2 describe-instances --filters "Name=subnet-id,Values=$SubnetId" "Name=instance-state-name,Values=pending,running,shutting-down,stopping,stopped" @awsArgs --output json 2>&1
-    
+
     $instances = @()
     if ($LASTEXITCODE -eq 0) {
         $instanceData = $instanceResult | ConvertFrom-Json
-        
+
         foreach ($reservation in $instanceData.Reservations) {
             foreach ($instance in $reservation.Instances) {
                 $instances += [PSCustomObject]@{
@@ -153,11 +153,11 @@ try {
     # Check for network interfaces
     Write-Output "`n🔍 Checking for network interfaces in subnet..."
     $eniResult = aws ec2 describe-network-interfaces --filters "Name=subnet-id,Values=$SubnetId" @awsArgs --output json 2>&1
-    
+
     $networkInterfaces = @()
     if ($LASTEXITCODE -eq 0) {
         $eniData = $eniResult | ConvertFrom-Json
-        
+
         foreach ($eni in $eniData.NetworkInterfaces) {
             # Skip the default network interface that's automatically created/deleted
             if ($eni.RequesterManaged -eq $false -or $eni.Status -ne "available") {
@@ -180,12 +180,12 @@ try {
                 Write-Output "    Type: $($eni.InterfaceType)"
                 Write-Output "    Description: $($eni.Description)"
                 Write-Output "    Requester Managed: $($eni.RequesterManaged)"
-                
+
                 if ($eni.RequesterManaged -eq $false -and $eni.Status -eq "available") {
                     Write-Output "    ⚠️  This interface may need manual deletion"
                 }
             }
-            
+
             # Check if any are blocking deletion
             $blockingEnis = $networkInterfaces | Where-Object { $_.RequesterManaged -eq $false -and $_.Status -eq "available" }
             if ($blockingEnis.Count -gt 0) {
@@ -200,11 +200,11 @@ try {
     # Check for route table associations
     Write-Output "`n🔍 Checking route table associations..."
     $routeTableResult = aws ec2 describe-route-tables --filters "Name=association.subnet-id,Values=$SubnetId" @awsArgs --output json 2>&1
-    
+
     $routeTableAssociations = @()
     if ($LASTEXITCODE -eq 0) {
         $routeTableData = $routeTableResult | ConvertFrom-Json
-        
+
         foreach ($routeTable in $routeTableData.RouteTables) {
             $subnetAssociations = $routeTable.Associations | Where-Object { $_.SubnetId -eq $SubnetId }
             foreach ($association in $subnetAssociations) {
@@ -232,11 +232,11 @@ try {
     # Check for VPC endpoints in the subnet
     Write-Output "`n🔍 Checking for VPC endpoints..."
     $vpcEndpointResult = aws ec2 describe-vpc-endpoints --filters "Name=vpc-id,Values=$($subnet.VpcId)" @awsArgs --output json 2>&1
-    
+
     $affectedEndpoints = @()
     if ($LASTEXITCODE -eq 0) {
         $vpcEndpointData = $vpcEndpointResult | ConvertFrom-Json
-        
+
         foreach ($endpoint in $vpcEndpointData.VpcEndpoints) {
             if ($endpoint.SubnetIds -and $endpoint.SubnetIds -contains $SubnetId) {
                 $affectedEndpoints += [PSCustomObject]@{
@@ -265,11 +265,11 @@ try {
     # Check for load balancers
     Write-Output "`n🔍 Checking for load balancers in subnet..."
     $elbResult = aws elbv2 describe-load-balancers @awsArgs --output json 2>&1
-    
+
     $affectedLoadBalancers = @()
     if ($LASTEXITCODE -eq 0) {
         $elbData = $elbResult | ConvertFrom-Json
-        
+
         foreach ($lb in $elbData.LoadBalancers) {
             if ($lb.SubnetMappings) {
                 $subnetMapping = $lb.SubnetMappings | Where-Object { $_.SubnetId -eq $SubnetId }
@@ -300,7 +300,7 @@ try {
     # Impact assessment
     $hasBlockingResources = ($instances.Count -gt 0) -or ($affectedLoadBalancers.Count -gt 0) -or (($networkInterfaces | Where-Object { $_.RequesterManaged -eq $false -and $_.Status -eq "available" }).Count -gt 0)
     $hasWarningResources = ($affectedEndpoints.Count -gt 0)
-    
+
     if ($hasBlockingResources) {
         Write-Error "❌ Cannot proceed with subnet deletion due to blocking resources listed above"
     }
@@ -340,13 +340,13 @@ try {
 
         if ($LASTEXITCODE -eq 0) {
             Write-Output "✅ Subnet deletion initiated successfully!"
-            
+
             # Verify deletion
             Write-Output "`n🔍 Verifying subnet deletion..."
             Start-Sleep -Seconds 3
-            
+
             $verifyResult = aws ec2 describe-subnets --subnet-ids $SubnetId @awsArgs --output json 2>&1
-            
+
             if ($LASTEXITCODE -ne 0) {
                 Write-Output "✅ Subnet successfully deleted (no longer found)"
             } else {
@@ -364,7 +364,7 @@ try {
             Write-Output "• Route table associations have been automatically removed"
             Write-Output "• Consider updating security groups that may have referenced this subnet"
             Write-Output "• Review any documentation or scripts that referenced this subnet ID"
-            
+
             if ($affectedEndpoints.Count -gt 0) {
                 Write-Output "• Verify VPC endpoint functionality for affected services"
             }
@@ -376,7 +376,7 @@ try {
         Write-Output "`n✅ DRY RUN: Subnet deletion command validated successfully"
         Write-Output "Command that would be executed:"
         Write-Output "aws ec2 delete-subnet --subnet-id $SubnetId"
-        
+
         if ($hasWarningResources) {
             Write-Output "`n⚠️  DRY RUN: This deletion would affect VPC endpoints - review impact above"
         }

@@ -6,7 +6,7 @@
     This script analyzes Azure resource costs using the Azure CLI and generates comprehensive cost reports.
     Supports cost analysis by Resource Group, resource type, tags, and time periods.
     Includes budget tracking, cost optimization recommendations, and export capabilities.
-    
+
     The script uses the Azure CLI commands: az consumption usage list, az billing account list
 
 .PARAMETER ResourceGroup
@@ -53,22 +53,22 @@
 
 .EXAMPLE
     .\az-cli-cost-analysis.ps1 -ResourceGroup "production-rg" -TimeFrame "LastMonth" -ExportToCsv "prod-costs.csv"
-    
+
     Analyzes costs for production Resource Group for the last month.
 
 .EXAMPLE
     .\az-cli-cost-analysis.ps1 -StartDate "2024-01-01" -EndDate "2024-01-31" -GroupBy "ResourceType" -TopResources 10
-    
+
     Analyzes costs for January 2024 grouped by resource type.
 
 .EXAMPLE
     .\az-cli-cost-analysis.ps1 -TimeFrame "LastWeek" -ShowOptimizationTips -CompareWithBudget
-    
+
     Shows last week's costs with optimization tips and budget comparison.
 
 .EXAMPLE
     .\az-cli-cost-analysis.ps1 -FilterBy "Microsoft.Compute" -Granularity "Daily" -IncludeForecast
-    
+
     Analyzes compute costs with daily granularity and forecast.
 
 .NOTES
@@ -260,20 +260,20 @@ try {
     # Build cost query - using consumption usage for detailed analysis
     # Note: Azure CLI consumption commands have limited functionality
     # This is a simplified version - in practice, you'd use Azure Cost Management APIs
-    
+
     try {
         # Get resource usage data (this provides some cost-related information)
         $azParams = @('consumption', 'usage', 'list')
         $azParams += '--start-date', $StartDate
         $azParams += '--end-date', $EndDate
-        
+
         if ($ResourceGroup) {
             # Note: Consumption commands don't directly support resource group filtering
             # We'll filter after retrieval
         }
-        
+
         $usageResult = & az @azParams 2>&1
-        
+
         if ($LASTEXITCODE -eq 0) {
             $null = $usageResult | ConvertFrom-Json
             Write-Host "✓ Retrieved usage data for analysis" -ForegroundColor Green
@@ -288,15 +288,15 @@ try {
 
     # Get resource information for cost estimation
     Write-Host "Analyzing resource inventory..." -ForegroundColor Yellow
-    
+
     $resourceParams = @('resource', 'list')
     if ($ResourceGroup) {
         $resourceParams += '--resource-group', $ResourceGroup
     }
-    
+
     $resources = az @resourceParams | ConvertFrom-Json
     if (-not $resources) { $resources = @() }
-    
+
     Write-Host "✓ Found $($resources.Count) resources for analysis" -ForegroundColor Green
 
     # Generate cost analysis report
@@ -321,10 +321,10 @@ try {
         Write-Host ""
         Write-Host "📋 Resource Breakdown:" -ForegroundColor Blue
         $resourceTypes = $resources | Group-Object -Property type | Sort-Object Count -Descending
-        
+
         $totalEstimatedCost = 0
         $costEstimates = @{}
-        
+
         # Simplified cost estimation based on resource types
         $costMultipliers = @{
             "Microsoft.Compute/virtualMachines" = 50.0
@@ -337,30 +337,30 @@ try {
             "Microsoft.Network/virtualNetworks" = 0.0
             "Microsoft.Network/networkSecurityGroups" = 0.0
         }
-        
+
         foreach ($typeGroup in $resourceTypes) {
-            $multiplier = if ($costMultipliers.ContainsKey($typeGroup.Name)) { 
-                $costMultipliers[$typeGroup.Name] 
-            } else { 
-                20.0 
+            $multiplier = if ($costMultipliers.ContainsKey($typeGroup.Name)) {
+                $costMultipliers[$typeGroup.Name]
+            } else {
+                20.0
             }
-            
+
             $estimatedCost = $typeGroup.Count * $multiplier * [math]::Round(($endDateTime - $startDateTime).TotalDays)
             $totalEstimatedCost += $estimatedCost
             $costEstimates[$typeGroup.Name] = $estimatedCost
-            
+
             Write-Host "  • $($typeGroup.Name): $($typeGroup.Count) resources (~$$([math]::Round($estimatedCost, 2)))" -ForegroundColor White
         }
-        
+
         Write-Host ""
         Write-Host "💵 Estimated Total Cost: $([math]::Round($totalEstimatedCost, 2)) $Currency" -ForegroundColor Green
         Write-Host "   (Based on resource count and type - actual costs may vary)" -ForegroundColor Gray
-        
+
         # Top cost contributors
         Write-Host ""
         Write-Host "🏆 Top Cost Contributors:" -ForegroundColor Yellow
         $sortedCosts = $costEstimates.GetEnumerator() | Sort-Object Value -Descending | Select-Object -First $TopResources
-        
+
         foreach ($cost in $sortedCosts) {
             $percentage = [math]::Round(($cost.Value / $totalEstimatedCost) * 100, 1)
             Write-Host "  $($cost.Key): $$([math]::Round($cost.Value, 2)) ($percentage%)" -ForegroundColor White
@@ -372,17 +372,17 @@ try {
         Write-Host ""
         Write-Host "🌍 Cost by Location:" -ForegroundColor Blue
         $locationGroups = $resources | Group-Object -Property location | Sort-Object Count -Descending
-        
+
         foreach ($locGroup in $locationGroups) {
-            $locationCost = ($locGroup.Group | ForEach-Object { 
-                $multiplier = if ($costMultipliers.ContainsKey($_.type)) { 
-                    $costMultipliers[$_.type] 
-                } else { 
-                    20.0 
+            $locationCost = ($locGroup.Group | ForEach-Object {
+                $multiplier = if ($costMultipliers.ContainsKey($_.type)) {
+                    $costMultipliers[$_.type]
+                } else {
+                    20.0
                 }
                 $multiplier * [math]::Round(($endDateTime - $startDateTime).TotalDays)
             } | Measure-Object -Sum).Sum
-            
+
             Write-Host "  • $($locGroup.Name): $($locGroup.Count) resources (~$$([math]::Round($locationCost, 2)))" -ForegroundColor White
         }
     }
@@ -392,17 +392,17 @@ try {
         Write-Host ""
         Write-Host "📁 Cost by Resource Group:" -ForegroundColor Blue
         $rgGroups = $resources | Group-Object -Property resourceGroup | Sort-Object Count -Descending | Select-Object -First 10
-        
+
         foreach ($rgGroup in $rgGroups) {
-            $rgCost = ($rgGroup.Group | ForEach-Object { 
-                $multiplier = if ($costMultipliers.ContainsKey($_.type)) { 
-                    $costMultipliers[$_.type] 
-                } else { 
-                    20.0 
+            $rgCost = ($rgGroup.Group | ForEach-Object {
+                $multiplier = if ($costMultipliers.ContainsKey($_.type)) {
+                    $costMultipliers[$_.type]
+                } else {
+                    20.0
                 }
                 $multiplier * [math]::Round(($endDateTime - $startDateTime).TotalDays)
             } | Measure-Object -Sum).Sum
-            
+
             Write-Host "  • $($rgGroup.Name): $($rgGroup.Count) resources (~$$([math]::Round($rgCost, 2)))" -ForegroundColor White
         }
     }
@@ -412,31 +412,31 @@ try {
         Write-Host ""
         Write-Host "💡 Cost Optimization Recommendations:" -ForegroundColor Yellow
         Write-Host $("-" * 50) -ForegroundColor Gray
-        
+
         $vmCount = ($resources | Where-Object { $_.type -eq "Microsoft.Compute/virtualMachines" }).Count
         $storageCount = ($resources | Where-Object { $_.type -eq "Microsoft.Storage/storageAccounts" }).Count
         $publicIpCount = ($resources | Where-Object { $_.type -eq "Microsoft.Network/publicIPAddresses" }).Count
-        
+
         if ($vmCount -gt 0) {
             Write-Host "🖥️ Virtual Machines ($vmCount found):" -ForegroundColor Blue
             Write-Host "  • Consider using Azure Reserved Instances for long-running VMs" -ForegroundColor White
             Write-Host "  • Implement auto-shutdown schedules for dev/test environments" -ForegroundColor White
             Write-Host "  • Right-size VMs based on actual usage patterns" -ForegroundColor White
         }
-        
+
         if ($storageCount -gt 0) {
             Write-Host "💾 Storage Accounts ($storageCount found):" -ForegroundColor Blue
             Write-Host "  • Implement lifecycle policies for blob storage" -ForegroundColor White
             Write-Host "  • Use appropriate storage tiers (Hot/Cool/Archive)" -ForegroundColor White
             Write-Host "  • Enable compression and deduplication where possible" -ForegroundColor White
         }
-        
+
         if ($publicIpCount -gt 0) {
             Write-Host "🌐 Public IP Addresses ($publicIpCount found):" -ForegroundColor Blue
             Write-Host "  • Release unused public IP addresses" -ForegroundColor White
             Write-Host "  • Consider using NAT Gateway for outbound connectivity" -ForegroundColor White
         }
-        
+
         Write-Host ""
         Write-Host "🎯 General Recommendations:" -ForegroundColor Green
         Write-Host "  • Review and clean up unused resources regularly" -ForegroundColor White
@@ -449,32 +449,32 @@ try {
     if ($ExportToCsv) {
         Write-Host ""
         Write-Host "💾 Exporting cost data to CSV..." -ForegroundColor Yellow
-        
+
         $csvData = $resources | Select-Object @(
             @{Name='ResourceName'; Expression={$_.name}},
             @{Name='ResourceType'; Expression={$_.type}},
             @{Name='ResourceGroup'; Expression={$_.resourceGroup}},
             @{Name='Location'; Expression={$_.location}},
             @{Name='EstimatedDailyCost'; Expression={
-                $multiplier = if ($costMultipliers.ContainsKey($_.type)) { 
-                    $costMultipliers[$_.type] 
-                } else { 
-                    20.0 
+                $multiplier = if ($costMultipliers.ContainsKey($_.type)) {
+                    $costMultipliers[$_.type]
+                } else {
+                    20.0
                 }
                 [math]::Round($multiplier, 2)
             }},
             @{Name='EstimatedPeriodCost'; Expression={
-                $multiplier = if ($costMultipliers.ContainsKey($_.type)) { 
-                    $costMultipliers[$_.type] 
-                } else { 
-                    20.0 
+                $multiplier = if ($costMultipliers.ContainsKey($_.type)) {
+                    $costMultipliers[$_.type]
+                } else {
+                    20.0
                 }
                 [math]::Round($multiplier * [math]::Round(($endDateTime - $startDateTime).TotalDays), 2)
             }},
             @{Name='AnalysisPeriod'; Expression={"$StartDate to $EndDate"}},
             @{Name='Currency'; Expression={$Currency}}
         )
-        
+
         $csvData | Export-Csv -Path $ExportToCsv -NoTypeInformation
         Write-Host "✓ Cost data exported to: $ExportToCsv" -ForegroundColor Green
     }
@@ -495,7 +495,7 @@ try {
             $dailyAverage = $totalEstimatedCost / [math]::Max(($endDateTime - $startDateTime).TotalDays, 1)
             $monthlyForecast = $dailyAverage * 30
             $yearlyForecast = $dailyAverage * 365
-            
+
             Write-Host "  Daily Average: $$([math]::Round($dailyAverage, 2))" -ForegroundColor White
             Write-Host "  Monthly Forecast: $$([math]::Round($monthlyForecast, 2))" -ForegroundColor White
             Write-Host "  Yearly Forecast: $$([math]::Round($yearlyForecast, 2))" -ForegroundColor White

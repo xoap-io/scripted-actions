@@ -165,7 +165,7 @@ $ErrorActionPreference = 'Stop'
 # Function to check and install Nutanix PowerShell SDK if needed
 function Test-NutanixSDKInstallation {
     Write-Host "Checking Nutanix PowerShell SDK installation..." -ForegroundColor Yellow
-    
+
     try {
         $nutanixModule = Get-Module -Name Nutanix.PowerShell.SDK -ListAvailable
         if (-not $nutanixModule) {
@@ -176,10 +176,10 @@ function Test-NutanixSDKInstallation {
             $version = $nutanixModule | Sort-Object Version -Descending | Select-Object -First 1
             Write-Host "Nutanix PowerShell SDK version $($version.Version) found." -ForegroundColor Green
         }
-        
+
         # Import the module
         Import-Module Nutanix.PowerShell.SDK -Force
-        
+
         return $true
     }
     catch {
@@ -191,16 +191,16 @@ function Test-NutanixSDKInstallation {
 # Function to connect to Prism Central or Element
 function Connect-ToNutanix {
     param($Server, $ServerType)
-    
+
     try {
         Write-Host "Connecting to $ServerType`: $Server" -ForegroundColor Yellow
-        
+
         # Check if already connected
         if ($global:DefaultNTNXConnection -and $global:DefaultNTNXConnection.Server -eq $Server) {
             Write-Host "Already connected to $Server" -ForegroundColor Green
             return $global:DefaultNTNXConnection
         }
-        
+
         # Connect to Nutanix
         $connection = Connect-NTNXCluster -Server $Server -AcceptInvalidSSLCerts
         Write-Host "Successfully connected to $ServerType`: $($connection.Server)" -ForegroundColor Green
@@ -221,11 +221,11 @@ function Get-TargetNetworks {
         $NetworkNames,
         $NetworkUUID
     )
-    
+
     try {
         $networks = @()
         $allNetworks = Get-NTNXNetwork
-        
+
         # Filter by cluster if specified
         if ($ClusterName) {
             $cluster = Get-NTNXCluster | Where-Object { $_.name -eq $ClusterName }
@@ -239,7 +239,7 @@ function Get-TargetNetworks {
             # Note: Networks may not have cluster association in all Nutanix versions
             # This filter may need adjustment based on your environment
         }
-        
+
         # Filter by specific network criteria
         if ($NetworkUUID) {
             $networks = $allNetworks | Where-Object { $_.uuid -eq $NetworkUUID }
@@ -254,11 +254,11 @@ function Get-TargetNetworks {
             # Return all networks
             $networks = $allNetworks
         }
-        
+
         if ($Operation -ne "Create" -and $Operation -ne "CreateWithPool" -and -not $networks) {
             throw "No networks found matching the specified criteria"
         }
-        
+
         if ($networks) {
             Write-Host "Found $($networks.Count) network(s) for processing:" -ForegroundColor Green
             foreach ($network in $networks) {
@@ -266,7 +266,7 @@ function Get-TargetNetworks {
                 Write-Host "  - $($network.name)$vlanInfo [$($network.uuid)]" -ForegroundColor White
             }
         }
-        
+
         return $networks
     }
     catch {
@@ -278,12 +278,12 @@ function Get-TargetNetworks {
 # Function to list networks
 function Get-NetworkList {
     param($Networks)
-    
+
     try {
         Write-Host "  Listing networks..." -ForegroundColor Cyan
-        
+
         $networkList = @()
-        
+
         foreach ($network in $Networks) {
             $networkInfo = @{
                 NetworkName = $network.name
@@ -291,7 +291,7 @@ function Get-NetworkList {
                 VlanId = if ($network.vlanId) { $network.vlanId } else { "None" }
                 Type = if ($network.vlanId) { "VLAN" } else { "Unmanaged" }
                 Description = if ($network.description) { $network.description } else { "No description" }
-                IPConfig = if ($network.ipConfig) { 
+                IPConfig = if ($network.ipConfig) {
                     @{
                         Gateway = $network.ipConfig.defaultGateway
                         SubnetMask = $network.ipConfig.subnetMask
@@ -304,12 +304,12 @@ function Get-NetworkList {
                 } else { "Not configured" }
                 LastUpdated = Get-Date
             }
-            
+
             $networkList += $networkInfo
         }
-        
+
         Write-Host "    ✓ Network list compiled - $($networkList.Count) networks" -ForegroundColor Green
-        
+
         return $networkList
     }
     catch {
@@ -321,37 +321,37 @@ function Get-NetworkList {
 # Function to create a network
 function New-NutanixNetwork {
     param($NetworkName, $VlanId, $NetworkDescription)
-    
+
     try {
         Write-Host "  Creating network: $NetworkName" -ForegroundColor Cyan
-        
+
         # Check if network already exists
         $existingNetwork = Get-NTNXNetwork | Where-Object { $_.name -eq $NetworkName }
         if ($existingNetwork) {
             throw "Network '$NetworkName' already exists"
         }
-        
+
         # Prepare network specification
         $networkSpec = @{
             name = $NetworkName
         }
-        
+
         if ($VlanId) {
             $networkSpec.vlanId = $VlanId
             Write-Host "    Adding VLAN ID: $VlanId" -ForegroundColor White
         }
-        
+
         if ($NetworkDescription) {
             $networkSpec.description = $NetworkDescription
             Write-Host "    Adding description: $NetworkDescription" -ForegroundColor White
         }
-        
+
         # Create the network
         Write-Host "    Creating network..." -ForegroundColor Yellow
         $result = New-NTNXNetwork @networkSpec
-        
+
         Write-Host "    ✓ Network '$NetworkName' created successfully" -ForegroundColor Green
-        
+
         return @{
             NetworkName = $NetworkName
             NetworkUUID = $result.uuid
@@ -377,36 +377,36 @@ function New-NutanixNetwork {
 # Function to create a network with IP pool
 function New-NutanixNetworkWithPool {
     param($NetworkName, $VlanId, $NetworkDescription, $IPPoolStart, $IPPoolEnd, $Gateway, $SubnetMask, $DNSServers, $DHCPEnabled)
-    
+
     try {
         Write-Host "  Creating network with IP pool: $NetworkName" -ForegroundColor Cyan
-        
+
         # Check if network already exists
         $existingNetwork = Get-NTNXNetwork | Where-Object { $_.name -eq $NetworkName }
         if ($existingNetwork) {
             throw "Network '$NetworkName' already exists"
         }
-        
+
         # Validate required parameters for IP pool
         if (-not $IPPoolStart -or -not $IPPoolEnd -or -not $Gateway -or -not $SubnetMask) {
             throw "IPPoolStart, IPPoolEnd, Gateway, and SubnetMask are required for CreateWithPool operation"
         }
-        
+
         # Prepare network specification
         $networkSpec = @{
             name = $NetworkName
         }
-        
+
         if ($VlanId) {
             $networkSpec.vlanId = $VlanId
             Write-Host "    Adding VLAN ID: $VlanId" -ForegroundColor White
         }
-        
+
         if ($NetworkDescription) {
             $networkSpec.description = $NetworkDescription
             Write-Host "    Adding description: $NetworkDescription" -ForegroundColor White
         }
-        
+
         # Add IP configuration
         $ipConfig = @{
             defaultGateway = $Gateway
@@ -416,30 +416,30 @@ function New-NutanixNetworkWithPool {
                 endIpAddress = $IPPoolEnd
             }
         }
-        
+
         if ($DNSServers) {
             $ipConfig.dnsServerIpList = $DNSServers
             Write-Host "    Adding DNS servers: $($DNSServers -join ', ')" -ForegroundColor White
         }
-        
+
         if ($DHCPEnabled) {
             # Note: DHCP configuration may require additional parameters
             # This is a basic implementation
             Write-Host "    Enabling DHCP (basic configuration)" -ForegroundColor White
         }
-        
+
         $networkSpec.ipConfig = $ipConfig
-        
+
         Write-Host "    IP Pool: $IPPoolStart - $IPPoolEnd" -ForegroundColor White
         Write-Host "    Gateway: $Gateway" -ForegroundColor White
         Write-Host "    Subnet Mask: $SubnetMask" -ForegroundColor White
-        
+
         # Create the network
         Write-Host "    Creating network with IP configuration..." -ForegroundColor Yellow
         $result = New-NTNXNetwork @networkSpec
-        
+
         Write-Host "    ✓ Network '$NetworkName' with IP pool created successfully" -ForegroundColor Green
-        
+
         return @{
             NetworkName = $NetworkName
             NetworkUUID = $result.uuid
@@ -471,15 +471,15 @@ function New-NutanixNetworkWithPool {
 # Function to delete a network
 function Remove-NutanixNetwork {
     param($Network, $Force)
-    
+
     try {
         Write-Host "  Deleting network: $($Network.name)" -ForegroundColor Cyan
-        
+
         # Check if VMs are using this network
-        $vmsUsingNetwork = Get-NTNXVM | Where-Object { 
-            $_.nics | Where-Object { $_.networkUuid -eq $Network.uuid } 
+        $vmsUsingNetwork = Get-NTNXVM | Where-Object {
+            $_.nics | Where-Object { $_.networkUuid -eq $Network.uuid }
         }
-        
+
         if ($vmsUsingNetwork.Count -gt 0 -and -not $Force) {
             Write-Warning "    Network is in use by $($vmsUsingNetwork.Count) VM(s). Use -Force to delete anyway."
             Write-Host "    VMs using this network:" -ForegroundColor Yellow
@@ -496,7 +496,7 @@ function Remove-NutanixNetwork {
                 LastUpdated = Get-Date
             }
         }
-        
+
         # Confirm deletion
         if (-not $Force) {
             $confirmation = Read-Host "Are you sure you want to delete network '$($Network.name)'? (y/N)"
@@ -511,13 +511,13 @@ function Remove-NutanixNetwork {
                 }
             }
         }
-        
+
         # Delete the network
         Write-Host "    Deleting network..." -ForegroundColor Yellow
         Remove-NTNXNetwork -NetworkUuid $Network.uuid
-        
+
         Write-Host "    ✓ Network '$($Network.name)' deleted successfully" -ForegroundColor Green
-        
+
         return @{
             NetworkName = $Network.name
             NetworkUUID = $Network.uuid
@@ -542,15 +542,15 @@ function Remove-NutanixNetwork {
 # Function to get network status
 function Get-NetworkStatus {
     param($Network)
-    
+
     try {
         Write-Host "  Getting network status: $($Network.name)" -ForegroundColor Cyan
-        
+
         # Get VMs using this network
-        $vmsUsingNetwork = Get-NTNXVM | Where-Object { 
-            $_.nics | Where-Object { $_.networkUuid -eq $Network.uuid } 
+        $vmsUsingNetwork = Get-NTNXVM | Where-Object {
+            $_.nics | Where-Object { $_.networkUuid -eq $Network.uuid }
         }
-        
+
         $status = @{
             NetworkName = $Network.name
             NetworkUUID = $Network.uuid
@@ -564,8 +564,8 @@ function Get-NetworkStatus {
                 Gateway = if ($Network.ipConfig) { $Network.ipConfig.defaultGateway } else { "Not configured" }
                 SubnetMask = if ($Network.ipConfig) { $Network.ipConfig.subnetMask } else { "Not configured" }
                 DHCPEnabled = if ($Network.ipConfig) { $Network.ipConfig.dhcpServerAddress -ne $null } else { $false }
-                DNSServers = if ($Network.ipConfig -and $Network.ipConfig.dnsServerIpList) { 
-                    $Network.ipConfig.dnsServerIpList -join ", " 
+                DNSServers = if ($Network.ipConfig -and $Network.ipConfig.dnsServerIpList) {
+                    $Network.ipConfig.dnsServerIpList -join ", "
                 } else { "Not configured" }
                 IPPool = if ($Network.ipConfig -and $Network.ipConfig.pool) {
                     "$($Network.ipConfig.pool.startIpAddress) - $($Network.ipConfig.pool.endIpAddress)"
@@ -573,9 +573,9 @@ function Get-NetworkStatus {
             }
             LastUpdated = Get-Date
         }
-        
+
         Write-Host "    ✓ Status collected - $($status.VMsConnected) VMs connected" -ForegroundColor Green
-        
+
         return $status
     }
     catch {
@@ -592,20 +592,20 @@ function Get-NetworkStatus {
 # Function to monitor network usage
 function Monitor-NetworkUsage {
     param($Networks)
-    
+
     try {
         Write-Host "  Monitoring network usage..." -ForegroundColor Cyan
-        
+
         $monitoringResults = @()
-        
+
         foreach ($network in $Networks) {
             # Get VMs using this network
-            $vmsUsingNetwork = Get-NTNXVM | Where-Object { 
-                $_.nics | Where-Object { $_.networkUuid -eq $network.uuid } 
+            $vmsUsingNetwork = Get-NTNXVM | Where-Object {
+                $_.nics | Where-Object { $_.networkUuid -eq $network.uuid }
             }
-            
+
             $poweredOnVMs = $vmsUsingNetwork | Where-Object { $_.powerState -eq "ON" }
-            
+
             $networkMonitoring = @{
                 NetworkName = $network.name
                 NetworkUUID = $network.uuid
@@ -613,7 +613,7 @@ function Monitor-NetworkUsage {
                 TotalVMs = $vmsUsingNetwork.Count
                 ActiveVMs = $poweredOnVMs.Count
                 InactiveVMs = $vmsUsingNetwork.Count - $poweredOnVMs.Count
-                UtilizationStatus = if ($vmsUsingNetwork.Count -eq 0) { "Unused" } 
+                UtilizationStatus = if ($vmsUsingNetwork.Count -eq 0) { "Unused" }
                                   elseif ($poweredOnVMs.Count -eq 0) { "Inactive" }
                                   else { "Active" }
                 IPPoolUtilization = if ($network.ipConfig -and $network.ipConfig.pool) {
@@ -631,12 +631,12 @@ function Monitor-NetworkUsage {
                 } else { "No IP pool configured" }
                 Timestamp = Get-Date
             }
-            
+
             $monitoringResults += $networkMonitoring
         }
-        
+
         Write-Host "    ✓ Network monitoring completed - $($monitoringResults.Count) networks analyzed" -ForegroundColor Green
-        
+
         return $monitoringResults
     }
     catch {
@@ -648,9 +648,9 @@ function Monitor-NetworkUsage {
 # Function to display results
 function Show-NetworkResults {
     param($Results, $Operation, $OutputFormat, $OutputPath)
-    
+
     Write-Host "`n=== Network $Operation Results ===" -ForegroundColor Cyan
-    
+
     switch ($Operation) {
         "List" {
             if ($OutputFormat -eq "Console") {
@@ -673,7 +673,7 @@ function Show-NetworkResults {
             if ($OutputFormat -eq "Console") {
                 Write-Host "`nNetwork Usage Monitoring:" -ForegroundColor Green
                 $Results | Format-Table NetworkName, VlanId, TotalVMs, ActiveVMs, UtilizationStatus -AutoSize
-                
+
                 # Show detailed IP pool utilization
                 $poolResults = $Results | Where-Object { $_.IPPoolUtilization -ne "No IP pool configured" }
                 if ($poolResults) {
@@ -711,7 +711,7 @@ function Show-NetworkResults {
             }
         }
     }
-    
+
     # Export results if requested
     if ($OutputFormat -ne "Console") {
         switch ($OutputFormat) {
@@ -744,36 +744,36 @@ function Show-NetworkResults {
 # Main execution
 try {
     Write-Host "=== Nutanix Network Operations ===" -ForegroundColor Cyan
-    
+
     # Determine target server
     $targetServer = if ($PrismCentral) { $PrismCentral } else { $PrismElement }
     $serverType = if ($PrismCentral) { "Prism Central" } else { "Prism Element" }
-    
+
     if (-not $targetServer) {
         throw "Either PrismCentral or PrismElement parameter must be specified"
     }
-    
+
     Write-Host "Target $serverType`: $targetServer" -ForegroundColor White
     Write-Host "Operation: $Operation" -ForegroundColor White
     Write-Host ""
-    
+
     # Check and install Nutanix PowerShell SDK
     if (-not (Test-NutanixSDKInstallation)) {
         throw "Nutanix PowerShell SDK installation failed"
     }
-    
+
     # Connect to Nutanix
     $connection = Connect-ToNutanix -Server $targetServer -ServerType $serverType
-    
+
     # Get target networks (not needed for create operations)
     $targetNetworks = @()
     if ($Operation -notin @("Create", "CreateWithPool")) {
         $targetNetworks = Get-TargetNetworks -ClusterName $ClusterName -ClusterUUID $ClusterUUID -NetworkName $NetworkName -NetworkNames $NetworkNames -NetworkUUID $NetworkUUID
     }
-    
+
     # Perform operations
     $results = @()
-    
+
     switch ($Operation) {
         "List" {
             $results = Get-NetworkList -Networks $targetNetworks
@@ -822,10 +822,10 @@ try {
             }
         }
     }
-    
+
     # Display results
     Show-NetworkResults -Results $results -Operation $Operation -OutputFormat $OutputFormat -OutputPath $OutputPath
-    
+
     Write-Host "`n=== Network Operations Completed ===" -ForegroundColor Green
 }
 catch {

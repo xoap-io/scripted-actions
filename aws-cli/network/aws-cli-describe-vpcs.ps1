@@ -135,7 +135,7 @@ try {
 
     # Add filters
     $filters = @()
-    
+
     if ($State) {
         $filters += "Name=state,Values=$State"
         Write-Output "Filter: State = $State"
@@ -199,37 +199,37 @@ try {
             Write-Output "`n📄 VPCs (JSON):"
             $vpcsData.Vpcs | ConvertTo-Json -Depth 5
         }
-        
+
         'table' {
             Write-Output "`n📊 VPCs Summary:"
             Write-Output "=" * 120
             Write-Output "VPC ID`t`t`tCIDR Block`t`tState`t`tDefault`tName"
             Write-Output "-" * 120
-            
+
             foreach ($vpc in $vpcsData.Vpcs) {
                 $name = "N/A"
                 if ($vpc.Tags) {
                     $nameTag = $vpc.Tags | Where-Object { $_.Key -eq 'Name' } | Select-Object -First 1
                     if ($nameTag) { $name = $nameTag.Value }
                 }
-                
+
                 Write-Output "$($vpc.VpcId)`t$($vpc.CidrBlock.PadRight(15))`t$($vpc.State.PadRight(10))`t$($vpc.IsDefault)`t$name"
             }
         }
-        
+
         'detailed' {
             foreach ($vpc in $vpcsData.Vpcs) {
                 Write-Output "`n" + "=" * 80
                 Write-Output "VPC: $($vpc.VpcId)"
                 Write-Output "=" * 80
-                
+
                 # Basic information
                 Write-Output "State: $($vpc.State)"
                 Write-Output "CIDR Block: $($vpc.CidrBlock)"
                 Write-Output "Default VPC: $($vpc.IsDefault)"
                 Write-Output "Owner ID: $($vpc.OwnerId)"
                 Write-Output "Instance Tenancy: $($vpc.InstanceTenancy)"
-                
+
                 # Additional CIDR blocks
                 if ($vpc.CidrBlockAssociationSet -and $vpc.CidrBlockAssociationSet.Count -gt 1) {
                     Write-Output "`n🔗 Additional CIDR Blocks:"
@@ -264,27 +264,27 @@ try {
                 # Subnets
                 if ($ShowSubnets -or $OutputFormat -eq 'detailed') {
                     Write-Output "`n🏠 Subnets:"
-                    
+
                     $subnetsResult = aws ec2 describe-subnets --filters "Name=vpc-id,Values=$($vpc.VpcId)" @awsArgs --output json 2>&1
-                    
+
                     if ($LASTEXITCODE -eq 0) {
                         $subnetsData = $subnetsResult | ConvertFrom-Json
-                        
+
                         if ($subnetsData.Subnets.Count -eq 0) {
                             Write-Output "  No subnets found"
                         } else {
                             Write-Output "  Subnet ID`t`tCIDR`t`t`tAZ`t`tPublic`tAvailable IPs"
                             Write-Output "  " + "-" * 70
-                            
+
                             foreach ($subnet in $subnetsData.Subnets) {
                                 Write-Output "  $($subnet.SubnetId)`t$($subnet.CidrBlock.PadRight(15))`t$($subnet.AvailabilityZone)`t$($subnet.MapPublicIpOnLaunch)`t$($subnet.AvailableIpAddressCount)"
                             }
-                            
+
                             # Subnet statistics
                             $publicSubnets = ($subnetsData.Subnets | Where-Object { $_.MapPublicIpOnLaunch }).Count
                             $privateSubnets = $subnetsData.Subnets.Count - $publicSubnets
                             $totalAvailableIps = ($subnetsData.Subnets | ForEach-Object { $_.AvailableIpAddressCount } | Measure-Object -Sum).Sum
-                            
+
                             Write-Output "`n  📊 Summary: $($subnetsData.Subnets.Count) total, $publicSubnets public, $privateSubnets private"
                             Write-Output "  📊 Available IPs: $totalAvailableIps"
                         }
@@ -294,24 +294,24 @@ try {
                 # Route Tables
                 if ($ShowRouteTables -or $OutputFormat -eq 'detailed') {
                     Write-Output "`n🛣️  Route Tables:"
-                    
+
                     $routeTablesResult = aws ec2 describe-route-tables --filters "Name=vpc-id,Values=$($vpc.VpcId)" @awsArgs --output json 2>&1
-                    
+
                     if ($LASTEXITCODE -eq 0) {
                         $routeTablesData = $routeTablesResult | ConvertFrom-Json
-                        
+
                         if ($routeTablesData.RouteTables.Count -eq 0) {
                             Write-Output "  No route tables found"
                         } else {
                             foreach ($routeTable in $routeTablesData.RouteTables) {
                                 $isMain = $null -ne ($routeTable.Associations | Where-Object { $_.Main -eq $true })
                                 $associationCount = $routeTable.Associations.Count
-                                
+
                                 Write-Output "  • $($routeTable.RouteTableId) $(if ($isMain) {'(Main)'} else {'(Custom)'}) - $($routeTable.Routes.Count) routes, $associationCount associations"
                             }
-                            
+
                             $customRtbs = $routeTablesData.RouteTables.Count - 1
-                            
+
                             Write-Output "`n  📊 Summary: 1 main, $customRtbs custom route tables"
                         }
                     }
@@ -320,13 +320,13 @@ try {
                 # Gateways
                 if ($ShowGateways -or $OutputFormat -eq 'detailed') {
                     Write-Output "`n🌉 Gateways:"
-                    
+
                     # Internet Gateways
                     $igwResult = aws ec2 describe-internet-gateways --filters "Name=attachment.vpc-id,Values=$($vpc.VpcId)" @awsArgs --output json 2>&1
-                    
+
                     if ($LASTEXITCODE -eq 0) {
                         $igwData = $igwResult | ConvertFrom-Json
-                        
+
                         if ($igwData.InternetGateways.Count -gt 0) {
                             foreach ($igw in $igwData.InternetGateways) {
                                 $attachment = $igw.Attachments | Where-Object { $_.VpcId -eq $vpc.VpcId }
@@ -339,10 +339,10 @@ try {
 
                     # NAT Gateways
                     $natResult = aws ec2 describe-nat-gateways --filter "Name=vpc-id,Values=$($vpc.VpcId)" @awsArgs --output json 2>&1
-                    
+
                     if ($LASTEXITCODE -eq 0) {
                         $natData = $natResult | ConvertFrom-Json
-                        
+
                         if ($natData.NatGateways.Count -gt 0) {
                             foreach ($nat in $natData.NatGateways) {
                                 Write-Output "  • NAT Gateway: $($nat.NatGatewayId) (State: $($nat.State), Subnet: $($nat.SubnetId))"
@@ -354,10 +354,10 @@ try {
 
                     # VPC Endpoints
                     $endpointResult = aws ec2 describe-vpc-endpoints --filters "Name=vpc-id,Values=$($vpc.VpcId)" @awsArgs --output json 2>&1
-                    
+
                     if ($LASTEXITCODE -eq 0) {
                         $endpointData = $endpointResult | ConvertFrom-Json
-                        
+
                         if ($endpointData.VpcEndpoints.Count -gt 0) {
                             Write-Output "  • VPC Endpoints: $($endpointData.VpcEndpoints.Count)"
                             foreach ($endpoint in $endpointData.VpcEndpoints) {
@@ -372,20 +372,20 @@ try {
                 # Network ACLs
                 if ($ShowNetworkAcls -or $OutputFormat -eq 'detailed') {
                     Write-Output "`n🛡️  Network ACLs:"
-                    
+
                     $naclResult = aws ec2 describe-network-acls --filters "Name=vpc-id,Values=$($vpc.VpcId)" @awsArgs --output json 2>&1
-                    
+
                     if ($LASTEXITCODE -eq 0) {
                         $naclData = $naclResult | ConvertFrom-Json
-                        
+
                         foreach ($nacl in $naclData.NetworkAcls) {
                             $associationCount = $nacl.Associations.Count
                             Write-Output "  • $($nacl.NetworkAclId) $(if ($nacl.IsDefault) {'(Default)'} else {'(Custom)'}) - $($nacl.Entries.Count) entries, $associationCount associations"
                         }
-                        
+
                         $defaultNacls = ($naclData.NetworkAcls | Where-Object { $_.IsDefault }).Count
                         $customNacls = $naclData.NetworkAcls.Count - $defaultNacls
-                        
+
                         Write-Output "`n  📊 Summary: $defaultNacls default, $customNacls custom Network ACLs"
                     }
                 }
@@ -393,23 +393,23 @@ try {
                 # Security Groups
                 if ($ShowSecurityGroups -or $OutputFormat -eq 'detailed') {
                     Write-Output "`n🔒 Security Groups:"
-                    
+
                     $sgResult = aws ec2 describe-security-groups --filters "Name=vpc-id,Values=$($vpc.VpcId)" @awsArgs --output json 2>&1
-                    
+
                     if ($LASTEXITCODE -eq 0) {
                         $sgData = $sgResult | ConvertFrom-Json
-                        
+
                         $defaultSgs = ($sgData.SecurityGroups | Where-Object { $_.GroupName -eq 'default' }).Count
                         $customSgs = $sgData.SecurityGroups.Count - $defaultSgs
-                        
+
                         Write-Output "  • Total Security Groups: $($sgData.SecurityGroups.Count)"
                         Write-Output "  • Default: $defaultSgs, Custom: $customSgs"
-                        
+
                         if ($OutputFormat -eq 'detailed') {
                             foreach ($sg in $sgData.SecurityGroups | Select-Object -First 5) {
                                 Write-Output "    - $($sg.GroupId): $($sg.GroupName) ($($sg.IpPermissions.Count) inbound, $($sg.IpPermissionsEgress.Count) outbound rules)"
                             }
-                            
+
                             if ($sgData.SecurityGroups.Count -gt 5) {
                                 Write-Output "    ... and $($sgData.SecurityGroups.Count - 5) more"
                             }
@@ -419,18 +419,18 @@ try {
 
                 # VPC Analysis
                 Write-Output "`n🔍 VPC Analysis:"
-                
+
                 # CIDR analysis
                 $cidrParts = $vpc.CidrBlock -split '/'
                 $networkBits = [int]$cidrParts[1]
                 $hostBits = 32 - $networkBits
                 $totalIps = [math]::Pow(2, $hostBits)
-                
+
                 Write-Output "  📊 CIDR Block Analysis:"
                 Write-Output "    • Network: /$networkBits"
                 Write-Output "    • Total IP addresses: $totalIps"
                 Write-Output "    • Usable for hosts: $($totalIps - 2)"
-                
+
                 if ($networkBits -le 16) {
                     Write-Output "    ✅ Large address space - good for enterprise workloads"
                 } elseif ($networkBits -le 20) {
@@ -456,7 +456,7 @@ try {
                     $azCount = ($subnetsData.Subnets | Group-Object AvailabilityZone).Count
                     Write-Output "  🏗️  High Availability:"
                     Write-Output "    • Spans $azCount Availability Zones"
-                    
+
                     if ($azCount -ge 2) {
                         Write-Output "    ✅ Multi-AZ deployment possible"
                     } else {
@@ -470,10 +470,10 @@ try {
     # Overall summary statistics
     if ($OutputFormat -eq 'detailed') {
         Write-Output "`n📈 Overall Summary:"
-        
+
         $defaultVpcs = ($vpcsData.Vpcs | Where-Object { $_.IsDefault }).Count
         $customVpcs = $vpcsData.Vpcs.Count - $defaultVpcs
-        
+
         Write-Output "  • Total VPCs: $($vpcsData.Vpcs.Count)"
         Write-Output "  • Default VPCs: $defaultVpcs"
         Write-Output "  • Custom VPCs: $customVpcs"

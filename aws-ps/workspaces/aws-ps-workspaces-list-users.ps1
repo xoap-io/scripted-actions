@@ -13,14 +13,14 @@ try {
     if (-not $directory) {
         throw "Directory $DirectoryId not found"
     }
-    
+
     Write-Host "Retrieving users from directory $DirectoryId..." -ForegroundColor Cyan
     $users = Get-WKSUser -DirectoryId $DirectoryId
-    
+
     if ($users) {
         Write-Host "Found $($users.Count) user(s) in directory ${DirectoryId}:" -ForegroundColor Green
         $users | Format-Table -Property UserName, FirstName, LastName, EmailAddress, Enabled -AutoSize
-        
+
         return $users
     } else {
         Write-Host "No users found in directory $DirectoryId" -ForegroundColor Yellow

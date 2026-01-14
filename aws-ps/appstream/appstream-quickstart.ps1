@@ -273,4 +273,3 @@ New-APSImageBuilder -Name "AS2_Lab_ImageBuilder" `
   -DisplayName "Image Builder" `
   -Description "Image builder for AppStream 2.0 hands-on lab" `
   -VpcConfig_SubnetIds $privateSubnet1.SubnetId
-  

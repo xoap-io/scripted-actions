@@ -30,27 +30,27 @@ Connect-AzAccount -Identity
 
 ### Organized Scripts
 
-| Folder | Description | Service Focus |
-|--------|-------------|---------------|
+| Folder           | Description           | Service Focus                          |
+| ---------------- | --------------------- | -------------------------------------- |
 | [`avd/`](./avd/) | Azure Virtual Desktop | AVD host pools, session hosts, scaling |
 
 ### Standalone Scripts
 
-| Script | Description | Use Case |
-|--------|-------------|----------|
-| `az-ps-create-linux-vm.ps1` | Linux VM creation | Deploy Ubuntu/CentOS VMs |
-| `az-ps-create-vm-scale-set.ps1` | VM Scale Set deployment | Auto-scaling VM groups |
-| `az-ps-delete-running-vms.ps1` | Bulk VM cleanup | Cost management, testing cleanup |
-| `az-ps-image-builder-windows-cleanup.ps1` | Image Builder cleanup | Remove temporary resources |
-| `az-ps-install-nginx-linux-vm.ps1` | NGINX web server setup | Web server automation |
-| `az-ps-install-webserver-windows.ps1` | IIS web server setup | Windows web server deployment |
-| `Create-NewWindowsVm.ps1` | Windows VM creation | Standard Windows VM deployment |
+| Script                                    | Description             | Use Case                         |
+| ----------------------------------------- | ----------------------- | -------------------------------- |
+| `az-ps-create-linux-vm.ps1`               | Linux VM creation       | Deploy Ubuntu/CentOS VMs         |
+| `az-ps-create-vm-scale-set.ps1`           | VM Scale Set deployment | Auto-scaling VM groups           |
+| `az-ps-delete-running-vms.ps1`            | Bulk VM cleanup         | Cost management, testing cleanup |
+| `az-ps-image-builder-windows-cleanup.ps1` | Image Builder cleanup   | Remove temporary resources       |
+| `az-ps-install-nginx-linux-vm.ps1`        | NGINX web server setup  | Web server automation            |
+| `az-ps-install-webserver-windows.ps1`     | IIS web server setup    | Windows web server deployment    |
+| `Create-NewWindowsVm.ps1`                 | Windows VM creation     | Standard Windows VM deployment   |
 
 ### Work-in-Progress Scripts
 
-| Script | Description | Status |
-|--------|-------------|---------|
-| `wip_az-ps-create-image-avd.ps1` | AVD image creation | Development |
+| Script                                | Description            | Status      |
+| ------------------------------------- | ---------------------- | ----------- |
+| `wip_az-ps-create-image-avd.ps1`      | AVD image creation     | Development |
 | `wip_az-ps-image-builder-windows.ps1` | Windows image building | Development |
 
 ## Common Usage Patterns
@@ -62,7 +62,7 @@ Scripts automatically install required Az modules:
 ```powershell
 function Test-AzModule {
     param($ModuleName)
-    
+
     if (-not (Get-Module -Name $ModuleName -ListAvailable)) {
         Write-Host "Installing $ModuleName..." -ForegroundColor Yellow
         Install-Module -Name $ModuleName -Force -AllowClobber -Scope CurrentUser

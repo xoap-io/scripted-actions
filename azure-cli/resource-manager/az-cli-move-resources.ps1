@@ -6,7 +6,7 @@
     This script moves Azure resources between Resource Groups or subscriptions using the Azure CLI.
     Includes comprehensive validation, dependency checking, and safety measures to prevent data loss.
     Supports bulk operations and provides detailed progress tracking for long-running moves.
-    
+
     The script uses the Azure CLI command: az resource move
 
 .PARAMETER SourceResourceGroup
@@ -38,22 +38,22 @@
 
 .EXAMPLE
     .\az-cli-move-resources.ps1 -SourceResourceGroup "source-rg" -DestinationResourceGroup "dest-rg"
-    
+
     Moves all resources from source-rg to dest-rg with validation and confirmation.
 
 .EXAMPLE
     .\az-cli-move-resources.ps1 -SourceResourceGroup "dev-rg" -DestinationResourceGroup "prod-rg" -ValidateOnly
-    
+
     Validates if resources can be moved without performing the actual move.
 
 .EXAMPLE
     .\az-cli-move-resources.ps1 -SourceResourceGroup "source-rg" -DestinationResourceGroup "dest-rg" -DestinationSubscription "12345678-1234-1234-1234-123456789abc" -Force
-    
+
     Moves resources to a different subscription without confirmation prompts.
 
 .EXAMPLE
     .\az-cli-move-resources.ps1 -SourceResourceGroup "vm-rg" -DestinationResourceGroup "compute-rg" -Resources @("/subscriptions/.../resourceGroups/vm-rg/providers/Microsoft.Compute/virtualMachines/vm1")
-    
+
     Moves only specific resources instead of all resources.
 
 .NOTES
@@ -133,7 +133,7 @@ try {
     if (-not $sourceRgCheck) {
         throw "Source Resource Group '$SourceResourceGroup' not found in subscription '$($azAccount.name)'"
     }
-    
+
     $sourceRgInfo = $sourceRgCheck | ConvertFrom-Json
     Write-Host "✓ Source Resource Group '$SourceResourceGroup' found" -ForegroundColor Green
     Write-Host "  Location: $($sourceRgInfo.location)" -ForegroundColor White
@@ -142,7 +142,7 @@ try {
     # Verify destination Resource Group
     Write-Host "Verifying destination Resource Group..." -ForegroundColor Yellow
     $destRgCheck = az group show --name $DestinationResourceGroup 2>$null
-    
+
     if (-not $destRgCheck) {
         if ($DestinationSubscription) {
             # Check in destination subscription
@@ -151,12 +151,12 @@ try {
             $destRgCheck = az group show --name $DestinationResourceGroup 2>$null
             az account set --subscription $currentSub  # Switch back
         }
-        
+
         if (-not $destRgCheck) {
             throw "Destination Resource Group '$DestinationResourceGroup' not found. Please create it first."
         }
     }
-    
+
     $destRgInfo = $destRgCheck | ConvertFrom-Json
     Write-Host "✓ Destination Resource Group '$DestinationResourceGroup' found" -ForegroundColor Green
     Write-Host "  Location: $($destRgInfo.location)" -ForegroundColor White
@@ -165,7 +165,7 @@ try {
     # Get resources to move
     Write-Host ""
     Write-Host "Retrieving resources to move..." -ForegroundColor Yellow
-    
+
     if ($Resources -and $Resources.Count -gt 0) {
         Write-Host "Using specified resource IDs ($($Resources.Count) resources)" -ForegroundColor Blue
         $resourcesToMove = @()
@@ -217,16 +217,16 @@ try {
         }
         Write-Host ""
         Write-Host "These resources will be excluded from the move operation." -ForegroundColor Yellow
-        
+
         # Remove unsupported resources
         $Resources = $resourcesToMove | Where-Object { $_.type -notin $unsupportedTypes } | ForEach-Object { $_.id }
         $resourcesToMove = $resourcesToMove | Where-Object { $_.type -notin $unsupportedTypes }
-        
+
         if ($resourcesToMove.Count -eq 0) {
             Write-Host "No supported resources remaining to move. Operation cancelled." -ForegroundColor Yellow
             exit 0
         }
-        
+
         Write-Host "Continuing with $($resourcesToMove.Count) supported resources..." -ForegroundColor Blue
     }
 
@@ -236,7 +236,7 @@ try {
         Write-Host "📦 Creating pre-move backup..." -ForegroundColor Yellow
         $backupTimestamp = Get-Date -Format "yyyyMMdd-HHmmss"
         $backupFileName = "resource-move-backup-$backupTimestamp.json"
-        
+
         $backupData = @{
             timestamp = $backupTimestamp
             sourceResourceGroup = $SourceResourceGroup
@@ -244,7 +244,7 @@ try {
             resources = $resourcesToMove
             operation = "pre-move-backup"
         }
-        
+
         $backupData | ConvertTo-Json -Depth 10 | Out-File -FilePath $backupFileName -Encoding UTF8
         Write-Host "✓ Backup created: $backupFileName" -ForegroundColor Green
     }
@@ -276,7 +276,7 @@ try {
             Write-Host "  • ... and $($resourcesToMove.Count - 10) more resources" -ForegroundColor Gray
         }
         Write-Host ""
-        
+
         $confirmation = Read-Host "Do you want to proceed with the move operation? (yes/no)"
         if ($confirmation -ne "yes") {
             Write-Host "Move operation cancelled by user." -ForegroundColor Yellow
@@ -286,11 +286,11 @@ try {
 
     # Build Azure CLI command parameters
     $azParams = @('resource', 'move')
-    
+
     if ($DestinationSubscription) {
         $azParams += '--destination-subscription-id', $DestinationSubscription
     }
-    
+
     $azParams += '--destination-group', $DestinationResourceGroup
     $azParams += '--ids'
     $azParams += $Resources
@@ -317,7 +317,7 @@ try {
     $result = & az @azParams 2>&1
     $endTime = Get-Date
     $duration = $endTime - $startTime
-    
+
     if ($LASTEXITCODE -eq 0) {
         Write-Host ""
         if ($ValidateOnly) {
@@ -358,15 +358,15 @@ try {
                     $movedCount++
                 }
             }
-            
+
             Write-Host "✓ Verified $movedCount of $($resourcesToMove.Count) resources in destination" -ForegroundColor Green
-            
+
             if ($movedCount -lt $resourcesToMove.Count) {
                 Write-Host "⚠ Some resources may still be in transit or failed to move" -ForegroundColor Yellow
                 Write-Host "Check the Azure portal for detailed status" -ForegroundColor Blue
             }
         }
-        
+
         Write-Host ""
         Write-Host "🏁 Operation completed successfully" -ForegroundColor Green
     }
@@ -383,7 +383,7 @@ try {
         Write-Host "• Ensure destination Resource Group exists and is accessible" -ForegroundColor White
         Write-Host ""
         Write-Host "Use -ValidateOnly to check for specific move issues" -ForegroundColor Blue
-        
+
         throw "Azure CLI command failed with exit code $LASTEXITCODE"
     }
 }

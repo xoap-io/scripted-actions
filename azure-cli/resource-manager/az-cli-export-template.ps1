@@ -6,7 +6,7 @@
     This script exports ARM templates from existing Azure resources using the Azure CLI.
     Supports exporting from Resource Groups, individual resources, and generating deployment templates.
     Includes parameter file generation, template optimization, and Infrastructure as Code workflows.
-    
+
     The script uses the Azure CLI commands: az group export, az resource show
 
 .PARAMETER ResourceGroup
@@ -50,22 +50,22 @@
 
 .EXAMPLE
     .\az-cli-export-template.ps1 -ResourceGroup "production-rg" -OutputPath ".\templates"
-    
+
     Exports ARM template from Resource Group to templates directory.
 
 .EXAMPLE
     .\az-cli-export-template.ps1 -ResourceGroup "web-rg" -IncludeParameterFile -IncludeComments -OutputPath ".\exports"
-    
+
     Exports template with parameters file and comments.
 
 .EXAMPLE
     .\az-cli-export-template.ps1 -Resources @("/subscriptions/.../resourceGroups/rg/providers/Microsoft.Compute/virtualMachines/vm1") -OutputPath ".\vm-template"
-    
+
     Exports template for specific virtual machine only.
 
 .EXAMPLE
     .\az-cli-export-template.ps1 -ResourceGroup "infra-rg" -OptimizeTemplate -ValidateTemplate -CreateDeploymentScript
-    
+
     Exports optimized template with validation and deployment script.
 
 .NOTES
@@ -172,7 +172,7 @@ try {
     if (-not $rgCheck) {
         throw "Resource Group '$ResourceGroup' not found in subscription '$($azAccount.name)'"
     }
-    
+
     $rgInfo = $rgCheck | ConvertFrom-Json
     Write-Host "✓ Resource Group '$ResourceGroup' found" -ForegroundColor Green
     Write-Host "  Location: $($rgInfo.location)" -ForegroundColor White
@@ -189,7 +189,7 @@ try {
     # Get resources to export
     Write-Host ""
     Write-Host "Analyzing resources to export..." -ForegroundColor Yellow
-    
+
     if ($Resources -and $Resources.Count -gt 0) {
         $ExportScope = "Resource"
         Write-Host "Exporting specific resources: $($Resources.Count)" -ForegroundColor Blue
@@ -201,7 +201,7 @@ try {
         $allResources = az resource list --resource-group $ResourceGroup 2>$null | ConvertFrom-Json
         $resourceCount = if ($allResources) { $allResources.Count } else { 0 }
         Write-Host "Exporting all resources from Resource Group: $resourceCount" -ForegroundColor Blue
-        
+
         if ($resourceCount -eq 0) {
             Write-Host "⚠ No resources found in Resource Group to export" -ForegroundColor Yellow
             Write-Host "Creating empty template..." -ForegroundColor Blue
@@ -236,22 +236,22 @@ try {
     if ($ExportScope -eq "ResourceGroup") {
         # Export entire Resource Group
         $azParams = @('group', 'export', '--name', $ResourceGroup)
-        
+
         if ($SkipResourceNameParameterization) {
             $azParams += '--skip-resource-name-params'
         }
-        
+
         if ($IncludeComments) {
             $azParams += '--include-comments'
         }
-        
+
         if ($IncludeParameterFile) {
             $azParams += '--include-parameter-default-value'
         }
     } else {
         # Export specific resources - need to use different approach
         Write-Host "Exporting individual resources..." -ForegroundColor Yellow
-        
+
         # Create a custom template for specific resources
         $template = @{
             '$schema' = "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#"
@@ -261,13 +261,13 @@ try {
             resources = @()
             outputs = @{}
         }
-        
+
         foreach ($resourceId in $Resources) {
             Write-Host "  Processing: $($resourceId -split '/' | Select-Object -Last 1)" -ForegroundColor Blue
-            
+
             # Get resource details
             $resourceDetails = az resource show --ids $resourceId | ConvertFrom-Json
-            
+
             if ($resourceDetails) {
                 # Add resource to template (simplified version)
                 $resourceTemplate = @{
@@ -277,31 +277,31 @@ try {
                     location = $resourceDetails.location
                     properties = $resourceDetails.properties
                 }
-                
+
                 if ($resourceDetails.tags) {
                     $resourceTemplate.tags = $resourceDetails.tags
                 }
-                
+
                 $template.resources += $resourceTemplate
             }
         }
-        
+
         # Convert to JSON and save
         $templateJson = $template | ConvertTo-Json -Depth 10
-        
+
         if ($FormatJson) {
             $templateJson | Out-File -FilePath $templateFilePath -Encoding UTF8
         } else {
             $templateJson -replace "`r`n", "" | Out-File -FilePath $templateFilePath -Encoding UTF8
         }
-        
+
         Write-Host "✓ Custom template exported successfully" -ForegroundColor Green
     }
 
     # Execute standard Resource Group export if needed
     if ($ExportScope -eq "ResourceGroup") {
         $result = & az @azParams 2>&1
-        
+
         if ($LASTEXITCODE -eq 0) {
             # Save the exported template
             if ($FormatJson) {
@@ -309,7 +309,7 @@ try {
             } else {
                 $result | Out-File -FilePath $templateFilePath -Encoding UTF8
             }
-            
+
             Write-Host "✓ Template exported successfully" -ForegroundColor Green
         } else {
             throw "Failed to export template: $($result -join "`n")"
@@ -323,7 +323,7 @@ try {
     if ($OptimizeTemplate) {
         Write-Host ""
         Write-Host "🔧 Optimizing template..." -ForegroundColor Yellow
-        
+
         # Remove common unnecessary properties
         foreach ($resource in $exportedTemplate.resources) {
             # Remove read-only properties
@@ -332,7 +332,7 @@ try {
                 $resource.properties.PSObject.Properties.Remove('resourceGuid')
                 $resource.properties.PSObject.Properties.Remove('uniqueId')
             }
-            
+
             # Remove system-generated names/IDs where appropriate
             if ($resource.type -eq "Microsoft.Network/networkSecurityGroups") {
                 if ($resource.properties.defaultSecurityRules) {
@@ -340,7 +340,7 @@ try {
                 }
             }
         }
-        
+
         # Save optimized template
         $exportedTemplate | ConvertTo-Json -Depth 20 | Out-File -FilePath $templateFilePath -Encoding UTF8
         Write-Host "✓ Template optimized" -ForegroundColor Green
@@ -350,13 +350,13 @@ try {
     if ($IncludeParameterFile) {
         Write-Host ""
         Write-Host "📄 Generating parameters file..." -ForegroundColor Yellow
-        
+
         $parametersTemplate = @{
             '$schema' = "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#"
             contentVersion = "1.0.0.0"
             parameters = @{}
         }
-        
+
         # Extract parameters from template
         if ($exportedTemplate.parameters) {
             foreach ($param in $exportedTemplate.parameters.PSObject.Properties) {
@@ -366,7 +366,7 @@ try {
                 $parametersTemplate.parameters[$param.Name] = $paramValue
             }
         }
-        
+
         $parametersTemplate | ConvertTo-Json -Depth 10 | Out-File -FilePath $parametersFilePath -Encoding UTF8
         Write-Host "✓ Parameters file generated: $ParametersFileName" -ForegroundColor Green
     }
@@ -375,16 +375,16 @@ try {
     if ($ValidateTemplate) {
         Write-Host ""
         Write-Host "🔍 Validating exported template..." -ForegroundColor Yellow
-        
+
         try {
             $validateParams = @('deployment', 'group', 'validate', '--resource-group', $ResourceGroup, '--template-file', $templateFilePath)
-            
+
             if ($IncludeParameterFile) {
                 $validateParams += '--parameters', "@$parametersFilePath"
             }
-            
+
             $validationResult = & az @validateParams 2>&1
-            
+
             if ($LASTEXITCODE -eq 0) {
                 Write-Host "✓ Template validation passed" -ForegroundColor Green
             } else {
@@ -401,7 +401,7 @@ try {
     if ($CreateDeploymentScript) {
         Write-Host ""
         Write-Host "📜 Creating deployment script..." -ForegroundColor Yellow
-        
+
         $deploymentScriptPath = Join-Path $OutputPath "deploy.ps1"
         $deploymentScript = @"
 <#
@@ -422,7 +422,7 @@ try {
 param(
     [Parameter(Mandatory = `$true)]
     [string]`$ResourceGroupName,
-    
+
     [string]`$DeploymentName = "deployment-`$(Get-Date -Format 'yyyyMMdd-HHmmss')"
 )
 
@@ -451,7 +451,7 @@ if (`$LASTEXITCODE -eq 0) {
     exit 1
 }
 "@
-        
+
         $deploymentScript | Out-File -FilePath $deploymentScriptPath -Encoding UTF8
         Write-Host "✓ Deployment script created: deploy.ps1" -ForegroundColor Green
     }
@@ -464,11 +464,11 @@ if (`$LASTEXITCODE -eq 0) {
     Write-Host "  Resources exported: $($exportedTemplate.resources.Count)" -ForegroundColor White
     Write-Host "  Parameters: $($exportedTemplate.parameters.PSObject.Properties.Count)" -ForegroundColor White
     Write-Host "  Variables: $($exportedTemplate.variables.PSObject.Properties.Count)" -ForegroundColor White
-    
+
     if ($IncludeParameterFile) {
         Write-Host "  Parameters file: $parametersFilePath" -ForegroundColor White
     }
-    
+
     if ($CreateDeploymentScript) {
         Write-Host "  Deployment script: deploy.ps1" -ForegroundColor White
     }

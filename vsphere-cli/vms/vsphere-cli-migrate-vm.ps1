@@ -115,7 +115,7 @@ $ErrorActionPreference = 'Stop'
 # Function to check and install PowerCLI if needed
 function Test-PowerCLIInstallation {
     Write-Host "Checking PowerCLI installation..." -ForegroundColor Yellow
-    
+
     try {
         $powerCLIModule = Get-Module -Name VMware.PowerCLI -ListAvailable
         if (-not $powerCLIModule) {
@@ -126,14 +126,14 @@ function Test-PowerCLIInstallation {
             $version = $powerCLIModule | Sort-Object Version -Descending | Select-Object -First 1
             Write-Host "PowerCLI version $($version.Version) found." -ForegroundColor Green
         }
-        
+
         # Import the module
         Import-Module VMware.PowerCLI -Force
-        
+
         # Disable certificate warnings for lab environments
         Set-PowerCLIConfiguration -InvalidCertificateAction Ignore -Confirm:$false -Scope User | Out-Null
         Set-PowerCLIConfiguration -ParticipateInCEIP $false -Confirm:$false -Scope User | Out-Null
-        
+
         return $true
     }
     catch {
@@ -145,17 +145,17 @@ function Test-PowerCLIInstallation {
 # Function to connect to vCenter
 function Connect-ToVCenter {
     param($Server)
-    
+
     try {
         Write-Host "Connecting to vCenter Server: $Server" -ForegroundColor Yellow
-        
+
         # Check if already connected
         $connection = $global:DefaultVIServers | Where-Object { $_.Name -eq $Server -and $_.IsConnected }
         if ($connection) {
             Write-Host "Already connected to $Server" -ForegroundColor Green
             return $connection
         }
-        
+
         # Connect to vCenter (will prompt for credentials if not cached)
         $connection = Connect-VIServer -Server $Server -Force
         Write-Host "Successfully connected to vCenter: $($connection.Name)" -ForegroundColor Green
@@ -173,12 +173,12 @@ function Get-TargetVMs {
         $VMName,
         $VMNames
     )
-    
+
     Write-Host "Identifying target VMs..." -ForegroundColor Yellow
-    
+
     try {
         $targetVMs = @()
-        
+
         if ($VMName) {
             # Single VM or wildcard pattern
             $targetVMs = Get-VM -Name $VMName -ErrorAction SilentlyContinue
@@ -194,20 +194,20 @@ function Get-TargetVMs {
                 }
             }
         }
-        
+
         if (-not $targetVMs) {
             throw "No VMs found matching the specified criteria"
         }
-        
+
         # Filter powered-on VMs for migration
         $poweredOnVMs = $targetVMs | Where-Object { $_.PowerState -eq "PoweredOn" }
-        
+
         Write-Host "Found $($targetVMs.Count) VM(s), $($poweredOnVMs.Count) powered on:" -ForegroundColor Green
         foreach ($vm in $targetVMs) {
             $status = if ($vm.PowerState -eq "PoweredOn") { "✓" } else { "⚠" }
             Write-Host "  $status $($vm.Name) [$($vm.PowerState)] on $($vm.VMHost.Name)" -ForegroundColor White
         }
-        
+
         return $poweredOnVMs
     }
     catch {
@@ -224,13 +224,13 @@ function Test-MigrationTargets {
         $DestinationDatastore,
         $DestinationCluster
     )
-    
+
     Write-Host "Validating migration targets..." -ForegroundColor Yellow
-    
+
     $destHost = $null
     $destDatastore = $null
     $destCluster = $null
-    
+
     # Validate destination host for vMotion
     if ($MigrationType -in @("vMotion", "Both")) {
         if ($DestinationHost) {
@@ -254,22 +254,22 @@ function Test-MigrationTargets {
             throw "Destination host or cluster required for vMotion migration"
         }
     }
-    
+
     # Validate destination datastore for Storage vMotion
     if ($MigrationType -in @("Storage", "Both")) {
         if (-not $DestinationDatastore) {
             throw "Destination datastore required for Storage migration"
         }
-        
+
         $destDatastore = Get-Datastore -Name $DestinationDatastore -ErrorAction SilentlyContinue
         if (-not $destDatastore) {
             throw "Destination datastore '$DestinationDatastore' not found"
         }
-        
+
         $freeSpaceGB = [math]::Round($destDatastore.FreeSpaceGB, 2)
         Write-Host "✓ Destination datastore '$DestinationDatastore' validated (Free: $freeSpaceGB GB)" -ForegroundColor Green
     }
-    
+
     return @{
         Host = $destHost
         Datastore = $destDatastore
@@ -284,27 +284,27 @@ function Test-VMMigrationCompatibility {
         $Targets,
         $MigrationType
     )
-    
+
     $issues = @()
-    
+
     try {
         # Check if VM is powered on
         if ($VM.PowerState -ne "PoweredOn") {
             $issues += "VM is not powered on"
         }
-        
+
         # Check for snapshots (can affect some migrations)
         $snapshots = Get-Snapshot -VM $VM -ErrorAction SilentlyContinue
         if ($snapshots) {
             $issues += "VM has $($snapshots.Count) snapshot(s) which may affect migration"
         }
-        
+
         # Check for CD/DVD connected
         $cdDrives = Get-CDDrive -VM $VM | Where-Object { $_.ConnectionState.Connected }
         if ($cdDrives) {
             $issues += "VM has connected CD/DVD drives"
         }
-        
+
         # Check destination host compatibility (for vMotion)
         if ($MigrationType -in @("vMotion", "Both") -and $Targets.Host) {
             # Check CPU compatibility
@@ -312,7 +312,7 @@ function Test-VMMigrationCompatibility {
             if ($sourceHost.ProcessorType -ne $Targets.Host.ProcessorType) {
                 $issues += "CPU types differ between source and destination hosts"
             }
-            
+
             # Check if destination host has enough resources
             $vmMemoryMB = $VM.MemoryGB * 1024
             $hostFreeMemoryMB = $Targets.Host.MemoryTotalMB - $Targets.Host.MemoryUsageMB
@@ -320,7 +320,7 @@ function Test-VMMigrationCompatibility {
                 $issues += "Insufficient memory on destination host"
             }
         }
-        
+
         # Check destination datastore space (for Storage vMotion)
         if ($MigrationType -in @("Storage", "Both") -and $Targets.Datastore) {
             $vmSizeGB = $VM.ProvisionedSpaceGB
@@ -328,7 +328,7 @@ function Test-VMMigrationCompatibility {
                 $issues += "Insufficient space on destination datastore"
             }
         }
-        
+
         return $issues
     }
     catch {
@@ -346,22 +346,22 @@ function Invoke-VMMigration {
         $WaitForCompletion,
         $ValidateOnly
     )
-    
+
     $results = @()
-    
+
     foreach ($vm in $VMs) {
         try {
             Write-Host "`nProcessing VM: $($vm.Name)" -ForegroundColor Cyan
-            
+
             # Validate migration compatibility
             $issues = Test-VMMigrationCompatibility -VM $vm -Targets $Targets -MigrationType $MigrationType
-            
+
             if ($issues.Count -gt 0) {
                 Write-Host "  Migration compatibility issues:" -ForegroundColor Yellow
                 foreach ($issue in $issues) {
                     Write-Host "    - $issue" -ForegroundColor Yellow
                 }
-                
+
                 if ($ValidateOnly) {
                     $results += @{
                         VM = $vm.Name
@@ -374,7 +374,7 @@ function Invoke-VMMigration {
                     continue
                 }
             }
-            
+
             if ($ValidateOnly) {
                 $results += @{
                     VM = $vm.Name
@@ -387,19 +387,19 @@ function Invoke-VMMigration {
                 Write-Host "  ✓ Migration validation passed" -ForegroundColor Green
                 continue
             }
-            
+
             # Perform migration based on type
             $migrationTask = $null
             $migrationParams = @{
                 VM = $vm
                 RunAsync = $true
             }
-            
+
             # Set priority
             if ($Priority -ne "Normal") {
                 $migrationParams.Priority = $Priority
             }
-            
+
             switch ($MigrationType) {
                 "vMotion" {
                     if ($Targets.Host) {
@@ -427,7 +427,7 @@ function Invoke-VMMigration {
                     $migrationTask = Move-VM @migrationParams
                 }
             }
-            
+
             $result = @{
                 VM = $vm.Name
                 Operation = $MigrationType
@@ -439,14 +439,14 @@ function Invoke-VMMigration {
                 DestinationHost = if ($Targets.Host) { $Targets.Host.Name } else { $Targets.Cluster.Name }
                 DestinationDatastore = if ($Targets.Datastore) { $Targets.Datastore.Name } else { "N/A" }
             }
-            
+
             # Wait for completion if requested
             if ($WaitForCompletion) {
                 Write-Host "  Waiting for migration to complete..." -ForegroundColor Yellow
-                
+
                 try {
                     $taskResult = Wait-Task -Task $migrationTask
-                    
+
                     if ($taskResult.State -eq "Success") {
                         $result.Status = "Completed"
                         $result.EndTime = Get-Date
@@ -466,7 +466,7 @@ function Invoke-VMMigration {
             } else {
                 Write-Host "  ✓ Migration task initiated (Task ID: $($migrationTask.Id))" -ForegroundColor Green
             }
-            
+
             $results += $result
         }
         catch {
@@ -481,7 +481,7 @@ function Invoke-VMMigration {
             Write-Host "  ✗ Failed to initiate migration: $($_.Exception.Message)" -ForegroundColor Red
         }
     }
-    
+
     return $results
 }
 
@@ -492,18 +492,18 @@ function Show-MigrationSummary {
         $MigrationType,
         $ValidateOnly
     )
-    
+
     $operation = if ($ValidateOnly) { "Migration Validation" } else { "$MigrationType Migration" }
     Write-Host "`n=== $operation Summary ===" -ForegroundColor Cyan
-    
+
     if ($ValidateOnly) {
         $compatible = $Results | Where-Object { $_.Status -eq "Compatible" }
         $issues = $Results | Where-Object { $_.Status -eq "Issues Found" }
-        
+
         Write-Host "Total VMs: $($Results.Count)" -ForegroundColor White
         Write-Host "Compatible: $($compatible.Count)" -ForegroundColor Green
         Write-Host "Issues Found: $($issues.Count)" -ForegroundColor Yellow
-        
+
         if ($issues.Count -gt 0) {
             Write-Host "`nVMs with Issues:" -ForegroundColor Yellow
             foreach ($result in $issues) {
@@ -517,29 +517,29 @@ function Show-MigrationSummary {
         $successful = $Results | Where-Object { $_.Status -eq "Completed" }
         $failed = $Results | Where-Object { $_.Status -eq "Failed" }
         $inProgress = $Results | Where-Object { $_.Status -eq "InProgress" }
-        
+
         Write-Host "Total VMs: $($Results.Count)" -ForegroundColor White
         Write-Host "Successful: $($successful.Count)" -ForegroundColor Green
         Write-Host "Failed: $($failed.Count)" -ForegroundColor Red
         Write-Host "In Progress: $($inProgress.Count)" -ForegroundColor Yellow
-        
+
         if ($successful.Count -gt 0) {
             Write-Host "`nSuccessful Migrations:" -ForegroundColor Green
             foreach ($result in $successful) {
-                $duration = if ($result.EndTime) { 
+                $duration = if ($result.EndTime) {
                     " ($([math]::Round(($result.EndTime - $result.StartTime).TotalMinutes, 1)) min)"
                 } else { "" }
                 Write-Host "  - $($result.VM): $($result.SourceHost) → $($result.DestinationHost)$duration" -ForegroundColor White
             }
         }
-        
+
         if ($failed.Count -gt 0) {
             Write-Host "`nFailed Migrations:" -ForegroundColor Red
             foreach ($result in $failed) {
                 Write-Host "  - $($result.VM): $($result.Error)" -ForegroundColor White
             }
         }
-        
+
         if ($inProgress.Count -gt 0) {
             Write-Host "`nMigrations In Progress:" -ForegroundColor Yellow
             foreach ($result in $inProgress) {
@@ -554,27 +554,27 @@ try {
     Write-Host "=== vSphere VM Migration ===" -ForegroundColor Cyan
     Write-Host "Target vCenter: $VCenterServer" -ForegroundColor White
     Write-Host "Migration Type: $MigrationType" -ForegroundColor White
-    
+
     if ($ValidateOnly) { Write-Host "Mode: Validation Only" -ForegroundColor White }
     if ($DestinationHost) { Write-Host "Destination Host: $DestinationHost" -ForegroundColor White }
     if ($DestinationCluster) { Write-Host "Destination Cluster: $DestinationCluster" -ForegroundColor White }
     if ($DestinationDatastore) { Write-Host "Destination Datastore: $DestinationDatastore" -ForegroundColor White }
     Write-Host ""
-    
+
     # Check and install PowerCLI
     if (-not (Test-PowerCLIInstallation)) {
         throw "PowerCLI installation failed"
     }
-    
+
     # Connect to vCenter
     $connection = Connect-ToVCenter -Server $VCenterServer
-    
+
     # Get target VMs
     $targetVMs = Get-TargetVMs -VMName $VMName -VMNames $VMNames
-    
+
     # Validate migration targets
     $targets = Test-MigrationTargets -MigrationType $MigrationType -DestinationHost $DestinationHost -DestinationDatastore $DestinationDatastore -DestinationCluster $DestinationCluster
-    
+
     # Confirm operation if not using Force and not validation only
     if (-not $Force -and -not $ValidateOnly) {
         $confirmation = Read-Host "`nProceed with $MigrationType migration of $($targetVMs.Count) VM(s)? (y/N)"
@@ -583,13 +583,13 @@ try {
             exit 0
         }
     }
-    
+
     # Perform migration or validation
     $results = Invoke-VMMigration -VMs $targetVMs -Targets $targets -MigrationType $MigrationType -Priority $Priority -WaitForCompletion:$WaitForCompletion -ValidateOnly:$ValidateOnly
-    
+
     # Display summary
     Show-MigrationSummary -Results $results -MigrationType $MigrationType -ValidateOnly:$ValidateOnly
-    
+
     Write-Host "`n=== Operation Completed ===" -ForegroundColor Green
 }
 catch {

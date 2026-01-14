@@ -92,16 +92,16 @@ try {
     if (-not $azVersion) {
         throw "Azure CLI is not installed or not available in PATH"
     }
-    
+
     Write-Host "Checking Azure CLI login status..." -ForegroundColor Cyan
     $account = az account show --output json 2>$null | ConvertFrom-Json
     if (-not $account) {
         throw "Not logged in to Azure CLI. Please run 'az login' first"
     }
     Write-Host "Logged in as: $($account.user.name)" -ForegroundColor Green
-    
+
     Write-Host "Creating Azure Virtual Desktop Application Group..." -ForegroundColor Cyan
-    
+
     # Build command parameters
     $azParams = @(
         'desktopvirtualization', 'applicationgroup', 'create',
@@ -110,39 +110,39 @@ try {
         '--application-group-type', $AppGroupType,
         '--host-pool-arm-path', $HostPoolArmPath
     )
-    
+
     if ($Location) {
         $azParams += '--location', $Location
     }
-    
+
     if ($Description) {
         $azParams += '--description', $Description
     }
-    
+
     if ($FriendlyName) {
         $azParams += '--friendly-name', $FriendlyName
     }
-    
+
     if ($Tags) {
         $azParams += '--tags', $Tags
     }
-    
+
     $azParams += '--output', 'json'
-    
+
     $result = & az @azParams
     if ($LASTEXITCODE -ne 0) {
         throw "Azure CLI command failed with exit code: $LASTEXITCODE"
     }
-    
+
     $appGroup = $result | ConvertFrom-Json
-    
+
     Write-Host "Azure Virtual Desktop Application Group created successfully:" -ForegroundColor Green
     Write-Host "  Name: $($appGroup.name)" -ForegroundColor White
     Write-Host "  Resource Group: $($appGroup.resourceGroup)" -ForegroundColor White
     Write-Host "  Location: $($appGroup.location)" -ForegroundColor White
     Write-Host "  Type: $($appGroup.applicationGroupType)" -ForegroundColor White
     Write-Host "  ID: $($appGroup.id)" -ForegroundColor White
-    
+
     return $appGroup
 } catch {
     Write-Error "Failed to create Azure Virtual Desktop Application Group: $_"

@@ -155,7 +155,7 @@ $ErrorActionPreference = 'Stop'
 # Function to check and install Nutanix PowerShell SDK if needed
 function Test-NutanixSDKInstallation {
     Write-Host "Checking Nutanix PowerShell SDK installation..." -ForegroundColor Yellow
-    
+
     try {
         $nutanixModule = Get-Module -Name Nutanix.PowerShell.SDK -ListAvailable
         if (-not $nutanixModule) {
@@ -166,10 +166,10 @@ function Test-NutanixSDKInstallation {
             $version = $nutanixModule | Sort-Object Version -Descending | Select-Object -First 1
             Write-Host "Nutanix PowerShell SDK version $($version.Version) found." -ForegroundColor Green
         }
-        
+
         # Import the module
         Import-Module Nutanix.PowerShell.SDK -Force
-        
+
         return $true
     }
     catch {
@@ -181,16 +181,16 @@ function Test-NutanixSDKInstallation {
 # Function to connect to Prism Central or Element
 function Connect-ToNutanix {
     param($Server, $ServerType)
-    
+
     try {
         Write-Host "Connecting to $ServerType`: $Server" -ForegroundColor Yellow
-        
+
         # Check if already connected
         if ($global:DefaultNTNXConnection -and $global:DefaultNTNXConnection.Server -eq $Server) {
             Write-Host "Already connected to $Server" -ForegroundColor Green
             return $global:DefaultNTNXConnection
         }
-        
+
         # Connect to Nutanix
         $connection = Connect-NTNXCluster -Server $Server -AcceptInvalidSSLCerts
         Write-Host "Successfully connected to $ServerType`: $($connection.Server)" -ForegroundColor Green
@@ -209,10 +209,10 @@ function Get-TargetClusters {
         $ClusterNames,
         $ClusterUUID
     )
-    
+
     try {
         $clusters = @()
-        
+
         if ($ClusterUUID) {
             # Get cluster by UUID
             $clusters = Get-NTNXCluster | Where-Object { $_.clusterUuid -eq $ClusterUUID }
@@ -229,16 +229,16 @@ function Get-TargetClusters {
             # Get all clusters
             $clusters = Get-NTNXCluster
         }
-        
+
         if (-not $clusters) {
             throw "No clusters found matching the specified criteria"
         }
-        
+
         Write-Host "Found $($clusters.Count) cluster(s) for processing:" -ForegroundColor Green
         foreach ($cluster in $clusters) {
             Write-Host "  - $($cluster.name) [$($cluster.clusterUuid)]" -ForegroundColor White
         }
-        
+
         return $clusters
     }
     catch {
@@ -250,42 +250,42 @@ function Get-TargetClusters {
 # Function to get cluster health information
 function Get-ClusterHealth {
     param($Cluster)
-    
+
     try {
         Write-Host "  Analyzing cluster health: $($Cluster.name)" -ForegroundColor Cyan
-        
+
         # Get cluster stats
         $clusterStats = Get-NTNXClusterStats -ClusterUuid $Cluster.clusterUuid
-        
+
         # Get host information
         $hosts = Get-NTNXHost | Where-Object { $_.clusterUuid -eq $Cluster.clusterUuid }
         $hostsOnline = $hosts | Where-Object { $_.state -eq "NORMAL" }
-        
+
         # Get storage information
         $storageContainers = Get-NTNXStorageContainer | Where-Object { $_.clusterUuid -eq $Cluster.clusterUuid }
-        
+
         # Calculate health metrics
-        $cpuUsage = if ($clusterStats.statsSpecificEntries.cpuUsagePpm) { 
-            [math]::Round($clusterStats.statsSpecificEntries.cpuUsagePpm / 10000, 2) 
+        $cpuUsage = if ($clusterStats.statsSpecificEntries.cpuUsagePpm) {
+            [math]::Round($clusterStats.statsSpecificEntries.cpuUsagePpm / 10000, 2)
         } else { 0 }
-        
-        $memoryUsage = if ($clusterStats.statsSpecificEntries.memoryUsagePpm) { 
-            [math]::Round($clusterStats.statsSpecificEntries.memoryUsagePpm / 10000, 2) 
+
+        $memoryUsage = if ($clusterStats.statsSpecificEntries.memoryUsagePpm) {
+            [math]::Round($clusterStats.statsSpecificEntries.memoryUsagePpm / 10000, 2)
         } else { 0 }
-        
+
         $storageUsage = if ($clusterStats.statsSpecificEntries.storageUsageBytes -and $Cluster.storageCapacityBytes) {
             [math]::Round(($clusterStats.statsSpecificEntries.storageUsageBytes / $Cluster.storageCapacityBytes) * 100, 2)
         } else { 0 }
-        
+
         # Determine overall health status
         $healthStatus = "Healthy"
         $healthIssues = @()
-        
+
         if ($hostsOnline.Count -ne $hosts.Count) {
             $healthStatus = "Warning"
             $healthIssues += "Some hosts are not in NORMAL state"
         }
-        
+
         if ($cpuUsage -gt 85) {
             $healthStatus = "Critical"
             $healthIssues += "High CPU usage: $cpuUsage%"
@@ -293,7 +293,7 @@ function Get-ClusterHealth {
             if ($healthStatus -eq "Healthy") { $healthStatus = "Warning" }
             $healthIssues += "Elevated CPU usage: $cpuUsage%"
         }
-        
+
         if ($memoryUsage -gt 90) {
             $healthStatus = "Critical"
             $healthIssues += "High memory usage: $memoryUsage%"
@@ -301,7 +301,7 @@ function Get-ClusterHealth {
             if ($healthStatus -eq "Healthy") { $healthStatus = "Warning" }
             $healthIssues += "Elevated memory usage: $memoryUsage%"
         }
-        
+
         if ($storageUsage -gt 90) {
             $healthStatus = "Critical"
             $healthIssues += "High storage usage: $storageUsage%"
@@ -309,7 +309,7 @@ function Get-ClusterHealth {
             if ($healthStatus -eq "Healthy") { $healthStatus = "Warning" }
             $healthIssues += "Elevated storage usage: $storageUsage%"
         }
-        
+
         Write-Host "    ✓ Health analysis completed - Status: $healthStatus" -ForegroundColor $(
             switch ($healthStatus) {
                 "Healthy" { "Green" }
@@ -318,7 +318,7 @@ function Get-ClusterHealth {
                 default { "White" }
             }
         )
-        
+
         return @{
             ClusterName = $Cluster.name
             ClusterUUID = $Cluster.clusterUuid
@@ -351,10 +351,10 @@ function Get-ClusterHealth {
 # Function to get detailed cluster status
 function Get-ClusterStatus {
     param($Cluster, $IncludeVMs, $IncludeHosts, $IncludeStorage, $IncludeNetworking)
-    
+
     try {
         Write-Host "  Getting cluster status: $($Cluster.name)" -ForegroundColor Cyan
-        
+
         $status = @{
             ClusterName = $Cluster.name
             ClusterUUID = $Cluster.clusterUuid
@@ -364,12 +364,12 @@ function Get-ClusterStatus {
             ExternalIP = $Cluster.externalIP
             LastUpdated = Get-Date
         }
-        
+
         # Include VM information
         if ($IncludeVMs) {
             $vms = Get-NTNXVM | Where-Object { $_.clusterUuid -eq $Cluster.clusterUuid }
             $poweredOnVMs = $vms | Where-Object { $_.powerState -eq "ON" }
-            
+
             $status.VMInfo = @{
                 TotalVMs = $vms.Count
                 PoweredOnVMs = $poweredOnVMs.Count
@@ -378,11 +378,11 @@ function Get-ClusterStatus {
                 TotalMemoryGB = [math]::Round(($vms | Measure-Object -Property memoryMb -Sum).Sum / 1024, 2)
             }
         }
-        
+
         # Include host information
         if ($IncludeHosts) {
             $hosts = Get-NTNXHost | Where-Object { $_.clusterUuid -eq $Cluster.clusterUuid }
-            
+
             $status.HostInfo = @{
                 TotalHosts = $hosts.Count
                 HealthyHosts = ($hosts | Where-Object { $_.state -eq "NORMAL" }).Count
@@ -391,11 +391,11 @@ function Get-ClusterStatus {
                 TotalMemoryGB = [math]::Round(($hosts | Measure-Object -Property memoryCapacityBytes -Sum).Sum / 1GB, 2)
             }
         }
-        
+
         # Include storage information
         if ($IncludeStorage) {
             $containers = Get-NTNXStorageContainer | Where-Object { $_.clusterUuid -eq $Cluster.clusterUuid }
-            
+
             $status.StorageInfo = @{
                 TotalContainers = $containers.Count
                 TotalCapacityGB = [math]::Round($Cluster.storageCapacityBytes / 1GB, 2)
@@ -404,20 +404,20 @@ function Get-ClusterStatus {
                 DeduplicationEnabled = ($containers | Where-Object { $_.fingerPrintOnWrite -eq "ON" }).Count
             }
         }
-        
+
         # Include networking information
         if ($IncludeNetworking) {
             $networks = Get-NTNXNetwork
-            
+
             $status.NetworkInfo = @{
                 TotalNetworks = $networks.Count
                 VLANNetworks = ($networks | Where-Object { $_.vlanId }).Count
                 NetworkNames = ($networks | Select-Object -ExpandProperty name) -join ", "
             }
         }
-        
+
         Write-Host "    ✓ Status information collected" -ForegroundColor Green
-        
+
         return $status
     }
     catch {
@@ -434,22 +434,22 @@ function Get-ClusterStatus {
 # Function to monitor cluster performance
 function Monitor-ClusterPerformance {
     param($Cluster, $AlertThresholds, $CPUThreshold, $MemoryThreshold, $StorageThreshold)
-    
+
     try {
         Write-Host "  Monitoring cluster performance: $($Cluster.name)" -ForegroundColor Cyan
-        
+
         # Get performance stats
         $stats = Get-NTNXClusterStats -ClusterUuid $Cluster.clusterUuid
-        
+
         # Calculate performance metrics
         $metrics = @{
             ClusterName = $Cluster.name
             ClusterUUID = $Cluster.clusterUuid
-            CPUUsagePercent = if ($stats.statsSpecificEntries.cpuUsagePpm) { 
-                [math]::Round($stats.statsSpecificEntries.cpuUsagePpm / 10000, 2) 
+            CPUUsagePercent = if ($stats.statsSpecificEntries.cpuUsagePpm) {
+                [math]::Round($stats.statsSpecificEntries.cpuUsagePpm / 10000, 2)
             } else { 0 }
-            MemoryUsagePercent = if ($stats.statsSpecificEntries.memoryUsagePpm) { 
-                [math]::Round($stats.statsSpecificEntries.memoryUsagePpm / 10000, 2) 
+            MemoryUsagePercent = if ($stats.statsSpecificEntries.memoryUsagePpm) {
+                [math]::Round($stats.statsSpecificEntries.memoryUsagePpm / 10000, 2)
             } else { 0 }
             StorageUsagePercent = if ($stats.statsSpecificEntries.storageUsageBytes -and $Cluster.storageCapacityBytes) {
                 [math]::Round(($stats.statsSpecificEntries.storageUsageBytes / $Cluster.storageCapacityBytes) * 100, 2)
@@ -460,32 +460,32 @@ function Monitor-ClusterPerformance {
             ThroughputWriteMBps = if ($stats.statsSpecificEntries.writeThroughputMBps) { $stats.statsSpecificEntries.writeThroughputMBps } else { 0 }
             Timestamp = Get-Date
         }
-        
+
         # Check for alerts if thresholds are enabled
         if ($AlertThresholds) {
             $alerts = @()
-            
+
             if ($metrics.CPUUsagePercent -gt $CPUThreshold) {
                 $alerts += "CPU usage ($($metrics.CPUUsagePercent)%) exceeds threshold ($CPUThreshold%)"
                 Write-Host "    ⚠ ALERT: $($alerts[-1])" -ForegroundColor Red
             }
-            
+
             if ($metrics.MemoryUsagePercent -gt $MemoryThreshold) {
                 $alerts += "Memory usage ($($metrics.MemoryUsagePercent)%) exceeds threshold ($MemoryThreshold%)"
                 Write-Host "    ⚠ ALERT: $($alerts[-1])" -ForegroundColor Red
             }
-            
+
             if ($metrics.StorageUsagePercent -gt $StorageThreshold) {
                 $alerts += "Storage usage ($($metrics.StorageUsagePercent)%) exceeds threshold ($StorageThreshold%)"
                 Write-Host "    ⚠ ALERT: $($alerts[-1])" -ForegroundColor Red
             }
-            
+
             $metrics.Alerts = $alerts
             $metrics.AlertCount = $alerts.Count
         }
-        
+
         Write-Host "    ✓ Performance metrics collected - CPU: $($metrics.CPUUsagePercent)%, Memory: $($metrics.MemoryUsagePercent)%, Storage: $($metrics.StorageUsagePercent)%" -ForegroundColor Green
-        
+
         return $metrics
     }
     catch {
@@ -502,45 +502,45 @@ function Monitor-ClusterPerformance {
 # Function to get cluster capacity information
 function Get-ClusterCapacity {
     param($Cluster)
-    
+
     try {
         Write-Host "  Analyzing cluster capacity: $($Cluster.name)" -ForegroundColor Cyan
-        
+
         # Get hosts for capacity calculation
         $hosts = Get-NTNXHost | Where-Object { $_.clusterUuid -eq $Cluster.clusterUuid }
         $containers = Get-NTNXStorageContainer | Where-Object { $_.clusterUuid -eq $Cluster.clusterUuid }
         $vms = Get-NTNXVM | Where-Object { $_.clusterUuid -eq $Cluster.clusterUuid }
-        
+
         # Calculate CPU capacity
         $totalCPUCores = ($hosts | Measure-Object -Property numCpuCores -Sum).Sum
         $allocatedCPUs = ($vms | Measure-Object -Property numVcpus -Sum).Sum
-        $cpuOvercommitRatio = if ($totalCPUCores -gt 0) { 
-            [math]::Round($allocatedCPUs / $totalCPUCores, 2) 
+        $cpuOvercommitRatio = if ($totalCPUCores -gt 0) {
+            [math]::Round($allocatedCPUs / $totalCPUCores, 2)
         } else { 0 }
-        
+
         # Calculate memory capacity
         $totalMemoryGB = [math]::Round(($hosts | Measure-Object -Property memoryCapacityBytes -Sum).Sum / 1GB, 2)
         $allocatedMemoryGB = [math]::Round(($vms | Measure-Object -Property memoryMb -Sum).Sum / 1024, 2)
         $memoryUtilizationPercent = if ($totalMemoryGB -gt 0) {
             [math]::Round(($allocatedMemoryGB / $totalMemoryGB) * 100, 2)
         } else { 0 }
-        
+
         # Calculate storage capacity
         $totalStorageGB = [math]::Round($Cluster.storageCapacityBytes / 1GB, 2)
         $usedStorageGB = [math]::Round(($containers | Measure-Object -Property usageStats.storageUsageBytes -Sum).Sum / 1GB, 2)
         $storageUtilizationPercent = if ($totalStorageGB -gt 0) {
             [math]::Round(($usedStorageGB / $totalStorageGB) * 100, 2)
         } else { 0 }
-        
+
         # Calculate growth projections (basic linear projection)
         $growthDays = 30  # Project for 30 days
         $dailyGrowthGB = 1.0  # Assume 1GB daily growth if no historical data
-        
+
         $projectedStorageGB = $usedStorageGB + ($dailyGrowthGB * $growthDays)
         $projectedUtilization = if ($totalStorageGB -gt 0) {
             [math]::Round(($projectedStorageGB / $totalStorageGB) * 100, 2)
         } else { 0 }
-        
+
         $capacity = @{
             ClusterName = $Cluster.name
             ClusterUUID = $Cluster.clusterUuid
@@ -563,8 +563,8 @@ function Get-ClusterCapacity {
                 AvailableGB = $totalStorageGB - $usedStorageGB
                 ProjectedUsageGB = $projectedStorageGB
                 ProjectedUtilizationPercent = $projectedUtilization
-                DaysToFull = if ($dailyGrowthGB -gt 0) { 
-                    [math]::Floor(($totalStorageGB - $usedStorageGB) / $dailyGrowthGB) 
+                DaysToFull = if ($dailyGrowthGB -gt 0) {
+                    [math]::Floor(($totalStorageGB - $usedStorageGB) / $dailyGrowthGB)
                 } else { "N/A" }
             }
             VMInfo = @{
@@ -573,9 +573,9 @@ function Get-ClusterCapacity {
             }
             LastUpdated = Get-Date
         }
-        
+
         Write-Host "    ✓ Capacity analysis completed" -ForegroundColor Green
-        
+
         return $capacity
     }
     catch {
@@ -592,9 +592,9 @@ function Get-ClusterCapacity {
 # Function to display results
 function Show-ClusterResults {
     param($Results, $Operation, $OutputFormat, $OutputPath)
-    
+
     Write-Host "`n=== Cluster $Operation Results ===" -ForegroundColor Cyan
-    
+
     switch ($Operation) {
         "Health" {
             if ($OutputFormat -eq "Console") {
@@ -619,7 +619,7 @@ function Show-ClusterResults {
             if ($OutputFormat -eq "Console") {
                 Write-Host "`nCluster Performance Monitoring:" -ForegroundColor Green
                 $Results | Format-Table ClusterName, CPUUsagePercent, MemoryUsagePercent, StorageUsagePercent, IOPSRead, IOPSWrite -AutoSize
-                
+
                 # Show alerts if any
                 $alertResults = $Results | Where-Object { $_.AlertCount -gt 0 }
                 if ($alertResults) {
@@ -653,7 +653,7 @@ function Show-ClusterResults {
             }
         }
     }
-    
+
     # Export results if requested
     if ($OutputFormat -ne "Console") {
         switch ($OutputFormat) {
@@ -686,32 +686,32 @@ function Show-ClusterResults {
 # Function for continuous monitoring
 function Start-ContinuousMonitoring {
     param($Clusters, $AlertThresholds, $CPUThreshold, $MemoryThreshold, $StorageThreshold, $RefreshInterval)
-    
+
     Write-Host "`n=== Starting Continuous Monitoring ===" -ForegroundColor Cyan
     Write-Host "Monitoring $($Clusters.Count) cluster(s) with $RefreshInterval second refresh interval" -ForegroundColor White
     Write-Host "Press Ctrl+C to stop monitoring" -ForegroundColor Yellow
     Write-Host ""
-    
+
     try {
         while ($true) {
             $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
             Write-Host "[$timestamp] Collecting performance metrics..." -ForegroundColor Gray
-            
+
             $results = @()
             foreach ($cluster in $Clusters) {
                 $metrics = Monitor-ClusterPerformance -Cluster $cluster -AlertThresholds:$AlertThresholds -CPUThreshold $CPUThreshold -MemoryThreshold $MemoryThreshold -StorageThreshold $StorageThreshold
                 $results += $metrics
             }
-            
+
             # Display current status
             Clear-Host
             Write-Host "=== Nutanix Cluster Continuous Monitoring ===" -ForegroundColor Cyan
             Write-Host "Last Update: $timestamp" -ForegroundColor White
             Write-Host "Refresh Interval: $RefreshInterval seconds" -ForegroundColor White
             Write-Host ""
-            
+
             Show-ClusterResults -Results $results -Operation "Monitor" -OutputFormat "Console"
-            
+
             Start-Sleep -Seconds $RefreshInterval
         }
     }
@@ -723,33 +723,33 @@ function Start-ContinuousMonitoring {
 # Main execution
 try {
     Write-Host "=== Nutanix Cluster Operations ===" -ForegroundColor Cyan
-    
+
     # Determine target server
     $targetServer = if ($PrismCentral) { $PrismCentral } else { $PrismElement }
     $serverType = if ($PrismCentral) { "Prism Central" } else { "Prism Element" }
-    
+
     if (-not $targetServer) {
         throw "Either PrismCentral or PrismElement parameter must be specified"
     }
-    
+
     Write-Host "Target $serverType`: $targetServer" -ForegroundColor White
     Write-Host "Operation: $Operation" -ForegroundColor White
     Write-Host ""
-    
+
     # Check and install Nutanix PowerShell SDK
     if (-not (Test-NutanixSDKInstallation)) {
         throw "Nutanix PowerShell SDK installation failed"
     }
-    
+
     # Connect to Nutanix
     $connection = Connect-ToNutanix -Server $targetServer -ServerType $serverType
-    
+
     # Get target clusters
     $targetClusters = Get-TargetClusters -ClusterName $ClusterName -ClusterNames $ClusterNames -ClusterUUID $ClusterUUID
-    
+
     # Perform operations
     $results = @()
-    
+
     foreach ($cluster in $targetClusters) {
         switch ($Operation) {
             "Health" {
@@ -798,12 +798,12 @@ try {
             }
         }
     }
-    
+
     # Display results
     if (-not $ContinuousMonitoring) {
         Show-ClusterResults -Results $results -Operation $Operation -OutputFormat $OutputFormat -OutputPath $OutputPath
     }
-    
+
     Write-Host "`n=== Cluster Operations Completed ===" -ForegroundColor Green
 }
 catch {

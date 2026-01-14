@@ -10,7 +10,7 @@
     - DNS server configuration
     - Network security group association
     - Encryption and VM protection options
-    
+
     The script uses the Azure CLI command: az network vnet create
 
 .PARAMETER Name
@@ -82,12 +82,12 @@
 
 .EXAMPLE
     .\az-cli-create-virtual-network.ps1 -Name "MyVNet" -ResourceGroup "MyResourceGroup" -Location "eastus" -AddressPrefixes "10.0.0.0/16" -SubnetName "default" -SubnetPrefixes "10.0.1.0/24"
-    
+
     Creates a basic Virtual Network with a single subnet.
 
 .EXAMPLE
     .\az-cli-create-virtual-network.ps1 -Name "MyVNet" -ResourceGroup "MyResourceGroup" -Location "eastus" -AddressPrefixes "10.0.0.0/16" -SubnetName "default" -SubnetPrefixes "10.0.1.0/24" -DnsServers "8.8.8.8 8.8.4.4" -EnableDdosProtection -Tags "environment=production team=networking"
-    
+
     Creates a Virtual Network with custom DNS servers, DDoS protection, and tags.
 
 .LINK
@@ -228,35 +228,35 @@ try {
     Write-Host "Creating Virtual Network '$Name' in resource group '$ResourceGroup'..." -ForegroundColor Yellow
     Write-Host "  Address Space: $AddressPrefixes" -ForegroundColor Gray
     Write-Host "  Subnet: $SubnetName ($SubnetPrefixes)" -ForegroundColor Gray
-    
+
     # Execute the Azure CLI command
     $result = & az @azParams --output json
-    
+
     if ($LASTEXITCODE -eq 0 -and -not $NoWait) {
         $vnet = $result | ConvertFrom-Json
-        
+
         Write-Host "✓ Virtual Network created successfully!" -ForegroundColor Green
         Write-Host "Virtual Network Details:" -ForegroundColor Cyan
         Write-Host "  Name: $($vnet.name)" -ForegroundColor White
         Write-Host "  Resource Group: $($vnet.resourceGroup)" -ForegroundColor White
         Write-Host "  Location: $($vnet.location)" -ForegroundColor White
         Write-Host "  Address Space: $($vnet.addressSpace.addressPrefixes -join ', ')" -ForegroundColor White
-        
+
         if ($vnet.subnets -and $vnet.subnets.Count -gt 0) {
             Write-Host "Subnets:" -ForegroundColor Cyan
             foreach ($subnet in $vnet.subnets) {
                 Write-Host "  - $($subnet.name): $($subnet.addressPrefix)" -ForegroundColor White
             }
         }
-        
+
         if ($vnet.dhcpOptions -and $vnet.dhcpOptions.dnsServers) {
             Write-Host "DNS Servers: $($vnet.dhcpOptions.dnsServers -join ', ')" -ForegroundColor White
         }
-        
+
         if ($vnet.enableDdosProtection) {
             Write-Host "DDoS Protection: Enabled" -ForegroundColor Green
         }
-        
+
     } elseif ($NoWait) {
         Write-Host "✓ Virtual Network creation initiated (no-wait mode)" -ForegroundColor Green
         Write-Host "Use 'az network vnet show --name $Name --resource-group $ResourceGroup' to check status" -ForegroundColor Yellow

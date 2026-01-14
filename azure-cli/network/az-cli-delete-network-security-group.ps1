@@ -6,7 +6,7 @@
     This script deletes an Azure Network Security Group using the Azure CLI.
     Includes safety checks to verify the NSG is not associated with any resources
     and provides confirmation prompts to prevent accidental deletion.
-    
+
     The script uses the Azure CLI command: az network nsg delete
 
 .PARAMETER NSGName
@@ -23,17 +23,17 @@
 
 .EXAMPLE
     .\az-cli-delete-network-security-group.ps1 -NSGName "web-nsg" -ResourceGroup "prod-rg"
-    
+
     Deletes a Network Security Group with safety checks and confirmation.
 
 .EXAMPLE
     .\az-cli-delete-network-security-group.ps1 -NSGName "web-nsg" -ResourceGroup "prod-rg" -Force
-    
+
     Forces deletion without confirmation prompts but still checks associations.
 
 .EXAMPLE
     .\az-cli-delete-network-security-group.ps1 -NSGName "web-nsg" -ResourceGroup "prod-rg" -Force -SkipAssociationCheck
-    
+
     Forces deletion without any safety checks or confirmations.
 
 .NOTES
@@ -90,7 +90,7 @@ try {
     if (-not $nsgCheck) {
         throw "Network Security Group '$NSGName' not found in resource group '$ResourceGroup'"
     }
-    
+
     $nsgInfo = $nsgCheck | ConvertFrom-Json
     Write-Host "✓ Network Security Group '$NSGName' found" -ForegroundColor Green
 
@@ -105,7 +105,7 @@ try {
     # Check for associations unless skipped
     if (-not $SkipAssociationCheck) {
         Write-Host "Checking for resource associations..." -ForegroundColor Yellow
-        
+
         $hasAssociations = $false
         $associationDetails = @()
 
@@ -136,7 +136,7 @@ try {
             $associationDetails | ForEach-Object { Write-Host $_ -ForegroundColor White }
             Write-Host "" -ForegroundColor White
             Write-Host "Deleting this NSG will remove network security from these resources!" -ForegroundColor Red
-            
+
             if (-not $Force) {
                 Write-Host "" -ForegroundColor White
                 $confirmation = Read-Host "Do you want to continue with deletion despite associations? (yes/no)"
@@ -159,7 +159,7 @@ try {
         Write-Host "⚠ WARNING: This will permanently delete the Network Security Group '$NSGName'" -ForegroundColor Red
         Write-Host "This action cannot be undone!" -ForegroundColor Red
         Write-Host "" -ForegroundColor White
-        
+
         $confirmation = Read-Host "Are you sure you want to delete this NSG? (yes/no)"
         if ($confirmation -ne "yes") {
             Write-Host "Deletion cancelled by user." -ForegroundColor Yellow
@@ -181,7 +181,7 @@ try {
 
     # Execute Azure CLI command
     $result = & az @azParams 2>&1
-    
+
     if ($LASTEXITCODE -eq 0) {
         Write-Host "✓ Network Security Group deleted successfully!" -ForegroundColor Green
         Write-Host "NSG '$NSGName' has been permanently removed from resource group '$ResourceGroup'" -ForegroundColor White

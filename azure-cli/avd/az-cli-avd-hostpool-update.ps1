@@ -211,20 +211,20 @@ try {
     if (-not $azVersion) {
         throw "Azure CLI is not installed or not available in PATH"
     }
-    
+
     Write-Host "Checking Azure CLI login status..." -ForegroundColor Cyan
     $account = az account show --output json 2>$null | ConvertFrom-Json
     if (-not $account) {
         throw "Not logged in to Azure CLI. Please run 'az login' first"
     }
     Write-Host "Logged in as: $($account.user.name)" -ForegroundColor Green
-    
+
     Write-Host "Checking if Host Pool exists..." -ForegroundColor Cyan
     $existingHostPool = az desktopvirtualization hostpool show --name $Name --resource-group $ResourceGroup --output json 2>$null
     if (-not $existingHostPool) {
         throw "Host Pool '$Name' not found in resource group '$ResourceGroup'"
     }
-    
+
     $currentHostPool = $existingHostPool | ConvertFrom-Json
     Write-Host "Found Host Pool: $($currentHostPool.name)" -ForegroundColor Yellow
     Write-Host "  Current Type: $($currentHostPool.hostPoolType)" -ForegroundColor Yellow
@@ -232,12 +232,12 @@ try {
     Write-Host "  Current Max Session Limit: $($currentHostPool.maxSessionLimit)" -ForegroundColor Yellow
     Write-Host "  Current Description: $($currentHostPool.description)" -ForegroundColor Yellow
     Write-Host "  Current Friendly Name: $($currentHostPool.friendlyName)" -ForegroundColor Yellow
-    
+
     # Check if there are any updates to make
     $hasUpdates = $false
-    
+
     Write-Host "Updating Azure Virtual Desktop Host Pool..." -ForegroundColor Cyan
-    
+
     # Build base command
     $updateParams = @(
         'desktopvirtualization', 'hostpool', 'update',
@@ -245,152 +245,152 @@ try {
         '--resource-group', $ResourceGroup,
         '--output', 'json'
     )
-    
+
     # Add optional parameters if provided
     if ($Add) {
         $updateParams += '--add', $Add
         $hasUpdates = $true
         Write-Host "  Will add: $Add" -ForegroundColor Green
     }
-    
+
     if ($CustomRdpProperty -and $CustomRdpProperty -ne $currentHostPool.customRdpProperty) {
         $updateParams += '--custom-rdp-property', $CustomRdpProperty
         $hasUpdates = $true
         Write-Host "  Will update custom RDP property to: $CustomRdpProperty" -ForegroundColor Green
     }
-    
+
     if ($Description -and $Description -ne $currentHostPool.description) {
         $updateParams += '--description', $Description
         $hasUpdates = $true
         Write-Host "  Will update description to: $Description" -ForegroundColor Green
     }
-    
+
     if ($ForceString) {
         $updateParams += '--force-string', $ForceString
         $hasUpdates = $true
         Write-Host "  Will apply force-string: $ForceString" -ForegroundColor Green
     }
-    
+
     if ($FriendlyName -and $FriendlyName -ne $currentHostPool.friendlyName) {
         $updateParams += '--friendly-name', $FriendlyName
         $hasUpdates = $true
         Write-Host "  Will update friendly name to: $FriendlyName" -ForegroundColor Green
     }
-    
+
     if ($IDs) {
         $updateParams += '--ids', $IDs
         $hasUpdates = $true
         Write-Host "  Will use resource IDs: $IDs" -ForegroundColor Green
     }
-    
+
     if ($LoadBalancerType -and $LoadBalancerType -ne $currentHostPool.loadBalancerType) {
         $updateParams += '--load-balancer-type', $LoadBalancerType
         $hasUpdates = $true
         Write-Host "  Will update load balancer type to: $LoadBalancerType" -ForegroundColor Green
     }
-    
+
     if ($MaxSessionLimit -and $MaxSessionLimit -ne $currentHostPool.maxSessionLimit) {
         $updateParams += '--max-session-limit', $MaxSessionLimit
         $hasUpdates = $true
         Write-Host "  Will update max session limit to: $MaxSessionLimit" -ForegroundColor Green
     }
-    
+
     if ($PersonalDesktopAssignmentType -and $PersonalDesktopAssignmentType -ne $currentHostPool.personalDesktopAssignmentType) {
         $updateParams += '--personal-desktop-assignment-type', $PersonalDesktopAssignmentType
         $hasUpdates = $true
         Write-Host "  Will update personal desktop assignment type to: $PersonalDesktopAssignmentType" -ForegroundColor Green
     }
-    
+
     if ($PreferredAppGroupType -and $PreferredAppGroupType -ne $currentHostPool.preferredAppGroupType) {
         $updateParams += '--preferred-app-group-type', $PreferredAppGroupType
         $hasUpdates = $true
         Write-Host "  Will update preferred app group type to: $PreferredAppGroupType" -ForegroundColor Green
     }
-    
+
     if ($RegistrationInfo) {
         $updateParams += '--registration-info', $RegistrationInfo
         $hasUpdates = $true
         Write-Host "  Will update registration info: $RegistrationInfo" -ForegroundColor Green
     }
-    
+
     if ($Remove) {
         $updateParams += '--remove', $Remove
         $hasUpdates = $true
         Write-Host "  Will remove: $Remove" -ForegroundColor Green
     }
-    
+
     if ($Ring) {
         $updateParams += '--ring', $Ring
         $hasUpdates = $true
         Write-Host "  Will update ring to: $Ring" -ForegroundColor Green
     }
-    
+
     if ($Set) {
         $updateParams += '--set', $Set
         $hasUpdates = $true
         Write-Host "  Will set: $Set" -ForegroundColor Green
     }
-    
+
     if ($SsoClientId) {
         $updateParams += '--sso-client-id', $SsoClientId
         $hasUpdates = $true
         Write-Host "  Will update SSO client ID to: $SsoClientId" -ForegroundColor Green
     }
-    
+
     if ($SsoClientSecretKeyVaultPath) {
         $updateParams += '--sso-client-secret-key-vault-path', $SsoClientSecretKeyVaultPath
         $hasUpdates = $true
         Write-Host "  Will update SSO client secret key vault path to: $SsoClientSecretKeyVaultPath" -ForegroundColor Green
     }
-    
+
     if ($SsoSecretType) {
         $updateParams += '--sso-secret-type', $SsoSecretType
         $hasUpdates = $true
         Write-Host "  Will update SSO secret type to: $SsoSecretType" -ForegroundColor Green
     }
-    
+
     if ($SsoAdfsAuthority) {
         $updateParams += '--ssoadfs-authority', $SsoAdfsAuthority
         $hasUpdates = $true
         Write-Host "  Will update SSO ADFS authority to: $SsoAdfsAuthority" -ForegroundColor Green
     }
-    
+
     if ($StartVmOnConnect) {
         $updateParams += '--start-vm-on-connect', $StartVmOnConnect
         $hasUpdates = $true
         Write-Host "  Will update start VM on connect to: $StartVmOnConnect" -ForegroundColor Green
     }
-    
+
     if ($Tags) {
         $updateParams += '--tags', $Tags
         $hasUpdates = $true
         Write-Host "  Will update tags to: $Tags" -ForegroundColor Green
     }
-    
+
     if ($ValidationEnvironment) {
         $updateParams += '--validation-environment', $ValidationEnvironment
         $hasUpdates = $true
         Write-Host "  Will update validation environment to: $ValidationEnvironment" -ForegroundColor Green
     }
-    
+
     if ($VmTemplate) {
         $updateParams += '--vm-template', $VmTemplate
         $hasUpdates = $true
         Write-Host "  Will update VM template to: $VmTemplate" -ForegroundColor Green
     }
-    
+
     if (-not $hasUpdates) {
         Write-Host "No updates specified or no changes detected" -ForegroundColor Yellow
         exit 0
     }
-    
+
     $result = & az @updateParams
     if ($LASTEXITCODE -ne 0) {
         throw "Azure CLI command failed with exit code: $LASTEXITCODE"
     }
-    
+
     $updatedHostPool = $result | ConvertFrom-Json
-    
+
     Write-Host "Azure Virtual Desktop Host Pool updated successfully:" -ForegroundColor Green
     Write-Host "  Name: $($updatedHostPool.name)" -ForegroundColor White
     Write-Host "  Resource Group: $($updatedHostPool.resourceGroup)" -ForegroundColor White
@@ -401,7 +401,7 @@ try {
     Write-Host "  Friendly Name: $($updatedHostPool.friendlyName)" -ForegroundColor White
     Write-Host "  Location: $($updatedHostPool.location)" -ForegroundColor White
     Write-Host "  ID: $($updatedHostPool.id)" -ForegroundColor White
-    
+
     return $updatedHostPool
 } catch {
     Write-Error "Failed to update Azure Virtual Desktop Host Pool: $_"

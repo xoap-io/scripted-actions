@@ -3,8 +3,8 @@
     Create a Google Cloud VM instance using Google Cloud CLI (gcloud).
 
 .DESCRIPTION
-    This script creates a Google Cloud VM instance with customizable options like machine type, 
-    image family, zone, and more using parameters. The script validates inputs and provides 
+    This script creates a Google Cloud VM instance with customizable options like machine type,
+    image family, zone, and more using parameters. The script validates inputs and provides
     robust error handling for reliable automation.
 
 .PARAMETER Project
@@ -69,7 +69,7 @@
     Prerequisites:
     - Google Cloud CLI (gcloud) must be installed and authenticated
     - User must have compute.instances.create permission in the target project
-    
+
     Author: XOAP
     Date: 2025-08-06
     Version: 2.0
@@ -154,7 +154,7 @@ function Test-GCloudAuth {
 # Function to build gcloud command arguments
 function Build-GCloudArguments {
     param($Parameters)
-    
+
     $arguments = @(
         'compute', 'instances', 'create', $Parameters.InstanceName,
         '--zone', $Parameters.Zone,
@@ -195,7 +195,7 @@ function Build-GCloudArguments {
 
 try {
     Write-Output "Starting Google Cloud VM creation process..."
-    
+
     # Test gcloud authentication
     Test-GCloudAuth
 
@@ -228,16 +228,16 @@ try {
 
     # Display the command for transparency
     Write-Output "Executing: gcloud $($arguments -join ' ')"
-    
+
     # Execute the gcloud command
     $result = & gcloud @arguments 2>&1
-    
+
     if ($LASTEXITCODE -eq 0) {
         Write-Output "✅ Virtual machine '$InstanceName' created successfully in project '$Project'."
         Write-Output "Zone: $Zone"
         Write-Output "Machine Type: $MachineType"
         Write-Output "Boot Disk Size: $DiskSize GB"
-        
+
         # Display additional configuration if provided
         if ($Tags) { Write-Output "Tags: $Tags" }
         if ($Labels) { Write-Output "Labels: $Labels" }

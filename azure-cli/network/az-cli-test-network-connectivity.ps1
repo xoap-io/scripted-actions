@@ -6,7 +6,7 @@
     This script performs comprehensive network connectivity tests using Azure Network Watcher.
     Tests connectivity between Azure resources, validates security group rules, and analyzes routing.
     Provides detailed diagnostics for troubleshooting network connectivity issues.
-    
+
     The script uses various Azure CLI Network Watcher commands for testing.
 
 .PARAMETER SourceResourceId
@@ -56,12 +56,12 @@
 
 .EXAMPLE
     .\az-cli-test-network-connectivity.ps1 -SourceResourceId "/subscriptions/.../vm1" -DestinationAddress "www.google.com" -DestinationPort 443 -Protocol TCP -TestType "Connectivity"
-    
+
     Tests connectivity from a VM to an external website.
 
 .EXAMPLE
     .\az-cli-test-network-connectivity.ps1 -TestType "IPFlow" -VMName "web-vm" -NICName "web-vm-nic" -Direction "Inbound" -Protocol TCP -LocalEndpoint "10.0.1.4:80" -RemoteEndpoint "0.0.0.0:*" -ResourceGroup "prod-rg"
-    
+
     Tests if inbound HTTP traffic is allowed to a VM.
 
 .NOTES
@@ -173,7 +173,7 @@ try {
     Write-Host "Checking Network Watcher availability..." -ForegroundColor Yellow
     $nwList = az network watcher list 2>$null | ConvertFrom-Json
     $networkWatcher = $nwList | Where-Object { $_.location -eq $Location.Replace(' ', '').ToLower() }
-    
+
     if (-not $networkWatcher) {
         throw "Network Watcher not found in $Location. Please enable Network Watcher first."
     }
@@ -183,7 +183,7 @@ try {
     function Test-NetworkConnectivity {
         Write-Host "🔗 Testing Network Connectivity" -ForegroundColor Yellow
         Write-Host "==============================" -ForegroundColor Yellow
-        
+
         if (-not $SourceResourceId) {
             throw "Source resource ID is required for connectivity testing"
         }
@@ -212,10 +212,10 @@ try {
         Write-Host "Running connectivity test..." -ForegroundColor Yellow
 
         $result = & az @azParams 2>&1 | ConvertFrom-Json
-        
+
         if ($LASTEXITCODE -eq 0) {
             $testResults.Results.Connectivity = $result
-            
+
             Write-Host "Connectivity Test Results:" -ForegroundColor Cyan
             Write-Host "  Status: $($result.connectionStatus)" -ForegroundColor $(if ($result.connectionStatus -eq "Reachable") { "Green" } else { "Red" })
             Write-Host "  Average Latency: $($result.avgLatencyInMs) ms" -ForegroundColor White
@@ -223,7 +223,7 @@ try {
             Write-Host "  Max Latency: $($result.maxLatencyInMs) ms" -ForegroundColor White
             Write-Host "  Probes Sent: $($result.probesSent)" -ForegroundColor White
             Write-Host "  Probes Failed: $($result.probesFailed)" -ForegroundColor White
-            
+
             if ($result.hops) {
                 Write-Host "  Network Hops:" -ForegroundColor Blue
                 foreach ($hop in $result.hops) {
@@ -246,7 +246,7 @@ try {
     function Test-IPFlow {
         Write-Host "📊 Testing IP Flow Verification" -ForegroundColor Yellow
         Write-Host "===============================" -ForegroundColor Yellow
-        
+
         if (-not $VMName -or -not $LocalEndpoint -or -not $RemoteEndpoint) {
             throw "VM name, local endpoint, and remote endpoint are required for IP flow testing"
         }
@@ -273,10 +273,10 @@ try {
         Write-Host "Running IP flow verification..." -ForegroundColor Yellow
 
         $result = & az @azParams 2>&1 | ConvertFrom-Json
-        
+
         if ($LASTEXITCODE -eq 0) {
             $testResults.Results.IPFlow = $result
-            
+
             Write-Host "IP Flow Verification Results:" -ForegroundColor Cyan
             Write-Host "  Access: $($result.access)" -ForegroundColor $(if ($result.access -eq "Allow") { "Green" } else { "Red" })
             Write-Host "  Rule Name: $($result.ruleName)" -ForegroundColor White
@@ -294,7 +294,7 @@ try {
     function Test-NextHop {
         Write-Host "🧭 Testing Next Hop Analysis" -ForegroundColor Yellow
         Write-Host "============================" -ForegroundColor Yellow
-        
+
         if (-not $VMName -or -not $DestinationAddress) {
             throw "VM name and destination address are required for next hop testing"
         }
@@ -315,10 +315,10 @@ try {
         Write-Host "Analyzing next hop..." -ForegroundColor Yellow
 
         $result = & az @azParams 2>&1 | ConvertFrom-Json
-        
+
         if ($LASTEXITCODE -eq 0) {
             $testResults.Results.NextHop = $result
-            
+
             Write-Host "Next Hop Analysis Results:" -ForegroundColor Cyan
             Write-Host "  Next Hop Type: $($result.nextHopType)" -ForegroundColor White
             Write-Host "  Next Hop IP: $($result.nextHopIpAddress)" -ForegroundColor White
@@ -332,7 +332,7 @@ try {
     function Show-SecurityGroupView {
         Write-Host "🛡️ Analyzing Security Group View" -ForegroundColor Yellow
         Write-Host "================================" -ForegroundColor Yellow
-        
+
         if (-not $VMName) {
             throw "VM name is required for security group view"
         }
@@ -347,26 +347,26 @@ try {
         Write-Host "Retrieving security group view..." -ForegroundColor Yellow
 
         $result = & az @azParams 2>&1 | ConvertFrom-Json
-        
+
         if ($LASTEXITCODE -eq 0) {
             $testResults.Results.SecurityGroupView = $result
-            
+
             Write-Host "Security Group View Results:" -ForegroundColor Cyan
-            
+
             if ($result.networkInterfaces) {
                 foreach ($nic in $result.networkInterfaces) {
                     Write-Host "  Network Interface: $($nic.id -split '/')[-1]" -ForegroundColor Blue
-                    
+
                     if ($nic.securityRuleAssociations.networkInterfaceAssociation) {
                         $nsgAssoc = $nic.securityRuleAssociations.networkInterfaceAssociation
                         Write-Host "    Associated NSG: $($nsgAssoc.id -split '/')[-1]" -ForegroundColor White
                     }
-                    
+
                     if ($nic.securityRuleAssociations.subnetAssociation) {
                         $subnetAssoc = $nic.securityRuleAssociations.subnetAssociation
                         Write-Host "    Subnet NSG: $($subnetAssoc.id -split '/')[-1]" -ForegroundColor White
                     }
-                    
+
                     if ($nic.securityRuleAssociations.effectiveSecurityRules) {
                         Write-Host "    Effective Security Rules: $($nic.securityRuleAssociations.effectiveSecurityRules.Count)" -ForegroundColor White
                     }
@@ -381,9 +381,9 @@ try {
     function Show-NetworkTopology {
         Write-Host "🌐 Analyzing Network Topology" -ForegroundColor Yellow
         Write-Host "=============================" -ForegroundColor Yellow
-        
+
         $azParams = @('network', 'watcher', 'show-topology')
-        
+
         if ($ResourceGroup -and $ResourceGroup -ne "NetworkWatcherRG") {
             $azParams += '--resource-group', $ResourceGroup
             Write-Host "Resource Group: $ResourceGroup" -ForegroundColor White
@@ -393,19 +393,19 @@ try {
         Write-Host "Retrieving network topology..." -ForegroundColor Yellow
 
         $result = & az @azParams 2>&1 | ConvertFrom-Json
-        
+
         if ($LASTEXITCODE -eq 0) {
             $testResults.Results.Topology = $result
-            
+
             Write-Host "Network Topology Results:" -ForegroundColor Cyan
             Write-Host "  Resources found: $($result.resources.Count)" -ForegroundColor White
-            
+
             $resourceCounts = @{}
             foreach ($resource in $result.resources) {
                 $resourceType = ($resource.id -split '/')[6]
                 $resourceCounts[$resourceType] = ($resourceCounts[$resourceType] ?? 0) + 1
             }
-            
+
             Write-Host "  Resource breakdown:" -ForegroundColor Blue
             foreach ($type in $resourceCounts.Keys) {
                 Write-Host "    $type`: $($resourceCounts[$type])" -ForegroundColor White

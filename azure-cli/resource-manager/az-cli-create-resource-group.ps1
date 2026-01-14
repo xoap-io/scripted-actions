@@ -6,7 +6,7 @@
     This script creates a new Azure Resource Group using the Azure CLI with comprehensive validation and error handling.
     Includes checks for existing resource groups, proper naming conventions, and detailed output.
     Supports managed resource groups and custom tagging for better resource organization.
-    
+
     The script uses the Azure CLI command: az group create
 
 .PARAMETER ResourceGroup
@@ -26,12 +26,12 @@
 
 .EXAMPLE
     .\az-cli-create-resource-group.ps1 -ResourceGroup "prod-rg" -Location "East US"
-    
+
     Creates a basic Resource Group in East US.
 
 .EXAMPLE
     .\az-cli-create-resource-group.ps1 -ResourceGroup "managed-rg" -Location "West US 2" -ManagedBy "/subscriptions/.../resourceGroups/mgmt-rg" -Tags '{"Environment":"Production","Owner":"TeamA"}'
-    
+
     Creates a managed Resource Group with custom tags.
 
 .NOTES
@@ -97,15 +97,15 @@ try {
     # Check if Resource Group already exists
     Write-Host "Checking if Resource Group already exists..." -ForegroundColor Yellow
     $existingRG = az group show --name $ResourceGroup 2>$null
-    
+
     if ($existingRG) {
         $rgInfo = $existingRG | ConvertFrom-Json
-        
+
         if ($rgInfo.location.Replace(' ', '').ToLower() -eq $Location.Replace(' ', '').ToLower()) {
             if ($Force) {
                 Write-Host "ℹ Resource Group '$ResourceGroup' already exists in $Location" -ForegroundColor Blue
                 Write-Host "Using existing Resource Group due to -Force parameter" -ForegroundColor Blue
-                
+
                 # Display existing RG details
                 Write-Host "Existing Resource Group Details:" -ForegroundColor Cyan
                 Write-Host "  Name: $($rgInfo.name)" -ForegroundColor White
@@ -117,7 +117,7 @@ try {
                 if ($rgInfo.tags) {
                     Write-Host "  Tags: $($rgInfo.tags | ConvertTo-Json -Compress)" -ForegroundColor White
                 }
-                
+
                 Write-Host "✓ Using existing Resource Group successfully!" -ForegroundColor Green
                 exit 0
             } else {
@@ -133,11 +133,11 @@ try {
     if ($ResourceGroup -notmatch '^[\w\-\.\(\)]+$') {
         throw "Resource Group name '$ResourceGroup' contains invalid characters. Use only letters, numbers, periods, underscores, hyphens, and parentheses."
     }
-    
+
     if ($ResourceGroup.Length -gt 90) {
         throw "Resource Group name '$ResourceGroup' is too long. Maximum length is 90 characters."
     }
-    
+
     Write-Host "✓ Resource Group name format validated" -ForegroundColor Green
 
     # Build Azure CLI command parameters
@@ -182,28 +182,28 @@ try {
 
     # Execute Azure CLI command
     $result = & az @azParams 2>&1
-    
+
     if ($LASTEXITCODE -eq 0) {
         $rgResult = $result | ConvertFrom-Json
-        
+
         Write-Host "✓ Resource Group created successfully!" -ForegroundColor Green
         Write-Host "Resource Group Details:" -ForegroundColor Cyan
         Write-Host "  Name: $($rgResult.name)" -ForegroundColor White
         Write-Host "  Resource ID: $($rgResult.id)" -ForegroundColor White
         Write-Host "  Location: $($rgResult.location)" -ForegroundColor White
         Write-Host "  Provisioning State: $($rgResult.properties.provisioningState)" -ForegroundColor White
-        
+
         if ($rgResult.managedBy) {
             Write-Host "  Managed By: $($rgResult.managedBy)" -ForegroundColor White
         }
-        
+
         if ($rgResult.tags) {
             Write-Host "  Tags:" -ForegroundColor White
             foreach ($tag in $rgResult.tags.PSObject.Properties) {
                 Write-Host "    $($tag.Name): $($tag.Value)" -ForegroundColor White
             }
         }
-        
+
         Write-Host "" -ForegroundColor White
         Write-Host "Next steps:" -ForegroundColor Yellow
         Write-Host "• Deploy resources to this Resource Group" -ForegroundColor White

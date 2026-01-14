@@ -3,7 +3,7 @@
     Remove Azure VM and all related resources created for Azure Stack HCI testing.
 
 .DESCRIPTION
-    This script removes a Windows Server virtual machine and all related Azure resources 
+    This script removes a Windows Server virtual machine and all related Azure resources
     that were created for Azure Stack HCI nested virtualization testing. This includes
     the VM, network interface, public IP, network security group, virtual network, and
     optionally the resource group.
@@ -61,7 +61,7 @@
 
 .NOTES
     Requires Azure PowerShell module (Az) to be installed and authenticated.
-    
+
     WARNING: This script will permanently delete Azure resources. Ensure you have backups
     of any important data before running this script.
 
@@ -122,7 +122,7 @@ function Write-ColorOutput {
         [string]$Message,
         [string]$Color = 'White'
     )
-    
+
     if ($DryRun) {
         Write-Host "[DRY RUN] $Message" -ForegroundColor Cyan
     } else {
@@ -153,25 +153,25 @@ function Test-ResourceExists {
         [string]$ResourceName,
         [string]$ResourceGroupName
     )
-    
+
     try {
         switch ($ResourceType) {
-            "VM" { 
+            "VM" {
                 $resource = Get-AzVM -ResourceGroupName $ResourceGroupName -Name $ResourceName -ErrorAction SilentlyContinue
             }
-            "NetworkInterface" { 
+            "NetworkInterface" {
                 $resource = Get-AzNetworkInterface -ResourceGroupName $ResourceGroupName -Name $ResourceName -ErrorAction SilentlyContinue
             }
-            "PublicIP" { 
+            "PublicIP" {
                 $resource = Get-AzPublicIpAddress -ResourceGroupName $ResourceGroupName -Name $ResourceName -ErrorAction SilentlyContinue
             }
-            "NetworkSecurityGroup" { 
+            "NetworkSecurityGroup" {
                 $resource = Get-AzNetworkSecurityGroup -ResourceGroupName $ResourceGroupName -Name $ResourceName -ErrorAction SilentlyContinue
             }
-            "VirtualNetwork" { 
+            "VirtualNetwork" {
                 $resource = Get-AzVirtualNetwork -ResourceGroupName $ResourceGroupName -Name $ResourceName -ErrorAction SilentlyContinue
             }
-            "ResourceGroup" { 
+            "ResourceGroup" {
                 $resource = Get-AzResourceGroup -Name $ResourceGroupName -ErrorAction SilentlyContinue
             }
         }
@@ -188,11 +188,11 @@ function Confirm-Deletion {
         [string]$ResourceType,
         [string]$ResourceName
     )
-    
+
     if ($Force -or $DryRun) {
         return $true
     }
-    
+
     $confirmation = Read-Host "Are you sure you want to delete $ResourceType '$ResourceName'? (y/N)"
     return $confirmation -eq 'y' -or $confirmation -eq 'Y'
 }
@@ -202,7 +202,7 @@ try {
     Write-ColorOutput "Starting Azure Stack HCI cleanup script" -Color Cyan
     Write-ColorOutput "Target Resource Group: $ResourceGroup" -Color White
     Write-ColorOutput "Target VM: $VmName" -Color White
-    
+
     if ($DryRun) {
         Write-ColorOutput "DRY RUN MODE - No actual resources will be deleted" -Color Yellow
     } elseif (-not $Force) {
@@ -216,7 +216,7 @@ try {
 
     # Check if resource group exists
     Write-ColorOutput "Checking if resource group '$ResourceGroup' exists..." -Color Yellow
-    
+
     if (-not (Test-ResourceExists -ResourceType "ResourceGroup" -ResourceName $ResourceGroup -ResourceGroupName $ResourceGroup)) {
         Write-ColorOutput "Resource group '$ResourceGroup' does not exist. Nothing to clean up." -Color Green
         exit 0
@@ -226,7 +226,7 @@ try {
 
     # 1. Remove Virtual Machine
     Write-ColorOutput "`n=== Removing Virtual Machine ===" -Color Cyan
-    
+
     if (Test-ResourceExists -ResourceType "VM" -ResourceName $VmName -ResourceGroupName $ResourceGroup) {
         if ($DryRun) {
             Write-ColorOutput "Would delete VM '$VmName'" -Color Cyan
@@ -248,7 +248,7 @@ try {
 
     # 2. Remove Network Interface
     Write-ColorOutput "`n=== Removing Network Interface ===" -Color Cyan
-    
+
     if (Test-ResourceExists -ResourceType "NetworkInterface" -ResourceName $NICName -ResourceGroupName $ResourceGroup) {
         if ($DryRun) {
             Write-ColorOutput "Would delete Network Interface '$NICName'" -Color Cyan
@@ -270,7 +270,7 @@ try {
 
     # 3. Remove Public IP
     Write-ColorOutput "`n=== Removing Public IP Address ===" -Color Cyan
-    
+
     if (Test-ResourceExists -ResourceType "PublicIP" -ResourceName $PublicIPName -ResourceGroupName $ResourceGroup) {
         if ($DryRun) {
             Write-ColorOutput "Would delete Public IP '$PublicIPName'" -Color Cyan
@@ -292,7 +292,7 @@ try {
 
     # 4. Remove Network Security Group
     Write-ColorOutput "`n=== Removing Network Security Group ===" -Color Cyan
-    
+
     if (Test-ResourceExists -ResourceType "NetworkSecurityGroup" -ResourceName $NSGName -ResourceGroupName $ResourceGroup) {
         if ($DryRun) {
             Write-ColorOutput "Would delete Network Security Group '$NSGName'" -Color Cyan
@@ -314,7 +314,7 @@ try {
 
     # 5. Remove Virtual Network
     Write-ColorOutput "`n=== Removing Virtual Network ===" -Color Cyan
-    
+
     if (Test-ResourceExists -ResourceType "VirtualNetwork" -ResourceName $VNetName -ResourceGroupName $ResourceGroup) {
         if ($DryRun) {
             Write-ColorOutput "Would delete Virtual Network '$VNetName'" -Color Cyan
@@ -337,7 +337,7 @@ try {
     # 6. Remove Resource Group (if requested)
     if ($RemoveResourceGroup) {
         Write-ColorOutput "`n=== Removing Resource Group ===" -Color Cyan
-        
+
         if ($DryRun) {
             Write-ColorOutput "Would delete Resource Group '$ResourceGroup' and ALL its contents" -Color Cyan
             Write-ColorOutput "WARNING: This would remove ALL resources in the resource group!" -Color Red
@@ -358,7 +358,7 @@ try {
 
     # Display cleanup summary
     Write-ColorOutput "`n=== Cleanup Summary ===" -Color Cyan
-    
+
     if ($DryRun) {
         Write-ColorOutput "DRY RUN COMPLETED - Resources that would be deleted:" -Color Yellow
         Write-ColorOutput "- Virtual Machine: $VmName" -Color White
@@ -381,7 +381,7 @@ try {
         if ($RemoveResourceGroup) {
             Write-ColorOutput "- Resource Group: $ResourceGroup" -Color White
         }
-        
+
         Write-ColorOutput "`nNote: Some resources may take additional time to be fully removed from Azure." -Color Yellow
         Write-ColorOutput "You can verify deletion status in the Azure portal." -Color Yellow
     }

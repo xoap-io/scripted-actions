@@ -254,13 +254,13 @@ try {
             foreach ($volume in $volumes) {
                 Write-Host "`nVolume ID: " -NoNewline -ForegroundColor White
                 Write-Host $volume.VolumeId -ForegroundColor Cyan
-                
+
                 Write-Host "  Size: " -NoNewline -ForegroundColor White
                 Write-Host "$($volume.Size) GiB" -ForegroundColor Yellow
-                
+
                 Write-Host "  Type: " -NoNewline -ForegroundColor White
                 Write-Host $volume.VolumeType -ForegroundColor Yellow
-                
+
                 Write-Host "  State: " -NoNewline -ForegroundColor White
                 $stateColor = switch ($volume.State) {
                     "available" { "Green" }
@@ -271,14 +271,14 @@ try {
                     default { "White" }
                 }
                 Write-Host $volume.State -ForegroundColor $stateColor
-                
+
                 Write-Host "  AZ: " -NoNewline -ForegroundColor White
                 Write-Host $volume.AvailabilityZone -ForegroundColor Yellow
-                
+
                 Write-Host "  Encrypted: " -NoNewline -ForegroundColor White
                 $encColor = if ($volume.Encrypted) { "Green" } else { "Red" }
                 Write-Host $volume.Encrypted -ForegroundColor $encColor
-                
+
                 Write-Host "  Created: " -NoNewline -ForegroundColor White
                 Write-Host $volume.CreateTime -ForegroundColor Gray
 
@@ -321,17 +321,17 @@ try {
             # Summary statistics
             Write-Host "`n" + "=" * 120 -ForegroundColor Gray
             Write-Host "Summary Statistics:" -ForegroundColor Cyan
-            
+
             $totalSize = ($volumes | Measure-Object -Property Size -Sum).Sum
             Write-Host "  Total Volumes: $($volumes.Count)" -ForegroundColor White
             Write-Host "  Total Size: $totalSize GiB" -ForegroundColor White
-            
+
             $stateGroups = $volumes | Group-Object State
             Write-Host "  States:" -ForegroundColor White
             foreach ($group in $stateGroups) {
                 Write-Host "    $($group.Name): $($group.Count)" -ForegroundColor Gray
             }
-            
+
             $typeGroups = $volumes | Group-Object VolumeType
             Write-Host "  Types:" -ForegroundColor White
             foreach ($group in $typeGroups) {

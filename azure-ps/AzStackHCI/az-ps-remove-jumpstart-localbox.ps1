@@ -56,7 +56,7 @@
 
 .NOTES
     Requires Azure PowerShell module (Az) to be installed and authenticated.
-    
+
     WARNING: This script will permanently delete ALL Azure resources in the specified resource group.
     Ensure you have backups of any important data before running this script.
 
@@ -99,7 +99,7 @@ function Write-ColorOutput {
         [string]$Message,
         [string]$Color = 'White'
     )
-    
+
     if ($DryRun) {
         Write-Host "[DRY RUN] $Message" -ForegroundColor Cyan
     } elseif ($ListResourcesOnly) {
@@ -131,7 +131,7 @@ function Get-ResourceGroupContents {
         [string]$ResourceGroupName,
         [string]$SubscriptionId
     )
-    
+
     try {
         $resources = Get-AzResource -ResourceGroupName $ResourceGroupName
         return $resources
@@ -147,25 +147,25 @@ function Show-ResourceInventory {
     param(
         [array]$Resources
     )
-    
+
     if ($Resources.Count -eq 0) {
         Write-ColorOutput "No resources found in the resource group." -Color Green
         return
     }
-    
+
     Write-ColorOutput "`nResource Inventory:" -Color Cyan
     Write-ColorOutput "==================" -Color Cyan
-    
+
     # Group resources by type
     $resourceGroups = $Resources | Group-Object ResourceType | Sort-Object Name
-    
+
     foreach ($group in $resourceGroups) {
         Write-ColorOutput "`n$($group.Name) ($($group.Count) resources):" -Color Yellow
         foreach ($resource in $group.Group) {
             Write-ColorOutput "  - $($resource.Name)" -Color White
         }
     }
-    
+
     Write-ColorOutput "`nTotal resources: $($Resources.Count)" -Color Cyan
 }
 
@@ -175,28 +175,28 @@ function Confirm-Deletion {
         [string]$ResourceGroupName,
         [int]$ResourceCount
     )
-    
+
     if ($Force -or $DryRun -or $ListResourcesOnly) {
         return $true
     }
-    
+
     Write-Host "`nWARNING: You are about to DELETE the entire resource group '$ResourceGroupName'" -ForegroundColor Red
     Write-Host "This will permanently remove ALL $ResourceCount resources in this resource group!" -ForegroundColor Red
     Write-Host "This action CANNOT be undone!" -ForegroundColor Red
     Write-Host ""
-    
+
     $confirmation1 = Read-Host "Type 'DELETE' to confirm you want to delete the resource group"
     if ($confirmation1 -ne 'DELETE') {
         Write-Host "Deletion cancelled." -ForegroundColor Yellow
         return $false
     }
-    
+
     $confirmation2 = Read-Host "Type the resource group name '$ResourceGroupName' to confirm"
     if ($confirmation2 -ne $ResourceGroupName) {
         Write-Host "Resource group name mismatch. Deletion cancelled." -ForegroundColor Yellow
         return $false
     }
-    
+
     return $true
 }
 
@@ -205,14 +205,14 @@ function Remove-ArcResources {
     param(
         [array]$Resources
     )
-    
+
     # Find Arc-enabled resources
     $arcServers = $Resources | Where-Object { $_.ResourceType -eq "Microsoft.HybridCompute/machines" }
     $arcClusters = $Resources | Where-Object { $_.ResourceType -eq "Microsoft.Kubernetes/connectedClusters" }
-    
+
     if ($arcServers.Count -gt 0 -or $arcClusters.Count -gt 0) {
         Write-ColorOutput "`nHandling Arc-enabled resources..." -Color Yellow
-        
+
         if ($DryRun -or $ListResourcesOnly) {
             Write-ColorOutput "Would disconnect and remove Arc-enabled resources:" -Color Cyan
             foreach ($server in $arcServers) {
@@ -233,7 +233,7 @@ function Remove-ArcResources {
                     Write-Warning "Failed to disconnect Arc server $($server.Name): $($_.Exception.Message)"
                 }
             }
-            
+
             # Disconnect Arc clusters
             foreach ($cluster in $arcClusters) {
                 try {
@@ -254,7 +254,7 @@ try {
     Write-ColorOutput "Starting Azure Arc Jumpstart LocalBox cleanup script" -Color Cyan
     Write-ColorOutput "Target Subscription: $SubscriptionId" -Color White
     Write-ColorOutput "Target Resource Group: $ResourceGroup" -Color White
-    
+
     if ($DryRun) {
         Write-ColorOutput "DRY RUN MODE - No actual resources will be deleted" -Color Yellow
     } elseif ($ListResourcesOnly) {
@@ -286,7 +286,7 @@ try {
 
     # Check if resource group exists
     Write-ColorOutput "Checking if resource group '$ResourceGroup' exists..." -Color Yellow
-    
+
     try {
         $rg = Get-AzResourceGroup -Name $ResourceGroup -ErrorAction SilentlyContinue
         if (-not $rg) {
@@ -303,7 +303,7 @@ try {
     # Get all resources in the resource group
     Write-ColorOutput "Scanning resources in resource group..." -Color Yellow
     $resources = Get-ResourceGroupContents -ResourceGroupName $ResourceGroup -SubscriptionId $SubscriptionId
-    
+
     # Display resource inventory
     Show-ResourceInventory -Resources $resources
 
@@ -324,12 +324,12 @@ try {
 
     # Perform cleanup
     Write-ColorOutput "`n=== Starting LocalBox Cleanup ===" -Color Cyan
-    
+
     if ($DryRun) {
         Write-ColorOutput "Would delete resource group '$ResourceGroup' and ALL $($resources.Count) resources" -Color Cyan
         Write-ColorOutput "Estimated cleanup time: 15-30 minutes" -Color Yellow
         Write-ColorOutput "Resources that would be deleted:" -Color Cyan
-        
+
         # Show what would be deleted
         $resourceTypes = $resources | Group-Object ResourceType | Sort-Object Count -Descending
         foreach ($type in $resourceTypes) {
@@ -339,24 +339,24 @@ try {
         try {
             Write-ColorOutput "Deleting resource group '$ResourceGroup'..." -Color Yellow
             Write-ColorOutput "This will take 15-30 minutes depending on the resources..." -Color Yellow
-            
+
             # Start the deletion
             $job = Remove-AzResourceGroup -Name $ResourceGroup -Force -AsJob
-            
+
             Write-ColorOutput "Resource group deletion job started. Job ID: $($job.Id)" -Color Green
             Write-ColorOutput "Monitoring deletion progress..." -Color Yellow
-            
+
             # Monitor the job
             $completed = $false
             $startTime = Get-Date
-            
+
             while (-not $completed) {
                 Start-Sleep -Seconds 30
                 $jobState = Get-Job -Id $job.Id
                 $elapsed = [math]::Round(((Get-Date) - $startTime).TotalMinutes, 1)
-                
+
                 Write-ColorOutput "Deletion in progress... (Elapsed: $elapsed minutes)" -Color Yellow
-                
+
                 if ($jobState.State -eq "Completed") {
                     $completed = $true
                     Write-ColorOutput "Resource group deletion completed successfully!" -Color Green
@@ -366,7 +366,7 @@ try {
                     Receive-Job -Id $job.Id
                     exit 1
                 }
-                
+
                 # Safety timeout after 45 minutes
                 if ($elapsed -gt 45) {
                     Write-Warning "Deletion is taking longer than expected (45+ minutes). Check Azure portal for status."
@@ -374,7 +374,7 @@ try {
                     break
                 }
             }
-            
+
             # Clean up the job
             Remove-Job -Id $job.Id -Force -ErrorAction SilentlyContinue
         }
@@ -386,7 +386,7 @@ try {
 
     # Display cleanup summary
     Write-ColorOutput "`n=== Cleanup Summary ===" -Color Cyan
-    
+
     if ($DryRun) {
         Write-ColorOutput "DRY RUN COMPLETED - LocalBox resources that would be deleted:" -Color Yellow
         Write-ColorOutput "- Resource Group: $ResourceGroup" -Color White
@@ -399,14 +399,14 @@ try {
         Write-ColorOutput "Deleted resources:" -Color White
         Write-ColorOutput "- Resource Group: $ResourceGroup" -Color White
         Write-ColorOutput "- Total Resources: $($resources.Count)" -Color White
-        
+
         $endTime = Get-Date
         $totalTime = [math]::Round(($endTime - $startTime).TotalMinutes, 1)
         Write-ColorOutput "- Total cleanup time: $totalTime minutes" -Color White
-        
+
         Write-ColorOutput "`nAll LocalBox resources have been permanently deleted." -Color Green
         Write-ColorOutput "Your Azure subscription is no longer being charged for these resources." -Color Green
-        
+
         Write-ColorOutput "`nNote: Some resources with soft-delete (Key Vaults, etc.) may still appear in the portal" -Color Yellow
         Write-ColorOutput "but are not billable. They will be permanently deleted after the retention period." -Color Yellow
     }

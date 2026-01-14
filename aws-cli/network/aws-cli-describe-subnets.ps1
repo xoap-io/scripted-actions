@@ -121,16 +121,16 @@ if (-not (Get-Command aws -ErrorAction SilentlyContinue)) {
 # Function to calculate available IPs in a subnet
 function Get-AvailableIpCount {
     param([string]$CidrBlock, [int]$AvailableIpAddressCount)
-    
+
     # Extract network bits from CIDR
     $networkBits = [int]($CidrBlock -split '/')[1]
     $hostBits = 32 - $networkBits
     $totalIps = [math]::Pow(2, $hostBits)
-    
+
     # AWS reserves 5 IPs per subnet
     $awsReservedIps = 5
     $maxAvailable = $totalIps - $awsReservedIps
-    
+
     return @{
         TotalIps = $totalIps
         MaxAvailable = $maxAvailable
@@ -154,7 +154,7 @@ try {
 
     # Add filters
     $filters = @()
-    
+
     if ($VpcId) {
         $filters += "Name=vpc-id,Values=$VpcId"
         Write-Output "Filter: VPC ID = $VpcId"
@@ -223,30 +223,30 @@ try {
             Write-Output "`n📄 Subnets (JSON):"
             $subnetsData.Subnets | ConvertTo-Json -Depth 5
         }
-        
+
         'table' {
             Write-Output "`n📊 Subnets Summary:"
             Write-Output "=" * 140
             Write-Output "Subnet ID`t`tVPC ID`t`t`tAZ`t`tCIDR Block`t`tAvailable IPs`tPublic`tName"
             Write-Output "-" * 140
-            
+
             foreach ($subnet in $subnetsData.Subnets) {
                 $name = "N/A"
                 if ($subnet.Tags) {
                     $nameTag = $subnet.Tags | Where-Object { $_.Key -eq 'Name' } | Select-Object -First 1
                     if ($nameTag) { $name = $nameTag.Value }
                 }
-                
+
                 Write-Output "$($subnet.SubnetId)`t$($subnet.VpcId)`t$($subnet.AvailabilityZone)`t$($subnet.CidrBlock.PadRight(15))`t$($subnet.AvailableIpAddressCount.ToString().PadLeft(5))`t`t$($subnet.MapPublicIpOnLaunch)`t$name"
             }
         }
-        
+
         'detailed' {
             foreach ($subnet in $subnetsData.Subnets) {
                 Write-Output "`n" + "=" * 80
                 Write-Output "Subnet: $($subnet.SubnetId)"
                 Write-Output "=" * 80
-                
+
                 # Basic information
                 Write-Output "VPC ID: $($subnet.VpcId)"
                 Write-Output "Availability Zone: $($subnet.AvailabilityZone)"
@@ -254,7 +254,7 @@ try {
                 Write-Output "CIDR Block: $($subnet.CidrBlock)"
                 Write-Output "State: $($subnet.State)"
                 Write-Output "Owner ID: $($subnet.OwnerId)"
-                
+
                 # IPv6 information
                 if ($subnet.Ipv6CidrBlockAssociationSet -and $subnet.Ipv6CidrBlockAssociationSet.Count -gt 0) {
                     Write-Output "`n🔗 IPv6 CIDR Blocks:"
@@ -272,14 +272,14 @@ try {
                 if ($ShowAvailableIps -or $OutputFormat -eq 'detailed') {
                     Write-Output "`n📊 IP Address Utilization:"
                     $ipStats = Get-AvailableIpCount -CidrBlock $subnet.CidrBlock -AvailableIpAddressCount $subnet.AvailableIpAddressCount
-                    
+
                     Write-Output "  Total IPs in CIDR: $($ipStats.TotalIps)"
                     Write-Output "  AWS Reserved IPs: 5"
                     Write-Output "  Max Available IPs: $($ipStats.MaxAvailable)"
                     Write-Output "  Currently Available: $($ipStats.CurrentAvailable)"
                     Write-Output "  Currently Used: $($ipStats.UsedIps)"
                     Write-Output "  Utilization: $($ipStats.UtilizationPercent)%"
-                    
+
                     if ($ipStats.UtilizationPercent -gt 80) {
                         Write-Output "  ⚠️  High utilization warning!"
                     }
@@ -296,21 +296,21 @@ try {
                 # Route Table information
                 if ($ShowRouteTable -or $OutputFormat -eq 'detailed') {
                     Write-Output "`n🛣️  Route Table Information:"
-                    
+
                     # Get associated route table
                     $rtbResult = aws ec2 describe-route-tables --filters "Name=association.subnet-id,Values=$($subnet.SubnetId)" @awsArgs --output json 2>&1
-                    
+
                     if ($LASTEXITCODE -eq 0) {
                         $rtbData = $rtbResult | ConvertFrom-Json
-                        
+
                         if ($rtbData.RouteTables.Count -gt 0) {
                             $routeTable = $rtbData.RouteTables[0]
                             Write-Output "  Associated Route Table: $($routeTable.RouteTableId)"
-                            
+
                             # Check for internet connectivity
                             $igwRoute = $routeTable.Routes | Where-Object { $_.GatewayId -like 'igw-*' -and $_.DestinationCidrBlock -eq '0.0.0.0/0' }
                             $natRoute = $routeTable.Routes | Where-Object { $_.NatGatewayId -and $_.DestinationCidrBlock -eq '0.0.0.0/0' }
-                            
+
                             if ($igwRoute) {
                                 Write-Output "  ✅ Public Subnet (Internet Gateway route)"
                             } elseif ($natRoute) {
@@ -321,7 +321,7 @@ try {
                         } else {
                             # Check main route table
                             $mainRtbResult = aws ec2 describe-route-tables --filters "Name=vpc-id,Values=$($subnet.VpcId)" "Name=association.main,Values=true" @awsArgs --output json 2>&1
-                            
+
                             if ($LASTEXITCODE -eq 0) {
                                 $mainRtbData = $mainRtbResult | ConvertFrom-Json
                                 if ($mainRtbData.RouteTables.Count -gt 0) {
@@ -335,12 +335,12 @@ try {
                 # Network ACL information
                 if ($ShowNetworkAcl -or $OutputFormat -eq 'detailed') {
                     Write-Output "`n🛡️  Network ACL Information:"
-                    
+
                     $naclResult = aws ec2 describe-network-acls --filters "Name=association.subnet-id,Values=$($subnet.SubnetId)" @awsArgs --output json 2>&1
-                    
+
                     if ($LASTEXITCODE -eq 0) {
                         $naclData = $naclResult | ConvertFrom-Json
-                        
+
                         if ($naclData.NetworkAcls.Count -gt 0) {
                             $networkAcl = $naclData.NetworkAcls[0]
                             Write-Output "  Network ACL: $($networkAcl.NetworkAclId)"
@@ -352,7 +352,7 @@ try {
 
                 # Subnet analysis
                 Write-Output "`n🔍 Subnet Analysis:"
-                
+
                 # Determine subnet type
                 if ($subnet.MapPublicIpOnLaunch) {
                     Write-Output "  📍 Public subnet (auto-assigns public IPs)"
@@ -362,7 +362,7 @@ try {
 
                 # Availability zone insights
                 Write-Output "  📍 Located in Availability Zone: $($subnet.AvailabilityZone)"
-                
+
                 # CIDR analysis
                 $networkBits = [int]($subnet.CidrBlock -split '/')[1]
                 if ($networkBits -ge 28) {
@@ -377,16 +377,16 @@ try {
     # Summary statistics
     if ($OutputFormat -eq 'detailed') {
         Write-Output "`n📈 Summary Statistics:"
-        
-        $totalIps = ($subnetsData.Subnets | ForEach-Object { 
+
+        $totalIps = ($subnetsData.Subnets | ForEach-Object {
             $networkBits = [int]($_.CidrBlock -split '/')[1]
             [math]::Pow(2, 32 - $networkBits) - 5
         } | Measure-Object -Sum).Sum
-        
+
         $availableIps = ($subnetsData.Subnets | ForEach-Object { $_.AvailableIpAddressCount } | Measure-Object -Sum).Sum
         $usedIps = $totalIps - $availableIps
         $utilizationPercent = if ($totalIps -gt 0) { [math]::Round(($usedIps / $totalIps) * 100, 1) } else { 0 }
-        
+
         Write-Output "  • Total Subnets: $($subnetsData.Subnets.Count)"
         Write-Output "  • Total Available IPs: $totalIps"
         Write-Output "  • Currently Available: $availableIps"

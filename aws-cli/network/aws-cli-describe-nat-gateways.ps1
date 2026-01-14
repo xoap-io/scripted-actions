@@ -119,19 +119,19 @@ try {
 
     # Add filters
     $filters = @()
-    
+
     if ($VpcId) {
         $filters += "Name=vpc-id,Values=$VpcId"
     }
-    
+
     if ($SubnetId) {
         $filters += "Name=subnet-id,Values=$SubnetId"
     }
-    
+
     if ($State) {
         $filters += "Name=state,Values=$State"
     }
-    
+
     if ($ConnectivityType) {
         $filters += "Name=connectivity-type,Values=$ConnectivityType"
     }
@@ -169,7 +169,7 @@ try {
     if ($ShowRoutes) {
         Write-Output "`n🔍 Retrieving route table information..."
         $routeResult = aws ec2 describe-route-tables @awsArgs --output json 2>&1
-        
+
         if ($LASTEXITCODE -eq 0) {
             $routeTablesData = ($routeResult | ConvertFrom-Json).RouteTables
         } else {
@@ -183,12 +183,12 @@ try {
             Write-Output "`n📄 JSON Output:"
             $natGateways | ConvertTo-Json -Depth 10
         }
-        
+
         "table" {
             Write-Output "`n📊 NAT Gateway Summary:"
             Write-Output ("{0,-20} {1,-12} {2,-15} {3,-15} {4,-20} {5,-15}" -f "NAT Gateway ID", "State", "Type", "VPC ID", "Subnet ID", "Public IP")
             Write-Output ("{0,-20} {1,-12} {2,-15} {3,-15} {4,-20} {5,-15}" -f ("-" * 20), ("-" * 12), ("-" * 15), ("-" * 15), ("-" * 20), ("-" * 15))
-            
+
             foreach ($nat in $natGateways) {
                 $publicIp = ""
                 if ($nat.NatGatewayAddresses -and $nat.NatGatewayAddresses.Count -gt 0) {
@@ -197,28 +197,28 @@ try {
                 } else {
                     $publicIp = "N/A"
                 }
-                
+
                 Write-Output ("{0,-20} {1,-12} {2,-15} {3,-15} {4,-20} {5,-15}" -f $nat.NatGatewayId, $nat.State, $nat.ConnectivityType, $nat.VpcId, $nat.SubnetId, $publicIp)
             }
         }
-        
+
         "detailed" {
             foreach ($nat in $natGateways) {
                 Write-Output "`n" + ("=" * 80)
                 Write-Output "🌐 NAT Gateway: $($nat.NatGatewayId)"
                 Write-Output ("=" * 80)
-                
+
                 Write-Output "📋 Basic Information:"
                 Write-Output "  State: $($nat.State)"
                 Write-Output "  Connectivity Type: $($nat.ConnectivityType)"
                 Write-Output "  VPC ID: $($nat.VpcId)"
                 Write-Output "  Subnet ID: $($nat.SubnetId)"
                 Write-Output "  Created: $($nat.CreateTime)"
-                
+
                 if ($nat.DeleteTime) {
                     Write-Output "  Deleted: $($nat.DeleteTime)"
                 }
-                
+
                 if ($nat.FailureCode) {
                     Write-Output "  Failure Code: $($nat.FailureCode)"
                     Write-Output "  Failure Message: $($nat.FailureMessage)"
@@ -291,7 +291,7 @@ try {
                         "private" { 0.045 }
                         default { 0.045 }
                     }
-                    
+
                     Write-Output "`n💰 Cost Information:"
                     Write-Output "  Estimated hourly cost: ~`$$hourlyCost USD"
                     Write-Output "  Estimated daily cost: ~`$$([math]::Round($hourlyCost * 24, 2)) USD"
@@ -305,20 +305,20 @@ try {
     # Summary statistics
     if ($OutputFormat -ne "json") {
         Write-Output "`n📊 Summary Statistics:"
-        
+
         $stateGroups = $natGateways | Group-Object -Property State
         foreach ($group in $stateGroups) {
             Write-Output "  $($group.Name): $($group.Count)"
         }
-        
+
         $typeGroups = $natGateways | Group-Object -Property ConnectivityType
         foreach ($group in $typeGroups) {
             Write-Output "  $($group.Name) NAT Gateways: $($group.Count)"
         }
-        
+
         $vpcGroups = $natGateways | Group-Object -Property VpcId
         Write-Output "  Unique VPCs: $($vpcGroups.Count)"
-        
+
         # Cost summary
         if ($ShowCosts) {
             $availableNats = ($natGateways | Where-Object { $_.State -eq "available" }).Count

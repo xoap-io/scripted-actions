@@ -50,26 +50,26 @@ try {
     if (-not $azVersion) {
         throw "Azure CLI is not installed or not available in PATH"
     }
-    
+
     Write-Host "Checking Azure CLI login status..." -ForegroundColor Cyan
     $account = az account show --output json 2>$null | ConvertFrom-Json
     if (-not $account) {
         throw "Not logged in to Azure CLI. Please run 'az login' first"
     }
     Write-Host "Logged in as: $($account.user.name)" -ForegroundColor Green
-    
+
     Write-Host "Checking if Application Group exists..." -ForegroundColor Cyan
     $existingAppGroup = az desktopvirtualization applicationgroup show --name $Name --resource-group $ResourceGroup --output json 2>$null
     if (-not $existingAppGroup) {
         Write-Warning "Application Group '$Name' not found in resource group '$ResourceGroup'"
         exit 0
     }
-    
+
     $appGroupData = $existingAppGroup | ConvertFrom-Json
     Write-Host "Found Application Group: $($appGroupData.name)" -ForegroundColor Yellow
     Write-Host "  Type: $($appGroupData.applicationGroupType)" -ForegroundColor Yellow
     Write-Host "  Location: $($appGroupData.location)" -ForegroundColor Yellow
-    
+
     if (-not $Force) {
         $confirmation = Read-Host "Are you sure you want to delete Application Group '$Name'? (y/N)"
         if ($confirmation -ne 'y' -and $confirmation -ne 'Y') {
@@ -77,21 +77,21 @@ try {
             exit 0
         }
     }
-    
+
     Write-Host "Deleting Azure Virtual Desktop Application Group..." -ForegroundColor Cyan
-    
+
     $azParams = @(
         'desktopvirtualization', 'applicationgroup', 'delete',
         '--name', $Name,
         '--resource-group', $ResourceGroup,
         '--yes'
     )
-    
+
     & az @azParams
     if ($LASTEXITCODE -ne 0) {
         throw "Azure CLI command failed with exit code: $LASTEXITCODE"
     }
-    
+
     Write-Host "Azure Virtual Desktop Application Group '$Name' deleted successfully" -ForegroundColor Green
 } catch {
     Write-Error "Failed to delete Azure Virtual Desktop Application Group: $_"

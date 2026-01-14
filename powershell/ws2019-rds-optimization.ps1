@@ -37,7 +37,7 @@
 .PARAMETER UserProfilePath
   UNC path for roaming user profiles (e.g., \\server\profiles$).
 
-.PARAMETER UserProfileDiskPath  
+.PARAMETER UserProfileDiskPath
   UNC path for User Profile Disks (e.g., \\server\upd$).
 
 .PARAMETER ProfileDiskMaxSizeGB
@@ -49,7 +49,7 @@
 .EXAMPLE
   .\ws2019-rds-optimization.ps1
   Runs with default optimizations (hides drives and disables Server Manager)
-  
+
 .EXAMPLE
   .\ws2019-rds-optimization.ps1 -HideLocalDrives -DisableServerManager -EnableVerboseLogging
   Explicitly enables drive hiding, Server Manager disabling, and verbose logging
@@ -62,7 +62,7 @@
   .\ws2019-rds-optimization.ps1 -RDSLicenseServer "rds-lic.domain.com" -RDSLicenseMode "PerUser"
   Configure RDS licensing server and mode
 
-.EXAMPLE  
+.EXAMPLE
   .\ws2019-rds-optimization.ps1 -UserProfilePath "\\fileserver\profiles$" -UserProfileDiskPath "\\fileserver\upd$" -ProfileDiskMaxSizeGB 20
   Configure user profile settings with roaming profiles and UPD
 
@@ -70,7 +70,7 @@
   Script Name   : ws2019-rds-optimization.ps1
   Author        : Generated for RDS Optimization
   Tested On     : Windows Server 2019 (Build 17763+)
-  
+
   IMPORTANT:
   - Run as Administrator
   - Take system backup/snapshot before running
@@ -109,14 +109,14 @@ function Write-Log {
     param([string]$Message, [string]$Level = 'INFO')
     $timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
     $logEntry = "[$timestamp] [$Level] $Message"
-    
+
     switch ($Level) {
         'INFO'    { Write-Host $logEntry -ForegroundColor Cyan }
         'SUCCESS' { Write-Host $logEntry -ForegroundColor Green }
         'WARNING' { Write-Host $logEntry -ForegroundColor Yellow }
         'ERROR'   { Write-Host $logEntry -ForegroundColor Red }
     }
-    
+
     Add-Content -Path $LogFile -Value $logEntry -Force
 }
 
@@ -128,9 +128,9 @@ function Test-IsAdmin {
 
 function Test-RDSConfiguration {
     Write-Log "Validating RDS and profile configuration parameters..." 'INFO'
-    
+
     $configValid = $true
-    
+
     # Validate RDS License Server accessibility
     if ($RDSLicenseServer) {
         Write-Log "Testing RDS License Server connectivity: $RDSLicenseServer" 'INFO'
@@ -144,12 +144,12 @@ function Test-RDSConfiguration {
         } catch {
             Write-Log "Could not test RDS License Server connectivity: $RDSLicenseServer ($_)" 'WARNING'
         }
-        
+
         if ($DryRun) {
             Write-Log "DRY-RUN: Would configure RDS License Server: $RDSLicenseServer, Mode: $RDSLicenseMode" 'INFO'
         }
     }
-    
+
     # Validate profile paths
     if ($UserProfilePath) {
         Write-Log "Validating roaming profile path: $UserProfilePath" 'INFO'
@@ -163,12 +163,12 @@ function Test-RDSConfiguration {
         } catch {
             Write-Log "Could not test roaming profile path: $UserProfilePath ($_)" 'WARNING'
         }
-        
+
         if ($DryRun) {
             Write-Log "DRY-RUN: Would configure roaming profiles to: $UserProfilePath" 'INFO'
         }
     }
-    
+
     if ($UserProfileDiskPath) {
         Write-Log "Validating User Profile Disk path: $UserProfileDiskPath" 'INFO'
         try {
@@ -181,17 +181,17 @@ function Test-RDSConfiguration {
         } catch {
             Write-Log "Could not test User Profile Disk path: $UserProfileDiskPath ($_)" 'WARNING'
         }
-        
+
         if ($DryRun) {
             Write-Log "DRY-RUN: Would configure UPD to: $UserProfileDiskPath (Max size: $ProfileDiskMaxSizeGB GB)" 'INFO'
         }
     }
-    
+
     # Check for conflicting profile configurations
     if ($UserProfilePath -and $UserProfileDiskPath) {
         Write-Log "WARNING: Both roaming profiles and UPD are configured. UPD will take precedence." 'WARNING'
     }
-    
+
     # Validate RDS role installation
     try {
         $rdsRole = Get-WindowsFeature -Name 'RDS-RD-Server' -ErrorAction SilentlyContinue
@@ -203,7 +203,7 @@ function Test-RDSConfiguration {
     } catch {
         Write-Log "Could not check RDS Session Host role installation status" 'WARNING'
     }
-    
+
     return $configValid
 }
 
@@ -212,16 +212,16 @@ function Test-WindowsFeature {
         [string]$FeatureName,
         [string]$Action = 'check'  # 'check', 'remove'
     )
-    
+
     try {
         $feature = Get-WindowsFeature -Name $FeatureName -ErrorAction SilentlyContinue
         if (-not $feature) {
             Write-Log "Windows Feature not found: $FeatureName (skipping)" 'WARNING'
             return $false
         }
-        
+
         $currentState = $feature.InstallState
-        
+
         if ($Action -eq 'remove') {
             if ($DryRun) {
                 if ($feature.InstallState -eq 'Installed') {
@@ -231,18 +231,18 @@ function Test-WindowsFeature {
                 }
                 return $true
             }
-            
+
             # Skip if already removed
             if ($feature.InstallState -ne 'Installed') {
                 Write-Log "Windows Feature already removed: $FeatureName (State: $currentState)" 'SUCCESS'
                 return $true
             }
-            
+
             Remove-WindowsFeature -Name $FeatureName -ErrorAction Stop
             Write-Log "Removed Windows Feature: $FeatureName (was: $currentState)" 'SUCCESS'
             return $true
         }
-        
+
         return $feature.InstallState -eq 'Installed'
     } catch {
         Write-Log "Failed to process Windows Feature $FeatureName : $_" 'ERROR'
@@ -258,7 +258,7 @@ function Set-RegistryValue {
         [Microsoft.Win32.RegistryValueKind]$Type = 'DWord',
         [string]$Description = ''
     )
-    
+
     try {
         # Check current value
         $currentValue = $null
@@ -272,22 +272,22 @@ function Set-RegistryValue {
         } else {
             $currentValue = '<path does not exist>'
         }
-        
+
         if ($DryRun) {
             Write-Log "DRY-RUN: Would set registry $Path\$Name = $Value (Current: $currentValue) ($Description)" 'INFO'
             return
         }
-        
+
         # Skip if value is already set correctly
         if ($pathExists -and $currentValue -eq $Value) {
             Write-Log "Registry already set: $Path\$Name = $Value ($Description)" 'SUCCESS'
             return
         }
-        
+
         if (-not $pathExists) {
             New-Item -Path $Path -Force | Out-Null
         }
-        
+
         Set-ItemProperty -Path $Path -Name $Name -Value $Value -Type $Type -Force
         Write-Log "Set registry: $Path\$Name = $Value (was: $currentValue) ($Description)" 'SUCCESS'
     } catch {
@@ -301,12 +301,12 @@ function Remove-RegistryValue {
         [string]$Name,
         [string]$Description = ''
     )
-    
+
     try {
         # Check if registry path and value exist
         $pathExists = Test-Path $Path
         $currentValue = '<not found>'
-        
+
         if ($pathExists) {
             try {
                 $currentValue = Get-ItemProperty -Path $Path -Name $Name -ErrorAction SilentlyContinue | Select-Object -ExpandProperty $Name -ErrorAction SilentlyContinue
@@ -317,18 +317,18 @@ function Remove-RegistryValue {
                 $currentValue = '<not set>'
             }
         }
-        
+
         if ($DryRun) {
             Write-Log "DRY-RUN: Would remove registry $Path\$Name (Current: $currentValue) ($Description)" 'INFO'
             return
         }
-        
+
         # Skip if value doesn't exist
         if (-not $pathExists -or $currentValue -eq '<not set>') {
             Write-Log "Registry value already absent: $Path\$Name ($Description)" 'SUCCESS'
             return
         }
-        
+
         Remove-ItemProperty -Path $Path -Name $Name -ErrorAction SilentlyContinue
         Write-Log "Removed registry: $Path\$Name (was: $currentValue) ($Description)" 'SUCCESS'
     } catch {
@@ -342,24 +342,24 @@ function Remove-RegistryValue {
 
 function Test-SystemRequirements {
     Write-Log "Performing system requirement checks..." 'INFO'
-    
+
     if (-not (Test-IsAdmin)) {
         throw "This script must be run as Administrator"
     }
-    
+
     $osVersion = Get-WmiObject -Class Win32_OperatingSystem
     $buildNumber = [int]$osVersion.BuildNumber
-    
+
     if ($buildNumber -lt 17763) {
         throw "This script requires Windows Server 2019 (Build 17763) or later. Current: $buildNumber"
     }
-    
+
     Write-Log "System check passed: Windows Server 2019 Build $buildNumber" 'SUCCESS'
 }
 
 function Test-SystemResources {
     Write-Log "Validating system resources availability..." 'INFO'
-    
+
     $resourceCounts = @{
         ServicesFound = 0
         ServicesMissing = 0
@@ -368,7 +368,7 @@ function Test-SystemResources {
         FeaturesFound = 0
         FeaturesMissing = 0
     }
-    
+
     # Check services
     $defaultDisableServices = @(
         'AJRouter',
@@ -415,9 +415,9 @@ function Test-SystemResources {
         'XblAuthManager',
         'XblGameSave'
     )
-    
+
     $servicesToCheck = $defaultDisableServices + $DisableServices | Where-Object { $_ -notin $KeepServices }
-    
+
     Write-Log "Checking $($servicesToCheck.Count) services..." 'INFO'
     foreach ($serviceName in $servicesToCheck) {
         $service = Get-Service -Name $serviceName -ErrorAction SilentlyContinue
@@ -429,7 +429,7 @@ function Test-SystemResources {
             Write-Verbose "Service not found: $serviceName"
         }
     }
-    
+
     # Check scheduled tasks (sample)
     $sampleTasks = @(
         '\Microsoft\Windows\Application Experience\Microsoft Compatibility Appraiser',
@@ -437,7 +437,7 @@ function Test-SystemResources {
         '\Microsoft\Windows\Defrag\ScheduledDefrag',
         '\Microsoft\Windows\WindowsUpdate\Automatic App Update'
     )
-    
+
     Write-Log "Checking sample scheduled tasks..." 'INFO'
     foreach ($taskPath in $sampleTasks) {
         try {
@@ -454,7 +454,7 @@ function Test-SystemResources {
             Write-Verbose "Task check failed: $taskPath"
         }
     }
-    
+
     # Check key Windows Features
     $featuresToCheck = @('Windows-Defender-Features')
     Write-Log "Checking Windows Features..." 'INFO'
@@ -473,17 +473,17 @@ function Test-SystemResources {
             Write-Verbose "Feature check failed: $featureName"
         }
     }
-    
+
     # Report findings
     Write-Log "Resource validation complete:" 'SUCCESS'
     Write-Log "  Services: $($resourceCounts.ServicesFound) found, $($resourceCounts.ServicesMissing) missing" 'INFO'
     Write-Log "  Tasks: $($resourceCounts.TasksFound) found, $($resourceCounts.TasksMissing) missing" 'INFO'
     Write-Log "  Features: $($resourceCounts.FeaturesFound) found, $($resourceCounts.FeaturesMissing) missing" 'INFO'
-    
+
     if ($resourceCounts.ServicesMissing -gt ($servicesToCheck.Count / 2)) {
         Write-Log "WARNING: Many services are missing. This may not be a standard Windows Server 2019 installation." 'WARNING'
     }
-    
+
     return $resourceCounts
 }
 
@@ -493,7 +493,7 @@ function Test-SystemResources {
 
 function Optimize-Services {
     Write-Log "Optimizing Windows services for RDS environment..." 'INFO'
-    
+
     # Default services to disable for RDS optimization
     $defaultDisableServices = @(
         'AJRouter',                   # AllJoyn Router Service
@@ -540,10 +540,10 @@ function Optimize-Services {
         'XblAuthManager',             # Xbox Live Auth Manager
         'XblGameSave'                 # Xbox Live Game Save
     )
-    
+
     # Combine default and additional services to disable
     $servicesToDisable = $defaultDisableServices + $DisableServices | Where-Object { $_ -notin $KeepServices }
-    
+
     foreach ($serviceName in $servicesToDisable) {
         try {
             $service = Get-Service -Name $serviceName -ErrorAction SilentlyContinue
@@ -551,10 +551,10 @@ function Optimize-Services {
                 Write-Log "Service not found: $serviceName (skipping)" 'WARNING'
                 continue
             }
-            
+
             $currentStatus = $service.Status
             $currentStartType = $service.StartType
-            
+
             if ($DryRun) {
                 if ($service.StartType -ne 'Disabled') {
                     Write-Log "DRY-RUN: Would disable service: $serviceName (Current: $currentStartType, Status: $currentStatus)" 'INFO'
@@ -563,13 +563,13 @@ function Optimize-Services {
                 }
                 continue
             }
-            
+
             # Skip if already disabled
             if ($service.StartType -eq 'Disabled') {
                 Write-Log "Service already disabled: $serviceName (Status: $currentStatus)" 'SUCCESS'
                 continue
             }
-            
+
             Set-Service -Name $serviceName -StartupType Disabled -ErrorAction Stop
             if ($service.Status -eq 'Running') {
                 Stop-Service -Name $serviceName -Force -ErrorAction SilentlyContinue
@@ -587,7 +587,7 @@ function Optimize-Services {
 
 function Optimize-ScheduledTasks {
     Write-Log "Disabling unnecessary scheduled tasks..." 'INFO'
-    
+
     $tasksToDisable = @(
         '\Microsoft\Windows\Application Experience\Microsoft Compatibility Appraiser',
         '\Microsoft\Windows\Application Experience\ProgramDataUpdater',
@@ -640,14 +640,14 @@ function Optimize-ScheduledTasks {
         '\Microsoft\Windows\WindowsUpdate\sih',
         '\Microsoft\Windows\WindowsUpdate\sihboot'
     )
-    
+
     foreach ($taskPath in $tasksToDisable) {
         try {
             # Try to find the task using a more flexible approach
             $task = $null
             $taskName = ''
             $taskPathOnly = ''
-            
+
             # Parse the full task path
             if ($taskPath.Contains('\')) {
                 $lastSlash = $taskPath.LastIndexOf('\')
@@ -657,7 +657,7 @@ function Optimize-ScheduledTasks {
                 $taskName = $taskPath
                 $taskPathOnly = '\'
             }
-            
+
             # Try to get the task
             try {
                 $task = Get-ScheduledTask -TaskPath $taskPathOnly -TaskName $taskName -ErrorAction SilentlyContinue
@@ -665,14 +665,14 @@ function Optimize-ScheduledTasks {
                 # If specific path fails, try broader search
                 $task = Get-ScheduledTask | Where-Object { ($_.TaskPath + $_.TaskName) -eq $taskPath }
             }
-            
+
             if (-not $task) {
                 Write-Log "Scheduled task not found: $taskPath (skipping)" 'WARNING'
                 continue
             }
-            
+
             $currentState = $task.State
-            
+
             if ($DryRun) {
                 if ($task.State -ne 'Disabled') {
                     Write-Log "DRY-RUN: Would disable scheduled task: $taskPath (Current state: $currentState)" 'INFO'
@@ -681,13 +681,13 @@ function Optimize-ScheduledTasks {
                 }
                 continue
             }
-            
+
             # Skip if already disabled
             if ($task.State -eq 'Disabled') {
                 Write-Log "Scheduled task already disabled: $taskPath (State: $currentState)" 'SUCCESS'
                 continue
             }
-            
+
             Disable-ScheduledTask -TaskName $task.TaskName -TaskPath $task.TaskPath -ErrorAction Stop | Out-Null
             Write-Log "Disabled scheduled task: $taskPath (was: $currentState)" 'SUCCESS'
         } catch {
@@ -702,56 +702,56 @@ function Optimize-ScheduledTasks {
 
 function Optimize-UserInterface {
     Write-Log "Applying UI and performance optimizations..." 'INFO'
-    
+
     # Hide Server Manager at startup (default behavior unless explicitly disabled)
     if ($DisableServerManager -or (-not $PSBoundParameters.ContainsKey('DisableServerManager'))) {
         Set-RegistryValue -Path 'HKLM:\SOFTWARE\Microsoft\ServerManager' -Name 'DoNotOpenServerManagerAtLogon' -Value 1 -Description 'Disable Server Manager auto-start'
         Set-RegistryValue -Path 'HKLM:\SOFTWARE\Microsoft\ServerManager\Oobe' -Name 'DoNotOpenInitialConfigurationTasksAtLogon' -Value 1 -Description 'Disable initial configuration tasks'
     }
-    
+
     # Hide local drives from users (default behavior unless explicitly disabled)
     if ($HideLocalDrives -or (-not $PSBoundParameters.ContainsKey('HideLocalDrives'))) {
         Set-RegistryValue -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer' -Name 'NoDrives' -Value 67108863 -Description 'Hide local drives A-Z except network drives'
         Set-RegistryValue -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer' -Name 'NoViewOnDrive' -Value 67108863 -Description 'Prevent viewing local drives'
     }
-    
+
     # Action Center and notification optimizations
     Set-RegistryValue -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer' -Name 'HideSCAHealth' -Value 1 -Description 'Hide Action Center icon'
     Set-RegistryValue -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\Explorer' -Name 'DisableNotificationCenter' -Value 1 -Description 'Disable notification center'
-    
+
     # Performance optimizations
     Set-RegistryValue -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management' -Name 'DisablePagingExecutive' -Value 1 -Description 'Keep drivers and kernel in physical memory'
     Set-RegistryValue -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management' -Name 'ClearPageFileAtShutdown' -Value 0 -Description 'Disable clear page file at shutdown'
-    
+
     # Disable Windows Search indexing for better performance
     Set-RegistryValue -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search' -Name 'AllowIndexingEncryptedStoresOrItems' -Value 0 -Description 'Disable search indexing'
     Set-RegistryValue -Path 'HKLM:\SOFTWARE\Microsoft\Windows Search' -Name 'EnablePerUserCatalog' -Value 0 -Description 'Disable per-user search catalog'
-    
+
     # Disable Windows Defender real-time protection for VDI (if appropriate)
     Set-RegistryValue -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Real-Time Protection' -Name 'DisableRealtimeMonitoring' -Value 1 -Description 'Disable Windows Defender real-time monitoring'
-    
+
     # Power management optimizations
     Set-RegistryValue -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\Power' -Name 'HibernateEnabled' -Value 0 -Description 'Disable hibernation'
     Set-RegistryValue -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\ControlPanel\NameSpace\{025A5937-A6BE-4686-A844-36FE4BEC8B6D}' -Name 'PreferredPlan' -Value '8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c' -Type String -Description 'Set High Performance power plan'
-    
+
     # Network optimizations
     Set-RegistryValue -Path 'HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters' -Name 'TcpAckFrequency' -Value 1 -Description 'TCP ACK frequency optimization'
     Set-RegistryValue -Path 'HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters' -Name 'TCPNoDelay' -Value 1 -Description 'Disable TCP Nagle algorithm'
-    
+
     # Visual effects optimizations
     Set-RegistryValue -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects' -Name 'VisualFXSetting' -Value 2 -Description 'Optimize visual effects for performance'
-    
+
     # Disable logon background image
     Set-RegistryValue -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\System' -Name 'DisableLogonBackgroundImage' -Value 1 -Description 'Disable logon background image'
-    
+
     # Crash dump optimizations
     Set-RegistryValue -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\CrashControl' -Name 'CrashDumpEnabled' -Value 0 -Description 'Disable crash dumps'
     Set-RegistryValue -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\CrashControl' -Name 'LogEvent' -Value 0 -Description 'Disable crash logging to event log'
     Set-RegistryValue -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\CrashControl' -Name 'SendAlert' -Value 0 -Description 'Disable administrative alert during crash'
-    
+
     # Services timeout optimization
     Set-RegistryValue -Path 'HKLM:\SYSTEM\CurrentControlSet\Control' -Name 'ServicesPipeTimeout' -Value 45000 -Description 'Increase services startup timeout to 45 seconds'
-    
+
     # Error reporting optimizations
     Set-RegistryValue -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\Windows' -Name 'ErrorMode' -Value 2 -Description 'Hide hard error messages'
 }
@@ -762,21 +762,21 @@ function Optimize-UserInterface {
 
 function Optimize-EventLogs {
     Write-Log "Optimizing event log settings..." 'INFO'
-    
+
     $eventLogs = @('Application', 'Security', 'System')
-    
+
     foreach ($logName in $eventLogs) {
         try {
             # Check current event log size
             $currentSize = $null
             $currentLocation = $null
-            
+
             try {
                 $logKey = "HKLM:\SYSTEM\CurrentControlSet\Services\EventLog\$logName"
                 if (Test-Path $logKey) {
                     $currentSize = Get-ItemProperty -Path $logKey -Name 'MaxSize' -ErrorAction SilentlyContinue | Select-Object -ExpandProperty 'MaxSize' -ErrorAction SilentlyContinue
                     $currentLocation = Get-ItemProperty -Path $logKey -Name 'File' -ErrorAction SilentlyContinue | Select-Object -ExpandProperty 'File' -ErrorAction SilentlyContinue
-                    
+
                     if ($null -eq $currentSize) { $currentSize = '<not set>' }
                     if ($null -eq $currentLocation) { $currentLocation = '<default>' }
                 }
@@ -784,7 +784,7 @@ function Optimize-EventLogs {
                 $currentSize = '<error reading>'
                 $currentLocation = '<error reading>'
             }
-            
+
             if ($DryRun) {
                 Write-Log "DRY-RUN: Would set $logName event log MaxSize to 65536 (Current: $currentSize)" 'INFO'
                 if ($PersistentDriveLetter -and $EventLogLocation) {
@@ -793,10 +793,10 @@ function Optimize-EventLogs {
                 }
                 continue
             }
-            
+
             # Reduce event log sizes
             Set-RegistryValue -Path "HKLM:\SYSTEM\CurrentControlSet\Services\EventLog\$logName" -Name 'MaxSize' -Value 65536 -Description "Reduce $logName event log size to 64KB"
-            
+
             # Configure event log location if persistent drive is specified
             if ($PersistentDriveLetter -and $EventLogLocation) {
                 $logPath = "$EventLogLocation\$logName.evtx"
@@ -814,17 +814,17 @@ function Optimize-EventLogs {
 
 function Optimize-InternetExplorer {
     Write-Log "Optimizing Internet Explorer settings..." 'INFO'
-    
+
     # Disable IE first-run customization wizard
     Set-RegistryValue -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Internet Explorer\Main' -Name 'DisableFirstRunCustomize' -Value 1 -Description 'Disable IE first-run wizard'
-    
+
     # Optimize IE temporary files
     Set-RegistryValue -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Internet Settings\Cache\Paths' -Name 'Paths' -Value 4 -Description 'Set IE temp file paths'
-    
+
     for ($i = 1; $i -le 4; $i++) {
         Set-RegistryValue -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Internet Settings\Cache\Paths\path$i" -Name 'CacheLimit' -Value 256 -Description "Set IE temp file cache limit for path$i"
     }
-    
+
     # Remove Active Setup entries to speed up logon
     $activeSetupEntries = @(
         '{2C7339CF-2B09-4501-B3F3-F3508C9228ED}',  # Themes Setup
@@ -837,7 +837,7 @@ function Optimize-InternetExplorer {
         '{A509B1A7-37EF-4b3f-8CFC-4F3A74704073}',  # IE ESC for Admins
         '{A509B1A8-37EF-4b3f-8CFC-4F3A74704073}'   # IE ESC for Users
     )
-    
+
     foreach ($entry in $activeSetupEntries) {
         Remove-RegistryValue -Path "HKLM:\SOFTWARE\Microsoft\Active Setup\Installed Components\$entry" -Name 'StubPath' -Description "Remove Active Setup entry $entry"
         Remove-RegistryValue -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Active Setup\Installed Components\$entry" -Name 'StubPath' -Description "Remove Active Setup entry $entry (WOW6432)"
@@ -850,13 +850,13 @@ function Optimize-InternetExplorer {
 
 function Optimize-WindowsUpdate {
     Write-Log "Configuring Windows Update settings for RDS..." 'INFO'
-    
+
     # Disable automatic Windows updates in RDS environment
     Set-RegistryValue -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update' -Name 'NoAutoUpdate' -Value 1 -Description 'Disable Windows Auto Update'
     Set-RegistryValue -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update' -Name 'AUOptions' -Value 1 -Description 'Set Windows Update to notify only'
     Set-RegistryValue -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update' -Name 'ScheduleInstallDay' -Value 0 -Description 'Disable scheduled installation'
     Set-RegistryValue -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update' -Name 'ScheduleInstallTime' -Value 3 -Description 'Set installation time to 3 AM if needed'
-    
+
     # Disable Windows Update delivery optimization
     Set-RegistryValue -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\DeliveryOptimization\Config' -Name 'DODownloadMode' -Value 0 -Description 'Disable delivery optimization'
 }
@@ -867,20 +867,20 @@ function Optimize-WindowsUpdate {
 
 function Optimize-TelemetryAndPrivacy {
     Write-Log "Disabling telemetry and privacy-invasive features..." 'INFO'
-    
+
     # Disable telemetry
     Set-RegistryValue -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection' -Name 'AllowTelemetry' -Value 0 -Description 'Disable telemetry'
     Set-RegistryValue -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\DataCollection' -Name 'AllowTelemetry' -Value 0 -Description 'Disable telemetry (secondary location)'
-    
+
     # Disable offline files
     Set-RegistryValue -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\NetCache' -Name 'Enabled' -Value 0 -Description 'Disable offline files'
-    
+
     # Disable background layout service
     Set-RegistryValue -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\OptimalLayout' -Name 'EnableAutoLayout' -Value 0 -Description 'Disable background layout service'
-    
+
     # Disable automatic defragmentation
     Set-RegistryValue -Path 'HKLM:\SOFTWARE\Microsoft\Dfrg\BootOptimizeFunction' -Name 'Enable' -Value 'N' -Type String -Description 'Disable defrag'
-    
+
     # Disable change notify events for better performance
     Set-RegistryValue -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\CurrentVersion\Policies\Explorer' -Name 'NoRemoteRecursiveEvents' -Value 1 -Description 'Turn off change notify events'
 }
@@ -891,24 +891,24 @@ function Optimize-TelemetryAndPrivacy {
 
 function Optimize-RDSSpecific {
     Write-Log "Applying RDS-specific optimizations..." 'INFO'
-    
+
     # Optimize RDS session settings
     Set-RegistryValue -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name 'KeepAliveEnable' -Value 1 -Description 'Enable RDS keep-alive'
     Set-RegistryValue -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name 'KeepAliveInterval' -Value 1 -Description 'Set RDS keep-alive interval'
-    
+
     # Optimize printer redirection
     Set-RegistryValue -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server\Wds\rdpwd' -Name 'MaxInstanceCount' -Value 50 -Description 'Increase max RDS instances'
-    
+
     # Disable RDS printer auto-creation delay
     Set-RegistryValue -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services' -Name 'RedirectionGUIDisabled' -Value 1 -Description 'Disable printer redirection GUI'
-    
+
     # Configure RDS License Server if specified
     if ($RDSLicenseServer) {
         Write-Log "Configuring RDS License Server: $RDSLicenseServer" 'INFO'
-        
+
         # Set license server
         Set-RegistryValue -Path 'HKLM:\SYSTEM\CurrentControlSet\Services\TermService\Parameters\LicenseServers' -Name 'SpecifiedLicenseServers' -Value $RDSLicenseServer -Type String -Description "Set RDS License Server to $RDSLicenseServer"
-        
+
         # Set licensing mode if specified
         if ($RDSLicenseMode -ne 'NotConfigured') {
             $licenseMode = switch ($RDSLicenseMode) {
@@ -918,7 +918,7 @@ function Optimize-RDSSpecific {
             }
             Set-RegistryValue -Path 'HKLM:\SYSTEM\CurrentControlSet\Services\TermService\Parameters' -Name 'LicensingMode' -Value $licenseMode -Description "Set RDS licensing mode to $RDSLicenseMode"
         }
-        
+
         # Configure license discovery
         Set-RegistryValue -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services' -Name 'LicenseServers' -Value $RDSLicenseServer -Type String -Description 'Set license server for discovery'
         Set-RegistryValue -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services' -Name 'LicensingMode' -Value $RDSLicenseMode -Type String -Description "Set policy licensing mode to $RDSLicenseMode"
@@ -926,52 +926,52 @@ function Optimize-RDSSpecific {
         # Clear cached license servers if not specified
         Set-RegistryValue -Path 'HKLM:\SYSTEM\CurrentControlSet\Services\TermService\Parameters\LicenseServers' -Name 'SpecifiedLicenseServers' -Value '' -Type String -Description 'Clear specified license servers'
     }
-    
+
     # Set RDS user limit (unlimited)
     Set-RegistryValue -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name 'MaxInstanceCount' -Value 4294967295 -Description 'Set RDS max concurrent sessions to unlimited'
-    
+
     # Disable RDS camera redirection (security)
     Set-RegistryValue -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services' -Name 'fDisableCameraRedir' -Value 1 -Description 'Disable camera redirection'
-    
+
     # Optimize RDS timeouts
     Set-RegistryValue -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services' -Name 'MaxIdleTime' -Value 0 -Description 'Disable idle timeout'
     Set-RegistryValue -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services' -Name 'MaxDisconnectionTime' -Value 0 -Description 'Disable disconnection timeout'
-    
+
     # Configure User Profiles if specified
     if ($UserProfilePath -or $UserProfileDiskPath) {
         Write-Log "Configuring RDS user profile settings..." 'INFO'
-        
+
         if ($UserProfilePath) {
             Write-Log "Setting roaming profiles path: $UserProfilePath" 'INFO'
-            
+
             # Enable roaming profiles
             Set-RegistryValue -Path 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList' -Name 'DefaultUserProfile' -Value $UserProfilePath -Type String -Description "Set default roaming profile path"
-            
+
             # Configure profile settings
             Set-RegistryValue -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\System' -Name 'SlowLinkProfileDefault' -Value 0 -Description 'Disable slow link detection for profiles'
             Set-RegistryValue -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\System' -Name 'WaitForNetworkBeforeUserProfile' -Value 1 -Description 'Wait for network before loading user profile'
-            
+
             # RDS-specific roaming profile settings
             Set-RegistryValue -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services' -Name 'fTempFoldersPerSession' -Value 1 -Description 'Use temp folders per session'
             Set-RegistryValue -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services' -Name 'DeleteTempDirsOnExit' -Value 1 -Description 'Delete temp directories on exit'
         }
-        
+
         if ($UserProfileDiskPath) {
             Write-Log "Setting User Profile Disk path: $UserProfileDiskPath (Max size: $ProfileDiskMaxSizeGB GB)" 'INFO'
-            
+
             # Configure UPD settings
             Set-RegistryValue -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services' -Name 'fEnableUPD' -Value 1 -Description 'Enable User Profile Disks'
             Set-RegistryValue -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services' -Name 'UPDPath' -Value $UserProfileDiskPath -Type String -Description "Set UPD path to $UserProfileDiskPath"
             Set-RegistryValue -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services' -Name 'UPDMaxSize' -Value ($ProfileDiskMaxSizeGB * 1024) -Description "Set UPD max size to $ProfileDiskMaxSizeGB GB"
-            
+
             # UPD optimization settings
             Set-RegistryValue -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services' -Name 'UPDExcludeList' -Value "AppData\Local;AppData\LocalLow;$Recycle.Bin;System Volume Information" -Type String -Description 'Set UPD exclusion list'
             Set-RegistryValue -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services' -Name 'UPDIncludeList' -Value "*" -Type String -Description 'Set UPD inclusion list to all'
-            
+
             # Disable roaming profiles when UPD is used
             Set-RegistryValue -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services' -Name 'fTempFoldersPerSession' -Value 1 -Description 'Use temp folders per session with UPD'
         }
-        
+
         # Common profile optimizations for RDS
         Set-RegistryValue -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\System' -Name 'VerboseStatus' -Value 0 -Description 'Disable verbose status messages during logon'
         Set-RegistryValue -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System' -Name 'DelayedDesktopSwitchTimeout' -Value 0 -Description 'Disable delayed desktop switch timeout'
@@ -984,19 +984,19 @@ function Optimize-RDSSpecific {
 
 function Optimize-Security {
     Write-Log "Applying security optimizations for multi-user environment..." 'INFO'
-    
+
     # Disable machine account password changes
     Set-RegistryValue -Path 'HKLM:\SYSTEM\CurrentControlSet\Services\Netlogon\Parameters' -Name 'DisablePasswordChange' -Value 1 -Description 'Disable machine account password changes'
-    
+
     # Restrict CD/DVD access
     Set-RegistryValue -Path 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon' -Name 'AllocateCDRoms' -Value 0 -Description 'Restrict CD/DVD access to console user only'
-    
+
     # Restrict floppy access (legacy)
     Set-RegistryValue -Path 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon' -Name 'AllocateFloppies' -Value 0 -Description 'Restrict floppy access to console user only'
-    
+
     # Disable USB storage for regular users
     Set-RegistryValue -Path 'HKLM:\SYSTEM\CurrentControlSet\Services\USBSTOR' -Name 'Start' -Value 4 -Description 'Disable USB storage service'
-    
+
     # Enhance audit policy
     Set-RegistryValue -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System\Audit' -Name 'ProcessCreationIncludeCmdLine_Enabled' -Value 1 -Description 'Enable command line auditing'
 }
@@ -1008,18 +1008,18 @@ function Optimize-Security {
 function Start-Optimization {
     Write-Log "Starting Windows Server 2019 RDS optimization..." 'INFO'
     Write-Log "Log file: $LogFile" 'INFO'
-    
+
     if ($DryRun) {
         Write-Log "RUNNING IN DRY-RUN MODE - No changes will be applied" 'WARNING'
     }
-    
+
     try {
         # System checks
         Test-SystemRequirements
-        
+
         # Resource validation
         $resourceValidation = Test-SystemResources
-        
+
         # RDS and profile configuration validation
         if ($RDSLicenseServer -or $UserProfilePath -or $UserProfileDiskPath) {
             $rdsConfigValid = Test-RDSConfiguration
@@ -1027,11 +1027,11 @@ function Start-Optimization {
                 Write-Log "WARNING: Some RDS/profile paths are not accessible. Continuing with optimization..." 'WARNING'
             }
         }
-        
+
         if ($DryRun) {
             Write-Log "Dry-run mode: Showing what would be changed with current values..." 'INFO'
         }
-        
+
         # Main optimization functions
         Optimize-Services
         Optimize-ScheduledTasks
@@ -1042,9 +1042,9 @@ function Start-Optimization {
         Optimize-TelemetryAndPrivacy
         Optimize-RDSSpecific
         Optimize-Security
-        
+
         Write-Log "Optimization completed successfully!" 'SUCCESS'
-        
+
         if ($DryRun) {
             Write-Log "This was a dry-run. No actual changes were made to the system." 'INFO'
             Write-Log "Re-run without -DryRun to apply these changes." 'INFO'
@@ -1053,9 +1053,9 @@ function Start-Optimization {
                 Write-Log "A system reboot is recommended to complete the optimization." 'WARNING'
             }
         }
-        
+
         return $resourceValidation
-        
+
     } catch {
         Write-Log "Optimization failed: $_" 'ERROR'
         throw
@@ -1067,7 +1067,7 @@ function Start-Optimization {
 # ===========================
 
 Write-Host "=============================================" -ForegroundColor Green
-Write-Host "Windows Server 2019 RDS Optimization Script" -ForegroundColor Green  
+Write-Host "Windows Server 2019 RDS Optimization Script" -ForegroundColor Green
 Write-Host "=============================================" -ForegroundColor Green
 Write-Host ""
 

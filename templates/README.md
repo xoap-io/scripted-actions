@@ -6,10 +6,10 @@ for parameter validation, error handling, and documentation.
 
 ## Available Templates
 
-| Template | Description | Purpose |
-|----------|-------------|---------|
-| [`template.ps1`](./template.ps1) | Basic PowerShell script template | Standard automation script structure |
-| [`splatting.ps1`](./splatting.ps1) | Parameter splatting examples | Complex parameter handling patterns |
+| Template                           | Description                      | Purpose                              |
+| ---------------------------------- | -------------------------------- | ------------------------------------ |
+| [`template.ps1`](./template.ps1)   | Basic PowerShell script template | Standard automation script structure |
+| [`splatting.ps1`](./splatting.ps1) | Parameter splatting examples     | Complex parameter handling patterns  |
 
 ## Template Features
 
@@ -206,15 +206,15 @@ if ($LASTEXITCODE -ne 0) {
 
 ```powershell
 # AWS Regions
-[ValidateSet("us-east-1", "us-east-2", "us-west-1", "us-west-2", 
+[ValidateSet("us-east-1", "us-east-2", "us-west-1", "us-west-2",
             "eu-west-1", "eu-west-2", "eu-central-1", "ap-southeast-1")]
 
 # Azure Regions
-[ValidateSet("eastus", "westus", "centralus", "northeurope", 
+[ValidateSet("eastus", "westus", "centralus", "northeurope",
             "westeurope", "southeastasia", "eastasia")]
 
 # GCP Zones
-[ValidateSet("us-central1-a", "us-central1-b", "us-west1-a", 
+[ValidateSet("us-central1-a", "us-central1-b", "us-west1-a",
             "europe-west1-b", "asia-southeast1-a")]
 ```
 
@@ -337,13 +337,13 @@ When adding new templates:
 # Custom validation function
 function ValidateAwsResourceId {
     param([string]$ResourceId, [string]$ResourceType)
-    
+
     $patterns = @{
         'instance' = '^i-[a-f0-9]{8,17}$'
         'vpc'      = '^vpc-[a-f0-9]{8,17}$'
         'subnet'   = '^subnet-[a-f0-9]{8,17}$'
     }
-    
+
     if (-not ($ResourceId -match $patterns[$ResourceType])) {
         throw "Invalid $ResourceType ID format: $ResourceId"
     }

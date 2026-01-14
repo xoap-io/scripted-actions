@@ -126,7 +126,7 @@ try {
 
     # Add filters
     $filters = @()
-    
+
     if ($VpcId) {
         $filters += "Name=vpc-id,Values=$VpcId"
         Write-Output "Filter: VPC ID = $VpcId"
@@ -195,40 +195,40 @@ try {
             Write-Output "`n📄 Route Tables (JSON):"
             $routeTablesData.RouteTables | ConvertTo-Json -Depth 5
         }
-        
+
         'table' {
             Write-Output "`n📊 Route Tables Summary:"
             Write-Output "=" * 120
             Write-Output "Route Table ID`t`tVPC ID`t`t`tMain`tRoutes`tAssociations`tName"
             Write-Output "-" * 120
-            
+
             foreach ($routeTable in $routeTablesData.RouteTables) {
                 $isMain = $null -ne ($routeTable.Associations | Where-Object { $_.Main -eq $true })
                 $name = "N/A"
-                
+
                 if ($routeTable.Tags) {
                     $nameTag = $routeTable.Tags | Where-Object { $_.Key -eq 'Name' } | Select-Object -First 1
                     if ($nameTag) { $name = $nameTag.Value }
                 }
-                
+
                 Write-Output "$($routeTable.RouteTableId)`t$($routeTable.VpcId)`t$isMain`t$($routeTable.Routes.Count)`t$($routeTable.Associations.Count)`t`t$name"
             }
         }
-        
+
         'detailed' {
             foreach ($routeTable in $routeTablesData.RouteTables) {
                 Write-Output "`n" + "=" * 80
                 Write-Output "Route Table: $($routeTable.RouteTableId)"
                 Write-Output "=" * 80
-                
+
                 # Basic information
                 Write-Output "VPC ID: $($routeTable.VpcId)"
                 Write-Output "Owner ID: $($routeTable.OwnerId)"
-                
+
                 # Check if main route table
                 $isMain = $null -ne ($routeTable.Associations | Where-Object { $_.Main -eq $true })
                 Write-Output "Main Route Table: $isMain"
-                
+
                 # Tags
                 if ($routeTable.Tags -and $routeTable.Tags.Count -gt 0) {
                     Write-Output "`n🏷️  Tags:"
@@ -242,12 +242,12 @@ try {
                     Write-Output "`n🛣️  Routes ($($routeTable.Routes.Count)):"
                     Write-Output "Destination`t`t`tTarget`t`t`t`tState`t`tOrigin"
                     Write-Output "-" * 80
-                    
+
                     foreach ($route in $routeTable.Routes) {
                         $destination = $route.DestinationCidrBlock
                         if (-not $destination) { $destination = $route.DestinationIpv6CidrBlock }
                         if (-not $destination) { $destination = $route.DestinationPrefixListId }
-                        
+
                         $target = "local"
                         if ($route.GatewayId -and $route.GatewayId -ne "local") { $target = $route.GatewayId }
                         if ($route.NatGatewayId) { $target = $route.NatGatewayId }
@@ -255,7 +255,7 @@ try {
                         if ($route.InstanceId) { $target = $route.InstanceId }
                         if ($route.VpcPeeringConnectionId) { $target = $route.VpcPeeringConnectionId }
                         if ($route.TransitGatewayId) { $target = $route.TransitGatewayId }
-                        
+
                         Write-Output "$($destination.PadRight(25))`t$($target.PadRight(25))`t$($route.State.PadRight(10))`t$($route.Origin)"
                     }
                 }
@@ -263,17 +263,17 @@ try {
                 # Associations
                 if ($ShowAssociations -or $OutputFormat -eq 'detailed') {
                     Write-Output "`n🔗 Associations ($($routeTable.Associations.Count)):"
-                    
+
                     if ($routeTable.Associations.Count -eq 0) {
                         Write-Output "  No explicit associations"
                     } else {
                         Write-Output "Association ID`t`t`tSubnet/Gateway ID`t`tType`t`tState"
                         Write-Output "-" * 80
-                        
+
                         foreach ($association in $routeTable.Associations) {
                             $associatedWith = "Main"
                             $type = "Main"
-                            
+
                             if ($association.SubnetId) {
                                 $associatedWith = $association.SubnetId
                                 $type = "Subnet"
@@ -282,7 +282,7 @@ try {
                                 $associatedWith = $association.GatewayId
                                 $type = "Gateway"
                             }
-                            
+
                             Write-Output "$($association.RouteTableAssociationId)`t$($associatedWith.PadRight(20))`t$($type.PadRight(10))`t$($association.AssociationState.State)"
                         }
                     }
@@ -290,7 +290,7 @@ try {
 
                 # Route analysis
                 Write-Output "`n🔍 Route Analysis:"
-                
+
                 # Check for internet connectivity
                 $igwRoute = $routeTable.Routes | Where-Object { $_.GatewayId -like 'igw-*' -and ($_.DestinationCidrBlock -eq '0.0.0.0/0' -or $_.DestinationIpv6CidrBlock -eq '::/0') }
                 if ($igwRoute) {
@@ -325,7 +325,7 @@ try {
                 if ($isMain) {
                     Write-Output "  📍 This is the main route table for the VPC"
                 }
-                
+
                 $subnetAssociations = $routeTable.Associations | Where-Object { $_.SubnetId }
                 if ($subnetAssociations.Count -gt 0) {
                     Write-Output "  📍 Associated with $($subnetAssociations.Count) subnet(s)"
@@ -337,11 +337,11 @@ try {
     # Summary statistics
     if ($OutputFormat -eq 'detailed') {
         Write-Output "`n📈 Summary Statistics:"
-        
+
         $totalRoutes = ($routeTablesData.RouteTables | ForEach-Object { $_.Routes.Count } | Measure-Object -Sum).Sum
         $totalAssociations = ($routeTablesData.RouteTables | ForEach-Object { $_.Associations.Count } | Measure-Object -Sum).Sum
         $mainRouteTables = ($routeTablesData.RouteTables | Where-Object { ($_.Associations | Where-Object { $_.Main -eq $true }) -ne $null }).Count
-        
+
         Write-Output "  • Total Route Tables: $($routeTablesData.RouteTables.Count)"
         Write-Output "  • Main Route Tables: $mainRouteTables"
         Write-Output "  • Custom Route Tables: $($routeTablesData.RouteTables.Count - $mainRouteTables)"

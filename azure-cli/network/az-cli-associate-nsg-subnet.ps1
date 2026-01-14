@@ -5,7 +5,7 @@
 .DESCRIPTION
     This script associates an existing Network Security Group with a subnet in an Azure Virtual Network using the Azure CLI.
     Can also be used to remove NSG association by specifying no NSG.
-    
+
     The script uses the Azure CLI command: az network vnet subnet update
 
 .PARAMETER VNetName
@@ -28,17 +28,17 @@
 
 .EXAMPLE
     .\az-cli-associate-nsg-subnet.ps1 -VNetName "MyVNet" -ResourceGroup "MyRG" -SubnetName "web-subnet" -NSGName "web-nsg"
-    
+
     Associates a Network Security Group with a subnet.
 
 .EXAMPLE
     .\az-cli-associate-nsg-subnet.ps1 -VNetName "MyVNet" -ResourceGroup "MyRG" -SubnetName "web-subnet" -NSGName "web-nsg" -NSGResourceGroup "security-rg"
-    
+
     Associates an NSG from a different resource group.
 
 .EXAMPLE
     .\az-cli-associate-nsg-subnet.ps1 -VNetName "MyVNet" -ResourceGroup "MyRG" -SubnetName "web-subnet" -RemoveNSG
-    
+
     Removes the NSG association from a subnet.
 
 .NOTES
@@ -102,7 +102,7 @@ try {
     if (-not $subnetCheck) {
         throw "Subnet '$SubnetName' not found in virtual network '$VNetName' in resource group '$ResourceGroup'"
     }
-    
+
     $subnetInfo = $subnetCheck | ConvertFrom-Json
     Write-Host "✓ Subnet '$SubnetName' found" -ForegroundColor Green
 
@@ -122,7 +122,7 @@ try {
         }
 
         Write-Host "Removing NSG association from subnet..." -ForegroundColor Yellow
-        
+
         $azParams = @(
             'network', 'vnet', 'subnet', 'update',
             '--vnet-name', $VNetName,
@@ -148,7 +148,7 @@ try {
         Write-Host "✓ Network Security Group '$NSGName' found" -ForegroundColor Green
 
         Write-Host "Associating NSG with subnet..." -ForegroundColor Yellow
-        
+
         $azParams = @(
             'network', 'vnet', 'subnet', 'update',
             '--vnet-name', $VNetName,
@@ -181,7 +181,7 @@ try {
 
     # Execute Azure CLI command
     $result = & az @azParams 2>&1
-    
+
     if ($LASTEXITCODE -eq 0) {
         if ($RemoveNSG) {
             Write-Host "✓ NSG association removed successfully!" -ForegroundColor Green
@@ -197,7 +197,7 @@ try {
             Write-Host "Updated Subnet Details:" -ForegroundColor Cyan
             Write-Host "  Name: $($updatedSubnetInfo.name)" -ForegroundColor White
             Write-Host "  Address Prefix: $($updatedSubnetInfo.addressPrefix)" -ForegroundColor White
-            
+
             if ($updatedSubnetInfo.networkSecurityGroup) {
                 Write-Host "  Network Security Group: $($updatedSubnetInfo.networkSecurityGroup.id -split '/')[-1]" -ForegroundColor Green
             } else {

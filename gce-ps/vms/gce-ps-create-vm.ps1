@@ -3,7 +3,7 @@
     Create a Google Cloud VM instance using the Google Cloud PowerShell module.
 
 .DESCRIPTION
-    This script creates a Google Cloud VM instance using the Add-GceInstance cmdlet from the 
+    This script creates a Google Cloud VM instance using the Add-GceInstance cmdlet from the
     Google Cloud PowerShell module. It provides comprehensive parameter validation, error handling,
     and supports common VM configuration scenarios with sensible defaults.
 
@@ -100,21 +100,21 @@
 
 .EXAMPLE
     .\gce-ps-create-vm.ps1 -Project "my-project-123" -Zone "us-central1-a" -Name "web-server-01" -MachineType "e2-medium"
-    
+
     Create a basic VM with minimal configuration using default settings.
 
 .EXAMPLE
     .\gce-ps-create-vm.ps1 -Project "my-project-123" -Zone "us-central1-a" -Name "app-server" `
     -MachineType "n1-standard-2" -ImageFamily "debian-11" -ImageProject "debian-cloud" `
     -DiskSizeGb 50 -Tag @("web-server","https-server") -Label @{"env"="prod";"team"="backend"}
-    
+
     Create a production VM with specific image, larger disk, and tags/labels.
 
 .EXAMPLE
     .\gce-ps-create-vm.ps1 -Project "my-project-123" -Zone "us-west1-b" -Name "dev-instance" `
     -MachineType "e2-micro" -ImageFamily "ubuntu-2004-lts" -ImageProject "ubuntu-os-cloud" `
     -Preemptible -NoExternalIp -Metadata @{"startup-script"="#!/bin/bash\napt update && apt install -y nginx"}
-    
+
     Create a preemptible development VM with no external IP and startup script.
 
 .NOTES
@@ -122,7 +122,7 @@
     - Google Cloud PowerShell module must be installed: Install-Module GoogleCloud
     - User must be authenticated: Connect-GcpAccount
     - User must have compute.instances.create permission in the target project
-    
+
     Author: XOAP
     Date: 2025-08-06
     Version: 2.0
@@ -234,13 +234,13 @@ function Test-GoogleCloudModule {
         if (-not $module) {
             throw "GoogleCloud PowerShell module is not installed. Please install it using: Install-Module GoogleCloud"
         }
-        
+
         # Import the module if not already loaded
         if (-not (Get-Module -Name GoogleCloud)) {
             Write-Output "Loading Google Cloud PowerShell module..."
             Import-Module GoogleCloud -ErrorAction Stop
         }
-        
+
         Write-Output "Google Cloud PowerShell module is available."
         return $true
     }
@@ -252,7 +252,7 @@ function Test-GoogleCloudModule {
 # Function to validate preemptible instance configuration
 function Test-PreemptibleConfiguration {
     param([bool]$IsPreemptible, [bool]$AutoRestart)
-    
+
     if ($IsPreemptible -and $AutoRestart) {
         throw "Preemptible instances cannot have AutomaticRestart enabled. Set AutomaticRestart to false for preemptible instances."
     }
@@ -266,20 +266,20 @@ function New-BootDiskFromImage {
         [int]$SizeGb,
         [string]$Type
     )
-    
+
     if (-not $ImageFamily -or -not $ImageProject) {
         return $null
     }
-    
+
     try {
         # Get the latest image from the family
         $image = Get-GceImage -Family $ImageFamily -Project $ImageProject
         if (-not $image) {
             throw "Could not find image in family '$ImageFamily' from project '$ImageProject'"
         }
-        
+
         Write-Output "Using image: $($image.Name) from family: $ImageFamily"
-        
+
         # Create boot disk configuration
         $bootDiskConfig = New-Object Google.Apis.Compute.v1.Data.AttachedDisk
         $bootDiskConfig.Boot = $true
@@ -287,11 +287,11 @@ function New-BootDiskFromImage {
         $bootDiskConfig.InitializeParams = New-Object Google.Apis.Compute.v1.Data.AttachedDiskInitializeParams
         $bootDiskConfig.InitializeParams.SourceImage = $image.SelfLink
         $bootDiskConfig.InitializeParams.DiskType = "zones/$Zone/diskTypes/$Type"
-        
+
         if ($SizeGb) {
             $bootDiskConfig.InitializeParams.DiskSizeGb = $SizeGb
         }
-        
+
         return $bootDiskConfig
     }
     catch {
@@ -302,7 +302,7 @@ function New-BootDiskFromImage {
 # Function to build parameters for Add-GceInstance
 function Build-GceInstanceParameters {
     param($InputParameters)
-    
+
     # Start with core parameters
     $gceParams = @{
         Project     = $InputParameters.Project
@@ -310,7 +310,7 @@ function Build-GceInstanceParameters {
         Name        = $InputParameters.Name
         MachineType = $InputParameters.MachineType
     }
-    
+
     # Add optional parameters only if they have values
     if ($InputParameters.CanIpForward) { $gceParams.CanIpForward = $InputParameters.CanIpForward }
     if ($InputParameters.Description) { $gceParams.Description = $InputParameters.Description }
@@ -327,10 +327,10 @@ function Build-GceInstanceParameters {
     if ($InputParameters.Metadata) { $gceParams.Metadata = $InputParameters.Metadata }
     if ($InputParameters.ExtraDisk) { $gceParams.ExtraDisk = $InputParameters.ExtraDisk }
     if ($InputParameters.Disk) { $gceParams.Disk = $InputParameters.Disk }
-    
+
     # Handle AutomaticRestart (explicit false handling)
     $gceParams.AutomaticRestart = $InputParameters.AutomaticRestart
-    
+
     # Handle boot disk configuration
     if ($InputParameters.BootDisk) {
         $gceParams.BootDisk = $InputParameters.BootDisk
@@ -344,24 +344,24 @@ function Build-GceInstanceParameters {
             $gceParams.BootDisk = $bootDisk
         }
     }
-    
+
     return $gceParams
 }
 
 try {
     Write-Output "Starting Google Cloud VM creation process..."
-    
+
     # Test Google Cloud PowerShell module
     Test-GoogleCloudModule
-    
+
     # Validate configuration
     Test-PreemptibleConfiguration -IsPreemptible $Preemptible.IsPresent -AutoRestart $AutomaticRestart
-    
+
     # Check for required ImageProject when ImageFamily is specified
     if ($ImageFamily -and -not $ImageProject) {
         throw "ImageProject is required when ImageFamily is specified. Common values: debian-cloud, ubuntu-os-cloud, windows-cloud, centos-cloud"
     }
-    
+
     # Set current project context
     Write-Output "Setting active project to: $Project"
     try {
@@ -371,7 +371,7 @@ try {
     catch {
         Write-Warning "Could not set project context, but will continue with explicit project parameter."
     }
-    
+
     # Prepare parameters
     $instanceParams = @{
         Project                = $Project
@@ -401,10 +401,10 @@ try {
         Label                  = $Label
         Address                = $Address
     }
-    
+
     # Build final parameters for Add-GceInstance
     $gceParameters = Build-GceInstanceParameters -InputParameters $instanceParams
-    
+
     # Display configuration summary
     Write-Output "VM Configuration:"
     Write-Output "  • Instance Name: $Name"
@@ -417,21 +417,21 @@ try {
     if ($Preemptible) { Write-Output "  • Instance Type: Preemptible" }
     if ($Tag) { Write-Output "  • Tags: $($Tag -join ', ')" }
     if ($Label) { Write-Output "  • Labels: $($Label.Keys | ForEach-Object { "$_=$($Label[$_])" } | Join-String -Separator ', ')" }
-    
+
     # Create the VM instance
     Write-Output "`n🚀 Creating VM instance..."
     $result = Add-GceInstance @gceParameters
-    
+
     if ($result) {
         Write-Output "Virtual machine '$Name' created successfully in project '$Project'!"
         Write-Output "Zone: $Zone"
         Write-Output "Machine Type: $MachineType"
-        
+
         # Display instance details if available
         if ($result.SelfLink) {
             Write-Output "Instance URL: $($result.SelfLink)"
         }
-        
+
         # Get and display network information
         try {
             Start-Sleep -Seconds 2  # Wait for instance to be fully created
@@ -439,7 +439,7 @@ try {
             if ($instance.NetworkInterfaces) {
                 $networkInterface = $instance.NetworkInterfaces[0]
                 Write-Output "Internal IP: $($networkInterface.NetworkIP)"
-                
+
                 if ($networkInterface.AccessConfigs) {
                     $externalIP = $networkInterface.AccessConfigs[0].NatIP
                     if ($externalIP) {

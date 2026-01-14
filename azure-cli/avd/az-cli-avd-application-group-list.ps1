@@ -54,46 +54,46 @@ try {
     if (-not $azVersion) {
         throw "Azure CLI is not installed or not available in PATH"
     }
-    
+
     Write-Host "Checking Azure CLI login status..." -ForegroundColor Cyan
     $account = az account show --output json 2>$null | ConvertFrom-Json
     if (-not $account) {
         throw "Not logged in to Azure CLI. Please run 'az login' first"
     }
     Write-Host "Logged in as: $($account.user.name)" -ForegroundColor Green
-    
+
     Write-Host "Listing Azure Virtual Desktop Application Groups..." -ForegroundColor Cyan
-    
+
     $azParams = @(
         'desktopvirtualization', 'applicationgroup', 'list',
         '--output', 'json'
     )
-    
+
     if ($ResourceGroup) {
         $azParams += '--resource-group', $ResourceGroup
         Write-Host "  Filtering by Resource Group: $ResourceGroup" -ForegroundColor Yellow
     }
-    
+
     if ($Filter) {
         $azParams += '--filter', $Filter
         Write-Host "  Applying filter: $Filter" -ForegroundColor Yellow
     }
-    
+
     if ($MaxItems) {
         $azParams += '--max-items', $MaxItems.ToString()
         Write-Host "  Limiting results to: $MaxItems items" -ForegroundColor Yellow
     }
-    
+
     $result = & az @azParams
     if ($LASTEXITCODE -ne 0) {
         throw "Azure CLI command failed with exit code: $LASTEXITCODE"
     }
-    
+
     $appGroups = $result | ConvertFrom-Json
-    
+
     if ($appGroups -and $appGroups.Count -gt 0) {
         Write-Host "Found $($appGroups.Count) Application Group(s):" -ForegroundColor Green
-        
+
         $appGroups | Format-Table -Property @(
             @{Name='Name'; Expression={$_.name}},
             @{Name='Type'; Expression={$_.applicationGroupType}},
@@ -101,7 +101,7 @@ try {
             @{Name='Location'; Expression={$_.location}},
             @{Name='Host Pool'; Expression={($_.hostPoolArmPath -split '/')[-1]}}
         ) -AutoSize
-        
+
         return $appGroups
     } else {
         Write-Host "No Application Groups found" -ForegroundColor Yellow

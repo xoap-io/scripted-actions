@@ -73,7 +73,7 @@ param (
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
     [string]$ResourceGroup,
- 
+
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
     [string]$FullName,
@@ -183,7 +183,7 @@ if ($Version) {
 # Set Error Action to Stop
 $ErrorActionPreference = "Stop"
 
-try {    
+try {
     # Create the MSIX package and capture the result
     $result = New-AzWvdMsixPackage @parameters
 

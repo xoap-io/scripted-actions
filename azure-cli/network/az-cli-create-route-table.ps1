@@ -5,7 +5,7 @@
 .DESCRIPTION
     This script creates an Azure Route Table using the Azure CLI.
     Route tables contain custom routes that override Azure's default system routes for subnet traffic.
-    
+
     The script uses the Azure CLI command: az network route-table create
 
 .PARAMETER Name
@@ -25,12 +25,12 @@
 
 .EXAMPLE
     .\az-cli-create-route-table.ps1 -Name "app-routes" -ResourceGroup "MyRG" -Location "eastus"
-    
+
     Creates a basic route table.
 
 .EXAMPLE
     .\az-cli-create-route-table.ps1 -Name "secure-routes" -ResourceGroup "MyRG" -Location "westus2" -DisableBgpRoutePropagation -Tags "environment=production purpose=security"
-    
+
     Creates a route table with BGP route propagation disabled and tags.
 
 .NOTES
@@ -98,11 +98,11 @@ try {
     )
 
     # Add optional parameters
-    if ($DisableBgpRoutePropagation) { 
-        $azParams += '--disable-bgp-route-propagation', 'true' 
+    if ($DisableBgpRoutePropagation) {
+        $azParams += '--disable-bgp-route-propagation', 'true'
     }
-    if ($Tags) { 
-        $azParams += '--tags', $Tags 
+    if ($Tags) {
+        $azParams += '--tags', $Tags
     }
 
     Write-Host "Creating Route Table..." -ForegroundColor Yellow
@@ -118,10 +118,10 @@ try {
 
     # Execute Azure CLI command
     $result = & az @azParams 2>&1
-    
+
     if ($LASTEXITCODE -eq 0) {
         Write-Host "✓ Route Table created successfully!" -ForegroundColor Green
-        
+
         # Parse and display Route Table information
         try {
             $rtInfo = $result | ConvertFrom-Json
@@ -131,13 +131,13 @@ try {
             Write-Host "  Location: $($rtInfo.location)" -ForegroundColor White
             Write-Host "  Resource ID: $($rtInfo.id)" -ForegroundColor White
             Write-Host "  BGP Route Propagation: $(if ($rtInfo.disableBgpRoutePropagation) { 'Disabled' } else { 'Enabled' })" -ForegroundColor White
-            
+
             if ($rtInfo.routes -and $rtInfo.routes.Count -gt 0) {
                 Write-Host "  Custom Routes: $($rtInfo.routes.Count)" -ForegroundColor White
             } else {
                 Write-Host "  Custom Routes: None (only system routes active)" -ForegroundColor White
             }
-            
+
             if ($rtInfo.tags -and $rtInfo.tags.PSObject.Properties.Count -gt 0) {
                 Write-Host "  Tags:" -ForegroundColor White
                 $rtInfo.tags.PSObject.Properties | ForEach-Object {

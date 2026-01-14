@@ -6,7 +6,7 @@
     This script deletes an Azure Route Table using the Azure CLI.
     Includes safety checks to verify the route table is not associated with any subnets
     and provides confirmation prompts to prevent accidental deletion.
-    
+
     The script uses the Azure CLI command: az network route-table delete
 
 .PARAMETER RouteTableName
@@ -23,17 +23,17 @@
 
 .EXAMPLE
     .\az-cli-delete-route-table.ps1 -RouteTableName "prod-rt" -ResourceGroup "network-rg"
-    
+
     Deletes a Route Table with safety checks and confirmation.
 
 .EXAMPLE
     .\az-cli-delete-route-table.ps1 -RouteTableName "prod-rt" -ResourceGroup "network-rg" -Force
-    
+
     Forces deletion without confirmation prompts but still checks associations.
 
 .EXAMPLE
     .\az-cli-delete-route-table.ps1 -RouteTableName "prod-rt" -ResourceGroup "network-rg" -Force -SkipAssociationCheck
-    
+
     Forces deletion without any safety checks or confirmations.
 
 .NOTES
@@ -90,7 +90,7 @@ try {
     if (-not $routeTableCheck) {
         throw "Route Table '$RouteTableName' not found in resource group '$ResourceGroup'"
     }
-    
+
     $routeTableInfo = $routeTableCheck | ConvertFrom-Json
     Write-Host "✓ Route Table '$RouteTableName' found" -ForegroundColor Green
 
@@ -113,22 +113,22 @@ try {
     # Check for subnet associations unless skipped
     if (-not $SkipAssociationCheck) {
         Write-Host "Checking for subnet associations..." -ForegroundColor Yellow
-        
+
         if ($routeTableInfo.subnets -and $routeTableInfo.subnets.Count -gt 0) {
             Write-Host "⚠ WARNING: Route Table has active subnet associations!" -ForegroundColor Red
             Write-Host "Associated Subnets:" -ForegroundColor Yellow
-            
+
             foreach ($subnet in $routeTableInfo.subnets) {
                 $subnetName = ($subnet.id -split '/')[-1]
                 $vnetName = ($subnet.id -split '/')[-3]
                 $subnetRG = ($subnet.id -split '/')[-7]
                 Write-Host "  • Subnet: $subnetName (VNet: $vnetName, RG: $subnetRG)" -ForegroundColor White
             }
-            
+
             Write-Host "" -ForegroundColor White
             Write-Host "Deleting this route table will remove custom routing from these subnets!" -ForegroundColor Red
             Write-Host "Subnets will fall back to system routes only." -ForegroundColor Yellow
-            
+
             if (-not $Force) {
                 Write-Host "" -ForegroundColor White
                 $confirmation = Read-Host "Do you want to continue with deletion despite subnet associations? (yes/no)"
@@ -151,7 +151,7 @@ try {
         Write-Host "⚠ WARNING: This will permanently delete the Route Table '$RouteTableName'" -ForegroundColor Red
         Write-Host "All custom routes will be lost and cannot be recovered!" -ForegroundColor Red
         Write-Host "" -ForegroundColor White
-        
+
         $confirmation = Read-Host "Are you sure you want to delete this Route Table? (yes/no)"
         if ($confirmation -ne "yes") {
             Write-Host "Deletion cancelled by user." -ForegroundColor Yellow
@@ -173,7 +173,7 @@ try {
 
     # Execute Azure CLI command
     $result = & az @azParams 2>&1
-    
+
     if ($LASTEXITCODE -eq 0) {
         Write-Host "✓ Route Table deleted successfully!" -ForegroundColor Green
         Write-Host "Route Table '$RouteTableName' has been permanently removed from resource group '$ResourceGroup'" -ForegroundColor White

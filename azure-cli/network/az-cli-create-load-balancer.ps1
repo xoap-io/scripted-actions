@@ -5,7 +5,7 @@
 .DESCRIPTION
     This script creates an Azure Load Balancer using the Azure CLI.
     Load balancers distribute incoming network traffic across multiple backend resources for high availability and scalability.
-    
+
     The script uses the Azure CLI command: az network lb create
 
 .PARAMETER Name
@@ -45,17 +45,17 @@
 
 .EXAMPLE
     .\az-cli-create-load-balancer.ps1 -Name "web-lb" -ResourceGroup "MyRG" -Location "eastus" -Type "Public" -PublicIPAddress "web-pip"
-    
+
     Creates a public load balancer with an existing public IP.
 
 .EXAMPLE
     .\az-cli-create-load-balancer.ps1 -Name "app-lb" -ResourceGroup "MyRG" -Location "westus2" -Type "Internal" -SubnetId "/subscriptions/.../subnets/app-subnet" -Sku "Standard"
-    
+
     Creates an internal Standard load balancer.
 
 .EXAMPLE
     .\az-cli-create-load-balancer.ps1 -Name "internal-lb" -ResourceGroup "MyRG" -Location "eastus2" -Type "Internal" -SubnetId "/subscriptions/.../subnets/app-subnet" -PrivateIPAddress "10.0.1.10" -Tags "environment=production tier=application"
-    
+
     Creates an internal load balancer with a static private IP and tags.
 
 .NOTES
@@ -169,8 +169,8 @@ try {
     }
 
     # Add optional parameters
-    if ($Tags) { 
-        $azParams += '--tags', $Tags 
+    if ($Tags) {
+        $azParams += '--tags', $Tags
     }
 
     Write-Host "Creating Load Balancer..." -ForegroundColor Yellow
@@ -193,10 +193,10 @@ try {
 
     # Execute Azure CLI command
     $result = & az @azParams 2>&1
-    
+
     if ($LASTEXITCODE -eq 0) {
         Write-Host "✓ Load Balancer created successfully!" -ForegroundColor Green
-        
+
         # Parse and display Load Balancer information
         try {
             $lbInfo = $result | ConvertFrom-Json
@@ -206,12 +206,12 @@ try {
             Write-Host "  Location: $($lbInfo.location)" -ForegroundColor White
             Write-Host "  SKU: $($lbInfo.sku.name)" -ForegroundColor White
             Write-Host "  Resource ID: $($lbInfo.id)" -ForegroundColor White
-            
+
             if ($lbInfo.frontendIPConfigurations -and $lbInfo.frontendIPConfigurations.Count -gt 0) {
                 $frontend = $lbInfo.frontendIPConfigurations[0]
                 Write-Host "  Frontend IP Configuration:" -ForegroundColor White
                 Write-Host "    Name: $($frontend.name)" -ForegroundColor White
-                
+
                 if ($frontend.publicIPAddress) {
                     Write-Host "    Type: Public" -ForegroundColor White
                     Write-Host "    Public IP: $($frontend.publicIPAddress.id -split '/')[-1]" -ForegroundColor White
@@ -221,18 +221,18 @@ try {
                     Write-Host "    Subnet: $($frontend.subnet.id -split '/')[-1]" -ForegroundColor White
                 }
             }
-            
+
             if ($lbInfo.backendAddressPools -and $lbInfo.backendAddressPools.Count -gt 0) {
                 Write-Host "  Backend Pool: $($lbInfo.backendAddressPools[0].name)" -ForegroundColor White
             }
-            
+
             if ($lbInfo.tags -and $lbInfo.tags.PSObject.Properties.Count -gt 0) {
                 Write-Host "  Tags:" -ForegroundColor White
                 $lbInfo.tags.PSObject.Properties | ForEach-Object {
                     Write-Host "    $($_.Name): $($_.Value)" -ForegroundColor White
                 }
             }
-            
+
             Write-Host "" -ForegroundColor White
             Write-Host "Next steps:" -ForegroundColor Yellow
             Write-Host "  1. Add backend pool members (VMs or VM Scale Sets)" -ForegroundColor White

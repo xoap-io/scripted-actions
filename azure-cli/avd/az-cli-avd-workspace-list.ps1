@@ -54,48 +54,48 @@ try {
     if (-not $azVersion) {
         throw "Azure CLI is not installed or not available in PATH"
     }
-    
+
     Write-Host "Checking Azure CLI login status..." -ForegroundColor Cyan
     $account = az account show --output json 2>$null | ConvertFrom-Json
     if (-not $account) {
         throw "Not logged in to Azure CLI. Please run 'az login' first"
     }
     Write-Host "Logged in as: $($account.user.name)" -ForegroundColor Green
-    
+
     Write-Host "Listing Azure Virtual Desktop Workspaces..." -ForegroundColor Cyan
-    
+
     # Build command parameters
     $listParams = @(
         'desktopvirtualization', 'workspace', 'list',
         '--output', 'json'
     )
-    
+
     if ($ResourceGroup) {
         $listParams += '--resource-group', $ResourceGroup
         Write-Host "  Filtering by Resource Group: $ResourceGroup" -ForegroundColor Yellow
     }
-    
+
     if ($MaxItems) {
         $listParams += '--max-items', $MaxItems
         Write-Host "  Limiting results to: $MaxItems items" -ForegroundColor Yellow
     }
-    
+
     if ($NextToken) {
         $listParams += '--next-token', $NextToken
         Write-Host "  Using next token for pagination" -ForegroundColor Yellow
     }
-    
+
     $result = & az @listParams
     if ($LASTEXITCODE -ne 0) {
         throw "Azure CLI command failed with exit code: $LASTEXITCODE"
     }
-    
+
     $workspaces = $result | ConvertFrom-Json
-    
+
     if ($workspaces -and $workspaces.Count -gt 0) {
         Write-Host "✓ Found $($workspaces.Count) Workspace(s)" -ForegroundColor Green
         Write-Host "`nWorkspace Summary:" -ForegroundColor Cyan
-        
+
         foreach ($workspace in $workspaces) {
             Write-Host "  Name: $($workspace.name)" -ForegroundColor White
             Write-Host "    Resource Group: $($workspace.resourceGroup)" -ForegroundColor Gray
@@ -114,7 +114,7 @@ try {
             Write-Host "  In Resource Group: $ResourceGroup" -ForegroundColor Yellow
         }
     }
-    
+
     return $workspaces
 } catch {
     Write-Error "Failed to list Azure Virtual Desktop Workspaces: $_"

@@ -6,7 +6,7 @@
     This script applies tags to Azure resources and Resource Groups using the Azure CLI.
     Supports bulk tagging operations, tag inheritance, compliance tagging, and tag management.
     Includes validation, conflict resolution, and reporting capabilities for enterprise tag governance.
-    
+
     The script uses the Azure CLI commands: az resource tag, az group update
 
 .PARAMETER ResourceGroup
@@ -44,22 +44,22 @@
 
 .EXAMPLE
     .\az-cli-tag-resources.ps1 -ResourceGroup "production-rg" -Tags @{"Environment"="Production"; "Owner"="TeamA"}
-    
+
     Applies Environment and Owner tags to all resources in the Resource Group.
 
 .EXAMPLE
     .\az-cli-tag-resources.ps1 -ResourceGroup "dev-rg" -TagsFromFile "tags.json" -TagResourceGroup
-    
+
     Applies tags from JSON file to Resource Group and all its resources.
 
 .EXAMPLE
     .\az-cli-tag-resources.ps1 -Resources @("/subscriptions/.../resourceGroups/rg/providers/Microsoft.Compute/virtualMachines/vm1") -Tags @{"CostCenter"="12345"} -Operation "merge"
-    
+
     Merges CostCenter tag with existing tags on specific resource.
 
 .EXAMPLE
     .\az-cli-tag-resources.ps1 -ResourceGroup "compliance-rg" -ComplianceTemplate "DataClassification" -ReportExisting
-    
+
     Applies data classification compliance tags with existing tags report.
 
 .NOTES
@@ -171,7 +171,7 @@ try {
     # Apply compliance template if specified
     if ($ComplianceTemplate) {
         Write-Host "Applying compliance template: $ComplianceTemplate" -ForegroundColor Yellow
-        
+
         $complianceTags = switch ($ComplianceTemplate) {
             "DataClassification" {
                 @{
@@ -214,7 +214,7 @@ try {
                 }
             }
         }
-        
+
         if ($Tags) {
             # Merge with existing tags
             foreach ($key in $complianceTags.Keys) {
@@ -225,7 +225,7 @@ try {
         } else {
             $Tags = $complianceTags
         }
-        
+
         Write-Host "✓ Applied $($complianceTags.Count) compliance tags" -ForegroundColor Green
     }
 
@@ -236,7 +236,7 @@ try {
         if (-not $rgCheck) {
             throw "Resource Group '$ResourceGroup' not found in subscription '$($azAccount.name)'"
         }
-        
+
         $rgInfo = $rgCheck | ConvertFrom-Json
         Write-Host "✓ Resource Group '$ResourceGroup' found" -ForegroundColor Green
         Write-Host "  Location: $($rgInfo.location)" -ForegroundColor White
@@ -244,7 +244,7 @@ try {
 
     # Get resources to tag
     $resourcesToTag = @()
-    
+
     if ($Resources -and $Resources.Count -gt 0) {
         Write-Host "Using specified resource IDs..." -ForegroundColor Blue
         foreach ($resourceId in $Resources) {
@@ -270,7 +270,7 @@ try {
             foreach ($property in $rgTags.PSObject.Properties) {
                 $inheritedTags[$property.Name] = $property.Value
             }
-            
+
             if ($Tags) {
                 # Merge with existing tags (Tags parameter takes precedence)
                 foreach ($key in $inheritedTags.Keys) {
@@ -281,7 +281,7 @@ try {
             } else {
                 $Tags = $inheritedTags
             }
-            
+
             Write-Host "✓ Inherited $($inheritedTags.Count) tags from Resource Group" -ForegroundColor Green
         } else {
             Write-Host "No tags found on Resource Group to inherit" -ForegroundColor Yellow
@@ -313,9 +313,9 @@ try {
         Write-Host ""
         Write-Host "📊 Existing Tags Report:" -ForegroundColor Blue
         Write-Host $("-" * 60) -ForegroundColor Gray
-        
+
         $allExistingTags = @{}
-        
+
         if ($TagResourceGroup -and $ResourceGroup) {
             Write-Host "Resource Group Tags:" -ForegroundColor Yellow
             if ($rgInfo.tags) {
@@ -328,10 +328,10 @@ try {
             }
             Write-Host ""
         }
-        
+
         Write-Host "Resource Tags Summary:" -ForegroundColor Yellow
         $tagStats = @{}
-        
+
         foreach ($resource in $resourcesToTag) {
             Write-Host "🔧 $($resource.name) ($($resource.type))" -ForegroundColor Blue
             if ($resource.tags) {
@@ -347,7 +347,7 @@ try {
                 Write-Host "    (No tags)" -ForegroundColor Gray
             }
         }
-        
+
         if ($tagStats.Count -gt 0) {
             Write-Host ""
             Write-Host "Tag Usage Statistics:" -ForegroundColor Cyan
@@ -355,7 +355,7 @@ try {
                 Write-Host "  $($tagStat.Key): $($tagStat.Value) resources" -ForegroundColor White
             }
         }
-        
+
         Write-Host ""
     }
 
@@ -364,37 +364,37 @@ try {
         Write-Host ""
         Write-Host "🔍 What-If Analysis:" -ForegroundColor Yellow
         Write-Host $("-" * 40) -ForegroundColor Gray
-        
+
         if ($TagResourceGroup -and $ResourceGroup) {
             Write-Host "Resource Group '$ResourceGroup' would be tagged with:" -ForegroundColor Blue
             foreach ($tag in $Tags.GetEnumerator()) {
-                $existingValue = if ($rgInfo.tags -and $rgInfo.tags.PSObject.Properties[$tag.Key]) { 
-                    $rgInfo.tags.PSObject.Properties[$tag.Key].Value 
-                } else { 
-                    "(new)" 
+                $existingValue = if ($rgInfo.tags -and $rgInfo.tags.PSObject.Properties[$tag.Key]) {
+                    $rgInfo.tags.PSObject.Properties[$tag.Key].Value
+                } else {
+                    "(new)"
                 }
                 Write-Host "  $($tag.Key): $($tag.Value) $(if ($existingValue -ne '(new)') { "(was: $existingValue)" })" -ForegroundColor White
             }
             Write-Host ""
         }
-        
+
         foreach ($resource in ($resourcesToTag | Select-Object -First 5)) {
             Write-Host "Resource '$($resource.name)' would be tagged with:" -ForegroundColor Blue
             foreach ($tag in $Tags.GetEnumerator()) {
-                $existingValue = if ($resource.tags -and $resource.tags.PSObject.Properties[$tag.Key]) { 
-                    $resource.tags.PSObject.Properties[$tag.Key].Value 
-                } else { 
-                    "(new)" 
+                $existingValue = if ($resource.tags -and $resource.tags.PSObject.Properties[$tag.Key]) {
+                    $resource.tags.PSObject.Properties[$tag.Key].Value
+                } else {
+                    "(new)"
                 }
                 Write-Host "  $($tag.Key): $($tag.Value) $(if ($existingValue -ne '(new)') { "(was: $existingValue)" })" -ForegroundColor White
             }
             Write-Host ""
         }
-        
+
         if ($resourcesToTag.Count -gt 5) {
             Write-Host "... and $($resourcesToTag.Count - 5) more resources" -ForegroundColor Gray
         }
-        
+
         Write-Host "🏁 What-If analysis completed - no changes made" -ForegroundColor Green
         exit 0
     }
@@ -412,7 +412,7 @@ try {
         Write-Host "Operation: $Operation" -ForegroundColor White
         Write-Host "Tags to apply: $($Tags.Count)" -ForegroundColor White
         Write-Host ""
-        
+
         $confirmation = Read-Host "Do you want to proceed with the tagging operation? (yes/no)"
         if ($confirmation -ne "yes") {
             Write-Host "Tagging operation cancelled by user." -ForegroundColor Yellow
@@ -435,7 +435,7 @@ try {
             foreach ($tag in $Tags.GetEnumerator()) {
                 $rgTagParams += "$($tag.Key)=$($tag.Value)"
             }
-            
+
             & az @rgTagParams | Out-Null
             Write-Host "✓ Resource Group tagged successfully" -ForegroundColor Green
             $successCount++
@@ -452,10 +452,10 @@ try {
         $current++
         $percentComplete = [math]::Round(($current / $resourcesToTag.Count) * 100, 1)
         Write-Host "[$current/$($resourcesToTag.Count)] ($percentComplete%) Tagging: $($resource.name)" -ForegroundColor Yellow
-        
+
         try {
             $resourceTagParams = @('resource', 'tag', '--ids', $resource.id)
-            
+
             if ($Operation -eq "replace") {
                 $resourceTagParams += '--tags'
                 foreach ($tag in $Tags.GetEnumerator()) {
@@ -474,7 +474,7 @@ try {
                 }
                 $resourceTagParams += '--operation', 'delete'
             }
-            
+
             & az @resourceTagParams | Out-Null
             $successCount++
         }

@@ -99,19 +99,19 @@ try {
     # If AssociationId not provided, find it using RouteTableId and SubnetId
     if (-not $AssociationId) {
         Write-Output "🔍 Finding association ID for Route Table: $RouteTableId and Subnet: $SubnetId"
-        
+
         $rtbResult = aws ec2 describe-route-tables --route-table-ids $RouteTableId @awsArgs --output json 2>&1
-        
+
         if ($LASTEXITCODE -ne 0) {
             Write-Error "Route table $RouteTableId not found or not accessible: $rtbResult"
         }
 
         $rtbData = $rtbResult | ConvertFrom-Json
         $routeTable = $rtbData.RouteTables[0]
-        
+
         # Find the association for the specified subnet
         $association = $routeTable.Associations | Where-Object { $_.SubnetId -eq $SubnetId }
-        
+
         if (-not $association) {
             Write-Error "No association found between route table $RouteTableId and subnet $SubnetId"
         }
@@ -123,15 +123,15 @@ try {
     # If only SubnetId provided, find any route table association
     if (-not $AssociationId -and $SubnetId -and -not $RouteTableId) {
         Write-Output "🔍 Finding route table association for Subnet: $SubnetId"
-        
+
         $rtbResult = aws ec2 describe-route-tables --filters "Name=association.subnet-id,Values=$SubnetId" @awsArgs --output json 2>&1
-        
+
         if ($LASTEXITCODE -ne 0) {
             Write-Error "Failed to find route table associations for subnet $SubnetId : $rtbResult"
         }
 
         $rtbData = $rtbResult | ConvertFrom-Json
-        
+
         if ($rtbData.RouteTables.Count -eq 0) {
             Write-Output "ℹ️  Subnet $SubnetId is not explicitly associated with any route table."
             Write-Output "It is using the main route table for its VPC."
@@ -140,7 +140,7 @@ try {
 
         $routeTable = $rtbData.RouteTables[0]
         $association = $routeTable.Associations | Where-Object { $_.SubnetId -eq $SubnetId }
-        
+
         if (-not $association) {
             Write-Error "Association not found for subnet $SubnetId"
         }
@@ -152,27 +152,27 @@ try {
 
     # Get detailed information about the association
     Write-Output "`n🔍 Verifying association details..."
-    
+
     if ($RouteTableId) {
         $rtbResult = aws ec2 describe-route-tables --route-table-ids $RouteTableId @awsArgs --output json 2>&1
     } else {
         # Find route table using association ID
         $rtbResult = aws ec2 describe-route-tables --filters "Name=association.route-table-association-id,Values=$AssociationId" @awsArgs --output json 2>&1
     }
-    
+
     if ($LASTEXITCODE -ne 0) {
         Write-Error "Failed to get route table information: $rtbResult"
     }
 
     $rtbData = $rtbResult | ConvertFrom-Json
-    
+
     if ($rtbData.RouteTables.Count -eq 0) {
         Write-Error "Route table not found for association $AssociationId"
     }
 
     $routeTable = $rtbData.RouteTables[0]
     $association = $routeTable.Associations | Where-Object { $_.RouteTableAssociationId -eq $AssociationId }
-    
+
     if (-not $association) {
         Write-Error "Association $AssociationId not found in route table $($routeTable.RouteTableId)"
     }
@@ -194,7 +194,7 @@ try {
 
     # Get main route table information
     $mainRtbResult = aws ec2 describe-route-tables --filters "Name=vpc-id,Values=$vpcId" "Name=association.main,Values=true" @awsArgs --output json 2>&1
-    
+
     if ($LASTEXITCODE -eq 0) {
         $mainRtbData = $mainRtbResult | ConvertFrom-Json
         if ($mainRtbData.RouteTables.Count -gt 0) {
@@ -207,11 +207,11 @@ try {
     # Get subnet details
     if ($association.SubnetId) {
         $subnetResult = aws ec2 describe-subnets --subnet-ids $association.SubnetId @awsArgs --output json 2>&1
-        
+
         if ($LASTEXITCODE -eq 0) {
             $subnetData = $subnetResult | ConvertFrom-Json
             $subnet = $subnetData.Subnets[0]
-            
+
             Write-Output "`n📋 Subnet Details:"
             Write-Output "  Subnet ID: $($subnet.SubnetId)"
             Write-Output "  CIDR Block: $($subnet.CidrBlock)"
@@ -222,11 +222,11 @@ try {
 
     # Warning about potential connectivity impact
     Write-Output "`n⚠️  Impact Analysis:"
-    
+
     # Check for internet routes in current route table
     $hasIgwRoute = $routeTable.Routes | Where-Object { $_.GatewayId -like 'igw-*' -and $_.DestinationCidrBlock -eq '0.0.0.0/0' }
     $hasNatRoute = $routeTable.Routes | Where-Object { $_.NatGatewayId -and $_.DestinationCidrBlock -eq '0.0.0.0/0' }
-    
+
     if ($hasIgwRoute) {
         Write-Output "  • Current route table provides INTERNET access via Internet Gateway"
     } elseif ($hasNatRoute) {
@@ -239,7 +239,7 @@ try {
     if ($mainRouteTable) {
         $mainHasIgwRoute = $mainRouteTable.Routes | Where-Object { $_.GatewayId -like 'igw-*' -and $_.DestinationCidrBlock -eq '0.0.0.0/0' }
         $mainHasNatRoute = $mainRouteTable.Routes | Where-Object { $_.NatGatewayId -and $_.DestinationCidrBlock -eq '0.0.0.0/0' }
-        
+
         if ($mainHasIgwRoute) {
             Write-Output "  • Main route table provides INTERNET access via Internet Gateway"
         } elseif ($mainHasNatRoute) {
@@ -262,9 +262,9 @@ try {
         Write-Output "Route Table: $($routeTable.RouteTableId)"
         Write-Output "From Subnet: $($association.SubnetId)"
         Write-Output "The subnet will then use the main route table: $($mainRouteTable.RouteTableId)"
-        
+
         $confirmation = Read-Host "`nAre you sure you want to continue? (y/N)"
-        
+
         if ($confirmation -ne 'y' -and $confirmation -ne 'Y') {
             Write-Output "❌ Operation cancelled by user."
             exit 0
@@ -279,25 +279,25 @@ try {
         if ($LASTEXITCODE -eq 0) {
             Write-Output "✅ Route table disassociated successfully!"
             Write-Output "Association ID $AssociationId has been removed."
-            
+
             # Verify the disassociation
             Write-Output "`n🔍 Verifying disassociation..."
             Start-Sleep -Seconds 2
-            
+
             $verifyResult = aws ec2 describe-route-tables --route-table-ids $routeTable.RouteTableId @awsArgs --output json 2>&1
-            
+
             if ($LASTEXITCODE -eq 0) {
                 $verifyData = $verifyResult | ConvertFrom-Json
                 $updatedRouteTable = $verifyData.RouteTables[0]
-                
+
                 $remainingAssociation = $updatedRouteTable.Associations | Where-Object { $_.RouteTableAssociationId -eq $AssociationId }
-                
+
                 if (-not $remainingAssociation) {
                     Write-Output "✅ Disassociation verified - association no longer exists"
                 } else {
                     Write-Warning "⚠️  Association still exists - may take a moment to update"
                 }
-                
+
                 Write-Output "Remaining associations for route table: $($updatedRouteTable.Associations.Count)"
             }
 

@@ -27,8 +27,8 @@ gcloud auth application-default login
 
 ## Directory Structure
 
-| Folder | Description | Service Focus |
-|--------|-------------|---------------|
+| Folder           | Description               | Service Focus                       |
+| ---------------- | ------------------------- | ----------------------------------- |
 | [`vms/`](./vms/) | Compute Engine management | VM instances, templates, operations |
 
 ## Common Usage Patterns
@@ -75,7 +75,7 @@ try {
     $result = gcloud compute instances create $InstanceName `
               --zone=$Zone --machine-type=$MachineType `
               --format=json | ConvertFrom-Json
-    
+
     if ($LASTEXITCODE -ne 0) {
         throw "Operation failed with exit code $LASTEXITCODE"
     }

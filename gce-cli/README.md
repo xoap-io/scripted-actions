@@ -28,14 +28,14 @@ gcloud auth application-default login
 
 ## Directory Structure
 
-| Folder | Description | Service Focus |
-|--------|-------------|---------------|
+| Folder           | Description        | Service Focus                  |
+| ---------------- | ------------------ | ------------------------------ |
 | [`vms/`](./vms/) | Compute Engine VMs | Instance management, templates |
 
 ### Standalone Scripts
 
-| Script | Description | Use Case |
-|--------|-------------|----------|
+| Script                           | Description     | Use Case        |
+| -------------------------------- | --------------- | --------------- |
 | `gce-cli-delete-running-vms.ps1` | Bulk VM cleanup | Cost management |
 
 ## Common Usage Patterns
@@ -82,7 +82,7 @@ try {
     $result = gcloud compute instances create $InstanceName `
               --zone=$Zone --machine-type=$MachineType `
               --format=json | ConvertFrom-Json
-    
+
     if ($LASTEXITCODE -ne 0) {
         throw "gcloud command failed with exit code $LASTEXITCODE"
     }

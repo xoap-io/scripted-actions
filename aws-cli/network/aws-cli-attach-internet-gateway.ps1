@@ -80,24 +80,24 @@ try {
     # Verify Internet Gateway exists and get current state
     Write-Output "`n🔍 Verifying Internet Gateway..."
     $igwResult = aws ec2 describe-internet-gateways --internet-gateway-ids $InternetGatewayId @awsArgs --output json 2>&1
-    
+
     if ($LASTEXITCODE -ne 0) {
         Write-Error "Internet Gateway $InternetGatewayId not found or not accessible: $igwResult"
     }
 
     $igwData = $igwResult | ConvertFrom-Json
     $internetGateway = $igwData.InternetGateways[0]
-    
+
     Write-Output "✅ Internet Gateway verified:"
     Write-Output "  State: $($internetGateway.State)"
     Write-Output "  Owner ID: $($internetGateway.OwnerId)"
-    
+
     # Check current attachments
     if ($internetGateway.Attachments -and $internetGateway.Attachments.Count -gt 0) {
         Write-Output "  Current attachments: $($internetGateway.Attachments.Count)"
         foreach ($attachment in $internetGateway.Attachments) {
             Write-Output "    • VPC: $($attachment.VpcId) (State: $($attachment.State))"
-            
+
             if ($attachment.VpcId -eq $VpcId) {
                 if ($attachment.State -eq 'attached') {
                     Write-Output "⚠️  Internet Gateway is already attached to this VPC"
@@ -114,7 +114,7 @@ try {
                 }
             }
         }
-        
+
         # Check if IGW is attached to a different VPC
         $otherAttachments = $internetGateway.Attachments | Where-Object { $_.VpcId -ne $VpcId -and $_.State -eq 'attached' }
         if ($otherAttachments.Count -gt 0) {
@@ -131,14 +131,14 @@ try {
     # Verify VPC exists
     Write-Output "`n🔍 Verifying VPC..."
     $vpcResult = aws ec2 describe-vpcs --vpc-ids $VpcId @awsArgs --output json 2>&1
-    
+
     if ($LASTEXITCODE -ne 0) {
         Write-Error "VPC $VpcId not found or not accessible: $vpcResult"
     }
 
     $vpcData = $vpcResult | ConvertFrom-Json
     $vpc = $vpcData.Vpcs[0]
-    
+
     Write-Output "✅ VPC verified:"
     Write-Output "  State: $($vpc.State)"
     Write-Output "  CIDR Block: $($vpc.CidrBlock)"
@@ -146,10 +146,10 @@ try {
 
     # Check if VPC already has an Internet Gateway attached
     $vpcIgwResult = aws ec2 describe-internet-gateways --filters "Name=attachment.vpc-id,Values=$VpcId" @awsArgs --output json 2>&1
-    
+
     if ($LASTEXITCODE -eq 0) {
         $vpcIgwData = $vpcIgwResult | ConvertFrom-Json
-        
+
         if ($vpcIgwData.InternetGateways.Count -gt 0) {
             $existingIgw = $vpcIgwData.InternetGateways[0]
             if ($existingIgw.InternetGatewayId -ne $InternetGatewayId) {
@@ -171,20 +171,20 @@ try {
             # Verify the attachment
             Write-Output "`n🔍 Verifying attachment..."
             Start-Sleep -Seconds 2
-            
+
             $verifyResult = aws ec2 describe-internet-gateways --internet-gateway-ids $InternetGatewayId @awsArgs --output json 2>&1
-            
+
             if ($LASTEXITCODE -eq 0) {
                 $verifyData = $verifyResult | ConvertFrom-Json
                 $verifiedIgw = $verifyData.InternetGateways[0]
-                
+
                 $attachment = $verifiedIgw.Attachments | Where-Object { $_.VpcId -eq $VpcId }
-                
+
                 if ($attachment) {
                     Write-Output "✅ Attachment verified:"
                     Write-Output "  VPC ID: $($attachment.VpcId)"
                     Write-Output "  State: $($attachment.State)"
-                    
+
                     if ($attachment.State -eq 'attached') {
                         Write-Output "🎉 Internet Gateway successfully attached!"
                     } elseif ($attachment.State -eq 'attaching') {

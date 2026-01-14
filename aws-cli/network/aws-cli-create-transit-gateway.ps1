@@ -131,18 +131,18 @@ try {
     # Build AWS CLI arguments
     $awsArgs = @('ec2', 'create-transit-gateway')
     $awsArgs += @('--description', $Description)
-    
+
     # Add options
     $optionString = ($options.GetEnumerator() | ForEach-Object { "$($_.Key)=$($_.Value)" }) -join ','
     $awsArgs += @('--options', $optionString)
-    
+
     # Build tag specifications
     $tagSpecs = @()
-    
+
     if ($Name) {
         $tagSpecs += "Key=Name,Value=$Name"
     }
-    
+
     if ($Tags) {
         $tagPairs = $Tags -split ','
         foreach ($tagPair in $tagPairs) {
@@ -152,15 +152,15 @@ try {
             }
         }
     }
-    
+
     if ($tagSpecs.Count -gt 0) {
         $awsArgs += @('--tag-specifications', "ResourceType=transit-gateway,Tags=$($tagSpecs -join ',')")
     }
-    
+
     if ($Profile) {
         $awsArgs += @('--profile', $Profile)
     }
-    
+
     if ($Region) {
         $awsArgs += @('--region', $Region)
     }
@@ -174,7 +174,7 @@ try {
     Write-Host "  Default Route Table Propagation: $DefaultRouteTablePropagation" -ForegroundColor White
     Write-Host "  DNS Support: $DnsSupport" -ForegroundColor White
     Write-Host "  Multicast Support: $MulticastSupport" -ForegroundColor White
-    
+
     if ($Name) {
         Write-Host "  Name: $Name" -ForegroundColor White
     }
@@ -188,9 +188,9 @@ try {
     # Create the Transit Gateway
     Write-Host "`nCreating Transit Gateway..." -ForegroundColor Yellow
     Write-Host "This operation may take several minutes..." -ForegroundColor Gray
-    
+
     $result = & aws @awsArgs 2>&1
-    
+
     if ($LASTEXITCODE -ne 0) {
         throw "Failed to create Transit Gateway: $result"
     }
@@ -233,33 +233,33 @@ try {
     # Wait for Transit Gateway if requested
     if ($Wait) {
         Write-Host "`nWaiting for Transit Gateway to become available..." -ForegroundColor Yellow
-        
+
         $maxAttempts = 60  # 10 minutes with 10-second intervals
         $attempt = 0
         $isAvailable = $false
-        
+
         while ($attempt -lt $maxAttempts -and -not $isAvailable) {
             Start-Sleep -Seconds 10
             $attempt++
-            
+
             Write-Host "  Checking status (attempt $attempt/$maxAttempts)..." -ForegroundColor Gray
-            
+
             $checkArgs = @('ec2', 'describe-transit-gateways', '--transit-gateway-ids', $transitGateway.TransitGatewayId)
-            
+
             if ($Profile) {
                 $checkArgs += @('--profile', $Profile)
             }
-            
+
             if ($Region) {
                 $checkArgs += @('--region', $Region)
             }
-            
+
             $checkResult = & aws @checkArgs 2>&1
-            
+
             if ($LASTEXITCODE -eq 0) {
                 $checkInfo = $checkResult | ConvertFrom-Json
                 $currentState = $checkInfo.TransitGateways[0].State
-                
+
                 if ($currentState -eq 'available') {
                     $isAvailable = $true
                     Write-Host "`nTransit Gateway is now available!" -ForegroundColor Green
@@ -271,7 +271,7 @@ try {
                 }
             }
         }
-        
+
         if (-not $isAvailable -and $attempt -eq $maxAttempts) {
             Write-Host "`nTimeout waiting for Transit Gateway to become available." -ForegroundColor Yellow
             Write-Host "Check the status manually with: aws ec2 describe-transit-gateways --transit-gateway-ids $($transitGateway.TransitGatewayId)" -ForegroundColor Gray
@@ -282,13 +282,13 @@ try {
     Write-Host "`nNext Steps:" -ForegroundColor Cyan
     Write-Host "1. Create VPC attachments to connect VPCs to the Transit Gateway:" -ForegroundColor White
     Write-Host "   aws ec2 create-transit-gateway-vpc-attachment --transit-gateway-id $($transitGateway.TransitGatewayId) --vpc-id <vpc-id> --subnet-ids <subnet-id>" -ForegroundColor Gray
-    
+
     Write-Host "`n2. Create VPN attachments for on-premises connectivity:" -ForegroundColor White
     Write-Host "   aws ec2 create-vpn-connection --customer-gateway-id <cgw-id> --transit-gateway-id $($transitGateway.TransitGatewayId) --type ipsec.1" -ForegroundColor Gray
-    
+
     Write-Host "`n3. Configure route tables for traffic routing:" -ForegroundColor White
     Write-Host "   aws ec2 create-route --route-table-id <rt-id> --destination-cidr-block <cidr> --transit-gateway-id $($transitGateway.TransitGatewayId)" -ForegroundColor Gray
-    
+
     Write-Host "`n4. (Optional) Create custom Transit Gateway route tables for advanced routing" -ForegroundColor White
 
     Write-Host "`nUseful Management Commands:" -ForegroundColor Cyan

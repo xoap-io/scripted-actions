@@ -93,7 +93,7 @@ Create a training environment for a PowerShell course with 20 students:
     -ResourceGroupName "training-rg" `
     -Location "East US 2" `
     -TrainingUserEmails @(
-        "student1@contoso.com", 
+        "student1@contoso.com",
         "student2@contoso.com",
         "student3@contoso.com"
         # ... add all student emails
@@ -167,47 +167,47 @@ Complete environment deletion after training:
 
 ### **Core Environment Settings**
 
-| Parameter | Description | Example | Required |
-|-----------|-------------|---------|----------|
-| `LabName` | DevTest Lab name | "PowerShellTraining2025" | Yes |
-| `ResourceGroupName` | Resource group name | "training-rg" | Yes |
-| `Location` | Azure region | "East US 2" | Yes |
-| `SubscriptionId` | Target subscription | "guid-here" | Optional |
+| Parameter           | Description         | Example                  | Required |
+| ------------------- | ------------------- | ------------------------ | -------- |
+| `LabName`           | DevTest Lab name    | "PowerShellTraining2025" | Yes      |
+| `ResourceGroupName` | Resource group name | "training-rg"            | Yes      |
+| `Location`          | Azure region        | "East US 2"              | Yes      |
+| `SubscriptionId`    | Target subscription | "guid-here"              | Optional |
 
 ### **VM Configuration**
 
-| Parameter | Description | Default | Options |
-|-----------|-------------|---------|---------|
-| `WindowsVMCount` | Number of Windows VMs | 10 | 0-50 |
-| `LinuxVMCount` | Number of Linux VMs | 5 | 0-50 |
-| `VMSize` | VM size for all machines | Standard_B2s | B1s, B2s, D2s_v3, etc. |
-| `AllowPublicIP` | Enable internet access | true | true/false |
+| Parameter        | Description              | Default      | Options                |
+| ---------------- | ------------------------ | ------------ | ---------------------- |
+| `WindowsVMCount` | Number of Windows VMs    | 10           | 0-50                   |
+| `LinuxVMCount`   | Number of Linux VMs      | 5            | 0-50                   |
+| `VMSize`         | VM size for all machines | Standard_B2s | B1s, B2s, D2s_v3, etc. |
+| `AllowPublicIP`  | Enable internet access   | true         | true/false             |
 
 ### **Access Control**
 
-| Parameter | Description | Format | Required |
-|-----------|-------------|--------|----------|
-| `TrainingUserEmails` | Student email addresses | @("user1@domain.com") | Optional |
-| `InstructorEmails` | Instructor email addresses | @("instructor@domain.com") | Optional |
-| `MaxVMsPerUser` | VM limit per user | 3 | 1-20 |
-| `MaxVMsPerLab` | Total VM limit | 50 | 5-100 |
+| Parameter            | Description                | Format                     | Required |
+| -------------------- | -------------------------- | -------------------------- | -------- |
+| `TrainingUserEmails` | Student email addresses    | @("user1@domain.com")      | Optional |
+| `InstructorEmails`   | Instructor email addresses | @("instructor@domain.com") | Optional |
+| `MaxVMsPerUser`      | VM limit per user          | 3                          | 1-20     |
+| `MaxVMsPerLab`       | Total VM limit             | 50                         | 5-100    |
 
 ### **Cost Management**
 
-| Parameter | Description | Default | Range |
-|-----------|-------------|---------|--------|
-| `AutoShutdownTime` | Daily shutdown time | "1800" | "0000"-"2359" |
-| `AutoStartupTime` | Daily startup time | "0800" | "0000"-"2359" |
-| `CostThreshold` | Monthly cost alert (USD) | 500 | 50-10000 |
-| `TrainingDuration` | Environment lifetime (days) | 7 | 1-90 |
+| Parameter          | Description                 | Default | Range         |
+| ------------------ | --------------------------- | ------- | ------------- |
+| `AutoShutdownTime` | Daily shutdown time         | "1800"  | "0000"-"2359" |
+| `AutoStartupTime`  | Daily startup time          | "0800"  | "0000"-"2359" |
+| `CostThreshold`    | Monthly cost alert (USD)    | 500     | 50-10000      |
+| `TrainingDuration` | Environment lifetime (days) | 7       | 1-90          |
 
 ### **Advanced Options**
 
-| Parameter | Description | Default |
-|-----------|-------------|---------|
-| `TimeZoneId` | Timezone for scheduling | "UTC" |
-| `InstallCommonTools` | Install development tools | true |
-| `EnableVPNGateway` | Create VPN gateway | false |
+| Parameter            | Description               | Default |
+| -------------------- | ------------------------- | ------- |
+| `TimeZoneId`         | Timezone for scheduling   | "UTC"   |
+| `InstallCommonTools` | Install development tools | true    |
+| `EnableVPNGateway`   | Create VPN gateway        | false   |
 
 ## Student Access Process
 
@@ -227,7 +227,7 @@ All training VMs use standard credentials:
 - **Username**: `trainee`
 - **Password**: `Training123!`
 
-*(Instructors can customize these in the script)*
+_(Instructors can customize these in the script)_
 
 ## Cost Management Features
 
@@ -305,6 +305,7 @@ All training VMs use standard credentials:
 ```
 Error: No Azure context found
 ```
+
 **Solution**: Run `Connect-AzAccount` and ensure proper subscription access
 
 #### **Quota Exceeded**
@@ -312,6 +313,7 @@ Error: No Azure context found
 ```
 Error: Not enough cores available in region
 ```
+
 **Solution**: Choose different region or request quota increase
 
 #### **User Assignment Failures**
@@ -319,6 +321,7 @@ Error: Not enough cores available in region
 ```
 Warning: User email@domain.com not found in Azure AD
 ```
+
 **Solution**: Verify user email addresses and Azure AD membership
 
 #### **VM Creation Timeouts**
@@ -326,6 +329,7 @@ Warning: User email@domain.com not found in Azure AD
 ```
 Error: VM deployment timed out
 ```
+
 **Solution**: Check Azure service health and retry with smaller batch sizes
 
 ### **Monitoring Commands**

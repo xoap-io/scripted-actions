@@ -117,7 +117,7 @@ $ErrorActionPreference = 'Stop'
 # Function to check and install PowerCLI if needed
 function Test-PowerCLIInstallation {
     Write-Host "Checking PowerCLI installation..." -ForegroundColor Yellow
-    
+
     try {
         $powerCLIModule = Get-Module -Name VMware.PowerCLI -ListAvailable
         if (-not $powerCLIModule) {
@@ -128,14 +128,14 @@ function Test-PowerCLIInstallation {
             $version = $powerCLIModule | Sort-Object Version -Descending | Select-Object -First 1
             Write-Host "PowerCLI version $($version.Version) found." -ForegroundColor Green
         }
-        
+
         # Import the module
         Import-Module VMware.PowerCLI -Force
-        
+
         # Disable certificate warnings for lab environments
         Set-PowerCLIConfiguration -InvalidCertificateAction Ignore -Confirm:$false -Scope User | Out-Null
         Set-PowerCLIConfiguration -ParticipateInCEIP $false -Confirm:$false -Scope User | Out-Null
-        
+
         return $true
     }
     catch {
@@ -147,17 +147,17 @@ function Test-PowerCLIInstallation {
 # Function to connect to vCenter
 function Connect-ToVCenter {
     param($Server)
-    
+
     try {
         Write-Host "Connecting to vCenter Server: $Server" -ForegroundColor Yellow
-        
+
         # Check if already connected
         $connection = $global:DefaultVIServers | Where-Object { $_.Name -eq $Server -and $_.IsConnected }
         if ($connection) {
             Write-Host "Already connected to $Server" -ForegroundColor Green
             return $connection
         }
-        
+
         # Connect to vCenter (will prompt for credentials if not cached)
         $connection = Connect-VIServer -Server $Server -Force
         Write-Host "Successfully connected to vCenter: $($connection.Name)" -ForegroundColor Green
@@ -176,12 +176,12 @@ function Get-TargetHosts {
         $HostNames,
         $ClusterName
     )
-    
+
     Write-Host "Identifying target hosts..." -ForegroundColor Yellow
-    
+
     try {
         $targetHosts = @()
-        
+
         if ($HostName) {
             # Single host or wildcard pattern
             $targetHosts = Get-VMHost -Name $HostName -ErrorAction SilentlyContinue
@@ -209,17 +209,17 @@ function Get-TargetHosts {
             # All hosts
             $targetHosts = Get-VMHost
         }
-        
+
         if (-not $targetHosts) {
             throw "No hosts found matching the specified criteria"
         }
-        
+
         Write-Host "Found $($targetHosts.Count) host(s):" -ForegroundColor Green
         foreach ($vmHost in $targetHosts) {
             $vmCount = (Get-VM -Location $vmHost | Where-Object { $_.PowerState -eq "PoweredOn" }).Count
             Write-Host "  - $($vmHost.Name): $($vmHost.ConnectionState), $vmCount powered-on VMs" -ForegroundColor White
         }
-        
+
         return $targetHosts
     }
     catch {
@@ -235,10 +235,10 @@ function Enter-HostMaintenanceMode {
         $EvacuateVMs,
         $WaitForCompletion
     )
-    
+
     try {
         Write-Host "  Entering maintenance mode for host '$($VMHost.Name)'..." -ForegroundColor Yellow
-        
+
         # Check if already in maintenance mode
         if ($VMHost.State -eq "Maintenance") {
             Write-Host "    Host is already in maintenance mode" -ForegroundColor Yellow
@@ -249,28 +249,28 @@ function Enter-HostMaintenanceMode {
                 Message = "Host was already in maintenance mode"
             }
         }
-        
+
         # Check for powered-on VMs
         $poweredOnVMs = Get-VM -Location $VMHost | Where-Object { $_.PowerState -eq "PoweredOn" }
-        
+
         if ($poweredOnVMs.Count -gt 0) {
             Write-Host "    Found $($poweredOnVMs.Count) powered-on VMs" -ForegroundColor Cyan
-            
+
             if ($EvacuateVMs) {
                 Write-Host "    Evacuating VMs using vMotion..." -ForegroundColor Yellow
-                
+
                 # Get cluster to find destination hosts
                 $cluster = $VMHost.Parent
-                $destinationHosts = Get-VMHost -Location $cluster | Where-Object { 
-                    $_.Name -ne $VMHost.Name -and 
-                    $_.State -eq "Connected" -and 
-                    $_.ConnectionState -eq "Connected" 
+                $destinationHosts = Get-VMHost -Location $cluster | Where-Object {
+                    $_.Name -ne $VMHost.Name -and
+                    $_.State -eq "Connected" -and
+                    $_.ConnectionState -eq "Connected"
                 }
-                
+
                 if ($destinationHosts.Count -eq 0) {
                     throw "No available destination hosts for VM evacuation"
                 }
-                
+
                 $evacuationTasks = @()
                 foreach ($vm in $poweredOnVMs) {
                     # Let DRS choose the best destination host
@@ -278,7 +278,7 @@ function Enter-HostMaintenanceMode {
                     $evacuationTasks += $moveTask
                     Write-Host "      Migrating VM '$($vm.Name)'..." -ForegroundColor Gray
                 }
-                
+
                 # Wait for all migrations to complete
                 if ($WaitForCompletion) {
                     Write-Host "    Waiting for VM migrations to complete..." -ForegroundColor Yellow
@@ -291,14 +291,14 @@ function Enter-HostMaintenanceMode {
                 throw "Host has $($poweredOnVMs.Count) powered-on VMs. Use -EvacuateVMs to automatically migrate them."
             }
         }
-        
+
         # Enter maintenance mode
         $maintenanceTask = Set-VMHost -VMHost $VMHost -State "Maintenance" -RunAsync
-        
+
         if ($WaitForCompletion) {
             Write-Host "    Waiting for maintenance mode to complete..." -ForegroundColor Yellow
             Wait-Task -Task $maintenanceTask | Out-Null
-            
+
             # Refresh host state
             $updatedHost = Get-VMHost -Name $VMHost.Name
             if ($updatedHost.State -eq "Maintenance") {
@@ -340,10 +340,10 @@ function Exit-HostMaintenanceMode {
         $VMHost,
         $WaitForCompletion
     )
-    
+
     try {
         Write-Host "  Exiting maintenance mode for host '$($VMHost.Name)'..." -ForegroundColor Yellow
-        
+
         # Check if in maintenance mode
         if ($VMHost.State -ne "Maintenance") {
             Write-Host "    Host is not in maintenance mode (Current state: $($VMHost.State))" -ForegroundColor Yellow
@@ -354,14 +354,14 @@ function Exit-HostMaintenanceMode {
                 Message = "Host was not in maintenance mode"
             }
         }
-        
+
         # Exit maintenance mode
         $exitTask = Set-VMHost -VMHost $VMHost -State "Connected" -RunAsync
-        
+
         if ($WaitForCompletion) {
             Write-Host "    Waiting for exit maintenance mode to complete..." -ForegroundColor Yellow
             Wait-Task -Task $exitTask | Out-Null
-            
+
             # Refresh host state
             $updatedHost = Get-VMHost -Name $VMHost.Name
             if ($updatedHost.State -eq "Connected") {
@@ -404,17 +404,17 @@ function Invoke-HostPowerOperation {
         $ShutdownTimeout,
         $WaitForCompletion
     )
-    
+
     try {
         Write-Host "  Performing $PowerOperation on host '$($VMHost.Name)'..." -ForegroundColor Yellow
-        
+
         # Check for powered-on VMs
         $poweredOnVMs = Get-VM -Location $VMHost | Where-Object { $_.PowerState -eq "PoweredOn" }
-        
+
         if ($poweredOnVMs.Count -gt 0 -and $PowerOperation -in @("Shutdown", "Reboot")) {
             throw "Host has $($poweredOnVMs.Count) powered-on VMs. Evacuate VMs before power operation."
         }
-        
+
         switch ($PowerOperation) {
             "Shutdown" {
                 $powerTask = Stop-VMHost -VMHost $VMHost -RunAsync -Confirm:$false
@@ -435,14 +435,14 @@ function Invoke-HostPowerOperation {
                 }
             }
         }
-        
+
         if ($WaitForCompletion -and $PowerOperation -ne "PowerOn") {
             Write-Host "    Waiting for power operation to complete (timeout: $ShutdownTimeout minutes)..." -ForegroundColor Yellow
-            
+
             try {
                 Wait-Task -Task $powerTask -TimeoutSeconds ($ShutdownTimeout * 60)
                 Write-Host "    ✓ Power operation completed successfully" -ForegroundColor Green
-                
+
                 return @{
                     Host = $VMHost.Name
                     Operation = "Power-$PowerOperation"
@@ -482,39 +482,39 @@ function Invoke-HostPowerOperation {
 # Function to perform host health check
 function Get-HostHealthCheck {
     param($VMHost)
-    
+
     Write-Host "  Performing health check for host '$($VMHost.Name)'..." -ForegroundColor Yellow
-    
+
     $healthIssues = @()
     $healthStatus = "Healthy"
-    
+
     try {
         # Check connection state
         if ($VMHost.ConnectionState -ne "Connected") {
             $healthIssues += "Connection state is $($VMHost.ConnectionState)"
             $healthStatus = "Warning"
         }
-        
+
         # Check overall status
         if ($VMHost.State -eq "NotResponding") {
             $healthIssues += "Host is not responding"
             $healthStatus = "Critical"
         }
-        
+
         # Check CPU usage
         $cpuUsage = $VMHost.CpuUsageMhz / $VMHost.CpuTotalMhz * 100
         if ($cpuUsage -gt 90) {
             $healthIssues += "High CPU usage: $([math]::Round($cpuUsage, 1))%"
             $healthStatus = "Warning"
         }
-        
+
         # Check memory usage
         $memUsage = $VMHost.MemoryUsageGB / $VMHost.MemoryTotalGB * 100
         if ($memUsage -gt 90) {
             $healthIssues += "High memory usage: $([math]::Round($memUsage, 1))%"
             $healthStatus = "Warning"
         }
-        
+
         # Check datastore accessibility
         $datastores = Get-Datastore -VMHost $VMHost
         $inaccessibleDatastores = $datastores | Where-Object { -not $_.Accessible }
@@ -522,12 +522,12 @@ function Get-HostHealthCheck {
             $healthIssues += "Inaccessible datastores: $($inaccessibleDatastores.Name -join ', ')"
             $healthStatus = "Critical"
         }
-        
+
         # Check for alarms
         $alarms = Get-AlarmDefinition | Where-Object { $_.Enabled } | ForEach-Object {
             Get-AlarmStatus -Entity $VMHost -AlarmDefinition $_
         } | Where-Object { $_.Status -ne "Green" }
-        
+
         if ($alarms) {
             $healthIssues += "Active alarms: $($alarms.Count)"
             if ($alarms | Where-Object { $_.Status -eq "Red" }) {
@@ -536,7 +536,7 @@ function Get-HostHealthCheck {
                 $healthStatus = "Warning"
             }
         }
-        
+
         # Uptime check
         $uptimeDays = [math]::Round($VMHost.ExtensionData.Summary.QuickStats.Uptime / 86400, 1)
         if ($uptimeDays -gt 365) {
@@ -545,7 +545,7 @@ function Get-HostHealthCheck {
                 $healthStatus = "Warning"
             }
         }
-        
+
         $result = @{
             Host = $VMHost.Name
             Operation = "HealthCheck"
@@ -559,21 +559,21 @@ function Get-HostHealthCheck {
             Version = $VMHost.Version
             Build = $VMHost.Build
         }
-        
+
         $statusColor = switch ($healthStatus) {
             "Healthy" { "Green" }
             "Warning" { "Yellow" }
             "Critical" { "Red" }
             default { "White" }
         }
-        
+
         Write-Host "    Status: $healthStatus" -ForegroundColor $statusColor
         if ($healthIssues.Count -gt 0) {
             foreach ($issue in $healthIssues) {
                 Write-Host "      - $issue" -ForegroundColor Gray
             }
         }
-        
+
         return $result
     }
     catch {
@@ -593,17 +593,17 @@ function Get-HostConfigurationReport {
         $OutputFormat,
         $OutputPath
     )
-    
+
     Write-Host "Generating host configuration report..." -ForegroundColor Yellow
-    
+
     $reportData = @()
-    
+
     foreach ($vmHost in $Hosts) {
         try {
             $vmsOnHost = Get-VM -Location $vmHost
             $poweredOnVMs = $vmsOnHost | Where-Object { $_.PowerState -eq "PoweredOn" }
             $datastores = Get-Datastore -VMHost $vmHost
-            
+
             $reportItem = [PSCustomObject]@{
                 Name = $vmHost.Name
                 Cluster = $vmHost.Parent.Name
@@ -632,14 +632,14 @@ function Get-HostConfigurationReport {
                 HyperThreading = $vmHost.HyperthreadingActive
                 Timestamp = Get-Date
             }
-            
+
             $reportData += $reportItem
         }
         catch {
             Write-Warning "Failed to get configuration data for host '$($vmHost.Name)': $($_.Exception.Message)"
         }
     }
-    
+
     # Export report
     switch ($OutputFormat) {
         "Console" {
@@ -661,7 +661,7 @@ function Get-HostConfigurationReport {
             Write-Host "Report exported to: $OutputPath" -ForegroundColor Green
         }
     }
-    
+
     return $reportData
 }
 
@@ -671,27 +671,27 @@ function Show-HostOperationSummary {
         $Results,
         $Operation
     )
-    
+
     Write-Host "`n=== Host $Operation Summary ===" -ForegroundColor Cyan
-    
+
     $successful = $Results | Where-Object { $_.Status -eq "Success" }
     $failed = $Results | Where-Object { $_.Status -eq "Failed" }
     $inProgress = $Results | Where-Object { $_.Status -eq "InProgress" }
     $warnings = $Results | Where-Object { $_.Status -in @("Warning", "AlreadyInMaintenance", "NotInMaintenance") }
-    
+
     Write-Host "Total Hosts: $($Results.Count)" -ForegroundColor White
     Write-Host "Successful: $($successful.Count)" -ForegroundColor Green
     Write-Host "Failed: $($failed.Count)" -ForegroundColor Red
     Write-Host "In Progress: $($inProgress.Count)" -ForegroundColor Yellow
     Write-Host "Warnings: $($warnings.Count)" -ForegroundColor Yellow
-    
+
     if ($failed.Count -gt 0) {
         Write-Host "`nFailed Operations:" -ForegroundColor Red
         foreach ($result in $failed) {
             Write-Host "  - $($result.Host): $($result.Message)" -ForegroundColor White
         }
     }
-    
+
     if ($warnings.Count -gt 0) {
         Write-Host "`nWarnings/Info:" -ForegroundColor Yellow
         foreach ($result in $warnings) {
@@ -705,23 +705,23 @@ try {
     Write-Host "=== vSphere Host Operations ===" -ForegroundColor Cyan
     Write-Host "Target vCenter: $VCenterServer" -ForegroundColor White
     Write-Host "Operation: $Operation" -ForegroundColor White
-    
+
     if ($HostName) { Write-Host "Target Host: $HostName" -ForegroundColor White }
     if ($HostNames) { Write-Host "Target Hosts: $($HostNames -join ', ')" -ForegroundColor White }
     if ($ClusterName) { Write-Host "Target Cluster: $ClusterName" -ForegroundColor White }
     Write-Host ""
-    
+
     # Check and install PowerCLI
     if (-not (Test-PowerCLIInstallation)) {
         throw "PowerCLI installation failed"
     }
-    
+
     # Connect to vCenter
     $connection = Connect-ToVCenter -Server $VCenterServer
-    
+
     # Get target hosts
     $targetHosts = Get-TargetHosts -HostName $HostName -HostNames $HostNames -ClusterName $ClusterName
-    
+
     # Confirm operation if not using Force and operation is potentially disruptive
     if (-not $Force -and $Operation -in @("EnterMaintenance", "Power")) {
         $confirmation = Read-Host "`nProceed with $Operation operation on $($targetHosts.Count) host(s)? (y/N)"
@@ -730,10 +730,10 @@ try {
             exit 0
         }
     }
-    
+
     # Perform the requested operation
     $results = @()
-    
+
     switch ($Operation) {
         "EnterMaintenance" {
             foreach ($vmHost in $targetHosts) {
@@ -741,56 +741,56 @@ try {
                 $results += $result
             }
         }
-        
+
         "ExitMaintenance" {
             foreach ($vmHost in $targetHosts) {
                 $result = Exit-HostMaintenanceMode -VMHost $vmHost -WaitForCompletion:$WaitForCompletion
                 $results += $result
             }
         }
-        
+
         "Power" {
             if (-not $PowerOperation) {
                 throw "PowerOperation parameter is required for Power operation"
             }
-            
+
             foreach ($vmHost in $targetHosts) {
                 $result = Invoke-HostPowerOperation -VMHost $vmHost -PowerOperation $PowerOperation -ShutdownTimeout $ShutdownTimeout -WaitForCompletion:$WaitForCompletion
                 $results += $result
             }
         }
-        
+
         "HealthCheck" {
             foreach ($vmHost in $targetHosts) {
                 $result = Get-HostHealthCheck -VMHost $vmHost
                 $results += $result
             }
-            
+
             # Display health summary
             $healthy = $results | Where-Object { $_.Status -eq "Healthy" }
             $warning = $results | Where-Object { $_.Status -eq "Warning" }
             $critical = $results | Where-Object { $_.Status -eq "Critical" }
-            
+
             Write-Host "`n=== Health Check Summary ===" -ForegroundColor Cyan
             Write-Host "Healthy: $($healthy.Count)" -ForegroundColor Green
             Write-Host "Warning: $($warning.Count)" -ForegroundColor Yellow
             Write-Host "Critical: $($critical.Count)" -ForegroundColor Red
         }
-        
+
         "Configuration" {
             $results = Get-HostConfigurationReport -Hosts $targetHosts -OutputFormat $OutputFormat -OutputPath $OutputPath
         }
-        
+
         "Report" {
             $results = Get-HostConfigurationReport -Hosts $targetHosts -OutputFormat $OutputFormat -OutputPath $OutputPath
         }
     }
-    
+
     # Display summary (except for Report operation which already displays results)
     if ($Operation -notin @("Report", "Configuration", "HealthCheck")) {
         Show-HostOperationSummary -Results $results -Operation $Operation
     }
-    
+
     Write-Host "`n=== Operation Completed ===" -ForegroundColor Green
 }
 catch {

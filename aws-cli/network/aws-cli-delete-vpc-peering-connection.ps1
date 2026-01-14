@@ -67,11 +67,11 @@ try {
 
     # Build AWS CLI arguments for describing the connection
     $describeArgs = @('ec2', 'describe-vpc-peering-connections', '--vpc-peering-connection-ids', $VpcPeeringConnectionId)
-    
+
     if ($Profile) {
         $describeArgs += @('--profile', $Profile)
     }
-    
+
     if ($Region) {
         $describeArgs += @('--region', $Region)
     }
@@ -79,31 +79,31 @@ try {
     # First, get peering connection details for confirmation
     Write-Host "Retrieving VPC peering connection details..." -ForegroundColor Yellow
     $connectionDetails = & aws @describeArgs 2>&1
-    
+
     if ($LASTEXITCODE -ne 0) {
         throw "Failed to retrieve VPC peering connection details: $connectionDetails"
     }
 
     $connectionInfo = $connectionDetails | ConvertFrom-Json
-    
+
     if ($connectionInfo.VpcPeeringConnections.Count -eq 0) {
         throw "VPC peering connection '$VpcPeeringConnectionId' not found"
     }
 
     $connection = $connectionInfo.VpcPeeringConnections[0]
-    
+
     # Display peering connection information
     Write-Host "`nVPC Peering Connection Details:" -ForegroundColor Cyan
     Write-Host "  Connection ID: $($connection.VpcPeeringConnectionId)" -ForegroundColor White
     Write-Host "  Status: $($connection.Status.Code)" -ForegroundColor White
     Write-Host "  Message: $($connection.Status.Message)" -ForegroundColor White
-    
+
     Write-Host "`n  Requester VPC:" -ForegroundColor White
     Write-Host "    VPC ID: $($connection.RequesterVpcInfo.VpcId)" -ForegroundColor Gray
     Write-Host "    CIDR Block: $($connection.RequesterVpcInfo.CidrBlock)" -ForegroundColor Gray
     Write-Host "    Owner ID: $($connection.RequesterVpcInfo.OwnerId)" -ForegroundColor Gray
     Write-Host "    Region: $($connection.RequesterVpcInfo.Region)" -ForegroundColor Gray
-    
+
     Write-Host "`n  Accepter VPC:" -ForegroundColor White
     Write-Host "    VPC ID: $($connection.AccepterVpcInfo.VpcId)" -ForegroundColor Gray
     Write-Host "    CIDR Block: $($connection.AccepterVpcInfo.CidrBlock)" -ForegroundColor Gray
@@ -123,7 +123,7 @@ try {
         Write-Host "`nPeering connection is already deleted!" -ForegroundColor Yellow
         return
     }
-    
+
     if ($connection.Status.Code -eq 'deleting') {
         Write-Host "`nPeering connection is already being deleted!" -ForegroundColor Yellow
         return
@@ -140,7 +140,7 @@ try {
     if (-not $Force) {
         Write-Host "`nWARNING: This action will permanently delete the VPC peering connection!" -ForegroundColor Red
         $confirmation = Read-Host "Are you sure you want to delete peering connection '$VpcPeeringConnectionId'? (yes/no)"
-        
+
         if ($confirmation -ne 'yes') {
             Write-Host "Operation cancelled by user." -ForegroundColor Yellow
             exit 0
@@ -149,11 +149,11 @@ try {
 
     # Build AWS CLI arguments for deletion
     $deleteArgs = @('ec2', 'delete-vpc-peering-connection', '--vpc-peering-connection-id', $VpcPeeringConnectionId)
-    
+
     if ($Profile) {
         $deleteArgs += @('--profile', $Profile)
     }
-    
+
     if ($Region) {
         $deleteArgs += @('--region', $Region)
     }
@@ -161,13 +161,13 @@ try {
     # Delete the VPC peering connection
     Write-Host "`nDeleting VPC peering connection..." -ForegroundColor Yellow
     $deleteResult = & aws @deleteArgs 2>&1
-    
+
     if ($LASTEXITCODE -ne 0) {
         throw "Failed to delete VPC peering connection: $deleteResult"
     }
 
     $deleteInfo = $deleteResult | ConvertFrom-Json
-    
+
     Write-Host "`nVPC peering connection deletion initiated successfully!" -ForegroundColor Green
     Write-Host "  Connection ID: $($deleteInfo.VpcPeeringConnection.VpcPeeringConnectionId)" -ForegroundColor White
     Write-Host "  Status: $($deleteInfo.VpcPeeringConnection.Status.Code)" -ForegroundColor White
@@ -176,13 +176,13 @@ try {
     Write-Host "`nRecommended Cleanup Actions:" -ForegroundColor Cyan
     Write-Host "1. Remove routes that reference this peering connection:" -ForegroundColor White
     Write-Host "   aws ec2 describe-route-tables --filters Name=route.vpc-peering-connection-id,Values=$VpcPeeringConnectionId" -ForegroundColor Gray
-    
+
     Write-Host "`n2. Review and remove security group rules that reference peer VPC CIDRs:" -ForegroundColor White
     Write-Host "   - Requester VPC CIDR: $($connection.RequesterVpcInfo.CidrBlock)" -ForegroundColor Gray
     Write-Host "   - Accepter VPC CIDR: $($connection.AccepterVpcInfo.CidrBlock)" -ForegroundColor Gray
-    
+
     Write-Host "`n3. Review Network ACL rules if using custom NACLs" -ForegroundColor White
-    
+
     Write-Host "`n4. Update application configurations that relied on cross-VPC connectivity" -ForegroundColor White
 
     Write-Host "`nMonitoring Commands:" -ForegroundColor Cyan

@@ -128,7 +128,7 @@ try {
         if ($LASTEXITCODE -ne 0) {
             throw "Security group $sgId not found or not accessible: $sgCheck"
         }
-        
+
         $sgData = $sgCheck | ConvertFrom-Json
         $sg = $sgData.SecurityGroups[0]
         Write-Output "  ✅ $sgId ($($sg.GroupName)) - VPC: $($sg.VpcId)"
@@ -177,7 +177,7 @@ try {
             'Remove' {
                 $newSecurityGroups = $currentSecurityGroups | Where-Object { $_ -notin $targetSecurityGroups }
                 Write-Output "Removing security groups: $($targetSecurityGroups -join ', ')"
-                
+
                 if ($newSecurityGroups.Count -eq 0) {
                     Write-Warning "Cannot remove all security groups from instance. At least one security group must remain."
                     continue
@@ -203,11 +203,11 @@ try {
 
             if ($LASTEXITCODE -eq 0) {
                 Write-Output "✅ Security groups updated successfully for instance $instanceId"
-                
+
                 # Verify the changes
                 Start-Sleep -Seconds 2
                 $verifyResult = aws ec2 describe-instances --instance-ids $instanceId @awsArgs --query 'Reservations[0].Instances[0].SecurityGroups[*].GroupId' --output text 2>&1
-                
+
                 if ($LASTEXITCODE -eq 0) {
                     $verifiedGroups = $verifyResult -split '\s+' | Where-Object { $_ }
                     Write-Output "Verified security groups: $($verifiedGroups -join ', ')"
@@ -231,7 +231,7 @@ try {
     Write-Output "- Security group changes take effect immediately"
     Write-Output "- Ensure new security groups allow necessary network access"
     Write-Output "- Use 'Replace' action to completely change security group assignments"
-    
+
     if ($Action -eq 'Remove') {
         Write-Output "- At least one security group must always remain attached to an instance"
     }

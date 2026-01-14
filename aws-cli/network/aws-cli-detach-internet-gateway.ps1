@@ -87,14 +87,14 @@ try {
     # Verify Internet Gateway exists and get current attachments
     Write-Output "`n🔍 Verifying Internet Gateway..."
     $igwResult = aws ec2 describe-internet-gateways --internet-gateway-ids $InternetGatewayId @awsArgs --output json 2>&1
-    
+
     if ($LASTEXITCODE -ne 0) {
         Write-Error "Internet Gateway $InternetGatewayId not found or not accessible: $igwResult"
     }
 
     $igwData = $igwResult | ConvertFrom-Json
     $internetGateway = $igwData.InternetGateways[0]
-    
+
     Write-Output "✅ Internet Gateway verified:"
     Write-Output "  Internet Gateway ID: $($internetGateway.InternetGatewayId)"
     Write-Output "  State: $($internetGateway.State)"
@@ -102,7 +102,7 @@ try {
 
     # Check if IGW is attached to the specified VPC
     $targetAttachment = $internetGateway.Attachments | Where-Object { $_.VpcId -eq $VpcId }
-    
+
     if (-not $targetAttachment) {
         Write-Error "Internet Gateway $InternetGatewayId is not attached to VPC $VpcId"
     }
@@ -118,14 +118,14 @@ try {
     # Verify VPC exists
     Write-Output "`n🔍 Verifying VPC..."
     $vpcResult = aws ec2 describe-vpcs --vpc-ids $VpcId @awsArgs --output json 2>&1
-    
+
     if ($LASTEXITCODE -ne 0) {
         Write-Error "VPC $VpcId not found or not accessible: $vpcResult"
     }
 
     $vpcData = $vpcResult | ConvertFrom-Json
     $vpc = $vpcData.Vpcs[0]
-    
+
     Write-Output "✅ VPC verified:"
     Write-Output "  VPC ID: $($vpc.VpcId)"
     Write-Output "  State: $($vpc.State)"
@@ -134,11 +134,11 @@ try {
     # Check for routes that reference this Internet Gateway
     Write-Output "`n🔍 Checking for routes that reference this Internet Gateway..."
     $routeResult = aws ec2 describe-route-tables --filters "Name=vpc-id,Values=$VpcId" @awsArgs --output json 2>&1
-    
+
     $referencingRoutes = @()
     if ($LASTEXITCODE -eq 0) {
         $routeData = $routeResult | ConvertFrom-Json
-        
+
         foreach ($routeTable in $routeData.RouteTables) {
             $igwRoutes = $routeTable.Routes | Where-Object { $_.GatewayId -eq $InternetGatewayId }
             if ($igwRoutes) {
@@ -174,11 +174,11 @@ try {
     # Check for public IP addresses that would be affected
     Write-Output "`n🔍 Checking for resources with public IP addresses..."
     $instanceResult = aws ec2 describe-instances --filters "Name=vpc-id,Values=$VpcId" "Name=instance-state-name,Values=running,pending,stopping,stopped" @awsArgs --output json 2>&1
-    
+
     $publicInstances = @()
     if ($LASTEXITCODE -eq 0) {
         $instanceData = $instanceResult | ConvertFrom-Json
-        
+
         foreach ($reservation in $instanceData.Reservations) {
             foreach ($instance in $reservation.Instances) {
                 if ($instance.PublicIpAddress -or $instance.PublicDnsName) {
@@ -209,7 +209,7 @@ try {
 
     # Impact assessment
     $isDisruptive = ($referencingRoutes.Count -gt 0) -or ($publicInstances.Count -gt 0)
-    
+
     if ($isDisruptive) {
         Write-Output "`n🚨 IMPACT ANALYSIS:"
         Write-Output "• Internet connectivity will be lost for resources in this VPC"
@@ -235,17 +235,17 @@ try {
 
         if ($LASTEXITCODE -eq 0) {
             Write-Output "✅ Internet Gateway detachment initiated successfully!"
-            
+
             # Verify detachment
             Write-Output "`n🔍 Verifying detachment..."
             $verifyResult = aws ec2 describe-internet-gateways --internet-gateway-ids $InternetGatewayId @awsArgs --output json 2>&1
-            
+
             if ($LASTEXITCODE -eq 0) {
                 $verifyData = $verifyResult | ConvertFrom-Json
                 $verifiedIgw = $verifyData.InternetGateways[0]
-                
+
                 $remainingAttachment = $verifiedIgw.Attachments | Where-Object { $_.VpcId -eq $VpcId }
-                
+
                 if (-not $remainingAttachment) {
                     Write-Output "✅ Internet Gateway successfully detached from VPC"
                 } else {
@@ -254,7 +254,7 @@ try {
                         Write-Output "   Detachment is in progress..."
                     }
                 }
-                
+
                 Write-Output "`n📋 Updated Internet Gateway Status:"
                 Write-Output "  Current attachments: $($verifiedIgw.Attachments.Count)"
                 foreach ($attachment in $verifiedIgw.Attachments) {
@@ -264,13 +264,13 @@ try {
 
             Write-Output "`n💡 Post-Detachment Tasks:"
             Write-Output "• Clean up routes that referenced this Internet Gateway:"
-            
+
             if ($referencingRoutes.Count -gt 0) {
                 foreach ($route in $referencingRoutes) {
                     Write-Output "  aws ec2 delete-route --route-table-id $($route.RouteTableId) --destination-cidr-block $($route.Destination)"
                 }
             }
-            
+
             Write-Output "• Verify that all applications handle the loss of internet connectivity"
             Write-Output "• Consider alternative internet access methods if needed:"
             Write-Output "  - NAT Gateway for outbound-only access"
@@ -286,11 +286,11 @@ try {
         Write-Output "`n✅ DRY RUN: Internet Gateway detachment command validated successfully"
         Write-Output "Command that would be executed:"
         Write-Output "aws ec2 detach-internet-gateway --internet-gateway-id $InternetGatewayId --vpc-id $VpcId"
-        
+
         if ($isDisruptive) {
             Write-Output "`n⚠️  DRY RUN: This detachment would disrupt internet connectivity - review impact above"
         }
-        
+
         Write-Output "`n📋 DRY RUN: Cleanup commands that would be needed:"
         if ($referencingRoutes.Count -gt 0) {
             foreach ($route in $referencingRoutes) {

@@ -6,7 +6,7 @@
     This script creates an Azure Key Vault using the Azure CLI with comprehensive security configuration and best practices.
     Supports access policies, network restrictions, advanced security features, and compliance settings.
     Includes RBAC configuration, soft delete, purge protection, and firewall rules.
-    
+
     The script uses the Azure CLI command: az keyvault create
 
 .PARAMETER Name
@@ -71,7 +71,7 @@
     Date: 2025-08-05
     Version: 1.0.0
     Requires: Azure CLI version 2.0 or later
-    
+
     Key Vault Security Best Practices:
     - Use Premium SKU for HSM-backed keys
     - Enable soft delete and purge protection
@@ -160,13 +160,13 @@ function Test-AzureCLI {
         if ($LASTEXITCODE -ne 0) {
             throw "Azure CLI is not installed or not functioning correctly"
         }
-        
+
         Write-Host "🔍 Checking Azure CLI authentication..." -ForegroundColor Cyan
         $null = az account show 2>$null
         if ($LASTEXITCODE -ne 0) {
             throw "Not authenticated to Azure CLI. Please run 'az login' first"
         }
-        
+
         Write-Host "✅ Azure CLI validation successful" -ForegroundColor Green
         return $true
     }
@@ -179,7 +179,7 @@ function Test-AzureCLI {
 # Function to validate resource group exists
 function Test-ResourceGroupExists {
     param($ResourceGroup)
-    
+
     try {
         Write-Host "🔍 Validating resource group '$ResourceGroup' exists..." -ForegroundColor Cyan
         $rg = az group show --name $ResourceGroup --query "name" --output tsv 2>$null
@@ -198,7 +198,7 @@ function Test-ResourceGroupExists {
 # Function to validate location
 function Test-AzureLocation {
     param($Location)
-    
+
     try {
         Write-Host "🔍 Validating Azure location '$Location'..." -ForegroundColor Cyan
         $validLocations = az account list-locations --query "[].name" --output tsv
@@ -217,15 +217,15 @@ function Test-AzureLocation {
 # Function to check Key Vault name availability
 function Test-KeyVaultNameAvailability {
     param($VaultName)
-    
+
     try {
         Write-Host "🔍 Checking Key Vault name availability..." -ForegroundColor Cyan
         $availability = az keyvault check-name --name $VaultName --output json | ConvertFrom-Json
-        
+
         if (-not $availability.nameAvailable) {
             throw "Key Vault name '$VaultName' is not available. Reason: $($availability.reason). $($availability.message)"
         }
-        
+
         Write-Host "✅ Key Vault name '$VaultName' is available" -ForegroundColor Green
         return $true
     }
@@ -240,12 +240,12 @@ function Get-CurrentUser {
     try {
         Write-Host "🔍 Getting current user information..." -ForegroundColor Cyan
         $account = az account show --query "user" --output json | ConvertFrom-Json
-        
+
         $userInfo = @{
             Type = $account.type
             Name = $account.name
         }
-        
+
         # Get object ID for the user
         if ($account.type -eq "user") {
             $objectId = az ad signed-in-user show --query "id" --output tsv 2>$null
@@ -253,7 +253,7 @@ function Get-CurrentUser {
                 $userInfo.ObjectId = $objectId
             }
         }
-        
+
         Write-Host "✅ Current user: $($userInfo.Name) ($($userInfo.Type))" -ForegroundColor Green
         return $userInfo
     }
@@ -266,54 +266,54 @@ function Get-CurrentUser {
 # Function to parse and validate tags
 function Get-ValidatedTags {
     param($TagString)
-    
+
     if ([string]::IsNullOrEmpty($TagString)) {
         return @()
     }
-    
+
     $tagPairs = $TagString -split '\s+'
     $azTags = @()
-    
+
     foreach ($pair in $tagPairs) {
         if ($pair -match '^([^=]+)=(.+)$') {
             $key = $Matches[1]
             $value = $Matches[2]
-            
+
             # Validate tag key and value
             if ($key.Length -gt 512 -or $value.Length -gt 256) {
                 throw "Tag key must be ≤ 512 chars and value ≤ 256 chars: $pair"
             }
-            
+
             $azTags += $pair
         }
         else {
             throw "Invalid tag format: $pair (use key=value format)"
         }
     }
-    
+
     return $azTags
 }
 
 # Function to parse and validate IP ranges
 function Get-ValidatedIpRanges {
     param($IpRangeString)
-    
+
     if ([string]::IsNullOrEmpty($IpRangeString)) {
         return @()
     }
-    
+
     $ranges = $IpRangeString -split ','
     $validRanges = @()
-    
+
     foreach ($range in $ranges) {
         $range = $range.Trim()
-        
+
         # Validate CIDR notation or single IP
         if ($range -match '^(\d{1,3}\.){3}\d{1,3}(\/\d{1,2})?$') {
             # Validate IP address parts
             $ipPart = ($range -split '\/')[0]
             $octets = $ipPart -split '\.'
-            
+
             $validIp = $true
             foreach ($octet in $octets) {
                 if ([int]$octet -gt 255) {
@@ -321,7 +321,7 @@ function Get-ValidatedIpRanges {
                     break
                 }
             }
-            
+
             if ($validIp) {
                 # Validate subnet mask if present
                 if ($range -contains '/') {
@@ -340,22 +340,22 @@ function Get-ValidatedIpRanges {
             throw "Invalid IP range format: $range (use CIDR notation like 192.168.1.0/24)"
         }
     }
-    
+
     return $validRanges
 }
 
 # Function to create access policy for current user
 function New-UserAccessPolicy {
     param($VaultName, $ResourceGroup, $UserInfo)
-    
+
     if (-not $UserInfo -or -not $UserInfo.ObjectId) {
         Write-Warning "Cannot create access policy - user object ID not available"
         return
     }
-    
+
     try {
         Write-Host "🔧 Creating access policy for current user..." -ForegroundColor Cyan
-        
+
         # Set comprehensive permissions for the user
         $permissions = @(
             'keyvault', 'set-policy',
@@ -366,9 +366,9 @@ function New-UserAccessPolicy {
             '--secret-permissions', 'get', 'list', 'set', 'delete', 'backup', 'restore', 'recover',
             '--certificate-permissions', 'get', 'list', 'create', 'delete', 'update', 'import', 'backup', 'restore', 'recover'
         )
-        
+
         $null = az @permissions
-        
+
         if ($LASTEXITCODE -eq 0) {
             Write-Host "✅ Access policy created for $($UserInfo.Name)" -ForegroundColor Green
         }
@@ -384,17 +384,17 @@ function New-UserAccessPolicy {
 # Function to configure network rules
 function Set-NetworkRules {
     param($VaultName, $ResourceGroup, $DefaultAction, $IpRanges)
-    
+
     if ($DefaultAction -eq 'Allow' -and $IpRanges.Count -eq 0) {
         return # No network restrictions needed
     }
-    
+
     try {
         Write-Host "🔧 Configuring network access rules..." -ForegroundColor Cyan
-        
+
         # Set default action
         $null = az keyvault update --name $VaultName --resource-group $ResourceGroup --default-action $DefaultAction
-        
+
         # Add IP rules if provided
         if ($IpRanges.Count -gt 0) {
             foreach ($range in $IpRanges) {
@@ -402,7 +402,7 @@ function Set-NetworkRules {
                 $null = az keyvault network-rule add --name $VaultName --resource-group $ResourceGroup --ip-address $range
             }
         }
-        
+
         Write-Host "✅ Network rules configured" -ForegroundColor Green
     }
     catch {
@@ -413,7 +413,7 @@ function Set-NetworkRules {
 # Function to display Key Vault summary
 function Show-KeyVaultSummary {
     param($Parameters)
-    
+
     Write-Host "`n📋 Key Vault Configuration Summary:" -ForegroundColor Yellow
     Write-Host "   Vault Name: $($Parameters.Name)" -ForegroundColor White
     Write-Host "   Resource Group: $($Parameters.ResourceGroup)" -ForegroundColor White
@@ -423,11 +423,11 @@ function Show-KeyVaultSummary {
     Write-Host "   Purge Protection: $($Parameters.EnablePurgeProtection)" -ForegroundColor White
     Write-Host "   RBAC Authorization: $($Parameters.EnableRbacAuthorization)" -ForegroundColor White
     Write-Host "   Public Access: $($Parameters.PublicNetworkAccess)" -ForegroundColor White
-    
+
     if ($Parameters.DefaultAction -eq 'Deny') {
         Write-Host "   Network Restrictions: Enabled" -ForegroundColor White
     }
-    
+
     if ($Parameters.Tags) {
         Write-Host "   Tags: $($Parameters.Tags)" -ForegroundColor White
     }
@@ -437,21 +437,21 @@ function Show-KeyVaultSummary {
 # Function to show security recommendations
 function Show-SecurityRecommendations {
     param($VaultName, $EnableSoftDelete, $EnablePurgeProtection, $EnableRbac)
-    
+
     Write-Host "`n🔒 Security Recommendations:" -ForegroundColor Yellow
-    
+
     if (-not $EnableSoftDelete) {
         Write-Host "   ⚠️ Consider enabling soft delete for data protection" -ForegroundColor Red
     }
-    
+
     if (-not $EnablePurgeProtection) {
         Write-Host "   ⚠️ Consider enabling purge protection for critical vaults" -ForegroundColor Red
     }
-    
+
     if (-not $EnableRbac) {
         Write-Host "   💡 Consider using RBAC for more granular access control" -ForegroundColor Yellow
     }
-    
+
     Write-Host "   📝 Next steps:" -ForegroundColor Cyan
     Write-Host "      1. Configure diagnostic settings for logging" -ForegroundColor White
     Write-Host "      2. Set up alerts for Key Vault access" -ForegroundColor White
@@ -465,45 +465,45 @@ function Show-SecurityRecommendations {
 try {
     Write-Host "🚀 Starting Azure Key Vault Creation" -ForegroundColor Green
     Write-Host "====================================" -ForegroundColor Green
-    
+
     # Validate Azure CLI
     if (-not (Test-AzureCLI)) {
         exit 1
     }
-    
+
     # Validate resource group exists
     if (-not (Test-ResourceGroupExists -ResourceGroup $ResourceGroup)) {
         exit 1
     }
-    
+
     # Validate location
     if (-not (Test-AzureLocation -Location $Location)) {
         exit 1
     }
-    
+
     # Check Key Vault name availability
     if (-not (Test-KeyVaultNameAvailability -VaultName $Name)) {
         exit 1
     }
-    
+
     # Get current user info for access policy
     $currentUser = $null
     if ($CreateAccessPolicy -or -not $EnableRbacAuthorization) {
         $currentUser = Get-CurrentUser
     }
-    
+
     # Validate and process tags
     $validatedTags = @()
     if ($Tags) {
         $validatedTags = Get-ValidatedTags -TagString $Tags
     }
-    
+
     # Validate IP ranges
     $validatedIpRanges = @()
     if ($AllowedIpRanges) {
         $validatedIpRanges = Get-ValidatedIpRanges -IpRangeString $AllowedIpRanges
     }
-    
+
     # Display configuration summary
     $paramSummary = @{
         Name = $Name
@@ -518,7 +518,7 @@ try {
         Tags = $Tags
     }
     Show-KeyVaultSummary -Parameters $paramSummary
-    
+
     # Build parameters array
     $azParams = @(
         'keyvault', 'create',
@@ -527,51 +527,51 @@ try {
         '--location', $Location,
         '--sku', $Sku
     )
-    
+
     # Add security options
     if ($EnabledForDeployment) { $azParams += '--enabled-for-deployment', 'true' }
     if ($EnabledForDiskEncryption) { $azParams += '--enabled-for-disk-encryption', 'true' }
     if ($EnabledForTemplateDeployment) { $azParams += '--enabled-for-template-deployment', 'true' }
-    if ($EnableSoftDelete) { 
+    if ($EnableSoftDelete) {
         $azParams += '--enable-soft-delete', 'true'
         $azParams += '--retention-days', $SoftDeleteRetentionDays.ToString()
     }
     if ($EnablePurgeProtection) { $azParams += '--enable-purge-protection', 'true' }
     if ($EnableRbacAuthorization) { $azParams += '--enable-rbac-authorization', 'true' }
     if ($PublicNetworkAccess -eq 'Disabled') { $azParams += '--public-network-access', 'Disabled' }
-    
+
     # Add tags if provided
     if ($validatedTags.Count -gt 0) {
         $azParams += '--tags'
         $azParams += $validatedTags
     }
-    
+
     # Create the Key Vault
     Write-Host "🔧 Creating Key Vault '$Name'..." -ForegroundColor Cyan
     $null = az @azParams
-    
+
     if ($LASTEXITCODE -eq 0) {
         Write-Host "✅ Key Vault '$Name' created successfully!" -ForegroundColor Green
-        
+
         # Configure network rules if needed
         if ($DefaultAction -eq 'Deny' -or $validatedIpRanges.Count -gt 0) {
             Set-NetworkRules -VaultName $Name -ResourceGroup $ResourceGroup -DefaultAction $DefaultAction -IpRanges $validatedIpRanges
         }
-        
+
         # Create access policy for current user if not using RBAC
         if ($CreateAccessPolicy -and -not $EnableRbacAuthorization -and $currentUser) {
             New-UserAccessPolicy -VaultName $Name -ResourceGroup $ResourceGroup -UserInfo $currentUser
         }
-        
+
         # Display created Key Vault details
         Write-Host "`n📝 Key Vault Details:" -ForegroundColor Yellow
         $vaultDetails = az keyvault show --name $Name --resource-group $ResourceGroup --output table
         Write-Host $vaultDetails -ForegroundColor White
-        
+
         # Show Key Vault URI
         $vaultUri = az keyvault show --name $Name --resource-group $ResourceGroup --query "properties.vaultUri" --output tsv
         Write-Host "`n🔗 Key Vault URI: $vaultUri" -ForegroundColor Cyan
-        
+
         # Show security recommendations
         Show-SecurityRecommendations -VaultName $Name -EnableSoftDelete $EnableSoftDelete -EnablePurgeProtection $EnablePurgeProtection -EnableRbac $EnableRbacAuthorization
     }

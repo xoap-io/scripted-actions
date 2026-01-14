@@ -113,7 +113,7 @@ try {
 
     # Build AWS CLI arguments
     $awsArgs = @('ec2', 'describe-network-interfaces')
-    
+
     if ($NetworkInterfaceIds) {
         $eniArray = $NetworkInterfaceIds -split ','
         $awsArgs += @('--network-interface-ids')
@@ -122,23 +122,23 @@ try {
 
     # Build filters array
     $filters = @()
-    
+
     if ($VpcId) {
         $filters += "Name=vpc-id,Values=$VpcId"
     }
-    
+
     if ($SubnetId) {
         $filters += "Name=subnet-id,Values=$SubnetId"
     }
-    
+
     if ($InstanceId) {
         $filters += "Name=attachment.instance-id,Values=$InstanceId"
     }
-    
+
     if ($Status) {
         $filters += "Name=status,Values=$Status"
     }
-    
+
     if ($InterfaceType) {
         $filters += "Name=interface-type,Values=$InterfaceType"
     }
@@ -147,18 +147,18 @@ try {
         $awsArgs += @('--filters')
         $awsArgs += $filters
     }
-    
+
     if ($Profile) {
         $awsArgs += @('--profile', $Profile)
     }
-    
+
     if ($Region) {
         $awsArgs += @('--region', $Region)
     }
 
     # Execute the AWS CLI command
     $result = & aws @awsArgs 2>&1
-    
+
     if ($LASTEXITCODE -ne 0) {
         throw "Failed to describe network interfaces: $result"
     }
@@ -197,20 +197,20 @@ try {
     foreach ($eni in $eniInfo.NetworkInterfaces) {
         Write-Host "`n" + "="*70 -ForegroundColor Gray
         Write-Host "Network Interface: $($eni.NetworkInterfaceId)" -ForegroundColor Cyan
-        
+
         # Basic information
         Write-Host "  Description: $($eni.Description)" -ForegroundColor White
         Write-Host "  Status: $($eni.Status)" -ForegroundColor White
         Write-Host "  Type: $($eni.InterfaceType)" -ForegroundColor White
         Write-Host "  MAC Address: $($eni.MacAddress)" -ForegroundColor White
-        
+
         # Network location
         Write-Host "`n  Network Location:" -ForegroundColor Yellow
         Write-Host "    VPC ID: $($eni.VpcId)" -ForegroundColor White
         Write-Host "    Subnet ID: $($eni.SubnetId)" -ForegroundColor White
         Write-Host "    Availability Zone: $($eni.AvailabilityZone)" -ForegroundColor White
         Write-Host "    Private IP: $($eni.PrivateIpAddress)" -ForegroundColor White
-        
+
         # Public IP information
         if ($eni.Association -and $eni.Association.PublicIp) {
             Write-Host "    Public IP: $($eni.Association.PublicIp)" -ForegroundColor Green
@@ -218,7 +218,7 @@ try {
                 Write-Host "    Elastic IP: $($eni.Association.AllocationId)" -ForegroundColor Green
             }
         }
-        
+
         # Attachment information
         if ($eni.Attachment) {
             Write-Host "`n  Attachment:" -ForegroundColor Yellow
@@ -230,7 +230,7 @@ try {
         } else {
             Write-Host "`n  Status: Not attached to any instance" -ForegroundColor Yellow
         }
-        
+
         # Owner information
         Write-Host "`n  Ownership:" -ForegroundColor Yellow
         Write-Host "    Owner ID: $($eni.OwnerId)" -ForegroundColor White
@@ -238,7 +238,7 @@ try {
             Write-Host "    Requester ID: $($eni.RequesterId)" -ForegroundColor White
             Write-Host "    Requester Managed: Yes" -ForegroundColor White
         }
-        
+
         # Show detailed information if requested
         if ($Detailed) {
             # Security groups
@@ -248,14 +248,14 @@ try {
                     Write-Host "    $($sg.GroupId) - $($sg.GroupName)" -ForegroundColor White
                 }
             }
-            
+
             # Private IP addresses
             if ($eni.PrivateIpAddresses -and $eni.PrivateIpAddresses.Count -gt 1) {
                 Write-Host "`n  Private IP Addresses:" -ForegroundColor Yellow
                 foreach ($ip in $eni.PrivateIpAddresses) {
                     $primaryText = if ($ip.Primary) { " (Primary)" } else { "" }
                     Write-Host "    $($ip.PrivateIpAddress)$primaryText" -ForegroundColor White
-                    
+
                     if ($ip.Association) {
                         Write-Host "      Public IP: $($ip.Association.PublicIp)" -ForegroundColor Green
                         if ($ip.Association.AllocationId) {
@@ -264,7 +264,7 @@ try {
                     }
                 }
             }
-            
+
             # IPv6 addresses
             if ($eni.Ipv6Addresses -and $eni.Ipv6Addresses.Count -gt 0) {
                 Write-Host "`n  IPv6 Addresses:" -ForegroundColor Yellow
@@ -272,11 +272,11 @@ try {
                     Write-Host "    $($ipv6.Ipv6Address)" -ForegroundColor White
                 }
             }
-            
+
             # Source/Destination check
             Write-Host "`n  Configuration:" -ForegroundColor Yellow
             Write-Host "    Source/Dest Check: $($eni.SourceDestCheck)" -ForegroundColor White
-            
+
             # Outpost information
             if ($eni.OutpostArn) {
                 Write-Host "    Outpost ARN: $($eni.OutpostArn)" -ForegroundColor White

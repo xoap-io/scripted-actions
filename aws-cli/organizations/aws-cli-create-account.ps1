@@ -7,7 +7,7 @@
     aws organizations create-account --email $AwsAccountEmail --account-name $AwsAccountName
 
     The script sets the ErrorActionPreference to SilentlyContinue to suppress error messages.
-    
+
     It does not return any output.
 
 .NOTES

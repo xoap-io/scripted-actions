@@ -76,4 +76,3 @@ try {
     Write-Error "Unexpected error: $_"
     exit 1
 }
-

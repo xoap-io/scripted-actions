@@ -103,7 +103,7 @@ try {
 
     $instanceData = $instanceResult | ConvertFrom-Json
     $instance = $instanceData.Reservations[0].Instances[0]
-    
+
     Write-Output "Instance details:"
     Write-Output "  State: $($instance.State.Name)"
     Write-Output "  Instance Type: $($instance.InstanceType)"
@@ -138,7 +138,7 @@ try {
         Write-Output "Consider stopping applications and syncing file systems before creating AMI."
     } else {
         Write-Output "Instance will be rebooted during AMI creation to ensure file system consistency."
-        
+
         if ($instance.State.Name -eq 'running') {
             Write-Output "⚠️  The running instance will be temporarily rebooted."
         }
@@ -151,7 +151,7 @@ try {
         '--name', $Name,
         '--description', $Description
     )
-    
+
     $createImageArgs += $awsArgs
 
     if ($NoReboot) {
@@ -170,11 +170,11 @@ try {
     Write-Output "Description: $Description"
 
     $result = & aws @createImageArgs 2>&1
-    
+
     if ($LASTEXITCODE -eq 0) {
         $amiData = $result | ConvertFrom-Json
         $amiId = $amiData.ImageId
-        
+
         Write-Output "✅ AMI creation initiated successfully!"
         Write-Output "AMI ID: $amiId"
         Write-Output "AMI Name: $Name"
@@ -182,16 +182,16 @@ try {
         # Apply tags if provided
         if ($Tags) {
             Write-Output "`nApplying tags to AMI..."
-            
+
             try {
                 # Validate JSON format
                 $null = $Tags | ConvertFrom-Json
-                
+
                 $tagArgs = @('ec2', 'create-tags', '--resources', $amiId, '--tags', $Tags)
                 $tagArgs += $awsArgs
-                
+
                 $tagResult = & aws @tagArgs 2>&1
-                
+
                 if ($LASTEXITCODE -eq 0) {
                     Write-Output "✅ Tags applied successfully"
                 } else {
@@ -205,24 +205,24 @@ try {
         # Monitor AMI creation progress
         Write-Output "`n📊 Monitoring AMI creation progress..."
         Write-Output "This may take several minutes depending on instance size and EBS volume configuration."
-        
+
         $maxWaitTime = 1800  # 30 minutes
         $waitTime = 0
         $checkInterval = 30  # Check every 30 seconds
-        
+
         do {
             Start-Sleep -Seconds $checkInterval
             $waitTime += $checkInterval
-            
+
             $statusResult = aws ec2 describe-images --image-ids $amiId @awsArgs --output json 2>&1
-            
+
             if ($LASTEXITCODE -eq 0) {
                 $statusData = $statusResult | ConvertFrom-Json
                 $ami = $statusData.Images[0]
                 $state = $ami.State
-                
+
                 Write-Output "[$([math]::Round($waitTime/60, 1)) min] AMI State: $state"
-                
+
                 if ($state -eq 'available') {
                     Write-Output "✅ AMI creation completed successfully!"
                     Write-Output "`n📋 AMI Details:"
@@ -233,7 +233,7 @@ try {
                     Write-Output "  Root Device Type: $($ami.RootDeviceType)"
                     Write-Output "  Virtualization Type: $($ami.VirtualizationType)"
                     Write-Output "  Creation Date: $($ami.CreationDate)"
-                    
+
                     if ($ami.BlockDeviceMappings) {
                         Write-Output "  Block Device Mappings:"
                         foreach ($mapping in $ami.BlockDeviceMappings) {
@@ -242,7 +242,7 @@ try {
                             }
                         }
                     }
-                    
+
                     break
                 } elseif ($state -eq 'failed') {
                     throw "AMI creation failed. Check AWS console for details."
@@ -252,9 +252,9 @@ try {
             } else {
                 Write-Warning "Failed to check AMI status: $statusResult"
             }
-            
+
         } while ($waitTime -lt $maxWaitTime)
-        
+
         if ($waitTime -ge $maxWaitTime) {
             Write-Warning "AMI creation is taking longer than expected ($($maxWaitTime/60) minutes)."
             Write-Output "AMI ID: $amiId"

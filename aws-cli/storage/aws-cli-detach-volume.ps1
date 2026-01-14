@@ -173,7 +173,7 @@ try {
     # Perform the detachment
     Write-Host "Detaching volume $VolumeId from instance $attachedInstanceId..." -ForegroundColor Cyan
     $detachResult = aws @detachArgs 2>&1
-    
+
     if ($LASTEXITCODE -ne 0) {
         throw "Failed to detach volume: $detachResult"
     }
@@ -186,7 +186,7 @@ try {
 
     if ($WaitForDetachment) {
         Write-Host "Waiting for detachment to complete..." -ForegroundColor Yellow
-        
+
         $timeout = 300 # 5 minutes
         $elapsed = 0
         $checkInterval = 10
@@ -200,9 +200,9 @@ try {
                 $statusData = $statusResult | ConvertFrom-Json
                 $currentVolume = $statusData.Volumes[0]
                 $currentState = $currentVolume.State
-                
+
                 Write-Host "Volume state: $currentState (${elapsed}s elapsed)" -ForegroundColor Gray
-                
+
                 if ($currentState -eq 'available') {
                     Write-Host "✓ Volume successfully detached!" -ForegroundColor Green
                     break

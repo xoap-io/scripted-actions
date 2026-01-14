@@ -6,7 +6,7 @@
     This script creates an Azure VPN Gateway using the Azure CLI.
     Supports both Route-based and Policy-based VPN types with various SKUs and features.
     Includes options for active-active configuration, BGP, and point-to-site VPN.
-    
+
     The script uses the Azure CLI command: az network vnet-gateway create
 
 .PARAMETER GatewayName
@@ -62,12 +62,12 @@
 
 .EXAMPLE
     .\az-cli-create-vpn-gateway.ps1 -GatewayName "hub-vpn-gw" -ResourceGroup "network-rg" -Location "East US" -VNetName "hub-vnet" -PublicIPName "vpn-gw-pip"
-    
+
     Creates a basic VPN Gateway with default settings.
 
 .EXAMPLE
     .\az-cli-create-vpn-gateway.ps1 -GatewayName "prod-vpn-gw" -ResourceGroup "network-rg" -Location "East US" -VNetName "prod-vnet" -PublicIPName "vpn-gw-pip1" -PublicIPName2 "vpn-gw-pip2" -SKU "VpnGw1" -EnableActiveActive -EnableBGP -ASN 65001
-    
+
     Creates a VPN Gateway with active-active configuration and BGP enabled.
 
 .NOTES
@@ -296,14 +296,14 @@ try {
     }
     Write-Host "  SKU: $SKU" -ForegroundColor White
     Write-Host "  Primary Public IP: $PublicIPName" -ForegroundColor White
-    
+
     if ($EnableActiveActive) {
         Write-Host "  Secondary Public IP: $PublicIPName2" -ForegroundColor White
         Write-Host "  Active-Active: Enabled" -ForegroundColor White
     } else {
         Write-Host "  Active-Active: Disabled" -ForegroundColor White
     }
-    
+
     if ($EnableBGP) {
         Write-Host "  BGP: Enabled (ASN: $ASN)" -ForegroundColor White
     } else {
@@ -322,12 +322,12 @@ try {
 
     # Execute Azure CLI command
     $result = & az @azParams 2>&1
-    
+
     if ($LASTEXITCODE -eq 0) {
         Write-Host "✓ VPN Gateway creation initiated successfully!" -ForegroundColor Green
         Write-Host "Gateway Name: $GatewayName" -ForegroundColor White
         Write-Host "Resource Group: $ResourceGroup" -ForegroundColor White
-        
+
         Write-Host "" -ForegroundColor White
         Write-Host "⏳ The VPN Gateway is being created in the background." -ForegroundColor Yellow
         Write-Host "This process typically takes 45-60 minutes to complete." -ForegroundColor Yellow

@@ -5,9 +5,9 @@
 .DESCRIPTION
     This script creates an AWS EC2 security group. The script uses the following AWS CLI commands:
     aws ec2 create-security-group --group-name $AwsSecurityGroupName --description $AwsSecurityGroupDescription --vpc-id $AwsVpcId
- 
+
     The script sets the ErrorActionPreference to SilentlyContinue to suppress error messages.
-    
+
     It does not return any output.
 
 .NOTES

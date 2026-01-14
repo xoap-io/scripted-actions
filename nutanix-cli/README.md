@@ -14,18 +14,21 @@ Install-Module -Name Nutanix.PowerShell.SDK -Force -AllowClobber
 ### VM Provisioning & Management
 
 1. **`nutanix-cli-create-vm.ps1`** - Create new VMs from scratch or images
+
    - VM creation with custom specifications
    - Resource allocation (CPU, memory, storage)
    - Network configuration and VLAN assignment
    - Nutanix PowerShell SDK auto-installation
 
 2. **`nutanix-cli-clone-vm.ps1`** - Clone VMs and create templates
+
    - Full VM cloning with customization
    - Bulk cloning with auto-generated naming
    - Resource modification during cloning
    - Snapshot-based cloning support
 
 3. **`nutanix-cli-vm-power-operations.ps1`** - Advanced VM power management
+
    - Start, stop, restart, suspend operations
    - Graceful vs. hard power operations with NGT integration
    - Sequential startup with configurable delays
@@ -34,12 +37,14 @@ Install-Module -Name Nutanix.PowerShell.SDK -Force -AllowClobber
    - Comprehensive status reporting with uptime tracking
 
 4. **`nutanix-cli-snapshot-vm.ps1`** - Snapshot management
+
    - Create, list, revert, delete snapshots
    - Snapshot cleanup with retention policies
    - Protection domain integration
    - Batch operations across multiple VMs
 
 5. **`nutanix-cli-migrate-vm.ps1`** - VM migration operations
+
    - Live migration between AHV hosts
    - Storage migration between containers
    - Migration validation and compatibility checking
@@ -58,18 +63,21 @@ Install-Module -Name Nutanix.PowerShell.SDK -Force -AllowClobber
 ### Cluster & Host Operations
 
 7. **`nutanix-cli-cluster-operations.ps1`** - Cluster management
+
    - Cluster health monitoring and reporting
    - Node addition and removal operations
    - Cluster configuration management
    - Performance monitoring and alerting
 
 8. **`nutanix-cli-host-operations.ps1`** - AHV host management
+
    - Host health status and diagnostics
    - Host maintenance mode operations
    - Host configuration and updates
    - Performance metrics collection
 
 9. **`nutanix-cli-network-operations.ps1`** - Network management
+
    - Virtual switch and VLAN configuration
    - Network security policy management
    - IP address pool management
@@ -86,12 +94,14 @@ Install-Module -Name Nutanix.PowerShell.SDK -Force -AllowClobber
 ### Storage Operations
 
 11. **`nutanix-cli-storage-containers.ps1`** - Storage container management
+
     - Container creation with deduplication/compression
     - Storage policy configuration
     - Capacity monitoring and alerting
     - Performance optimization
 
 12. **`nutanix-cli-volume-groups.ps1`** - Volume group operations
+
     - iSCSI volume group creation and management
     - Volume attachment to VMs
     - Volume group snapshots and cloning

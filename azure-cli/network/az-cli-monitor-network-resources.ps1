@@ -6,7 +6,7 @@
     This script provides comprehensive monitoring and health checks for Azure network resources using the Azure CLI.
     Monitors Virtual Networks, subnets, Network Security Groups, Route Tables, Public IPs, Load Balancers, and VPN Gateways.
     Provides detailed status reports and identifies potential issues.
-    
+
     The script uses various Azure CLI network commands for monitoring.
 
 .PARAMETER ResourceGroup
@@ -29,17 +29,17 @@
 
 .EXAMPLE
     .\az-cli-monitor-network-resources.ps1
-    
+
     Monitors all network resources across all resource groups.
 
 .EXAMPLE
     .\az-cli-monitor-network-resources.ps1 -ResourceGroup "prod-rg" -ResourceType "VNet"
-    
+
     Monitors only Virtual Networks in the specified resource group.
 
 .EXAMPLE
     .\az-cli-monitor-network-resources.ps1 -ResourceGroup "prod-rg" -ShowHealthOnly -ExportPath "C:\reports\network-health.json"
-    
+
     Shows only unhealthy resources and exports results to a file.
 
 .NOTES
@@ -123,7 +123,7 @@ try {
             [string]$Health,
             [hashtable]$Details
         )
-        
+
         $resourceResult = @{
             ResourceType = $ResourceType
             Name = $ResourceName
@@ -133,10 +133,10 @@ try {
             Health = $Health
             Details = $Details
         }
-        
+
         $monitoringResults.ResourceDetails += $resourceResult
         $monitoringResults.TotalResources++
-        
+
         switch ($Health) {
             "Healthy" { $monitoringResults.HealthyResources++ }
             "Warning" { $monitoringResults.WarningResources++ }
@@ -147,24 +147,24 @@ try {
     # Function to check Virtual Networks
     function Test-VirtualNetworks {
         Write-Host "Checking Virtual Networks..." -ForegroundColor Yellow
-        
+
         $vnetParams = @('network', 'vnet', 'list')
         if ($ResourceGroup) { $vnetParams += '--resource-group', $ResourceGroup }
         if ($VNetName) { $vnetParams += '--query', "[?name=='$VNetName']" }
-        
+
         $vnets = & az @vnetParams | ConvertFrom-Json
-        
+
         foreach ($vnet in $vnets) {
             $health = "Healthy"
             $details = @{}
-            
+
             # Check subnet utilization
             $subnetInfo = @()
             foreach ($subnet in $vnet.subnets) {
                 $usedIPs = if ($subnet.ipConfigurations) { $subnet.ipConfigurations.Count } else { 0 }
                 $totalIPs = [math]::Pow(2, (32 - ($subnet.addressPrefix -split '/')[1])) - 5  # Azure reserves 5 IPs
                 $utilization = if ($totalIPs -gt 0) { [math]::Round(($usedIPs / $totalIPs) * 100, 2) } else { 0 }
-                
+
                 $subnetInfo += @{
                     Name = $subnet.name
                     AddressPrefix = $subnet.addressPrefix
@@ -172,19 +172,19 @@ try {
                     TotalIPs = $totalIPs
                     Utilization = $utilization
                 }
-                
+
                 if ($utilization -gt 80) { $health = "Warning" }
                 if ($utilization -gt 95) { $health = "Unhealthy" }
             }
-            
+
             $details.Subnets = $subnetInfo
             $details.AddressPrefixes = $vnet.addressSpace.addressPrefixes
             $details.DhcpOptions = $vnet.dhcpOptions
             $details.EnableDdosProtection = $vnet.enableDdosProtection
-            
+
             Add-ResourceResult -ResourceType "VNet" -ResourceName $vnet.name -ResourceGroup $vnet.resourceGroup `
                 -Location $vnet.location -Status $vnet.provisioningState -Health $health -Details $details
-            
+
             if (-not $ShowHealthOnly -or $health -ne "Healthy") {
                 $healthColor = switch ($health) { "Healthy" { "Green" } "Warning" { "Yellow" } "Unhealthy" { "Red" } }
                 Write-Host "  📡 VNet: $($vnet.name) - $health" -ForegroundColor $healthColor
@@ -202,16 +202,16 @@ try {
     # Function to check Network Security Groups
     function Test-NetworkSecurityGroups {
         Write-Host "Checking Network Security Groups..." -ForegroundColor Yellow
-        
+
         $nsgParams = @('network', 'nsg', 'list')
         if ($ResourceGroup) { $nsgParams += '--resource-group', $ResourceGroup }
-        
+
         $nsgs = & az @nsgParams | ConvertFrom-Json
-        
+
         foreach ($nsg in $nsgs) {
             $health = "Healthy"
             $details = @{}
-            
+
             # Check for common security issues
             $securityIssues = @()
             foreach ($rule in $nsg.securityRules) {
@@ -224,16 +224,16 @@ try {
                     $health = "Unhealthy"
                 }
             }
-            
+
             $details.SecurityRules = $nsg.securityRules.Count
             $details.DefaultRules = $nsg.defaultSecurityRules.Count
             $details.SecurityIssues = $securityIssues
             $details.AssociatedSubnets = if ($nsg.subnets) { $nsg.subnets.Count } else { 0 }
             $details.AssociatedNICs = if ($nsg.networkInterfaces) { $nsg.networkInterfaces.Count } else { 0 }
-            
+
             Add-ResourceResult -ResourceType "NSG" -ResourceName $nsg.name -ResourceGroup $nsg.resourceGroup `
                 -Location $nsg.location -Status $nsg.provisioningState -Health $health -Details $details
-            
+
             if (-not $ShowHealthOnly -or $health -ne "Healthy") {
                 $healthColor = switch ($health) { "Healthy" { "Green" } "Warning" { "Yellow" } "Unhealthy" { "Red" } }
                 Write-Host "  🛡️ NSG: $($nsg.name) - $health" -ForegroundColor $healthColor
@@ -247,32 +247,32 @@ try {
     # Function to check Public IP addresses
     function Test-PublicIPs {
         Write-Host "Checking Public IP addresses..." -ForegroundColor Yellow
-        
+
         $pipParams = @('network', 'public-ip', 'list')
         if ($ResourceGroup) { $pipParams += '--resource-group', $ResourceGroup }
-        
+
         $pips = & az @pipParams | ConvertFrom-Json
-        
+
         foreach ($pip in $pips) {
             $health = "Healthy"
             $details = @{}
-            
+
             # Check allocation status and associations
             if ($pip.ipAddress -eq "Not Assigned" -or $pip.publicIPAllocationMethod -eq "Dynamic" -and -not $pip.ipConfiguration) {
                 $health = "Warning"
             }
-            
+
             $details.AllocationMethod = $pip.publicIPAllocationMethod
             $details.IPAddress = $pip.ipAddress
             $details.SKU = $pip.sku.name
             $details.Zones = $pip.zones
-            $details.AssociatedResource = if ($pip.ipConfiguration) { 
+            $details.AssociatedResource = if ($pip.ipConfiguration) {
                 ($pip.ipConfiguration.id -split '/')[-3] + "/" + ($pip.ipConfiguration.id -split '/')[-1]
             } else { "None" }
-            
+
             Add-ResourceResult -ResourceType "PublicIP" -ResourceName $pip.name -ResourceGroup $pip.resourceGroup `
                 -Location $pip.location -Status $pip.provisioningState -Health $health -Details $details
-            
+
             if (-not $ShowHealthOnly -or $health -ne "Healthy") {
                 $healthColor = switch ($health) { "Healthy" { "Green" } "Warning" { "Yellow" } "Unhealthy" { "Red" } }
                 Write-Host "  🌐 Public IP: $($pip.name) - $health" -ForegroundColor $healthColor
@@ -286,16 +286,16 @@ try {
     # Function to check Load Balancers
     function Test-LoadBalancers {
         Write-Host "Checking Load Balancers..." -ForegroundColor Yellow
-        
+
         $lbParams = @('network', 'lb', 'list')
         if ($ResourceGroup) { $lbParams += '--resource-group', $ResourceGroup }
-        
+
         $lbs = & az @lbParams | ConvertFrom-Json
-        
+
         foreach ($lb in $lbs) {
             $health = "Healthy"
             $details = @{}
-            
+
             # Check backend pool health
             $backendIssues = @()
             foreach ($pool in $lb.backendAddressPools) {
@@ -305,17 +305,17 @@ try {
                     $health = "Warning"
                 }
             }
-            
+
             $details.SKU = $lb.sku.name
             $details.Type = if ($lb.frontendIPConfigurations[0].publicIPAddress) { "Public" } else { "Internal" }
             $details.BackendPools = $lb.backendAddressPools.Count
             $details.Rules = $lb.loadBalancingRules.Count
             $details.Probes = $lb.probes.Count
             $details.BackendIssues = $backendIssues
-            
+
             Add-ResourceResult -ResourceType "LoadBalancer" -ResourceName $lb.name -ResourceGroup $lb.resourceGroup `
                 -Location $lb.location -Status $lb.provisioningState -Health $health -Details $details
-            
+
             if (-not $ShowHealthOnly -or $health -ne "Healthy") {
                 $healthColor = switch ($health) { "Healthy" { "Green" } "Warning" { "Yellow" } "Unhealthy" { "Red" } }
                 Write-Host "  ⚖️ Load Balancer: $($lb.name) - $health" -ForegroundColor $healthColor
@@ -329,21 +329,21 @@ try {
     # Function to check VPN Gateways
     function Test-VPNGateways {
         Write-Host "Checking VPN Gateways..." -ForegroundColor Yellow
-        
+
         $gwParams = @('network', 'vnet-gateway', 'list')
         if ($ResourceGroup) { $gwParams += '--resource-group', $ResourceGroup }
-        
+
         $gateways = & az @gwParams | ConvertFrom-Json
-        
+
         foreach ($gw in $gateways) {
             $health = "Healthy"
             $details = @{}
-            
+
             # Check gateway health and connections
             if ($gw.provisioningState -ne "Succeeded") {
                 $health = "Unhealthy"
             }
-            
+
             $details.GatewayType = $gw.gatewayType
             $details.VpnType = $gw.vpnType
             $details.SKU = $gw.sku.name
@@ -352,10 +352,10 @@ try {
             if ($gw.bgpSettings) {
                 $details.ASN = $gw.bgpSettings.asn
             }
-            
+
             Add-ResourceResult -ResourceType "VPNGateway" -ResourceName $gw.name -ResourceGroup $gw.resourceGroup `
                 -Location $gw.location -Status $gw.provisioningState -Health $health -Details $details
-            
+
             if (-not $ShowHealthOnly -or $health -ne "Healthy") {
                 $healthColor = switch ($health) { "Healthy" { "Green" } "Warning" { "Yellow" } "Unhealthy" { "Red" } }
                 Write-Host "  🔒 VPN Gateway: $($gw.name) - $health" -ForegroundColor $healthColor
@@ -392,7 +392,7 @@ try {
     if ($ExportPath) {
         Write-Host ""
         Write-Host "Exporting results to: $ExportPath" -ForegroundColor Yellow
-        
+
         switch ($OutputFormat) {
             "JSON" {
                 $monitoringResults | ConvertTo-Json -Depth 10 | Out-File -FilePath $ExportPath -Encoding UTF8

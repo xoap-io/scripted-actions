@@ -113,7 +113,7 @@ try {
 
     # Build AWS CLI arguments
     $awsArgs = @('ec2', 'describe-vpc-peering-connections')
-    
+
     if ($VpcPeeringConnectionIds) {
         $connectionArray = $VpcPeeringConnectionIds -split ','
         $awsArgs += @('--vpc-peering-connection-ids')
@@ -122,23 +122,23 @@ try {
 
     # Build filters array
     $filters = @()
-    
+
     if ($RequesterVpcId) {
         $filters += "Name=requester-vpc-info.vpc-id,Values=$RequesterVpcId"
     }
-    
+
     if ($AccepterVpcId) {
         $filters += "Name=accepter-vpc-info.vpc-id,Values=$AccepterVpcId"
     }
-    
+
     if ($Status) {
         $filters += "Name=status-code,Values=$Status"
     }
-    
+
     if ($RequesterOwnerId) {
         $filters += "Name=requester-vpc-info.owner-id,Values=$RequesterOwnerId"
     }
-    
+
     if ($AccepterOwnerId) {
         $filters += "Name=accepter-vpc-info.owner-id,Values=$AccepterOwnerId"
     }
@@ -147,18 +147,18 @@ try {
         $awsArgs += @('--filters')
         $awsArgs += $filters
     }
-    
+
     if ($Profile) {
         $awsArgs += @('--profile', $Profile)
     }
-    
+
     if ($Region) {
         $awsArgs += @('--region', $Region)
     }
 
     # Execute the AWS CLI command
     $result = & aws @awsArgs 2>&1
-    
+
     if ($LASTEXITCODE -ne 0) {
         throw "Failed to describe VPC peering connections: $result"
     }
@@ -190,7 +190,7 @@ try {
     foreach ($connection in $peeringInfo.VpcPeeringConnections) {
         Write-Host "`n" + "="*70 -ForegroundColor Gray
         Write-Host "Peering Connection: $($connection.VpcPeeringConnectionId)" -ForegroundColor Cyan
-        
+
         # Status information
         $statusColor = switch ($connection.Status.Code) {
             'active' { 'Green' }
@@ -201,19 +201,19 @@ try {
             'expired' { 'Red' }
             default { 'White' }
         }
-        
+
         Write-Host "  Status: $($connection.Status.Code)" -ForegroundColor $statusColor
         if ($connection.Status.Message) {
             Write-Host "  Message: $($connection.Status.Message)" -ForegroundColor White
         }
-        
+
         # VPC information
         Write-Host "`n  Requester VPC:" -ForegroundColor Yellow
         Write-Host "    VPC ID: $($connection.RequesterVpcInfo.VpcId)" -ForegroundColor White
         Write-Host "    CIDR Block: $($connection.RequesterVpcInfo.CidrBlock)" -ForegroundColor White
         Write-Host "    Owner ID: $($connection.RequesterVpcInfo.OwnerId)" -ForegroundColor White
         Write-Host "    Region: $($connection.RequesterVpcInfo.Region)" -ForegroundColor White
-        
+
         # Display additional CIDR blocks if present
         if ($connection.RequesterVpcInfo.CidrBlockSet -and $connection.RequesterVpcInfo.CidrBlockSet.Count -gt 1) {
             Write-Host "    Additional CIDRs:" -ForegroundColor White
@@ -223,13 +223,13 @@ try {
                 }
             }
         }
-        
+
         Write-Host "`n  Accepter VPC:" -ForegroundColor Yellow
         Write-Host "    VPC ID: $($connection.AccepterVpcInfo.VpcId)" -ForegroundColor White
         Write-Host "    CIDR Block: $($connection.AccepterVpcInfo.CidrBlock)" -ForegroundColor White
         Write-Host "    Owner ID: $($connection.AccepterVpcInfo.OwnerId)" -ForegroundColor White
         Write-Host "    Region: $($connection.AccepterVpcInfo.Region)" -ForegroundColor White
-        
+
         # Display additional CIDR blocks if present
         if ($connection.AccepterVpcInfo.CidrBlockSet -and $connection.AccepterVpcInfo.CidrBlockSet.Count -gt 1) {
             Write-Host "    Additional CIDRs:" -ForegroundColor White
@@ -243,7 +243,7 @@ try {
         # Connection type analysis
         $isInterRegion = $connection.RequesterVpcInfo.Region -ne $connection.AccepterVpcInfo.Region
         $isInterAccount = $connection.RequesterVpcInfo.OwnerId -ne $connection.AccepterVpcInfo.OwnerId
-        
+
         Write-Host "`n  Connection Type:" -ForegroundColor Yellow
         if ($isInterAccount -and $isInterRegion) {
             Write-Host "    Cross-account, Cross-region" -ForegroundColor Cyan
@@ -271,28 +271,28 @@ try {
         # Show detailed information if requested
         if ($Detailed -and $connection.Status.Code -eq 'active') {
             Write-Host "`n  Route Table Analysis:" -ForegroundColor Yellow
-            
+
             # Check for routes using this peering connection
             $routeArgs = @('ec2', 'describe-route-tables', '--filters', "Name=route.vpc-peering-connection-id,Values=$($connection.VpcPeeringConnectionId)")
-            
+
             if ($Profile) {
                 $routeArgs += @('--profile', $Profile)
             }
-            
+
             if ($Region) {
                 $routeArgs += @('--region', $Region)
             }
 
             $routeResult = & aws @routeArgs 2>&1
-            
+
             if ($LASTEXITCODE -eq 0) {
                 $routeInfo = $routeResult | ConvertFrom-Json
-                
+
                 if ($routeInfo.RouteTables.Count -gt 0) {
                     Write-Host "    Route tables using this peering connection:" -ForegroundColor White
                     foreach ($routeTable in $routeInfo.RouteTables) {
                         Write-Host "      - $($routeTable.RouteTableId) (VPC: $($routeTable.VpcId))" -ForegroundColor Gray
-                        
+
                         $peeringRoutes = $routeTable.Routes | Where-Object { $_.VpcPeeringConnectionId -eq $connection.VpcPeeringConnectionId }
                         foreach ($route in $peeringRoutes) {
                             Write-Host "        Route: $($route.DestinationCidrBlock) -> $($route.VpcPeeringConnectionId)" -ForegroundColor Gray
@@ -306,7 +306,7 @@ try {
     }
 
     Write-Host "`n" + "="*70 -ForegroundColor Gray
-    
+
     if (-not $Detailed) {
         Write-Host "`nTip: Use -Detailed switch for route table analysis and comprehensive information." -ForegroundColor Cyan
     }

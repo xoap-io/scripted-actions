@@ -152,26 +152,26 @@ try {
     if (-not $azVersion) {
         throw "Azure CLI is not installed or not available in PATH"
     }
-    
+
     Write-Host "Checking Azure CLI login status..." -ForegroundColor Cyan
     $account = az account show --output json 2>$null | ConvertFrom-Json
     if (-not $account) {
         throw "Not logged in to Azure CLI. Please run 'az login' first"
     }
     Write-Host "Logged in as: $($account.user.name)" -ForegroundColor Green
-    
+
     Write-Host "Checking if Resource Group exists..." -ForegroundColor Cyan
     $resourceGroupExists = az group show --name $ResourceGroup --output json 2>$null
     if (-not $resourceGroupExists) {
         throw "Resource Group '$ResourceGroup' not found"
     }
-    
+
     Write-Host "Checking if Virtual Network exists..." -ForegroundColor Cyan
     $vnetExists = az network vnet show --name $VnetName --resource-group $ResourceGroup --output json 2>$null
     if (-not $vnetExists) {
         throw "Virtual Network '$VnetName' not found in resource group '$ResourceGroup'"
     }
-    
+
     Write-Host "Checking if Public IP exists..." -ForegroundColor Cyan
     # Check if it's a resource ID or just a name
     if ($PublicIpAddress -like "/subscriptions/*") {
@@ -182,7 +182,7 @@ try {
     if (-not $publicIpExists) {
         throw "Public IP '$PublicIpAddress' not found"
     }
-    
+
     Write-Host "Checking if Bastion Host already exists..." -ForegroundColor Cyan
     $existingBastion = az network bastion show --name $BastionName --resource-group $ResourceGroup --output json 2>$null
     if ($existingBastion) {
@@ -193,9 +193,9 @@ try {
         Write-Host "  Provisioning State: $($bastionData.provisioningState)" -ForegroundColor Yellow
         exit 0
     }
-    
+
     Write-Host "Creating Azure Bastion Host..." -ForegroundColor Cyan
-    
+
     # Build command parameters
     $createParams = @(
         'network', 'bastion', 'create',
@@ -206,68 +206,68 @@ try {
         '--location', $Location,
         '--output', 'json'
     )
-    
+
     # Add optional parameters
     if ($DisableCopyPaste) {
         $createParams += '--disable-copy-paste', 'true'
         Write-Host "  Will disable copy-paste functionality" -ForegroundColor Green
     }
-    
+
     if ($EnableIpConnect) {
         $createParams += '--enable-ip-connect', 'true'
         Write-Host "  Will enable IP connect" -ForegroundColor Green
     }
-    
+
     if ($EnableTunneling) {
         $createParams += '--enable-tunneling', 'true'
         Write-Host "  Will enable tunneling" -ForegroundColor Green
     }
-    
+
     if ($FileCopy) {
         $createParams += '--file-copy', 'true'
         Write-Host "  Will enable file copy" -ForegroundColor Green
     }
-    
+
     if ($Kerberos) {
         $createParams += '--kerberos', 'true'
         Write-Host "  Will enable Kerberos authentication" -ForegroundColor Green
     }
-    
+
     if ($NoWait) {
         $createParams += '--no-wait'
         Write-Host "  Will not wait for operation completion" -ForegroundColor Green
     }
-    
+
     if ($ScaleUnits) {
         $createParams += '--scale-units', $ScaleUnits
         Write-Host "  Will set scale units to: $ScaleUnits" -ForegroundColor Green
     }
-    
+
     if ($SessionRecording) {
         $createParams += '--session-recording', 'true'
         Write-Host "  Will enable session recording" -ForegroundColor Green
     }
-    
+
     if ($ShareableLink) {
         $createParams += '--shareable-link', 'true'
         Write-Host "  Will enable shareable link" -ForegroundColor Green
     }
-    
+
     if ($Sku) {
         $createParams += '--sku', $Sku
         Write-Host "  Will use SKU: $Sku" -ForegroundColor Green
     }
-    
+
     if ($Tags) {
         $createParams += '--tags', $Tags
         Write-Host "  Will apply tags: $Tags" -ForegroundColor Green
     }
-    
+
     if ($Zones) {
         $createParams += '--zones', $Zones
         Write-Host "  Will use availability zones: $Zones" -ForegroundColor Green
     }
-    
+
     if ($NoWait) {
         Write-Host "Starting Bastion Host creation (not waiting for completion)..." -ForegroundColor Yellow
         & az @createParams
@@ -282,9 +282,9 @@ try {
         if ($LASTEXITCODE -ne 0) {
             throw "Azure CLI command failed with exit code: $LASTEXITCODE"
         }
-        
+
         $bastionHost = $result | ConvertFrom-Json
-        
+
         Write-Host "✓ Azure Bastion Host created successfully!" -ForegroundColor Green
         Write-Host "Bastion Host Details:" -ForegroundColor Cyan
         Write-Host "  Name: $($bastionHost.name)" -ForegroundColor White
@@ -294,7 +294,7 @@ try {
         Write-Host "  Provisioning State: $($bastionHost.provisioningState)" -ForegroundColor White
         Write-Host "  DNS Name: $($bastionHost.dnsName)" -ForegroundColor White
         Write-Host "  ID: $($bastionHost.id)" -ForegroundColor White
-        
+
         return $bastionHost
     }
 } catch {

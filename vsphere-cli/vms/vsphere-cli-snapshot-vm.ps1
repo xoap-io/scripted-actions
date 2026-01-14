@@ -109,7 +109,7 @@ $ErrorActionPreference = 'Stop'
 # Function to check and install PowerCLI if needed
 function Test-PowerCLIInstallation {
     Write-Host "Checking PowerCLI installation..." -ForegroundColor Yellow
-    
+
     try {
         $powerCLIModule = Get-Module -Name VMware.PowerCLI -ListAvailable
         if (-not $powerCLIModule) {
@@ -120,14 +120,14 @@ function Test-PowerCLIInstallation {
             $version = $powerCLIModule | Sort-Object Version -Descending | Select-Object -First 1
             Write-Host "PowerCLI version $($version.Version) found." -ForegroundColor Green
         }
-        
+
         # Import the module
         Import-Module VMware.PowerCLI -Force
-        
+
         # Disable certificate warnings for lab environments
         Set-PowerCLIConfiguration -InvalidCertificateAction Ignore -Confirm:$false -Scope User | Out-Null
         Set-PowerCLIConfiguration -ParticipateInCEIP $false -Confirm:$false -Scope User | Out-Null
-        
+
         return $true
     }
     catch {
@@ -139,17 +139,17 @@ function Test-PowerCLIInstallation {
 # Function to connect to vCenter
 function Connect-ToVCenter {
     param($Server)
-    
+
     try {
         Write-Host "Connecting to vCenter Server: $Server" -ForegroundColor Yellow
-        
+
         # Check if already connected
         $connection = $global:DefaultVIServers | Where-Object { $_.Name -eq $Server -and $_.IsConnected }
         if ($connection) {
             Write-Host "Already connected to $Server" -ForegroundColor Green
             return $connection
         }
-        
+
         # Connect to vCenter (will prompt for credentials if not cached)
         $connection = Connect-VIServer -Server $Server -Force
         Write-Host "Successfully connected to vCenter: $($connection.Name)" -ForegroundColor Green
@@ -167,12 +167,12 @@ function Get-TargetVMs {
         $VMName,
         $VMNames
     )
-    
+
     Write-Host "Identifying target VMs..." -ForegroundColor Yellow
-    
+
     try {
         $targetVMs = @()
-        
+
         if ($VMName) {
             # Single VM or wildcard pattern
             $targetVMs = Get-VM -Name $VMName -ErrorAction SilentlyContinue
@@ -188,16 +188,16 @@ function Get-TargetVMs {
                 }
             }
         }
-        
+
         if (-not $targetVMs) {
             throw "No VMs found matching the specified criteria"
         }
-        
+
         Write-Host "Found $($targetVMs.Count) VM(s) matching criteria:" -ForegroundColor Green
         foreach ($vm in $targetVMs) {
             Write-Host "  - $($vm.Name) [$($vm.PowerState)]" -ForegroundColor White
         }
-        
+
         return $targetVMs
     }
     catch {
@@ -215,15 +215,15 @@ function New-VMSnapshot {
         $Memory,
         $Quiesce
     )
-    
+
     Write-Host "Creating snapshots for $($VMs.Count) VM(s)..." -ForegroundColor Yellow
-    
+
     $results = @()
-    
+
     foreach ($vm in $VMs) {
         try {
             Write-Host "  Processing VM: $($vm.Name)" -ForegroundColor Cyan
-            
+
             # Check if snapshot with same name already exists
             $existingSnapshot = Get-Snapshot -VM $vm -Name $SnapshotName -ErrorAction SilentlyContinue
             if ($existingSnapshot) {
@@ -237,7 +237,7 @@ function New-VMSnapshot {
                 }
                 continue
             }
-            
+
             # Create snapshot
             $snapshotParams = @{
                 VM = $vm
@@ -245,13 +245,13 @@ function New-VMSnapshot {
                 Memory = $Memory
                 Quiesce = $Quiesce
             }
-            
+
             if ($SnapshotDescription) {
                 $snapshotParams.Description = $SnapshotDescription
             }
-            
+
             $snapshot = New-Snapshot @snapshotParams
-            
+
             $results += @{
                 VM = $vm.Name
                 Operation = "Create"
@@ -261,7 +261,7 @@ function New-VMSnapshot {
                 Created = $snapshot.Created
                 SizeGB = [math]::Round($snapshot.SizeGB, 2)
             }
-            
+
             Write-Host "    ✓ Snapshot '$SnapshotName' created" -ForegroundColor Green
         }
         catch {
@@ -275,26 +275,26 @@ function New-VMSnapshot {
             Write-Host "    ✗ Failed to create snapshot: $($_.Exception.Message)" -ForegroundColor Red
         }
     }
-    
+
     return $results
 }
 
 # Function to list snapshots
 function Get-VMSnapshotList {
     param($VMs)
-    
+
     Write-Host "Listing snapshots for $($VMs.Count) VM(s)..." -ForegroundColor Yellow
-    
+
     $results = @()
-    
+
     foreach ($vm in $VMs) {
         Write-Host "`nVM: $($vm.Name)" -ForegroundColor Cyan
-        
+
         $snapshots = Get-Snapshot -VM $vm -ErrorAction SilentlyContinue
-        
+
         if ($snapshots) {
             Write-Host "  Found $($snapshots.Count) snapshot(s):" -ForegroundColor Green
-            
+
             foreach ($snapshot in $snapshots) {
                 $snapshotInfo = @{
                     VM = $vm.Name
@@ -307,12 +307,12 @@ function Get-VMSnapshotList {
                     Parent = if ($snapshot.Parent) { $snapshot.Parent.Name } else { "Root" }
                     Children = $snapshot.Children.Count
                 }
-                
+
                 $results += $snapshotInfo
-                
+
                 $ageInDays = [math]::Round((Get-Date).Subtract($snapshot.Created).TotalDays, 1)
                 $currentMarker = if ($snapshot.IsCurrent) { " [CURRENT]" } else { "" }
-                
+
                 Write-Host "    - $($snapshot.Name)$currentMarker" -ForegroundColor White
                 Write-Host "      Created: $($snapshot.Created) ($ageInDays days ago)" -ForegroundColor Gray
                 Write-Host "      Size: $([math]::Round($snapshot.SizeGB, 2)) GB" -ForegroundColor Gray
@@ -324,7 +324,7 @@ function Get-VMSnapshotList {
             Write-Host "  No snapshots found" -ForegroundColor Yellow
         }
     }
-    
+
     return $results
 }
 
@@ -334,15 +334,15 @@ function Restore-VMSnapshot {
         $VMs,
         $SnapshotName
     )
-    
+
     Write-Host "Reverting VMs to snapshot '$SnapshotName'..." -ForegroundColor Yellow
-    
+
     $results = @()
-    
+
     foreach ($vm in $VMs) {
         try {
             Write-Host "  Processing VM: $($vm.Name)" -ForegroundColor Cyan
-            
+
             # Find the snapshot
             $snapshot = Get-Snapshot -VM $vm -Name $SnapshotName -ErrorAction SilentlyContinue
             if (-not $snapshot) {
@@ -356,10 +356,10 @@ function Restore-VMSnapshot {
                 }
                 continue
             }
-            
+
             # Revert to snapshot
             Set-VM -VM $vm -Snapshot $snapshot -Confirm:$false
-            
+
             $results += @{
                 VM = $vm.Name
                 Operation = "Revert"
@@ -368,7 +368,7 @@ function Restore-VMSnapshot {
                 Snapshot = $snapshot.Name
                 SnapshotDate = $snapshot.Created
             }
-            
+
             Write-Host "    ✓ Reverted to snapshot '$SnapshotName'" -ForegroundColor Green
         }
         catch {
@@ -382,7 +382,7 @@ function Restore-VMSnapshot {
             Write-Host "    ✗ Failed to revert: $($_.Exception.Message)" -ForegroundColor Red
         }
     }
-    
+
     return $results
 }
 
@@ -394,16 +394,16 @@ function Remove-VMSnapshot {
         $RemoveChildren,
         $DeleteAll = $false
     )
-    
+
     $operation = if ($DeleteAll) { "DeleteAll" } else { "Delete" }
     Write-Host "Deleting snapshots from $($VMs.Count) VM(s)..." -ForegroundColor Yellow
-    
+
     $results = @()
-    
+
     foreach ($vm in $VMs) {
         try {
             Write-Host "  Processing VM: $($vm.Name)" -ForegroundColor Cyan
-            
+
             if ($DeleteAll) {
                 # Delete all snapshots
                 $snapshots = Get-Snapshot -VM $vm -ErrorAction SilentlyContinue
@@ -411,7 +411,7 @@ function Remove-VMSnapshot {
                     foreach ($snapshot in $snapshots) {
                         Remove-Snapshot -Snapshot $snapshot -Confirm:$false -RemoveChildren:$RemoveChildren
                     }
-                    
+
                     $results += @{
                         VM = $vm.Name
                         Operation = $operation
@@ -419,7 +419,7 @@ function Remove-VMSnapshot {
                         Message = "All snapshots deleted"
                         Count = $snapshots.Count
                     }
-                    
+
                     Write-Host "    ✓ Deleted $($snapshots.Count) snapshot(s)" -ForegroundColor Green
                 } else {
                     $results += @{
@@ -445,9 +445,9 @@ function Remove-VMSnapshot {
                     }
                     continue
                 }
-                
+
                 Remove-Snapshot -Snapshot $snapshot -Confirm:$false -RemoveChildren:$RemoveChildren
-                
+
                 $results += @{
                     VM = $vm.Name
                     Operation = $operation
@@ -455,7 +455,7 @@ function Remove-VMSnapshot {
                     Message = "Snapshot deleted successfully"
                     Snapshot = $snapshot.Name
                 }
-                
+
                 Write-Host "    ✓ Deleted snapshot '$SnapshotName'" -ForegroundColor Green
             }
         }
@@ -470,7 +470,7 @@ function Remove-VMSnapshot {
             Write-Host "    ✗ Failed to delete: $($_.Exception.Message)" -ForegroundColor Red
         }
     }
-    
+
     return $results
 }
 
@@ -480,17 +480,17 @@ function Invoke-SnapshotCleanup {
         $VMs,
         $MaxSnapshotsPerVM
     )
-    
+
     Write-Host "Cleaning up old snapshots (keeping max $MaxSnapshotsPerVM per VM)..." -ForegroundColor Yellow
-    
+
     $results = @()
-    
+
     foreach ($vm in $VMs) {
         try {
             Write-Host "  Processing VM: $($vm.Name)" -ForegroundColor Cyan
-            
+
             $snapshots = Get-Snapshot -VM $vm -ErrorAction SilentlyContinue | Sort-Object Created -Descending
-            
+
             if ($snapshots.Count -le $MaxSnapshotsPerVM) {
                 $results += @{
                     VM = $vm.Name
@@ -502,11 +502,11 @@ function Invoke-SnapshotCleanup {
                 Write-Host "    - Within limit ($($snapshots.Count)/$MaxSnapshotsPerVM snapshots)" -ForegroundColor Yellow
                 continue
             }
-            
+
             # Delete oldest snapshots
             $snapshotsToDelete = $snapshots | Select-Object -Skip $MaxSnapshotsPerVM
             $deletedCount = 0
-            
+
             foreach ($snapshot in $snapshotsToDelete) {
                 # Don't delete current snapshot
                 if (-not $snapshot.IsCurrent) {
@@ -515,7 +515,7 @@ function Invoke-SnapshotCleanup {
                     Write-Host "    ✓ Deleted old snapshot: $($snapshot.Name) ($($snapshot.Created))" -ForegroundColor Green
                 }
             }
-            
+
             $results += @{
                 VM = $vm.Name
                 Operation = "Cleanup"
@@ -524,7 +524,7 @@ function Invoke-SnapshotCleanup {
                 Deleted = $deletedCount
                 Remaining = $snapshots.Count - $deletedCount
             }
-            
+
             Write-Host "    ✓ Deleted $deletedCount old snapshot(s)" -ForegroundColor Green
         }
         catch {
@@ -538,7 +538,7 @@ function Invoke-SnapshotCleanup {
             Write-Host "    ✗ Failed cleanup: $($_.Exception.Message)" -ForegroundColor Red
         }
     }
-    
+
     return $results
 }
 
@@ -548,25 +548,25 @@ function Show-SnapshotSummary {
         $Results,
         $Operation
     )
-    
+
     Write-Host "`n=== $Operation Operation Summary ===" -ForegroundColor Cyan
-    
+
     $successful = $Results | Where-Object { $_.Status -eq "Success" }
     $failed = $Results | Where-Object { $_.Status -eq "Failed" }
     $skipped = $Results | Where-Object { $_.Status -eq "Skipped" }
-    
+
     Write-Host "Total VMs: $($Results.Count)" -ForegroundColor White
     Write-Host "Successful: $($successful.Count)" -ForegroundColor Green
     Write-Host "Failed: $($failed.Count)" -ForegroundColor Red
     Write-Host "Skipped: $($skipped.Count)" -ForegroundColor Yellow
-    
+
     if ($failed.Count -gt 0) {
         Write-Host "`nFailed Operations:" -ForegroundColor Red
         foreach ($result in $failed) {
             Write-Host "  - $($result.VM): $($result.Message)" -ForegroundColor White
         }
     }
-    
+
     # Operation-specific summaries
     switch ($Operation) {
         "Create" {
@@ -587,28 +587,28 @@ try {
     Write-Host "=== vSphere VM Snapshot Management ===" -ForegroundColor Cyan
     Write-Host "Target vCenter: $VCenterServer" -ForegroundColor White
     Write-Host "Operation: $Operation" -ForegroundColor White
-    
+
     if ($VMName) { Write-Host "Target VM Pattern: $VMName" -ForegroundColor White }
     if ($VMNames) { Write-Host "Target VMs: $($VMNames -join ', ')" -ForegroundColor White }
     if ($SnapshotName) { Write-Host "Snapshot Name: $SnapshotName" -ForegroundColor White }
     Write-Host ""
-    
+
     # Validate required parameters
     if ($Operation -in @("Create", "Revert", "Delete") -and -not $SnapshotName) {
         throw "SnapshotName parameter is required for $Operation operation"
     }
-    
+
     # Check and install PowerCLI
     if (-not (Test-PowerCLIInstallation)) {
         throw "PowerCLI installation failed"
     }
-    
+
     # Connect to vCenter
     $connection = Connect-ToVCenter -Server $VCenterServer
-    
+
     # Get target VMs
     $targetVMs = Get-TargetVMs -VMName $VMName -VMNames $VMNames
-    
+
     # Confirm operation if not using Force and operation is destructive
     if (-not $Force -and $Operation -in @("Delete", "DeleteAll", "Cleanup", "Revert")) {
         $confirmation = Read-Host "`nProceed with $Operation operation on $($targetVMs.Count) VM(s)? (y/N)"
@@ -617,7 +617,7 @@ try {
             exit 0
         }
     }
-    
+
     # Perform the snapshot operation
     $results = @()
     switch ($Operation) {
@@ -640,12 +640,12 @@ try {
             $results = Invoke-SnapshotCleanup -VMs $targetVMs -MaxSnapshotsPerVM $MaxSnapshotsPerVM
         }
     }
-    
+
     # Display summary (except for List operation which already displays results)
     if ($Operation -ne "List") {
         Show-SnapshotSummary -Results $results -Operation $Operation
     }
-    
+
     Write-Host "`n=== Operation Completed ===" -ForegroundColor Green
 }
 catch {

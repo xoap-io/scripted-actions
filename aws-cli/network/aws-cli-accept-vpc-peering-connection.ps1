@@ -67,42 +67,42 @@ try {
 
     # First, get current peering connection details
     $describeArgs = @('ec2', 'describe-vpc-peering-connections', '--vpc-peering-connection-ids', $VpcPeeringConnectionId)
-    
+
     if ($Profile) {
         $describeArgs += @('--profile', $Profile)
     }
-    
+
     if ($Region) {
         $describeArgs += @('--region', $Region)
     }
 
     Write-Host "Retrieving peering connection details..." -ForegroundColor Yellow
     $currentResult = & aws @describeArgs 2>&1
-    
+
     if ($LASTEXITCODE -ne 0) {
         throw "Failed to retrieve peering connection details: $currentResult"
     }
 
     $currentInfo = $currentResult | ConvertFrom-Json
-    
+
     if ($currentInfo.VpcPeeringConnections.Count -eq 0) {
         throw "VPC peering connection '$VpcPeeringConnectionId' not found"
     }
 
     $currentConnection = $currentInfo.VpcPeeringConnections[0]
-    
+
     # Display current peering connection information
     Write-Host "`nCurrent Peering Connection Details:" -ForegroundColor Cyan
     Write-Host "  Connection ID: $($currentConnection.VpcPeeringConnectionId)" -ForegroundColor White
     Write-Host "  Status: $($currentConnection.Status.Code)" -ForegroundColor White
     Write-Host "  Message: $($currentConnection.Status.Message)" -ForegroundColor White
-    
+
     Write-Host "`n  Requester VPC:" -ForegroundColor White
     Write-Host "    VPC ID: $($currentConnection.RequesterVpcInfo.VpcId)" -ForegroundColor Gray
     Write-Host "    CIDR: $($currentConnection.RequesterVpcInfo.CidrBlock)" -ForegroundColor Gray
     Write-Host "    Owner: $($currentConnection.RequesterVpcInfo.OwnerId)" -ForegroundColor Gray
     Write-Host "    Region: $($currentConnection.RequesterVpcInfo.Region)" -ForegroundColor Gray
-    
+
     Write-Host "`n  Accepter VPC:" -ForegroundColor White
     Write-Host "    VPC ID: $($currentConnection.AccepterVpcInfo.VpcId)" -ForegroundColor Gray
     Write-Host "    CIDR: $($currentConnection.AccepterVpcInfo.CidrBlock)" -ForegroundColor Gray
@@ -114,31 +114,31 @@ try {
         Write-Host "`nPeering connection is already active!" -ForegroundColor Green
         return
     }
-    
+
     if ($currentConnection.Status.Code -ne 'pending-acceptance') {
         Write-Host "`nWARNING: Peering connection is in '$($currentConnection.Status.Code)' state." -ForegroundColor Yellow
         Write-Host "It can only be accepted when in 'pending-acceptance' state." -ForegroundColor Yellow
-        
+
         if ($currentConnection.Status.Code -eq 'rejected') {
             Write-Host "This connection has been rejected and cannot be accepted." -ForegroundColor Red
             exit 1
         }
-        
+
         if ($currentConnection.Status.Code -eq 'expired') {
             Write-Host "This connection has expired and cannot be accepted." -ForegroundColor Red
             exit 1
         }
-        
+
         Write-Host "Attempting to accept anyway..." -ForegroundColor Yellow
     }
 
     # Build AWS CLI arguments for acceptance
     $awsArgs = @('ec2', 'accept-vpc-peering-connection', '--vpc-peering-connection-id', $VpcPeeringConnectionId)
-    
+
     if ($Profile) {
         $awsArgs += @('--profile', $Profile)
     }
-    
+
     if ($Region) {
         $awsArgs += @('--region', $Region)
     }
@@ -146,7 +146,7 @@ try {
     # Accept the VPC peering connection
     Write-Host "`nAccepting VPC peering connection..." -ForegroundColor Yellow
     $result = & aws @awsArgs 2>&1
-    
+
     if ($LASTEXITCODE -ne 0) {
         throw "Failed to accept VPC peering connection: $result"
     }
@@ -162,23 +162,23 @@ try {
     # Wait for the connection to become active if requested
     if ($Wait) {
         Write-Host "`nWaiting for peering connection to become active..." -ForegroundColor Yellow
-        
+
         $maxAttempts = 30
         $attempt = 0
         $isActive = $false
-        
+
         while ($attempt -lt $maxAttempts -and -not $isActive) {
             Start-Sleep -Seconds 10
             $attempt++
-            
+
             Write-Host "  Checking status (attempt $attempt/$maxAttempts)..." -ForegroundColor Gray
-            
+
             $checkResult = & aws @describeArgs 2>&1
-            
+
             if ($LASTEXITCODE -eq 0) {
                 $checkInfo = $checkResult | ConvertFrom-Json
                 $currentStatus = $checkInfo.VpcPeeringConnections[0].Status.Code
-                
+
                 if ($currentStatus -eq 'active') {
                     $isActive = $true
                     Write-Host "`nPeering connection is now active!" -ForegroundColor Green
@@ -190,7 +190,7 @@ try {
                 }
             }
         }
-        
+
         if (-not $isActive -and $attempt -eq $maxAttempts) {
             Write-Host "`nTimeout waiting for peering connection to become active." -ForegroundColor Yellow
             Write-Host "Check the status manually with: aws ec2 describe-vpc-peering-connections --vpc-peering-connection-ids $VpcPeeringConnectionId" -ForegroundColor Gray
@@ -202,14 +202,14 @@ try {
     Write-Host "1. Update route tables in both VPCs:" -ForegroundColor White
     Write-Host "   - Add routes pointing to the peer VPC's CIDR block" -ForegroundColor Gray
     Write-Host "   - Use the peering connection as the target" -ForegroundColor Gray
-    
+
     Write-Host "`n2. Update security groups:" -ForegroundColor White
     Write-Host "   - Add inbound/outbound rules to allow traffic from peer VPC" -ForegroundColor Gray
     Write-Host "   - Reference the peer VPC's CIDR block or security groups" -ForegroundColor Gray
-    
+
     Write-Host "`n3. Update Network ACLs (if using custom NACLs):" -ForegroundColor White
     Write-Host "   - Add inbound/outbound rules for peer VPC traffic" -ForegroundColor Gray
-    
+
     Write-Host "`n4. Test connectivity between instances in both VPCs" -ForegroundColor White
 
     Write-Host "`nExample route creation commands:" -ForegroundColor Cyan

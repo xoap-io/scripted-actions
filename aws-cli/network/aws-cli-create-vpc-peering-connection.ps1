@@ -103,21 +103,21 @@ try {
 
     # Build AWS CLI arguments
     $awsArgs = @('ec2', 'create-vpc-peering-connection', '--vpc-id', $VpcId, '--peer-vpc-id', $PeerVpcId)
-    
+
     if ($PeerOwnerId) {
         $awsArgs += @('--peer-owner-id', $PeerOwnerId)
         Write-Host "Creating cross-account peering connection..." -ForegroundColor Yellow
     }
-    
+
     if ($PeerRegion) {
         $awsArgs += @('--peer-region', $PeerRegion)
         Write-Host "Creating cross-region peering connection..." -ForegroundColor Yellow
     }
-    
+
     if ($Profile) {
         $awsArgs += @('--profile', $Profile)
     }
-    
+
     if ($Region) {
         $awsArgs += @('--region', $Region)
     }
@@ -132,7 +132,7 @@ try {
                 $tagSpecs += "Key=$($parts[0]),Value=$($parts[1])"
             }
         }
-        
+
         if ($tagSpecs.Count -gt 0) {
             $awsArgs += @('--tag-specifications', "ResourceType=vpc-peering-connection,Tags=$($tagSpecs -join ',')")
         }
@@ -142,11 +142,11 @@ try {
     Write-Host "`nPeering Connection Configuration:" -ForegroundColor Cyan
     Write-Host "  Requester VPC: $VpcId" -ForegroundColor White
     Write-Host "  Peer VPC: $PeerVpcId" -ForegroundColor White
-    
+
     if ($PeerOwnerId) {
         Write-Host "  Peer Account: $PeerOwnerId" -ForegroundColor White
     }
-    
+
     if ($PeerRegion) {
         Write-Host "  Peer Region: $PeerRegion" -ForegroundColor White
     }
@@ -154,7 +154,7 @@ try {
     # Create the VPC peering connection
     Write-Host "`nCreating VPC peering connection..." -ForegroundColor Yellow
     $result = & aws @awsArgs 2>&1
-    
+
     if ($LASTEXITCODE -ne 0) {
         throw "Failed to create VPC peering connection: $result"
     }
@@ -174,7 +174,7 @@ try {
     Write-Host "    CIDR Block: $($peeringConnection.RequesterVpcInfo.CidrBlock)" -ForegroundColor Gray
     Write-Host "    Owner ID: $($peeringConnection.RequesterVpcInfo.OwnerId)" -ForegroundColor Gray
     Write-Host "    Region: $($peeringConnection.RequesterVpcInfo.Region)" -ForegroundColor Gray
-    
+
     Write-Host "  Accepter VPC:" -ForegroundColor White
     Write-Host "    VPC ID: $($peeringConnection.AccepterVpcInfo.VpcId)" -ForegroundColor Gray
     Write-Host "    CIDR Block: $($peeringConnection.AccepterVpcInfo.CidrBlock)" -ForegroundColor Gray
@@ -189,19 +189,19 @@ try {
     # Wait for peering connection if requested
     if ($Wait) {
         Write-Host "`nWaiting for peering connection to be ready..." -ForegroundColor Yellow
-        
+
         $waitArgs = @('ec2', 'wait', 'vpc-peering-connection-exists', '--vpc-peering-connection-ids', $peeringConnection.VpcPeeringConnectionId)
-        
+
         if ($Profile) {
             $waitArgs += @('--profile', $Profile)
         }
-        
+
         if ($Region) {
             $waitArgs += @('--region', $Region)
         }
 
         & aws @waitArgs 2>&1
-        
+
         if ($LASTEXITCODE -eq 0) {
             Write-Host "Peering connection is ready!" -ForegroundColor Green
         } else {
@@ -211,7 +211,7 @@ try {
 
     # Display next steps
     Write-Host "`nNext Steps:" -ForegroundColor Cyan
-    
+
     if ($PeerOwnerId -or $PeerRegion) {
         Write-Host "1. The peer account owner must accept this peering connection:" -ForegroundColor White
         Write-Host "   aws ec2 accept-vpc-peering-connection --vpc-peering-connection-id $($peeringConnection.VpcPeeringConnectionId)" -ForegroundColor Gray
@@ -219,14 +219,14 @@ try {
         Write-Host "1. Accept the peering connection (same account):" -ForegroundColor White
         Write-Host "   aws ec2 accept-vpc-peering-connection --vpc-peering-connection-id $($peeringConnection.VpcPeeringConnectionId)" -ForegroundColor Gray
     }
-    
+
     Write-Host "2. Update route tables in both VPCs to enable traffic routing" -ForegroundColor White
     Write-Host "3. Update security groups to allow traffic between VPCs" -ForegroundColor White
     Write-Host "4. Consider updating NACLs if using custom network ACLs" -ForegroundColor White
 
     Write-Host "`nMonitoring Commands:" -ForegroundColor Cyan
     Write-Host "Check status: aws ec2 describe-vpc-peering-connections --vpc-peering-connection-ids $($peeringConnection.VpcPeeringConnectionId)" -ForegroundColor Gray
-    
+
     # Output the peering connection ID for scripting
     Write-Output $peeringConnection.VpcPeeringConnectionId
 

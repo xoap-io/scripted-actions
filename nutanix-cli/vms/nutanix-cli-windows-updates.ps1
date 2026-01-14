@@ -175,7 +175,7 @@ $ErrorActionPreference = 'Stop'
 # Function to check and install required modules
 function Test-RequiredModules {
     Write-Host "Checking required PowerShell modules..." -ForegroundColor Yellow
-    
+
     try {
         # Check Nutanix PowerShell SDK
         $nutanixModule = Get-Module -Name Nutanix.PowerShell.SDK -ListAvailable
@@ -184,7 +184,7 @@ function Test-RequiredModules {
             Install-Module -Name Nutanix.PowerShell.SDK -Force -AllowClobber -Scope CurrentUser
             Write-Host "Nutanix PowerShell SDK installed successfully." -ForegroundColor Green
         }
-        
+
         # Check PSWindowsUpdate module
         $winUpdateModule = Get-Module -Name PSWindowsUpdate -ListAvailable
         if (-not $winUpdateModule) {
@@ -192,11 +192,11 @@ function Test-RequiredModules {
             Install-Module -Name PSWindowsUpdate -Force -AllowClobber -Scope CurrentUser
             Write-Host "PSWindowsUpdate module installed successfully." -ForegroundColor Green
         }
-        
+
         # Import modules
         Import-Module Nutanix.PowerShell.SDK -Force
         Import-Module PSWindowsUpdate -Force
-        
+
         Write-Host "All required modules available." -ForegroundColor Green
         return $true
     }
@@ -209,16 +209,16 @@ function Test-RequiredModules {
 # Function to connect to Prism Central or Element
 function Connect-ToNutanix {
     param($Server, $ServerType)
-    
+
     try {
         Write-Host "Connecting to $ServerType`: $Server" -ForegroundColor Yellow
-        
+
         # Check if already connected
         if ($global:DefaultNTNXConnection -and $global:DefaultNTNXConnection.Server -eq $Server) {
             Write-Host "Already connected to $Server" -ForegroundColor Green
             return $global:DefaultNTNXConnection
         }
-        
+
         # Connect to Nutanix
         $connection = Connect-NTNXCluster -Server $Server -AcceptInvalidSSLCerts
         Write-Host "Successfully connected to $ServerType`: $($connection.Server)" -ForegroundColor Green
@@ -239,12 +239,12 @@ function Get-TargetWindowsVMs {
         $ClusterUUID,
         $ExcludeVMs
     )
-    
+
     Write-Host "Identifying target Windows VMs..." -ForegroundColor Yellow
-    
+
     try {
         $allVMs = @()
-        
+
         if ($VMUUIDs) {
             # Get VMs by UUID
             $allVMs = Get-NTNXVM | Where-Object { $_.uuid -in $VMUUIDs }
@@ -269,29 +269,29 @@ function Get-TargetWindowsVMs {
         else {
             throw "Must specify VMNames, VMUUIDs, ClusterName, or ClusterUUID"
         }
-        
+
         # Filter for Windows VMs that are powered on
-        $windowsVMs = $allVMs | Where-Object { 
-            $_.powerState -eq "ON" -and 
-            $_.guestOperatingSystem -match "Windows" 
+        $windowsVMs = $allVMs | Where-Object {
+            $_.powerState -eq "ON" -and
+            $_.guestOperatingSystem -match "Windows"
         }
-        
+
         # Exclude specified VMs
         if ($ExcludeVMs) {
             $windowsVMs = $windowsVMs | Where-Object { $_.vmName -notin $ExcludeVMs }
             Write-Host "Excluded $($ExcludeVMs.Count) VM(s) from processing" -ForegroundColor Gray
         }
-        
+
         if (-not $windowsVMs) {
             throw "No powered-on Windows VMs found matching the specified criteria"
         }
-        
+
         Write-Host "Found $($windowsVMs.Count) Windows VM(s) for update processing:" -ForegroundColor Green
         foreach ($vm in $windowsVMs) {
             $ngtStatus = if ($vm.nutanixGuestTools.toolsInstalled) { "Installed" } else { "Not Installed" }
             Write-Host "  - $($vm.vmName) [$($vm.guestOperatingSystem)] [NGT: $ngtStatus]" -ForegroundColor White
         }
-        
+
         return $windowsVMs
     }
     catch {
@@ -303,14 +303,14 @@ function Get-TargetWindowsVMs {
 # Function to test VM connectivity
 function Test-VMConnectivity {
     param($VM, $Credential)
-    
+
     try {
         # Try to get IP address from NGT
         $ipAddress = $null
         if ($VM.nutanixGuestTools.toolsInstalled -and $VM.ipAddresses) {
             $ipAddress = $VM.ipAddresses | Where-Object { $_ -match "^\d+\.\d+\.\d+\.\d+$" } | Select-Object -First 1
         }
-        
+
         if (-not $ipAddress) {
             return @{
                 Success = $false
@@ -318,7 +318,7 @@ function Test-VMConnectivity {
                 IPAddress = $null
             }
         }
-        
+
         # Test WinRM connectivity
         $testResult = Test-WSMan -ComputerName $ipAddress -Credential $Credential -ErrorAction SilentlyContinue
         if ($testResult) {
@@ -347,25 +347,25 @@ function Test-VMConnectivity {
 # Function to create snapshot before updates
 function New-UpdateSnapshot {
     param($VM, $SnapshotPrefix)
-    
+
     try {
         $snapshotName = "$SnapshotPrefix-$($VM.vmName)-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
         Write-Host "      Creating snapshot: $snapshotName" -ForegroundColor Gray
-        
+
         # Check if snapshot already exists
-        $existingSnapshots = Get-NTNXSnapshot | Where-Object { 
-            $_.vmUuid -eq $VM.uuid -and $_.snapshotName -eq $snapshotName 
+        $existingSnapshots = Get-NTNXSnapshot | Where-Object {
+            $_.vmUuid -eq $VM.uuid -and $_.snapshotName -eq $snapshotName
         }
         if ($existingSnapshots) {
             Write-Warning "      Snapshot '$snapshotName' already exists"
             return $existingSnapshots[0]
         }
-        
+
         # Create snapshot
         $snapshotSpec = New-Object Nutanix.Prism.Model.SnapshotSpec
         $snapshotSpec.snapshotName = $snapshotName
         $snapshotSpec.vmUuid = $VM.uuid
-        
+
         $snapshot = New-NTNXSnapshot -SnapshotSpecs $snapshotSpec
         Write-Host "      ✓ Snapshot created: $($snapshot.snapshotName)" -ForegroundColor Green
         return $snapshot
@@ -379,10 +379,10 @@ function New-UpdateSnapshot {
 # Function to install PSWindowsUpdate module on remote VM
 function Install-RemotePSWindowsUpdate {
     param($ComputerName, $Credential)
-    
+
     try {
         Write-Host "        Installing PSWindowsUpdate module on VM..." -ForegroundColor Gray
-        
+
         $scriptBlock = {
             try {
                 $module = Get-Module -Name PSWindowsUpdate -ListAvailable
@@ -399,7 +399,7 @@ function Install-RemotePSWindowsUpdate {
                 return "Failed to install PSWindowsUpdate: $($_.Exception.Message)"
             }
         }
-        
+
         $result = Invoke-Command -ComputerName $ComputerName -Credential $Credential -ScriptBlock $scriptBlock
         Write-Host "        ✓ $result" -ForegroundColor Green
         return $true
@@ -413,16 +413,16 @@ function Install-RemotePSWindowsUpdate {
 # Function to scan for updates
 function Get-VMWindowsUpdates {
     param($VM, $ComputerName, $Credential, $UpdateCategories, $ExcludeKBs, $IncludeKBs)
-    
+
     try {
         Write-Host "        Scanning for Windows updates..." -ForegroundColor Gray
-        
+
         $scriptBlock = {
             param($Categories, $ExcludeKBs, $IncludeKBs)
-            
+
             try {
                 $searchCriteria = ""
-                
+
                 if ($IncludeKBs) {
                     # Search for specific KBs
                     $kbFilter = ($IncludeKBs | ForEach-Object { "UpdateID='$_'" }) -join " OR "
@@ -437,15 +437,15 @@ function Get-VMWindowsUpdates {
                             "Important" { $categoryFilter += "CategoryIDs contains 'E6CF1350-C01B-414D-A61F-263D14D133B4'" }
                         }
                     }
-                    
+
                     $updates = Get-WindowsUpdate -Category $Categories
                 }
-                
+
                 # Exclude specified KBs
                 if ($ExcludeKBs) {
                     $updates = $updates | Where-Object { $_.KBArticleIDs -notin $ExcludeKBs }
                 }
-                
+
                 return @{
                     Success = $true
                     Updates = $updates
@@ -463,15 +463,15 @@ function Get-VMWindowsUpdates {
                 }
             }
         }
-        
+
         $result = Invoke-Command -ComputerName $ComputerName -Credential $Credential -ScriptBlock $scriptBlock -ArgumentList $UpdateCategories, $ExcludeKBs, $IncludeKBs
-        
+
         if ($result.Success) {
             Write-Host "        ✓ Found $($result.Count) update(s) [$($result.TotalSizeMB) MB]" -ForegroundColor Green
         } else {
             Write-Warning "        Update scan failed: $($result.Error)"
         }
-        
+
         return $result
     }
     catch {
@@ -489,20 +489,20 @@ function Get-VMWindowsUpdates {
 # Function to install updates
 function Install-VMWindowsUpdates {
     param($VM, $ComputerName, $Credential, $Updates, $AutoReboot)
-    
+
     try {
         Write-Host "        Installing $($Updates.Count) Windows update(s)..." -ForegroundColor Gray
-        
+
         $scriptBlock = {
             param($UpdateTitles, $AutoReboot)
-            
+
             try {
                 $installResults = @()
                 $rebootRequired = $false
-                
+
                 # Install updates
                 $result = Install-WindowsUpdate -Title $UpdateTitles -AcceptAll -AutoReboot:$AutoReboot
-                
+
                 foreach ($update in $result) {
                     $installResults += @{
                         Title = $update.Title
@@ -510,12 +510,12 @@ function Install-VMWindowsUpdates {
                         Status = $update.Result
                         Size = $update.Size
                     }
-                    
+
                     if ($update.RebootRequired) {
                         $rebootRequired = $true
                     }
                 }
-                
+
                 return @{
                     Success = $true
                     Results = $installResults
@@ -533,10 +533,10 @@ function Install-VMWindowsUpdates {
                 }
             }
         }
-        
+
         $updateTitles = $Updates | ForEach-Object { $_.Title }
         $result = Invoke-Command -ComputerName $ComputerName -Credential $Credential -ScriptBlock $scriptBlock -ArgumentList $updateTitles, $AutoReboot
-        
+
         if ($result.Success) {
             Write-Host "        ✓ Installed $($result.InstalledCount) update(s)" -ForegroundColor Green
             if ($result.RebootRequired) {
@@ -545,7 +545,7 @@ function Install-VMWindowsUpdates {
         } else {
             Write-Warning "        Update installation failed: $($result.Error)"
         }
-        
+
         return $result
     }
     catch {
@@ -563,20 +563,20 @@ function Install-VMWindowsUpdates {
 # Function to wait for VM reboot completion
 function Wait-VMReboot {
     param($VM, $ComputerName, $Credential, $TimeoutMinutes)
-    
+
     try {
         Write-Host "        Waiting for VM reboot to complete..." -ForegroundColor Gray
-        
+
         $timeout = (Get-Date).AddMinutes($TimeoutMinutes)
         $vmOnline = $false
-        
+
         # Wait for VM to go offline (reboot start)
         Start-Sleep -Seconds 30
-        
+
         # Wait for VM to come back online
         while ((Get-Date) -lt $timeout -and -not $vmOnline) {
             Start-Sleep -Seconds 30
-            
+
             try {
                 $testResult = Test-WSMan -ComputerName $ComputerName -Credential $Credential -ErrorAction SilentlyContinue
                 if ($testResult) {
@@ -591,7 +591,7 @@ function Wait-VMReboot {
                 # VM still rebooting
             }
         }
-        
+
         if ($vmOnline) {
             Write-Host "        ✓ VM reboot completed successfully" -ForegroundColor Green
             return $true
@@ -620,7 +620,7 @@ function Update-SingleVM {
         $ExcludeKBs,
         $IncludeKBs
     )
-    
+
     $vmResult = @{
         VMName = $VM.vmName
         UUID = $VM.uuid
@@ -634,12 +634,12 @@ function Update-SingleVM {
         ProcessingTime = 0
         UpdateDetails = @()
     }
-    
+
     $startTime = Get-Date
-    
+
     try {
         Write-Host "  Processing VM: $($VM.vmName)" -ForegroundColor Cyan
-        
+
         # Test connectivity
         $connectivityTest = Test-VMConnectivity -VM $VM -Credential $Credential
         if (-not $connectivityTest.Success) {
@@ -648,16 +648,16 @@ function Update-SingleVM {
             Write-Host "    ✗ $($connectivityTest.Message)" -ForegroundColor Red
             return $vmResult
         }
-        
+
         $ipAddress = $connectivityTest.IPAddress
         Write-Host "    ✓ VM connectivity verified [$ipAddress]" -ForegroundColor Green
-        
+
         # Create snapshot if requested
         if ($CreateSnapshots -and -not $ScanOnly) {
             $snapshot = New-UpdateSnapshot -VM $VM -SnapshotPrefix $SnapshotPrefix
             $vmResult.SnapshotCreated = $snapshot -ne $null
         }
-        
+
         # Install PSWindowsUpdate module on remote VM
         $moduleInstalled = Install-RemotePSWindowsUpdate -ComputerName $ipAddress -Credential $Credential
         if (-not $moduleInstalled) {
@@ -666,25 +666,25 @@ function Update-SingleVM {
             Write-Host "    ✗ Failed to install PSWindowsUpdate module" -ForegroundColor Red
             return $vmResult
         }
-        
+
         # Scan for updates
         $scanResult = Get-VMWindowsUpdates -VM $VM -ComputerName $ipAddress -Credential $Credential -UpdateCategories $UpdateCategories -ExcludeKBs $ExcludeKBs -IncludeKBs $IncludeKBs
         $vmResult.UpdatesFound = $scanResult.Count
-        
+
         if (-not $scanResult.Success) {
             $vmResult.Status = "Failed"
             $vmResult.Message = "Update scan failed: $($scanResult.Error)"
             Write-Host "    ✗ Update scan failed: $($scanResult.Error)" -ForegroundColor Red
             return $vmResult
         }
-        
+
         if ($scanResult.Count -eq 0) {
             $vmResult.Status = "Success"
             $vmResult.Message = "No updates found"
             Write-Host "    ✓ No updates found" -ForegroundColor Green
             return $vmResult
         }
-        
+
         # Store update details
         $vmResult.UpdateDetails = $scanResult.Updates | ForEach-Object {
             @{
@@ -695,27 +695,27 @@ function Update-SingleVM {
                 Status = "Pending"
             }
         }
-        
+
         if ($ScanOnly) {
             $vmResult.Status = "Success"
             $vmResult.Message = "Scan completed - $($scanResult.Count) update(s) found"
             Write-Host "    ✓ Scan completed - $($scanResult.Count) update(s) found" -ForegroundColor Green
             return $vmResult
         }
-        
+
         # Install updates
         $installResult = Install-VMWindowsUpdates -VM $VM -ComputerName $ipAddress -Credential $Credential -Updates $scanResult.Updates -AutoReboot $AutoReboot
-        
+
         if (-not $installResult.Success) {
             $vmResult.Status = "Failed"
             $vmResult.Message = "Update installation failed: $($installResult.Error)"
             Write-Host "    ✗ Update installation failed: $($installResult.Error)" -ForegroundColor Red
             return $vmResult
         }
-        
+
         $vmResult.UpdatesInstalled = $installResult.InstalledCount
         $vmResult.RebootRequired = $installResult.RebootRequired
-        
+
         # Update details with installation results
         foreach ($result in $installResult.Results) {
             $detail = $vmResult.UpdateDetails | Where-Object { $_.KB -eq $result.KB }
@@ -723,13 +723,13 @@ function Update-SingleVM {
                 $detail.Status = $result.Status
             }
         }
-        
+
         # Handle reboot if required and AutoReboot is enabled
         if ($installResult.RebootRequired -and $AutoReboot) {
             $rebootSuccess = Wait-VMReboot -VM $VM -ComputerName $ipAddress -Credential $Credential -TimeoutMinutes $RebootTimeout
             $vmResult.RebootCompleted = $rebootSuccess
         }
-        
+
         $vmResult.Status = "Success"
         $vmResult.Message = "Updates processed successfully - $($vmResult.UpdatesInstalled) installed"
         Write-Host "    ✓ Updates processed successfully - $($vmResult.UpdatesInstalled) installed" -ForegroundColor Green
@@ -742,7 +742,7 @@ function Update-SingleVM {
     finally {
         $vmResult.ProcessingTime = [math]::Round((Get-Date).Subtract($startTime).TotalMinutes, 2)
     }
-    
+
     return $vmResult
 }
 
@@ -761,82 +761,82 @@ function Update-VMsConcurrently {
         $IncludeKBs,
         $MaxConcurrentVMs
     )
-    
+
     Write-Host "Processing $($VMs.Count) VM(s) with maximum $MaxConcurrentVMs concurrent operations..." -ForegroundColor Yellow
-    
+
     $results = @()
     $jobs = @()
     $vmQueue = [System.Collections.Queue]::new($VMs)
-    
+
     # Function to create script block for background jobs
     $scriptBlock = {
         param($VM, $Credential, $UpdateCategories, $ScanOnly, $AutoReboot, $RebootTimeout, $CreateSnapshots, $SnapshotPrefix, $ExcludeKBs, $IncludeKBs)
-        
+
         # Import functions (would need to be defined in the job)
         # For simplicity, we'll process sequentially instead of using jobs
         return $VM
     }
-    
+
     # Process VMs in batches
     while ($vmQueue.Count -gt 0) {
         $currentBatch = @()
         $batchSize = [Math]::Min($MaxConcurrentVMs, $vmQueue.Count)
-        
+
         for ($i = 0; $i -lt $batchSize; $i++) {
             if ($vmQueue.Count -gt 0) {
                 $currentBatch += $vmQueue.Dequeue()
             }
         }
-        
+
         # Process current batch
         foreach ($vm in $currentBatch) {
             $result = Update-SingleVM -VM $vm -Credential $Credential -UpdateCategories $UpdateCategories -ScanOnly:$ScanOnly -AutoReboot:$AutoReboot -RebootTimeout $RebootTimeout -CreateSnapshots:$CreateSnapshots -SnapshotPrefix $SnapshotPrefix -ExcludeKBs $ExcludeKBs -IncludeKBs $IncludeKBs
             $results += $result
         }
-        
+
         # Small delay between batches
         if ($vmQueue.Count -gt 0) {
             Start-Sleep -Seconds 10
         }
     }
-    
+
     return $results
 }
 
 # Function to generate update report
 function Show-UpdateResults {
     param($Results, $OutputFormat, $OutputPath)
-    
+
     Write-Host "`n=== Windows Update Results ===" -ForegroundColor Cyan
-    
+
     $successful = $Results | Where-Object { $_.Status -eq "Success" }
     $failed = $Results | Where-Object { $_.Status -eq "Failed" }
     $totalUpdates = ($Results | Measure-Object -Property UpdatesInstalled -Sum).Sum
     $totalFound = ($Results | Measure-Object -Property UpdatesFound -Sum).Sum
-    
+
     Write-Host "Total VMs Processed: $($Results.Count)" -ForegroundColor White
     Write-Host "Successful: $($successful.Count)" -ForegroundColor Green
     Write-Host "Failed: $($failed.Count)" -ForegroundColor Red
     Write-Host "Total Updates Found: $totalFound" -ForegroundColor White
     Write-Host "Total Updates Installed: $totalUpdates" -ForegroundColor Green
-    
+
     if ($successful.Count -gt 0) {
         Write-Host "`nSuccessful Updates:" -ForegroundColor Green
         foreach ($result in $successful) {
-            $rebootStatus = if ($result.RebootRequired) { 
+            $rebootStatus = if ($result.RebootRequired) {
                 if ($result.RebootCompleted) { "[Rebooted]" } else { "[Reboot Required]" }
             } else { "" }
             Write-Host "  ✓ $($result.VMName): $($result.UpdatesInstalled)/$($result.UpdatesFound) updates $rebootStatus" -ForegroundColor White
         }
     }
-    
+
     if ($failed.Count -gt 0) {
         Write-Host "`nFailed Updates:" -ForegroundColor Red
         foreach ($result in $failed) {
             Write-Host "  ✗ $($result.VMName): $($result.Message)" -ForegroundColor White
         }
     }
-    
+
     # Export results if requested
     if ($OutputFormat -ne "Console") {
         $exportData = $Results | ForEach-Object {
@@ -854,7 +854,7 @@ function Show-UpdateResults {
                 Timestamp = Get-Date
             }
         }
-        
+
         switch ($OutputFormat) {
             "CSV" {
                 if (-not $OutputPath) {
@@ -884,23 +884,23 @@ function Show-UpdateResults {
 # Main execution
 try {
     Write-Host "=== Nutanix Windows Update Management ===" -ForegroundColor Cyan
-    
+
     # Determine target server
     $targetServer = if ($PrismCentral) { $PrismCentral } else { $PrismElement }
     $serverType = if ($PrismCentral) { "Prism Central" } else { "Prism Element" }
-    
+
     if (-not $targetServer) {
         throw "Either PrismCentral or PrismElement parameter must be specified"
     }
-    
+
     # Validate credentials
     if (-not $DomainCredential -and -not $LocalCredential) {
         throw "Either DomainCredential or LocalCredential must be specified"
     }
-    
+
     $credential = if ($DomainCredential) { $DomainCredential } else { $LocalCredential }
     $credentialType = if ($DomainCredential) { "Domain" } else { "Local" }
-    
+
     Write-Host "Target $serverType`: $targetServer" -ForegroundColor White
     Write-Host "Credential Type: $credentialType" -ForegroundColor White
     Write-Host "Update Categories: $($UpdateCategories -join ', ')" -ForegroundColor White
@@ -910,18 +910,18 @@ try {
         Write-Host "Create Snapshots: $CreateSnapshots" -ForegroundColor White
     }
     Write-Host ""
-    
+
     # Check and install required modules
     if (-not (Test-RequiredModules)) {
         throw "Required module installation failed"
     }
-    
+
     # Connect to Nutanix
     $connection = Connect-ToNutanix -Server $targetServer -ServerType $serverType
-    
+
     # Get target Windows VMs
     $targetVMs = Get-TargetWindowsVMs -VMNames $VMNames -VMUUIDs $VMUUIDs -ClusterName $ClusterName -ClusterUUID $ClusterUUID -ExcludeVMs $ExcludeVMs
-    
+
     # Confirm operation if not using Force
     if (-not $Force -and -not $ScanOnly -and $targetVMs.Count -gt 1) {
         $confirmation = Read-Host "`nProceed with installing Windows updates on $($targetVMs.Count) VM(s)? (y/N)"
@@ -930,14 +930,14 @@ try {
             exit 0
         }
     }
-    
+
     # Process VMs
     Write-Host "Starting Windows update processing..." -ForegroundColor Yellow
     $results = Update-VMsConcurrently -VMs $targetVMs -Credential $credential -UpdateCategories $UpdateCategories -ScanOnly:$ScanOnly -AutoReboot:$AutoReboot -RebootTimeout $RebootTimeout -CreateSnapshots:$CreateSnapshots -SnapshotPrefix $SnapshotPrefix -ExcludeKBs $ExcludeKBs -IncludeKBs $IncludeKBs -MaxConcurrentVMs $MaxConcurrentVMs
-    
+
     # Display results
     Show-UpdateResults -Results $results -OutputFormat $OutputFormat -OutputPath $OutputPath
-    
+
     Write-Host "`n=== Windows Update Processing Completed ===" -ForegroundColor Green
 }
 catch {

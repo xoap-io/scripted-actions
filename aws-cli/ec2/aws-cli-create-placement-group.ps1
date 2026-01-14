@@ -163,9 +163,9 @@ try {
                     try {
                         $tagsArray = $Tags | ConvertFrom-Json
                         $tagsJson = $tagsArray | ConvertTo-Json -Depth 3 -Compress
-                        
+
                         $tagResult = aws ec2 create-tags --resources $placementData.GroupId --tags $tagsJson @awsArgs 2>&1
-                        
+
                         if ($LASTEXITCODE -eq 0) {
                             Write-Output "✅ Tags applied successfully"
                         } else {
@@ -179,23 +179,23 @@ try {
                 # Display the created placement group details
                 Write-Output "`n📊 Placement Group Details:"
                 $describeResult = aws ec2 describe-placement-groups --group-names $PlacementGroupName @awsArgs --output json 2>&1
-                
+
                 if ($LASTEXITCODE -eq 0) {
                     $pgData = $describeResult | ConvertFrom-Json
                     $pg = $pgData.PlacementGroups[0]
-                    
+
                     Write-Output "Name: $($pg.GroupName)"
                     Write-Output "ID: $($pg.GroupId)"
                     Write-Output "Strategy: $($pg.Strategy)"
                     Write-Output "State: $($pg.State)"
-                    
+
                     if ($pg.PartitionCount) {
                         Write-Output "Partition Count: $($pg.PartitionCount)"
                     }
                     if ($pg.SpreadLevel) {
                         Write-Output "Spread Level: $($pg.SpreadLevel)"
                     }
-                    
+
                     Write-Output "`n💡 Placement Group Usage Tips:"
                     switch ($Strategy) {
                         'cluster' {
@@ -230,7 +230,7 @@ try {
 
             # Check if placement group exists and get details
             $describeResult = aws ec2 describe-placement-groups --group-names $PlacementGroupName @awsArgs --output json 2>&1
-            
+
             if ($LASTEXITCODE -ne 0) {
                 Write-Warning "Placement group '$PlacementGroupName' not found or not accessible"
                 exit 0
@@ -247,7 +247,7 @@ try {
 
             # Check for instances in the placement group
             $instancesResult = aws ec2 describe-instances --filters "Name=placement-group-name,Values=$PlacementGroupName" @awsArgs --query 'Reservations[].Instances[?State.Name!=`terminated`].[InstanceId,State.Name]' --output text 2>&1
-            
+
             if ($LASTEXITCODE -eq 0 -and $instancesResult.Trim()) {
                 $runningInstances = $instancesResult.Trim() -split "`n"
                 Write-Warning "⚠️  Placement group contains $($runningInstances.Count) running instances:"
@@ -263,7 +263,7 @@ try {
             if (-not $Force) {
                 Write-Output "`n⚠️  You are about to delete placement group: $PlacementGroupName"
                 $confirmation = Read-Host "Are you sure you want to continue? (y/N)"
-                
+
                 if ($confirmation -ne 'y' -and $confirmation -ne 'Y') {
                     Write-Output "❌ Operation cancelled by user."
                     exit 0
@@ -287,26 +287,26 @@ try {
             }
 
             Write-Output "`n📋 Describing placement group: $PlacementGroupName"
-            
+
             $describeResult = aws ec2 describe-placement-groups --group-names $PlacementGroupName @awsArgs --output json 2>&1
 
             if ($LASTEXITCODE -eq 0) {
                 $pgData = $describeResult | ConvertFrom-Json
-                
+
                 if ($pgData.PlacementGroups.Count -eq 0) {
                     Write-Warning "Placement group '$PlacementGroupName' not found"
                     exit 0
                 }
 
                 $pg = $pgData.PlacementGroups[0]
-                
+
                 Write-Output "`n📊 Placement Group Details:"
                 Write-Output "=" * 50
                 Write-Output "Name: $($pg.GroupName)"
                 Write-Output "ID: $($pg.GroupId)"
                 Write-Output "Strategy: $($pg.Strategy)"
                 Write-Output "State: $($pg.State)"
-                
+
                 if ($pg.PartitionCount) {
                     Write-Output "Partition Count: $($pg.PartitionCount)"
                 }
@@ -324,7 +324,7 @@ try {
 
                 # Get instances in this placement group
                 $instancesResult = aws ec2 describe-instances --filters "Name=placement-group-name,Values=$PlacementGroupName" @awsArgs --query 'Reservations[].Instances[].[InstanceId,InstanceType,State.Name,AvailabilityZone,Placement.PartitionNumber]' --output text 2>&1
-                
+
                 if ($LASTEXITCODE -eq 0 -and $instancesResult.Trim()) {
                     $instances = $instancesResult.Trim() -split "`n"
                     Write-Output "`n🖥️  Instances in Placement Group ($($instances.Count)):"
@@ -346,12 +346,12 @@ try {
 
         'List' {
             Write-Output "`n📋 Listing all placement groups..."
-            
+
             $listResult = aws ec2 describe-placement-groups @awsArgs --output json 2>&1
 
             if ($LASTEXITCODE -eq 0) {
                 $pgData = $listResult | ConvertFrom-Json
-                
+
                 if ($pgData.PlacementGroups.Count -eq 0) {
                     Write-Output "No placement groups found in this region"
                     exit 0
@@ -365,7 +365,7 @@ try {
                 foreach ($pg in $pgData.PlacementGroups) {
                     $partitionInfo = if ($pg.PartitionCount) { $pg.PartitionCount } else { "N/A" }
                     $spreadInfo = if ($pg.SpreadLevel) { $pg.SpreadLevel } else { "N/A" }
-                    
+
                     Write-Output "$($pg.GroupName.PadRight(20))`t$($pg.Strategy.PadRight(10))`t$($pg.State.PadRight(10))`t$partitionInfo`t`t$spreadInfo"
                 }
 

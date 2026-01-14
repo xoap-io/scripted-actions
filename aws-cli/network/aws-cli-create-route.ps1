@@ -155,11 +155,11 @@ try {
 
     # Count target parameters
     $targets = @($GatewayId, $NatGatewayId, $NetworkInterfaceId, $InstanceId, $VpcPeeringConnectionId, $TransitGatewayId, $LocalGatewayId, $CarrierGatewayId, $VpcEndpointId) | Where-Object { $_ }
-    
+
     if ($targets.Count -eq 0) {
         throw "At least one target (Gateway, NAT Gateway, Network Interface, Instance, etc.) must be specified."
     }
-    
+
     if ($targets.Count -gt 1) {
         throw "Only one target can be specified per route."
     }
@@ -221,14 +221,14 @@ try {
     # Verify route table exists before creating route
     Write-Output "`n🔍 Verifying route table exists..."
     $rtbResult = aws ec2 describe-route-tables --route-table-ids $RouteTableId @awsArgs --output json 2>&1
-    
+
     if ($LASTEXITCODE -ne 0) {
         Write-Error "Route table $RouteTableId not found or not accessible: $rtbResult"
     }
 
     $rtbData = $rtbResult | ConvertFrom-Json
     $routeTable = $rtbData.RouteTables[0]
-    
+
     Write-Output "✅ Route table verified:"
     Write-Output "  VPC ID: $($routeTable.VpcId)"
     Write-Output "  Current routes: $($routeTable.Routes.Count)"
@@ -236,7 +236,7 @@ try {
     # Check for existing conflicting routes
     Write-Output "`n🔍 Checking for conflicting routes..."
     $conflictingRoute = $null
-    
+
     if ($DestinationCidrBlock) {
         $conflictingRoute = $routeTable.Routes | Where-Object { $_.DestinationCidrBlock -eq $DestinationCidrBlock }
     }
@@ -249,7 +249,7 @@ try {
         Write-Output "  Destination: $($conflictingRoute.DestinationCidrBlock)$($conflictingRoute.DestinationIpv6CidrBlock)"
         Write-Output "  Current target: $($conflictingRoute.GatewayId)$($conflictingRoute.NatGatewayId)$($conflictingRoute.NetworkInterfaceId)$($conflictingRoute.InstanceId)"
         Write-Output "  State: $($conflictingRoute.State)"
-        
+
         if (-not $DryRun) {
             throw "A route with this destination already exists. Use replace-route to modify it."
         } else {
@@ -265,7 +265,7 @@ try {
         if ($LASTEXITCODE -eq 0) {
             $routeData = $result | ConvertFrom-Json
             Write-Output "✅ Route created successfully!"
-            
+
             if ($routeData.Return) {
                 Write-Output "Creation status: Success"
             }
@@ -273,14 +273,14 @@ try {
             # Verify the route was created
             Write-Output "`n🔍 Verifying route creation..."
             $verifyResult = aws ec2 describe-route-tables --route-table-ids $RouteTableId @awsArgs --output json 2>&1
-            
+
             if ($LASTEXITCODE -eq 0) {
                 $verifyData = $verifyResult | ConvertFrom-Json
                 $updatedRouteTable = $verifyData.RouteTables[0]
-                
+
                 Write-Output "✅ Route table updated:"
                 Write-Output "  Total routes: $($updatedRouteTable.Routes.Count)"
-                
+
                 # Find and display the new route
                 $newRoute = $null
                 if ($DestinationCidrBlock) {

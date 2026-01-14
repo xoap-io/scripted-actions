@@ -6,7 +6,7 @@
     This script creates a Local Network Gateway in Azure using the Azure CLI.
     Local Network Gateways represent on-premises network endpoints for VPN connections.
     Used to establish site-to-site VPN connections between Azure and on-premises networks.
-    
+
     The script uses the Azure CLI command: az network local-gateway create
 
 .PARAMETER GatewayName
@@ -41,12 +41,12 @@
 
 .EXAMPLE
     .\az-cli-create-local-network-gateway.ps1 -GatewayName "onprem-lgw" -ResourceGroup "network-rg" -Location "East US" -GatewayIPAddress "203.0.113.10" -AddressPrefixes "192.168.0.0/16,10.0.0.0/8"
-    
+
     Creates a Local Network Gateway for on-premises networks with static routing.
 
 .EXAMPLE
     .\az-cli-create-local-network-gateway.ps1 -GatewayName "onprem-lgw-bgp" -ResourceGroup "network-rg" -Location "East US" -GatewayIPAddress "203.0.113.10" -AddressPrefixes "192.168.1.0/24" -EnableBGP -BGPPeerIP "192.168.1.1" -ASN 65001
-    
+
     Creates a Local Network Gateway with BGP enabled for dynamic routing.
 
 .NOTES
@@ -171,7 +171,7 @@ try {
         '--gateway-ip-address', $GatewayIPAddress,
         '--local-address-prefixes'
     )
-    
+
     # Add address prefixes as separate arguments
     $azParams += $prefixArray
 
@@ -206,7 +206,7 @@ try {
     foreach ($prefix in $prefixArray) {
         Write-Host "    • $prefix" -ForegroundColor White
     }
-    
+
     if ($EnableBGP) {
         Write-Host "  BGP: Enabled" -ForegroundColor Green
         Write-Host "    ASN: $ASN" -ForegroundColor White
@@ -222,22 +222,22 @@ try {
 
     # Execute Azure CLI command
     $result = & az @azParams 2>&1
-    
+
     if ($LASTEXITCODE -eq 0) {
         $lgwInfo = $result | ConvertFrom-Json
-        
+
         Write-Host "✓ Local Network Gateway created successfully!" -ForegroundColor Green
         Write-Host "Local Network Gateway Details:" -ForegroundColor Cyan
         Write-Host "  Name: $($lgwInfo.name)" -ForegroundColor White
         Write-Host "  Resource ID: $($lgwInfo.id)" -ForegroundColor White
         Write-Host "  Provisioning State: $($lgwInfo.provisioningState)" -ForegroundColor White
         Write-Host "  Gateway IP Address: $($lgwInfo.gatewayIpAddress)" -ForegroundColor White
-        
+
         Write-Host "  Local Network Address Spaces:" -ForegroundColor White
         foreach ($space in $lgwInfo.localNetworkAddressSpace.addressPrefixes) {
             Write-Host "    • $space" -ForegroundColor White
         }
-        
+
         if ($lgwInfo.bgpSettings) {
             Write-Host "  BGP Configuration:" -ForegroundColor Green
             Write-Host "    ASN: $($lgwInfo.bgpSettings.asn)" -ForegroundColor White
@@ -246,7 +246,7 @@ try {
                 Write-Host "    Peer Weight: $($lgwInfo.bgpSettings.peerWeight)" -ForegroundColor White
             }
         }
-        
+
         Write-Host "" -ForegroundColor White
         Write-Host "Next steps:" -ForegroundColor Yellow
         Write-Host "• Create a VPN connection between this Local Network Gateway and your VPN Gateway" -ForegroundColor White

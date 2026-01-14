@@ -5,7 +5,7 @@
 .DESCRIPTION
     This script creates an Azure Public IP address using the Azure CLI.
     Public IP addresses enable Azure resources to communicate to the internet and public-facing Azure services.
-    
+
     The script uses the Azure CLI command: az network public-ip create
 
 .PARAMETER Name
@@ -44,17 +44,17 @@
 
 .EXAMPLE
     .\az-cli-create-public-ip.ps1 -Name "myPublicIP" -ResourceGroup "MyRG" -Location "eastus"
-    
+
     Creates a basic dynamic Public IP address.
 
 .EXAMPLE
     .\az-cli-create-public-ip.ps1 -Name "myStaticIP" -ResourceGroup "MyRG" -Location "westus2" -AllocationMethod "Static" -Sku "Standard" -DnsName "myapp"
-    
+
     Creates a static Standard SKU Public IP with DNS name.
 
 .EXAMPLE
     .\az-cli-create-public-ip.ps1 -Name "myZonalIP" -ResourceGroup "MyRG" -Location "eastus2" -AllocationMethod "Static" -Sku "Standard" -Zone "1" -Tags "environment=production"
-    
+
     Creates a zone-redundant static Public IP with tags.
 
 .NOTES
@@ -153,14 +153,14 @@ try {
     )
 
     # Add optional parameters
-    if ($DnsName) { 
-        $azParams += '--dns-name', $DnsName 
+    if ($DnsName) {
+        $azParams += '--dns-name', $DnsName
     }
-    if ($Zone) { 
-        $azParams += '--zone', $Zone 
+    if ($Zone) {
+        $azParams += '--zone', $Zone
     }
-    if ($Tags) { 
-        $azParams += '--tags', $Tags 
+    if ($Tags) {
+        $azParams += '--tags', $Tags
     }
 
     Write-Host "Creating Public IP address..." -ForegroundColor Yellow
@@ -180,10 +180,10 @@ try {
 
     # Execute Azure CLI command
     $result = & az @azParams 2>&1
-    
+
     if ($LASTEXITCODE -eq 0) {
         Write-Host "✓ Public IP address created successfully!" -ForegroundColor Green
-        
+
         # Parse and display Public IP information
         try {
             $pipInfo = $result | ConvertFrom-Json
@@ -195,7 +195,7 @@ try {
             Write-Host "  Allocation Method: $($pipInfo.publicIPAllocationMethod)" -ForegroundColor White
             Write-Host "  IP Version: $($pipInfo.publicIPAddressVersion)" -ForegroundColor White
             Write-Host "  Resource ID: $($pipInfo.id)" -ForegroundColor White
-            
+
             if ($pipInfo.ipAddress) {
                 Write-Host "  IP Address: $($pipInfo.ipAddress)" -ForegroundColor Green
             }

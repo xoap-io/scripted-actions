@@ -39,27 +39,27 @@
 
 .EXAMPLE
     .\gcp-ps-stop-running-instances.ps1
-    
+
     Stops all running instances in the default project and zone with confirmation prompts.
 
 .EXAMPLE
     .\gcp-ps-stop-running-instances.ps1 -ProjectId "my-project" -Zone "us-central1-a" -WhatIf
-    
+
     Shows what instances would be stopped in the specified project and zone.
 
 .EXAMPLE
     .\gcp-ps-stop-running-instances.ps1 -NamePattern "web-*" -Force -AllZones
-    
+
     Stops all running instances with names starting with 'web-' across all zones without confirmation.
 
 .EXAMPLE
     .\gcp-ps-stop-running-instances.ps1 -LabelFilter "environment=dev" -Region "us-central1"
-    
+
     Stops all running instances labeled with environment=dev in the us-central1 region.
 
 .EXAMPLE
     .\gcp-ps-stop-running-instances.ps1 -InstanceNames "instance-1,instance-2" -Zone "us-west1-a"
-    
+
     Stops specific instances by their names in the specified zone.
 
 .NOTES
@@ -70,7 +70,7 @@
 
 .LINK
     https://cloud.google.com/powershell/docs/reference/GoogleCloudBeta/1.0.1.0/Stop-GceInstance
-    
+
 .COMPONENT
     Google Cloud PowerShell Compute Engine
 #>
@@ -123,7 +123,7 @@ $ErrorActionPreference = 'Stop'
 
 try {
     Write-Host "🔍 Checking Google Cloud PowerShell module..." -ForegroundColor Cyan
-    
+
     # Check if GoogleCloud module is available
     if (-not (Get-Module -ListAvailable -Name GoogleCloud)) {
         throw "Google Cloud PowerShell module is not installed. Please run: Install-Module -Name GoogleCloud"
@@ -146,7 +146,7 @@ try {
                 throw "No project specified and no default project found in gcloud config"
             }
         }
-        
+
         # Test authentication by listing projects
         $null = Get-GcpProject -ProjectId $ProjectId
         Write-Host "✅ Authentication successful for project: $ProjectId" -ForegroundColor Green
@@ -156,7 +156,7 @@ try {
 
     # Determine zones to check
     $zonesToCheck = @()
-    
+
     if ($AllZones) {
         Write-Host "🌍 Getting all zones in project..." -ForegroundColor Cyan
         if ($Region) {
@@ -207,22 +207,22 @@ try {
 
     foreach ($currentZone in $zonesToCheck) {
         Write-Host "🔍 Discovering instances in zone: $currentZone" -ForegroundColor Cyan
-        
+
         try {
             $zoneInstances = Get-GceInstance -Zone $currentZone -Project $ProjectId
-            
+
             foreach ($instance in $zoneInstances) {
                 # Add zone info to instance object
                 $instance | Add-Member -NotePropertyName ZoneName -NotePropertyValue $currentZone -Force
-                
+
                 $allInstances += $instance
-                
+
                 # Filter running instances
                 if ($instance.Status -eq "RUNNING") {
                     $runningInstances += $instance
                 }
             }
-            
+
             Write-Host "   Found $($zoneInstances.Count) instances" -ForegroundColor Gray
         } catch {
             Write-Host "   ⚠️ Unable to access zone $currentZone : $($_.Exception.Message)" -ForegroundColor Yellow
@@ -329,14 +329,14 @@ try {
     foreach ($zoneGroup in $instancesByZone) {
         $currentZone = $zoneGroup.Name
         $zoneInstances = $zoneGroup.Group
-        
+
         Write-Host "   Stopping $($zoneInstances.Count) instances in zone: $currentZone" -ForegroundColor Yellow
-        
+
         foreach ($instance in $zoneInstances) {
             try {
                 Write-Host "     Stopping: $($instance.Name)" -ForegroundColor Gray
                 $stopResult = Stop-GceInstance -Project $ProjectId -Zone $currentZone -Name $instance.Name
-                
+
                 $stopResults += @{
                     InstanceName = $instance.Name
                     MachineType = $instance.MachineType.Split('/')[-1]
@@ -345,7 +345,7 @@ try {
                     Status = "Stopping"
                     Error = $null
                 }
-                
+
                 Write-Host "     ✅ Successfully initiated stop for: $($instance.Name)" -ForegroundColor Green
             } catch {
                 $stopResults += @{
@@ -356,7 +356,7 @@ try {
                     Status = "Failed"
                     Error = $_.Exception.Message
                 }
-                
+
                 Write-Host "     ❌ Failed to stop: $($instance.Name) - $($_.Exception.Message)" -ForegroundColor Red
             }
         }
@@ -391,7 +391,7 @@ try {
     Write-Host "   🎯 Target Instances: $($filteredRunningInstances.Count)" -ForegroundColor Cyan
     Write-Host "   ✅ Successfully Stopped: $($successfulStops.Count)" -ForegroundColor Green
     Write-Host "   ❌ Failed: $($failedStops.Count)" -ForegroundColor Red
-    
+
     if ($successfulStops.Count -gt 0) {
         Write-Host "`n💰 Cost Savings: Instances are now stopping/terminated and will not incur compute charges" -ForegroundColor Green
         Write-Host "   (Persistent disks may still incur storage charges)" -ForegroundColor Gray

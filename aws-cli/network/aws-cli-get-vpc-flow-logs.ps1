@@ -111,7 +111,7 @@ try {
 
     # Build AWS CLI arguments
     $awsArgs = @('ec2', 'describe-flow-logs')
-    
+
     if ($FlowLogIds) {
         $logArray = $FlowLogIds -split ','
         $awsArgs += @('--flow-log-ids')
@@ -120,19 +120,19 @@ try {
 
     # Build filters array
     $filters = @()
-    
+
     if ($ResourceId) {
         $filters += "Name=resource-id,Values=$ResourceId"
     }
-    
+
     if ($ResourceType) {
         $filters += "Name=resource-type,Values=$ResourceType"
     }
-    
+
     if ($FlowLogStatus) {
         $filters += "Name=flow-log-status,Values=$FlowLogStatus"
     }
-    
+
     if ($TrafficType) {
         $filters += "Name=traffic-type,Values=$TrafficType"
     }
@@ -141,18 +141,18 @@ try {
         $awsArgs += @('--filters')
         $awsArgs += $filters
     }
-    
+
     if ($Profile) {
         $awsArgs += @('--profile', $Profile)
     }
-    
+
     if ($Region) {
         $awsArgs += @('--region', $Region)
     }
 
     # Execute the AWS CLI command
     $result = & aws @awsArgs 2>&1
-    
+
     if ($LASTEXITCODE -ne 0) {
         throw "Failed to describe VPC Flow Logs: $result"
     }
@@ -177,7 +177,7 @@ try {
     # Categorize flow logs
     $activeFlowLogs = $flowLogInfo.FlowLogs | Where-Object { $_.FlowLogStatus -eq 'ACTIVE' }
     $inactiveFlowLogs = $flowLogInfo.FlowLogs | Where-Object { $_.FlowLogStatus -eq 'INACTIVE' }
-    
+
     Write-Host "  Active: $($activeFlowLogs.Count)" -ForegroundColor Green
     Write-Host "  Inactive: $($inactiveFlowLogs.Count)" -ForegroundColor Yellow
 
@@ -198,42 +198,42 @@ try {
     foreach ($flowLog in $flowLogInfo.FlowLogs) {
         Write-Host "`n" + "="*60 -ForegroundColor Gray
         Write-Host "Flow Log: $($flowLog.FlowLogId)" -ForegroundColor Cyan
-        
+
         # Status
         $statusColor = if ($flowLog.FlowLogStatus -eq 'ACTIVE') { 'Green' } else { 'Yellow' }
         Write-Host "  Status: $($flowLog.FlowLogStatus)" -ForegroundColor $statusColor
-        
+
         # Resource information
         Write-Host "  Resource ID: $($flowLog.ResourceId)" -ForegroundColor White
         Write-Host "  Resource Type: $($flowLog.ResourceType)" -ForegroundColor White
         Write-Host "  Traffic Type: $($flowLog.TrafficType)" -ForegroundColor White
-        
+
         # Destination information
         Write-Host "`n  Destination Configuration:" -ForegroundColor Yellow
         Write-Host "    Log Destination Type: $($flowLog.LogDestinationType)" -ForegroundColor White
-        
+
         if ($flowLog.LogDestination) {
             Write-Host "    Log Destination: $($flowLog.LogDestination)" -ForegroundColor White
         }
-        
+
         if ($flowLog.LogGroupName) {
             Write-Host "    CloudWatch Log Group: $($flowLog.LogGroupName)" -ForegroundColor White
         }
-        
+
         if ($flowLog.DeliverLogsPermissionArn) {
             Write-Host "    IAM Role ARN: $($flowLog.DeliverLogsPermissionArn)" -ForegroundColor White
         }
-        
+
         # Format information
         if ($flowLog.LogFormat) {
             Write-Host "`n  Log Format:" -ForegroundColor Yellow
             Write-Host "    $($flowLog.LogFormat)" -ForegroundColor Gray
         }
-        
+
         # Timestamps
         Write-Host "`n  Timeline:" -ForegroundColor Yellow
         Write-Host "    Creation Time: $($flowLog.CreationTime)" -ForegroundColor White
-        
+
         if ($flowLog.FlowLogStatus -eq 'INACTIVE' -and $flowLog.DeliverLogsErrorMessage) {
             Write-Host "    Error Message: $($flowLog.DeliverLogsErrorMessage)" -ForegroundColor Red
         }
@@ -252,41 +252,41 @@ try {
     # Show recommendations if requested
     if ($ShowRecommendations) {
         Write-Host "`nConfiguration Recommendations:" -ForegroundColor Cyan
-        
+
         # Check for missing flow logs
         Write-Host "`n1. Coverage Analysis:" -ForegroundColor Yellow
         Write-Host "   - Consider enabling flow logs at VPC level for comprehensive coverage" -ForegroundColor White
         Write-Host "   - Subnet-level logs for granular analysis of specific network segments" -ForegroundColor White
         Write-Host "   - Network interface-level logs for detailed instance traffic analysis" -ForegroundColor White
-        
+
         # Traffic type recommendations
         Write-Host "`n2. Traffic Type Configuration:" -ForegroundColor Yellow
         $allTrafficLogs = $flowLogInfo.FlowLogs | Where-Object { $_.TrafficType -eq 'ALL' }
         $rejectOnlyLogs = $flowLogInfo.FlowLogs | Where-Object { $_.TrafficType -eq 'REJECT' }
-        
+
         if ($rejectOnlyLogs.Count -gt 0 -and $allTrafficLogs.Count -eq 0) {
             Write-Host "   - Consider enabling 'ALL' traffic logging for complete visibility" -ForegroundColor Yellow
         }
-        
+
         Write-Host "   - 'ALL': Complete traffic visibility (higher cost)" -ForegroundColor White
         Write-Host "   - 'REJECT': Security-focused logging (lower cost)" -ForegroundColor White
         Write-Host "   - 'ACCEPT': Successful connections only" -ForegroundColor White
-        
+
         # Destination recommendations
         Write-Host "`n3. Destination Optimization:" -ForegroundColor Yellow
         $s3Logs = $flowLogInfo.FlowLogs | Where-Object { $_.LogDestinationType -eq 's3' }
         $cloudWatchLogs = $flowLogInfo.FlowLogs | Where-Object { $_.LogDestinationType -eq 'cloud-watch-logs' }
-        
+
         Write-Host "   - S3: Cost-effective for long-term storage and analysis ($($s3Logs.Count) configured)" -ForegroundColor White
         Write-Host "   - CloudWatch Logs: Real-time monitoring and alerting ($($cloudWatchLogs.Count) configured)" -ForegroundColor White
         Write-Host "   - Kinesis Data Firehose: Stream processing and transformation" -ForegroundColor White
-        
+
         # Cost optimization
         Write-Host "`n4. Cost Optimization:" -ForegroundColor Yellow
         Write-Host "   - Use custom log formats to reduce data volume and costs" -ForegroundColor White
         Write-Host "   - Implement log retention policies to manage storage costs" -ForegroundColor White
         Write-Host "   - Consider sampling for high-volume environments" -ForegroundColor White
-        
+
         # Security recommendations
         Write-Host "`n5. Security Best Practices:" -ForegroundColor Yellow
         Write-Host "   - Enable flow logs for all VPCs to detect anomalous traffic" -ForegroundColor White

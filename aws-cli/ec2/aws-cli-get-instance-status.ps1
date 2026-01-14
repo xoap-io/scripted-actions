@@ -3,7 +3,7 @@
     Get detailed status information for EC2 instances using AWS CLI.
 
 .DESCRIPTION
-    This script retrieves comprehensive status information for EC2 instances including 
+    This script retrieves comprehensive status information for EC2 instances including
     instance status, system status, and reachability checks using AWS CLI.
 
 .PARAMETER InstanceId
@@ -92,14 +92,14 @@ try {
 
     # Execute the status check
     $result = & aws @statusArgs 2>&1
-    
+
     if ($LASTEXITCODE -eq 0) {
         if ($OutputFormat -eq 'json') {
             $statusData = $result | ConvertFrom-Json
-            
+
             Write-Output "`n📊 Instance Status Summary:"
             Write-Output "=" * 50
-            
+
             if ($statusData.InstanceStatuses.Count -eq 0) {
                 Write-Output "No instance status information found."
                 if (-not $IncludeAllInstances) {
@@ -109,7 +109,7 @@ try {
                 foreach ($instance in $statusData.InstanceStatuses) {
                     Write-Output "`nInstance ID: $($instance.InstanceId)"
                     Write-Output "Availability Zone: $($instance.AvailabilityZone)"
-                    
+
                     # Instance Status
                     $instanceStatus = $instance.InstanceStatus.Status
                     $instanceStatusIcon = switch ($instanceStatus) {
@@ -120,13 +120,13 @@ try {
                         default { '❓' }
                     }
                     Write-Output "Instance Status: $instanceStatusIcon $instanceStatus"
-                    
+
                     if ($instance.InstanceStatus.Details) {
                         foreach ($detail in $instance.InstanceStatus.Details) {
                             Write-Output "  - $($detail.Name): $($detail.Status)"
                         }
                     }
-                    
+
                     # System Status
                     $systemStatus = $instance.SystemStatus.Status
                     $systemStatusIcon = switch ($systemStatus) {
@@ -137,13 +137,13 @@ try {
                         default { '❓' }
                     }
                     Write-Output "System Status: $systemStatusIcon $systemStatus"
-                    
+
                     if ($instance.SystemStatus.Details) {
                         foreach ($detail in $instance.SystemStatus.Details) {
                             Write-Output "  - $($detail.Name): $($detail.Status)"
                         }
                     }
-                    
+
                     # Events
                     if ($instance.Events) {
                         Write-Output "📅 Scheduled Events:"
@@ -154,7 +154,7 @@ try {
                             Write-Output "    Not After: $($scheduledEvent.NotAfter)"
                         }
                     }
-                    
+
                     Write-Output "-" * 30
                 }
             }
@@ -162,9 +162,9 @@ try {
             # For table and text output, display raw results
             Write-Output $result
         }
-        
+
         Write-Output "`n✅ Instance status check completed successfully."
-        
+
     } else {
         throw "Failed to retrieve instance status: $result"
     }
@@ -173,26 +173,26 @@ try {
     if ($InstanceId -and $OutputFormat -eq 'json') {
         Write-Output "`n🔍 Additional Instance Information:"
         Write-Output "=" * 50
-        
+
         $instanceArgs = @('ec2', 'describe-instances', '--instance-ids', $InstanceId)
         $instanceArgs += $awsArgs
         $instanceArgs += @('--output', 'json')
-        
+
         $instanceResult = & aws @instanceArgs 2>&1
-        
+
         if ($LASTEXITCODE -eq 0) {
             $instanceData = $instanceResult | ConvertFrom-Json
             $instance = $instanceData.Reservations[0].Instances[0]
-            
+
             Write-Output "Instance Type: $($instance.InstanceType)"
             Write-Output "State: $($instance.State.Name)"
             Write-Output "Launch Time: $($instance.LaunchTime)"
             Write-Output "Private IP: $($instance.PrivateIpAddress)"
-            
+
             if ($instance.PublicIpAddress) {
                 Write-Output "Public IP: $($instance.PublicIpAddress)"
             }
-            
+
             if ($instance.Tags) {
                 $nameTag = $instance.Tags | Where-Object { $_.Key -eq 'Name' } | Select-Object -First 1
                 if ($nameTag) {

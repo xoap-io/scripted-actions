@@ -67,11 +67,11 @@ try {
 
     # Build AWS CLI arguments for describing the Elastic IP
     $describeArgs = @('ec2', 'describe-addresses', '--allocation-ids', $AllocationId)
-    
+
     if ($Profile) {
         $describeArgs += @('--profile', $Profile)
     }
-    
+
     if ($Region) {
         $describeArgs += @('--region', $Region)
     }
@@ -79,43 +79,43 @@ try {
     # First, get Elastic IP details for confirmation
     Write-Host "Retrieving Elastic IP details..." -ForegroundColor Yellow
     $addressDetails = & aws @describeArgs 2>&1
-    
+
     if ($LASTEXITCODE -ne 0) {
         throw "Failed to retrieve Elastic IP details: $addressDetails"
     }
 
     $addressInfo = $addressDetails | ConvertFrom-Json
-    
+
     if ($addressInfo.Addresses.Count -eq 0) {
         throw "Elastic IP with allocation ID '$AllocationId' not found"
     }
 
     $address = $addressInfo.Addresses[0]
-    
+
     # Display Elastic IP information
     Write-Host "`nElastic IP Details:" -ForegroundColor Cyan
     Write-Host "  Allocation ID: $($address.AllocationId)" -ForegroundColor White
     Write-Host "  Public IP: $($address.PublicIp)" -ForegroundColor White
     Write-Host "  Domain: $($address.Domain)" -ForegroundColor White
-    
+
     if ($address.AssociationId) {
         Write-Host "  Association ID: $($address.AssociationId)" -ForegroundColor White
         Write-Host "  Associated Instance: $($address.InstanceId)" -ForegroundColor White
         Write-Host "  Private IP: $($address.PrivateIpAddress)" -ForegroundColor White
-        
+
         if ($address.NetworkInterfaceId) {
             Write-Host "  Network Interface: $($address.NetworkInterfaceId)" -ForegroundColor White
         }
-        
+
         Write-Host "  STATUS: ASSOCIATED - This IP is currently in use!" -ForegroundColor Red
     } else {
         Write-Host "  STATUS: Not associated with any resource" -ForegroundColor Green
     }
-    
+
     if ($address.NetworkBorderGroup) {
         Write-Host "  Network Border Group: $($address.NetworkBorderGroup)" -ForegroundColor White
     }
-    
+
     if ($address.CustomerOwnedIp) {
         Write-Host "  Customer Owned IP: $($address.CustomerOwnedIp)" -ForegroundColor White
     }
@@ -152,7 +152,7 @@ try {
         Write-Host "`nWARNING: This action will permanently release the Elastic IP!" -ForegroundColor Red
         Write-Host "The IP address $($address.PublicIp) will be returned to AWS and may be allocated to another customer." -ForegroundColor Red
         $confirmation = Read-Host "Are you sure you want to release Elastic IP '$AllocationId'? (yes/no)"
-        
+
         if ($confirmation -ne 'yes') {
             Write-Host "Operation cancelled by user." -ForegroundColor Yellow
             exit 0
@@ -161,19 +161,19 @@ try {
 
     # Release the Elastic IP
     Write-Host "`nReleasing Elastic IP..." -ForegroundColor Yellow
-    
+
     $releaseArgs = @('ec2', 'release-address', '--allocation-id', $AllocationId)
-    
+
     if ($Profile) {
         $releaseArgs += @('--profile', $Profile)
     }
-    
+
     if ($Region) {
         $releaseArgs += @('--region', $Region)
     }
 
     $releaseResult = & aws @releaseArgs 2>&1
-    
+
     if ($LASTEXITCODE -ne 0) {
         throw "Failed to release Elastic IP: $releaseResult"
     }
@@ -187,7 +187,7 @@ try {
     Write-Host "- The IP address is no longer allocated to your account" -ForegroundColor White
     Write-Host "- Billing for this Elastic IP has stopped" -ForegroundColor White
     Write-Host "- The IP may be allocated to another AWS customer" -ForegroundColor White
-    
+
     if ($address.AssociationId) {
         Write-Host "- The previously associated resource no longer has a public IP" -ForegroundColor Yellow
         Write-Host "- Update any DNS records pointing to $($address.PublicIp)" -ForegroundColor Yellow
@@ -198,7 +198,7 @@ try {
     Write-Host "1. Update DNS records if they pointed to $($address.PublicIp)" -ForegroundColor White
     Write-Host "2. Review security group rules that may reference this IP" -ForegroundColor White
     Write-Host "3. Update application configurations that used this IP" -ForegroundColor White
-    
+
     if ($address.AssociationId) {
         Write-Host "4. Consider allocating a new Elastic IP if public connectivity is still needed" -ForegroundColor White
     }

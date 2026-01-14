@@ -113,31 +113,31 @@ try {
     if (-not $azVersion) {
         throw "Azure CLI is not installed or not available in PATH"
     }
-    
+
     Write-Host "Checking Azure CLI login status..." -ForegroundColor Cyan
     $account = az account show --output json 2>$null | ConvertFrom-Json
     if (-not $account) {
         throw "Not logged in to Azure CLI. Please run 'az login' first"
     }
     Write-Host "Logged in as: $($account.user.name)" -ForegroundColor Green
-    
+
     Write-Host "Checking if Workspace exists..." -ForegroundColor Cyan
     $existingWorkspace = az desktopvirtualization workspace show --name $Name --resource-group $ResourceGroup --output json 2>$null
     if (-not $existingWorkspace) {
         throw "Workspace '$Name' not found in resource group '$ResourceGroup'"
     }
-    
+
     $currentWorkspace = $existingWorkspace | ConvertFrom-Json
     Write-Host "Found Workspace: $($currentWorkspace.name)" -ForegroundColor Yellow
     Write-Host "  Current Description: $($currentWorkspace.description)" -ForegroundColor Yellow
     Write-Host "  Current Friendly Name: $($currentWorkspace.friendlyName)" -ForegroundColor Yellow
     Write-Host "  Current Application Group References: $($currentWorkspace.applicationGroupReferences -join ', ')" -ForegroundColor Yellow
-    
+
     # Check if there are any updates to make
     $hasUpdates = $false
-    
+
     Write-Host "Updating Azure Virtual Desktop Workspace..." -ForegroundColor Cyan
-    
+
     # Build base command
     $updateParams = @(
         'desktopvirtualization', 'workspace', 'update',
@@ -145,74 +145,74 @@ try {
         '--resource-group', $ResourceGroup,
         '--output', 'json'
     )
-    
+
     # Add optional parameters if provided
     if ($Add) {
         $updateParams += '--add', $Add
         $hasUpdates = $true
         Write-Host "  Will add: $Add" -ForegroundColor Green
     }
-    
+
     if ($ApplicationGroupReferences -and ($ApplicationGroupReferences -ne ($currentWorkspace.applicationGroupReferences -join ' '))) {
         $updateParams += '--application-group-references', $ApplicationGroupReferences
         $hasUpdates = $true
         Write-Host "  Will update application group references to: $ApplicationGroupReferences" -ForegroundColor Green
     }
-    
+
     if ($Description -and $Description -ne $currentWorkspace.description) {
         $updateParams += '--description', $Description
         $hasUpdates = $true
         Write-Host "  Will update description to: $Description" -ForegroundColor Green
     }
-    
+
     if ($ForceString) {
         $updateParams += '--force-string', $ForceString
         $hasUpdates = $true
         Write-Host "  Will apply force-string: $ForceString" -ForegroundColor Green
     }
-    
+
     if ($FriendlyName -and $FriendlyName -ne $currentWorkspace.friendlyName) {
         $updateParams += '--friendly-name', $FriendlyName
         $hasUpdates = $true
         Write-Host "  Will update friendly name to: $FriendlyName" -ForegroundColor Green
     }
-    
+
     if ($IDs) {
         $updateParams += '--ids', $IDs
         $hasUpdates = $true
         Write-Host "  Will use resource IDs: $IDs" -ForegroundColor Green
     }
-    
+
     if ($Remove) {
         $updateParams += '--remove', $Remove
         $hasUpdates = $true
         Write-Host "  Will remove: $Remove" -ForegroundColor Green
     }
-    
+
     if ($Set) {
         $updateParams += '--set', $Set
         $hasUpdates = $true
         Write-Host "  Will set: $Set" -ForegroundColor Green
     }
-    
+
     if ($Tags) {
         $updateParams += '--tags', $Tags
         $hasUpdates = $true
         Write-Host "  Will update tags to: $Tags" -ForegroundColor Green
     }
-    
+
     if (-not $hasUpdates) {
         Write-Host "No updates specified or no changes detected" -ForegroundColor Yellow
         exit 0
     }
-    
+
     $result = & az @updateParams
     if ($LASTEXITCODE -ne 0) {
         throw "Azure CLI command failed with exit code: $LASTEXITCODE"
     }
-    
+
     $updatedWorkspace = $result | ConvertFrom-Json
-    
+
     Write-Host "Azure Virtual Desktop Workspace updated successfully:" -ForegroundColor Green
     Write-Host "  Name: $($updatedWorkspace.name)" -ForegroundColor White
     Write-Host "  Resource Group: $($updatedWorkspace.resourceGroup)" -ForegroundColor White
@@ -221,7 +221,7 @@ try {
     Write-Host "  Application Group References: $($updatedWorkspace.applicationGroupReferences -join ', ')" -ForegroundColor White
     Write-Host "  Location: $($updatedWorkspace.location)" -ForegroundColor White
     Write-Host "  ID: $($updatedWorkspace.id)" -ForegroundColor White
-    
+
     return $updatedWorkspace
 } catch {
     Write-Error "Failed to update Azure Virtual Desktop Workspace: $_"

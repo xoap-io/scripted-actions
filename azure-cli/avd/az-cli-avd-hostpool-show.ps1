@@ -51,16 +51,16 @@ try {
     if (-not $azVersion) {
         throw "Azure CLI is not installed or not available in PATH"
     }
-    
+
     Write-Host "Checking Azure CLI login status..." -ForegroundColor Cyan
     $account = az account show --output json 2>$null | ConvertFrom-Json
     if (-not $account) {
         throw "Not logged in to Azure CLI. Please run 'az login' first"
     }
     Write-Host "Logged in as: $($account.user.name)" -ForegroundColor Green
-    
+
     Write-Host "Retrieving Host Pool details..." -ForegroundColor Cyan
-    
+
     if ($PSCmdlet.ParameterSetName -eq 'ByName') {
         $azParams = @(
             'desktopvirtualization', 'hostpool', 'show',
@@ -78,14 +78,14 @@ try {
         )
         Write-Host "  Using Resource IDs: $IDs" -ForegroundColor Yellow
     }
-    
+
     $result = & az @azParams
     if ($LASTEXITCODE -ne 0) {
         throw "Azure CLI command failed with exit code: $LASTEXITCODE"
     }
-    
+
     $hostPool = $result | ConvertFrom-Json
-    
+
     Write-Host "✓ Host Pool details retrieved successfully!" -ForegroundColor Green
     Write-Host "`nHost Pool Details:" -ForegroundColor Cyan
     Write-Host "  Name: $($hostPool.name)" -ForegroundColor White
@@ -103,14 +103,14 @@ try {
     Write-Host "  Custom RDP Property: $($hostPool.customRdpProperty)" -ForegroundColor White
     Write-Host "  VM Template: $($hostPool.vmTemplate)" -ForegroundColor White
     Write-Host "  ID: $($hostPool.id)" -ForegroundColor DarkGray
-    
+
     # Show registration info if available
     if ($hostPool.registrationInfo) {
         Write-Host "`nRegistration Info:" -ForegroundColor Cyan
         Write-Host "  Expiration Time: $($hostPool.registrationInfo.expirationTime)" -ForegroundColor White
         Write-Host "  Registration Token Enabled: $($hostPool.registrationInfo.registrationTokenOperation)" -ForegroundColor White
     }
-    
+
     return $hostPool
 } catch {
     Write-Error "Failed to retrieve Host Pool details: $_"

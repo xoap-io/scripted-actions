@@ -3,7 +3,7 @@
     List EBS snapshots with filtering options using AWS CLI.
 
 .DESCRIPTION
-    This script lists EBS snapshots using the latest AWS CLI (v2.16+) with various 
+    This script lists EBS snapshots using the latest AWS CLI (v2.16+) with various
     filtering and output options for comprehensive snapshot management.
 
 .PARAMETER SnapshotIds
@@ -238,21 +238,21 @@ try {
         foreach ($snapshot in $snapshots) {
             $startTime = [DateTime]::Parse($snapshot.StartTime)
             $include = $true
-            
+
             if ($StartTimeAfter) {
                 $afterDate = [DateTime]::Parse($StartTimeAfter)
                 if ($startTime -lt $afterDate) {
                     $include = $false
                 }
             }
-            
+
             if ($StartTimeBefore) {
                 $beforeDate = [DateTime]::Parse($StartTimeBefore).AddDays(1)
                 if ($startTime -ge $beforeDate) {
                     $include = $false
                 }
             }
-            
+
             if ($include) {
                 $filteredSnapshots += $snapshot
             }
@@ -325,13 +325,13 @@ try {
             foreach ($snapshot in $snapshots) {
                 Write-Host "`nSnapshot ID: " -NoNewline -ForegroundColor White
                 Write-Host $snapshot.SnapshotId -ForegroundColor Cyan
-                
+
                 Write-Host "  Volume ID: " -NoNewline -ForegroundColor White
                 Write-Host $snapshot.VolumeId -ForegroundColor Yellow
-                
+
                 Write-Host "  Volume Size: " -NoNewline -ForegroundColor White
                 Write-Host "$($snapshot.VolumeSize) GiB" -ForegroundColor Yellow
-                
+
                 Write-Host "  State: " -NoNewline -ForegroundColor White
                 $stateColor = switch ($snapshot.State) {
                     "completed" { "Green" }
@@ -340,20 +340,20 @@ try {
                     default { "White" }
                 }
                 Write-Host $snapshot.State -ForegroundColor $stateColor
-                
+
                 Write-Host "  Progress: " -NoNewline -ForegroundColor White
                 Write-Host "$($snapshot.Progress)%" -ForegroundColor Cyan
-                
+
                 Write-Host "  Start Time: " -NoNewline -ForegroundColor White
                 Write-Host $snapshot.StartTime -ForegroundColor Gray
-                
+
                 Write-Host "  Description: " -NoNewline -ForegroundColor White
                 Write-Host $snapshot.Description -ForegroundColor Gray
-                
+
                 Write-Host "  Encrypted: " -NoNewline -ForegroundColor White
                 $encColor = if ($snapshot.Encrypted) { "Green" } else { "Red" }
                 Write-Host $snapshot.Encrypted -ForegroundColor $encColor
-                
+
                 Write-Host "  Owner ID: " -NoNewline -ForegroundColor White
                 Write-Host $snapshot.OwnerId -ForegroundColor Gray
 
@@ -373,17 +373,17 @@ try {
             # Summary statistics
             Write-Host "`n" + "=" * 120 -ForegroundColor Gray
             Write-Host "Summary Statistics:" -ForegroundColor Cyan
-            
+
             $totalSize = ($snapshots | Measure-Object -Property VolumeSize -Sum).Sum
             Write-Host "  Total Snapshots: $($snapshots.Count)" -ForegroundColor White
             Write-Host "  Total Volume Size: $totalSize GiB" -ForegroundColor White
-            
+
             $stateGroups = $snapshots | Group-Object State
             Write-Host "  States:" -ForegroundColor White
             foreach ($group in $stateGroups) {
                 Write-Host "    $($group.Name): $($group.Count)" -ForegroundColor Gray
             }
-            
+
             $encryptedCount = ($snapshots | Where-Object { $_.Encrypted }).Count
             $unencryptedCount = $snapshots.Count - $encryptedCount
             Write-Host "  Encryption:" -ForegroundColor White
@@ -392,13 +392,13 @@ try {
 
             # Age analysis
             $now = Get-Date
-            $recentCount = ($snapshots | Where-Object { 
-                ([DateTime]::Parse($_.StartTime)) -gt $now.AddDays(-7) 
+            $recentCount = ($snapshots | Where-Object {
+                ([DateTime]::Parse($_.StartTime)) -gt $now.AddDays(-7)
             }).Count
-            $oldCount = ($snapshots | Where-Object { 
-                ([DateTime]::Parse($_.StartTime)) -lt $now.AddDays(-30) 
+            $oldCount = ($snapshots | Where-Object {
+                ([DateTime]::Parse($_.StartTime)) -lt $now.AddDays(-30)
             }).Count
-            
+
             Write-Host "  Age Analysis:" -ForegroundColor White
             Write-Host "    Last 7 days: $recentCount" -ForegroundColor Gray
             Write-Host "    Older than 30 days: $oldCount" -ForegroundColor Gray

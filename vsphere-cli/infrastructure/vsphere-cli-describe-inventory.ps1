@@ -98,7 +98,7 @@ $ErrorActionPreference = 'Stop'
 # Function to check and install PowerCLI if needed
 function Test-PowerCLIInstallation {
     Write-Host "Checking PowerCLI installation..." -ForegroundColor Yellow
-    
+
     try {
         $powerCLIModule = Get-Module -Name VMware.PowerCLI -ListAvailable
         if (-not $powerCLIModule) {
@@ -109,14 +109,14 @@ function Test-PowerCLIInstallation {
             $version = $powerCLIModule | Sort-Object Version -Descending | Select-Object -First 1
             Write-Host "PowerCLI version $($version.Version) found." -ForegroundColor Green
         }
-        
+
         # Import the module
         Import-Module VMware.PowerCLI -Force
-        
+
         # Disable certificate warnings for lab environments
         Set-PowerCLIConfiguration -InvalidCertificateAction Ignore -Confirm:$false -Scope User | Out-Null
         Set-PowerCLIConfiguration -ParticipateInCEIP $false -Confirm:$false -Scope User | Out-Null
-        
+
         return $true
     }
     catch {
@@ -128,17 +128,17 @@ function Test-PowerCLIInstallation {
 # Function to connect to vCenter
 function Connect-ToVCenter {
     param($Server)
-    
+
     try {
         Write-Host "Connecting to vCenter Server: $Server" -ForegroundColor Yellow
-        
+
         # Check if already connected
         $connection = $global:DefaultVIServers | Where-Object { $_.Name -eq $Server -and $_.IsConnected }
         if ($connection) {
             Write-Host "Already connected to $Server" -ForegroundColor Green
             return $connection
         }
-        
+
         # Connect to vCenter (will prompt for credentials if not cached)
         $connection = Connect-VIServer -Server $Server -Force
         Write-Host "Successfully connected to vCenter: $($connection.Name)" -ForegroundColor Green
@@ -153,7 +153,7 @@ function Connect-ToVCenter {
 # Function to get overview report
 function Get-OverviewReport {
     Write-Host "Generating infrastructure overview..." -ForegroundColor Yellow
-    
+
     $overview = [PSCustomObject]@{
         VCenterServer = $global:DefaultVIServers[0].Name
         VCenterVersion = $global:DefaultVIServers[0].Version
@@ -170,25 +170,25 @@ function Get-OverviewReport {
         UsedStorageGB = [math]::Round((Get-Datastore | Measure-Object -Property CapacityGB -Sum).Sum - (Get-Datastore | Measure-Object -Property FreeSpaceGB -Sum).Sum, 2)
         StorageUtilizationPercent = [math]::Round(((Get-Datastore | Measure-Object -Property CapacityGB -Sum).Sum - (Get-Datastore | Measure-Object -Property FreeSpaceGB -Sum).Sum) / (Get-Datastore | Measure-Object -Property CapacityGB -Sum).Sum * 100, 1)
     }
-    
+
     return $overview
 }
 
 # Function to get datacenter report
 function Get-DatacenterReport {
     Write-Host "Generating datacenter report..." -ForegroundColor Yellow
-    
+
     $datacenters = Get-Datacenter
     if ($DatacenterName) {
         $datacenters = $datacenters | Where-Object { $_.Name -eq $DatacenterName }
     }
-    
+
     $dcReport = @()
     foreach ($dc in $datacenters) {
         $clusters = Get-Cluster -Location $dc
         $hosts = Get-VMHost -Location $dc
         $vms = Get-VM -Location $dc
-        
+
         $dcInfo = [PSCustomObject]@{
             Name = $dc.Name
             Clusters = $clusters.Count
@@ -199,17 +199,17 @@ function Get-DatacenterReport {
             TotalMemoryGB = [math]::Round(($hosts | Measure-Object -Property MemoryTotalGB -Sum).Sum, 2)
             Datastores = (Get-Datastore -Location $dc).Count
         }
-        
+
         $dcReport += $dcInfo
     }
-    
+
     return $dcReport
 }
 
 # Function to get cluster report
 function Get-ClusterReport {
     Write-Host "Generating cluster report..." -ForegroundColor Yellow
-    
+
     $clusters = Get-Cluster
     if ($DatacenterName) {
         $datacenter = Get-Datacenter -Name $DatacenterName
@@ -218,12 +218,12 @@ function Get-ClusterReport {
     if ($ClusterName) {
         $clusters = $clusters | Where-Object { $_.Name -eq $ClusterName }
     }
-    
+
     $clusterReport = @()
     foreach ($cluster in $clusters) {
         $hosts = Get-VMHost -Location $cluster
         $vms = Get-VM -Location $cluster
-        
+
         $clusterInfo = [PSCustomObject]@{
             Name = $cluster.Name
             Datacenter = $cluster.Parent.Name
@@ -238,25 +238,25 @@ function Get-ClusterReport {
             UsedCPUCores = ($vms | Where-Object { $_.PowerState -eq "PoweredOn" } | Measure-Object -Property NumCpu -Sum).Sum
             UsedMemoryGB = [math]::Round(($vms | Where-Object { $_.PowerState -eq "PoweredOn" } | Measure-Object -Property MemoryGB -Sum).Sum, 2)
         }
-        
+
         if ($IncludeMetrics) {
             $cpuUsage = Get-Stat -Entity $cluster -Stat "cpu.usagemhz.average" -Realtime | Measure-Object -Property Value -Average
             $memUsage = Get-Stat -Entity $cluster -Stat "mem.usage.average" -Realtime | Measure-Object -Property Value -Average
-            
+
             $clusterInfo | Add-Member -NotePropertyName "CPUUsagePercent" -NotePropertyValue ([math]::Round($cpuUsage.Average, 1))
             $clusterInfo | Add-Member -NotePropertyName "MemoryUsagePercent" -NotePropertyValue ([math]::Round($memUsage.Average, 1))
         }
-        
+
         $clusterReport += $clusterInfo
     }
-    
+
     return $clusterReport
 }
 
 # Function to get host report
 function Get-HostReport {
     Write-Host "Generating host report..." -ForegroundColor Yellow
-    
+
     $hosts = Get-VMHost
     if ($DatacenterName) {
         $datacenter = Get-Datacenter -Name $DatacenterName
@@ -266,11 +266,11 @@ function Get-HostReport {
         $cluster = Get-Cluster -Name $ClusterName
         $hosts = Get-VMHost -Location $cluster
     }
-    
+
     $hostReport = @()
     foreach ($vmHost in $hosts) {
         $vms = Get-VM -Location $vmHost
-        
+
         $hostInfo = [PSCustomObject]@{
             Name = $vmHost.Name
             Cluster = $vmHost.Parent.Name
@@ -287,25 +287,25 @@ function Get-HostReport {
             PoweredOnVMs = ($vms | Where-Object { $_.PowerState -eq "PoweredOn" }).Count
             UptimeDays = [math]::Round($vmHost.ExtensionData.Summary.QuickStats.Uptime / 86400, 1)
         }
-        
+
         if ($IncludeMetrics) {
             $cpuUsage = Get-Stat -Entity $vmHost -Stat "cpu.usage.average" -Realtime | Measure-Object -Property Value -Average
             $memUsage = Get-Stat -Entity $vmHost -Stat "mem.usage.average" -Realtime | Measure-Object -Property Value -Average
-            
+
             $hostInfo | Add-Member -NotePropertyName "CPUUsagePercent" -NotePropertyValue ([math]::Round($cpuUsage.Average, 1))
             $hostInfo | Add-Member -NotePropertyName "MemoryUsagePercent" -NotePropertyValue ([math]::Round($memUsage.Average, 1))
         }
-        
+
         $hostReport += $hostInfo
     }
-    
+
     return $hostReport
 }
 
 # Function to get VM report
 function Get-VMReport {
     Write-Host "Generating VM report..." -ForegroundColor Yellow
-    
+
     $vms = Get-VM
     if ($DatacenterName) {
         $datacenter = Get-Datacenter -Name $DatacenterName
@@ -315,12 +315,12 @@ function Get-VMReport {
         $cluster = Get-Cluster -Name $ClusterName
         $vms = Get-VM -Location $cluster
     }
-    
+
     # Filter by power state
     if (-not $ShowPoweredOffVMs) {
         $vms = $vms | Where-Object { $_.PowerState -eq "PoweredOn" }
     }
-    
+
     $vmReport = @()
     foreach ($vm in $vms) {
         $vmInfo = [PSCustomObject]@{
@@ -342,18 +342,18 @@ function Get-VMReport {
             CreateDate = $vm.CreateDate
             UptimeDays = if ($vm.PowerState -eq "PoweredOn") { [math]::Round((Get-Date).Subtract($vm.ExtensionData.Runtime.BootTime).TotalDays, 1) } else { 0 }
         }
-        
+
         if ($IncludeMetrics -and $vm.PowerState -eq "PoweredOn") {
             $cpuUsage = Get-Stat -Entity $vm -Stat "cpu.usage.average" -Realtime | Measure-Object -Property Value -Average
             $memUsage = Get-Stat -Entity $vm -Stat "mem.usage.average" -Realtime | Measure-Object -Property Value -Average
-            
+
             $vmInfo | Add-Member -NotePropertyName "CPUUsagePercent" -NotePropertyValue ([math]::Round($cpuUsage.Average, 1))
             $vmInfo | Add-Member -NotePropertyName "MemoryUsagePercent" -NotePropertyValue ([math]::Round($memUsage.Average, 1))
         }
-        
+
         $vmReport += $vmInfo
     }
-    
+
     # Include templates if requested
     if ($ShowTemplates) {
         $templates = Get-Template
@@ -361,7 +361,7 @@ function Get-VMReport {
             $datacenter = Get-Datacenter -Name $DatacenterName
             $templates = Get-Template -Location $datacenter
         }
-        
+
         foreach ($template in $templates) {
             $templateInfo = [PSCustomObject]@{
                 Name = $template.Name
@@ -382,28 +382,28 @@ function Get-VMReport {
                 CreateDate = $template.ExtensionData.Config.CreateDate
                 UptimeDays = 0
             }
-            
+
             $vmReport += $templateInfo
         }
     }
-    
+
     return $vmReport
 }
 
 # Function to get datastore report
 function Get-DatastoreReport {
     Write-Host "Generating datastore report..." -ForegroundColor Yellow
-    
+
     $datastores = Get-Datastore
     if ($DatacenterName) {
         $datacenter = Get-Datacenter -Name $DatacenterName
         $datastores = Get-Datastore -Location $datacenter
     }
-    
+
     $datastoreReport = @()
     foreach ($datastore in $datastores) {
         $vms = Get-VM -Datastore $datastore
-        
+
         $datastoreInfo = [PSCustomObject]@{
             Name = $datastore.Name
             Type = $datastore.Type
@@ -417,27 +417,27 @@ function Get-DatastoreReport {
             Accessible = $datastore.Accessible
             MultiplePaths = $datastore.ExtensionData.Summary.MultipleHostAccess
         }
-        
+
         $datastoreReport += $datastoreInfo
     }
-    
+
     return $datastoreReport
 }
 
 # Function to get network report
 function Get-NetworkReport {
     Write-Host "Generating network report..." -ForegroundColor Yellow
-    
+
     $networks = Get-VirtualPortGroup
     if ($DatacenterName) {
         $datacenter = Get-Datacenter -Name $DatacenterName
         $networks = Get-VirtualPortGroup -Location $datacenter
     }
-    
+
     $networkReport = @()
     foreach ($network in $networks) {
         $vms = Get-VM | Where-Object { ($_ | Get-NetworkAdapter).NetworkName -contains $network.Name }
-        
+
         $networkInfo = [PSCustomObject]@{
             Name = $network.Name
             VLanId = $network.VLanId
@@ -445,17 +445,17 @@ function Get-NetworkReport {
             ConnectedVMs = $vms.Count
             Switch = if ($network.VirtualSwitch) { $network.VirtualSwitch.Name } else { "N/A" }
         }
-        
+
         $networkReport += $networkInfo
     }
-    
+
     return $networkReport
 }
 
 # Function to get resource pool report
 function Get-ResourcePoolReport {
     Write-Host "Generating resource pool report..." -ForegroundColor Yellow
-    
+
     $resourcePools = Get-ResourcePool
     if ($DatacenterName) {
         $datacenter = Get-Datacenter -Name $DatacenterName
@@ -465,11 +465,11 @@ function Get-ResourcePoolReport {
         $cluster = Get-Cluster -Name $ClusterName
         $resourcePools = Get-ResourcePool -Location $cluster
     }
-    
+
     $rpReport = @()
     foreach ($rp in $resourcePools) {
         $vms = Get-VM -Location $rp
-        
+
         $rpInfo = [PSCustomObject]@{
             Name = $rp.Name
             Parent = $rp.Parent.Name
@@ -481,10 +481,10 @@ function Get-ResourcePoolReport {
             MemReservationGB = [math]::Round($rp.MemReservationMB / 1024, 2)
             MemLimitGB = if ($rp.MemLimitMB -ne -1) { [math]::Round($rp.MemLimitMB / 1024, 2) } else { "Unlimited" }
         }
-        
+
         $rpReport += $rpInfo
     }
-    
+
     return $rpReport
 }
 
@@ -497,12 +497,12 @@ function Export-Report {
         $OutputPath,
         $SortBy
     )
-    
+
     # Sort data if requested
     if ($SortBy -and $Data[0].PSObject.Properties.Name -contains $SortBy) {
         $Data = $Data | Sort-Object $SortBy
     }
-    
+
     switch ($OutputFormat) {
         "Console" {
             Write-Host "`n=== $ReportType Report ===" -ForegroundColor Cyan
@@ -519,7 +519,7 @@ function Export-Report {
             if (-not $OutputPath) {
                 $OutputPath = "${ReportType}_$(Get-Date -Format 'yyyyMMdd_HHmmss').html"
             }
-            
+
             $htmlContent = @"
 <!DOCTYPE html>
 <html>
@@ -541,7 +541,7 @@ function Export-Report {
 </body>
 </html>
 "@
-            
+
             $htmlContent | Out-File -FilePath $OutputPath -Encoding UTF8
             Write-Host "Report exported to: $OutputPath" -ForegroundColor Green
         }
@@ -562,26 +562,26 @@ try {
     Write-Host "Report Type: $ReportType" -ForegroundColor White
     Write-Host "Output Format: $OutputFormat" -ForegroundColor White
     Write-Host ""
-    
+
     # Check and install PowerCLI
     if (-not (Test-PowerCLIInstallation)) {
         throw "PowerCLI installation failed"
     }
-    
+
     # Connect to vCenter
     $connection = Connect-ToVCenter -Server $VCenterServer
-    
+
     # Generate reports based on type
     $reportData = @()
-    $reportsToGenerate = if ($ReportType -eq "All") { 
-        @("Overview", "Datacenters", "Clusters", "Hosts", "VMs", "Datastores", "Networks", "ResourcePools") 
-    } else { 
-        @($ReportType) 
+    $reportsToGenerate = if ($ReportType -eq "All") {
+        @("Overview", "Datacenters", "Clusters", "Hosts", "VMs", "Datastores", "Networks", "ResourcePools")
+    } else {
+        @($ReportType)
     }
-    
+
     foreach ($report in $reportsToGenerate) {
         Write-Host "Generating $report report..." -ForegroundColor Yellow
-        
+
         $data = switch ($report) {
             "Overview" { Get-OverviewReport }
             "Datacenters" { Get-DatacenterReport }
@@ -592,7 +592,7 @@ try {
             "Networks" { Get-NetworkReport }
             "ResourcePools" { Get-ResourcePoolReport }
         }
-        
+
         if ($ReportType -eq "All") {
             # For "All" reports, display each section
             Export-Report -Data $data -ReportType $report -OutputFormat "Console" -SortBy $SortBy
@@ -601,12 +601,12 @@ try {
             $reportData = $data
         }
     }
-    
+
     # Export single report type if not "All"
     if ($ReportType -ne "All") {
         Export-Report -Data $reportData -ReportType $ReportType -OutputFormat $OutputFormat -OutputPath $OutputPath -SortBy $SortBy
     }
-    
+
     Write-Host "`n=== Report Generation Completed ===" -ForegroundColor Green
 }
 catch {

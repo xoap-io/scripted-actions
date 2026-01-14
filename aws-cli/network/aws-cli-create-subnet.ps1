@@ -7,7 +7,7 @@
     aws ec2 create-subnet --vpc-id $AwsVpcId --cidr-block $AwsCidrBlock --ipv6-cidr-block $AwsIpv6CidrBlock --tag-specifications $AwsTagSpecifications
 
     The script sets the ErrorActionPreference to SilentlyContinue to suppress error messages.
-    
+
     It does not return any output.
 
 .NOTES

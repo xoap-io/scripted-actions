@@ -231,7 +231,7 @@ param(
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
     [ValidateSet(
-        'Hot', 
+        'Hot',
         'Cool'
     )]
     [string]$AccessTier,
@@ -263,8 +263,8 @@ param(
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
     [ValidateSet(
-        'SystemAssigned', 
-        'UserAssigned', 
+        'SystemAssigned',
+        'UserAssigned',
         'SystemAssigned,UserAssigned'
     )]
     [string]$IdentityType,

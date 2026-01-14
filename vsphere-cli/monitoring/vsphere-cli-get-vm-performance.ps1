@@ -139,7 +139,7 @@ $global:AlertHistory = @()
 # Function to check and install PowerCLI if needed
 function Test-PowerCLIInstallation {
     Write-Host "Checking PowerCLI installation..." -ForegroundColor Yellow
-    
+
     try {
         $powerCLIModule = Get-Module -Name VMware.PowerCLI -ListAvailable
         if (-not $powerCLIModule) {
@@ -150,14 +150,14 @@ function Test-PowerCLIInstallation {
             $version = $powerCLIModule | Sort-Object Version -Descending | Select-Object -First 1
             Write-Host "PowerCLI version $($version.Version) found." -ForegroundColor Green
         }
-        
+
         # Import the module
         Import-Module VMware.PowerCLI -Force
-        
+
         # Disable certificate warnings for lab environments
         Set-PowerCLIConfiguration -InvalidCertificateAction Ignore -Confirm:$false -Scope User | Out-Null
         Set-PowerCLIConfiguration -ParticipateInCEIP $false -Confirm:$false -Scope User | Out-Null
-        
+
         return $true
     }
     catch {
@@ -169,17 +169,17 @@ function Test-PowerCLIInstallation {
 # Function to connect to vCenter
 function Connect-ToVCenter {
     param($Server)
-    
+
     try {
         Write-Host "Connecting to vCenter Server: $Server" -ForegroundColor Yellow
-        
+
         # Check if already connected
         $connection = $global:DefaultVIServers | Where-Object { $_.Name -eq $Server -and $_.IsConnected }
         if ($connection) {
             Write-Host "Already connected to $Server" -ForegroundColor Green
             return $connection
         }
-        
+
         # Connect to vCenter (will prompt for credentials if not cached)
         $connection = Connect-VIServer -Server $Server -Force
         Write-Host "Successfully connected to vCenter: $($connection.Name)" -ForegroundColor Green
@@ -198,12 +198,12 @@ function Get-TargetVMs {
         $VMNames,
         $ClusterName
     )
-    
+
     Write-Host "Identifying target VMs..." -ForegroundColor Yellow
-    
+
     try {
         $targetVMs = @()
-        
+
         if ($VMName) {
             # Single VM or wildcard pattern
             $targetVMs = Get-VM -Name $VMName -ErrorAction SilentlyContinue | Where-Object { $_.PowerState -eq "PoweredOn" }
@@ -230,16 +230,16 @@ function Get-TargetVMs {
         else {
             throw "Must specify VMName, VMNames, or ClusterName"
         }
-        
+
         if (-not $targetVMs) {
             throw "No powered-on VMs found matching the specified criteria"
         }
-        
+
         Write-Host "Found $($targetVMs.Count) powered-on VM(s) for monitoring:" -ForegroundColor Green
         foreach ($vm in $targetVMs) {
             Write-Host "  - $($vm.Name)" -ForegroundColor White
         }
-        
+
         return $targetVMs
     }
     catch {
@@ -251,27 +251,27 @@ function Get-TargetVMs {
 # Function to get CPU metrics
 function Get-CPUMetrics {
     param($VMs, $Duration, $SampleInterval)
-    
+
     Write-Host "Collecting CPU metrics..." -ForegroundColor Yellow
-    
+
     $cpuMetrics = @()
     $endTime = Get-Date
     $startTime = $endTime.AddMinutes(-$Duration)
-    
+
     foreach ($vm in $VMs) {
         try {
             # Get CPU usage statistics
             $cpuStats = Get-Stat -Entity $vm -Stat @("cpu.usage.average", "cpu.usagemhz.average", "cpu.ready.summation") -Start $startTime -Finish $endTime -IntervalMins ($SampleInterval / 60)
-            
+
             $cpuUsage = $cpuStats | Where-Object { $_.MetricId -eq "cpu.usage.average" }
             $cpuMhz = $cpuStats | Where-Object { $_.MetricId -eq "cpu.usagemhz.average" }
             $cpuReady = $cpuStats | Where-Object { $_.MetricId -eq "cpu.ready.summation" }
-            
+
             $avgCpuUsage = if ($cpuUsage) { [math]::Round(($cpuUsage | Measure-Object -Property Value -Average).Average, 2) } else { 0 }
             $maxCpuUsage = if ($cpuUsage) { [math]::Round(($cpuUsage | Measure-Object -Property Value -Maximum).Maximum, 2) } else { 0 }
             $avgCpuMhz = if ($cpuMhz) { [math]::Round(($cpuMhz | Measure-Object -Property Value -Average).Average, 2) } else { 0 }
             $avgCpuReady = if ($cpuReady) { [math]::Round(($cpuReady | Measure-Object -Property Value -Average).Average, 2) } else { 0 }
-            
+
             $cpuMetric = [PSCustomObject]@{
                 VM = $vm.Name
                 MetricType = "CPU"
@@ -282,43 +282,43 @@ function Get-CPUMetrics {
                 AllocatedCPUs = $vm.NumCpu
                 Timestamp = Get-Date
             }
-            
+
             $cpuMetrics += $cpuMetric
         }
         catch {
             Write-Warning "Failed to get CPU metrics for VM '$($vm.Name)': $($_.Exception.Message)"
         }
     }
-    
+
     return $cpuMetrics
 }
 
 # Function to get Memory metrics
 function Get-MemoryMetrics {
     param($VMs, $Duration, $SampleInterval)
-    
+
     Write-Host "Collecting Memory metrics..." -ForegroundColor Yellow
-    
+
     $memoryMetrics = @()
     $endTime = Get-Date
     $startTime = $endTime.AddMinutes(-$Duration)
-    
+
     foreach ($vm in $VMs) {
         try {
             # Get memory usage statistics
             $memStats = Get-Stat -Entity $vm -Stat @("mem.usage.average", "mem.active.average", "mem.consumed.average", "mem.swapused.average") -Start $startTime -Finish $endTime -IntervalMins ($SampleInterval / 60)
-            
+
             $memUsage = $memStats | Where-Object { $_.MetricId -eq "mem.usage.average" }
             $memActive = $memStats | Where-Object { $_.MetricId -eq "mem.active.average" }
             $memConsumed = $memStats | Where-Object { $_.MetricId -eq "mem.consumed.average" }
             $memSwap = $memStats | Where-Object { $_.MetricId -eq "mem.swapused.average" }
-            
+
             $avgMemUsage = if ($memUsage) { [math]::Round(($memUsage | Measure-Object -Property Value -Average).Average, 2) } else { 0 }
             $maxMemUsage = if ($memUsage) { [math]::Round(($memUsage | Measure-Object -Property Value -Maximum).Maximum, 2) } else { 0 }
             $avgMemActive = if ($memActive) { [math]::Round(($memActive | Measure-Object -Property Value -Average).Average / 1024, 2) } else { 0 }
             $avgMemConsumed = if ($memConsumed) { [math]::Round(($memConsumed | Measure-Object -Property Value -Average).Average / 1024, 2) } else { 0 }
             $avgMemSwap = if ($memSwap) { [math]::Round(($memSwap | Measure-Object -Property Value -Average).Average / 1024, 2) } else { 0 }
-            
+
             $memoryMetric = [PSCustomObject]@{
                 VM = $vm.Name
                 MetricType = "Memory"
@@ -330,43 +330,43 @@ function Get-MemoryMetrics {
                 AllocatedMemoryGB = $vm.MemoryGB
                 Timestamp = Get-Date
             }
-            
+
             $memoryMetrics += $memoryMetric
         }
         catch {
             Write-Warning "Failed to get memory metrics for VM '$($vm.Name)': $($_.Exception.Message)"
         }
     }
-    
+
     return $memoryMetrics
 }
 
 # Function to get Disk metrics
 function Get-DiskMetrics {
     param($VMs, $Duration, $SampleInterval)
-    
+
     Write-Host "Collecting Disk metrics..." -ForegroundColor Yellow
-    
+
     $diskMetrics = @()
     $endTime = Get-Date
     $startTime = $endTime.AddMinutes(-$Duration)
-    
+
     foreach ($vm in $VMs) {
         try {
             # Get disk statistics
             $diskStats = Get-Stat -Entity $vm -Stat @("disk.usage.average", "disk.read.average", "disk.write.average", "disk.totalLatency.average") -Start $startTime -Finish $endTime -IntervalMins ($SampleInterval / 60)
-            
+
             $diskUsage = $diskStats | Where-Object { $_.MetricId -eq "disk.usage.average" }
             $diskRead = $diskStats | Where-Object { $_.MetricId -eq "disk.read.average" }
             $diskWrite = $diskStats | Where-Object { $_.MetricId -eq "disk.write.average" }
             $diskLatency = $diskStats | Where-Object { $_.MetricId -eq "disk.totalLatency.average" }
-            
+
             $avgDiskUsage = if ($diskUsage) { [math]::Round(($diskUsage | Measure-Object -Property Value -Average).Average, 2) } else { 0 }
             $avgDiskRead = if ($diskRead) { [math]::Round(($diskRead | Measure-Object -Property Value -Average).Average, 2) } else { 0 }
             $avgDiskWrite = if ($diskWrite) { [math]::Round(($diskWrite | Measure-Object -Property Value -Average).Average, 2) } else { 0 }
             $avgDiskLatency = if ($diskLatency) { [math]::Round(($diskLatency | Measure-Object -Property Value -Average).Average, 2) } else { 0 }
             $maxDiskLatency = if ($diskLatency) { [math]::Round(($diskLatency | Measure-Object -Property Value -Maximum).Maximum, 2) } else { 0 }
-            
+
             $diskMetric = [PSCustomObject]@{
                 VM = $vm.Name
                 MetricType = "Disk"
@@ -378,44 +378,44 @@ function Get-DiskMetrics {
                 TotalDiskGB = [math]::Round($vm.ProvisionedSpaceGB, 2)
                 Timestamp = Get-Date
             }
-            
+
             $diskMetrics += $diskMetric
         }
         catch {
             Write-Warning "Failed to get disk metrics for VM '$($vm.Name)': $($_.Exception.Message)"
         }
     }
-    
+
     return $diskMetrics
 }
 
 # Function to get Network metrics
 function Get-NetworkMetrics {
     param($VMs, $Duration, $SampleInterval)
-    
+
     Write-Host "Collecting Network metrics..." -ForegroundColor Yellow
-    
+
     $networkMetrics = @()
     $endTime = Get-Date
     $startTime = $endTime.AddMinutes(-$Duration)
-    
+
     foreach ($vm in $VMs) {
         try {
             # Get network statistics
             $netStats = Get-Stat -Entity $vm -Stat @("net.usage.average", "net.received.average", "net.transmitted.average", "net.packetsRx.summation", "net.packetsTx.summation") -Start $startTime -Finish $endTime -IntervalMins ($SampleInterval / 60)
-            
+
             $netUsage = $netStats | Where-Object { $_.MetricId -eq "net.usage.average" }
             $netReceived = $netStats | Where-Object { $_.MetricId -eq "net.received.average" }
             $netTransmitted = $netStats | Where-Object { $_.MetricId -eq "net.transmitted.average" }
             $packetsRx = $netStats | Where-Object { $_.MetricId -eq "net.packetsRx.summation" }
             $packetsTx = $netStats | Where-Object { $_.MetricId -eq "net.packetsTx.summation" }
-            
+
             $avgNetUsage = if ($netUsage) { [math]::Round(($netUsage | Measure-Object -Property Value -Average).Average, 2) } else { 0 }
             $avgNetReceived = if ($netReceived) { [math]::Round(($netReceived | Measure-Object -Property Value -Average).Average, 2) } else { 0 }
             $avgNetTransmitted = if ($netTransmitted) { [math]::Round(($netTransmitted | Measure-Object -Property Value -Average).Average, 2) } else { 0 }
             $avgPacketsRx = if ($packetsRx) { [math]::Round(($packetsRx | Measure-Object -Property Value -Average).Average, 2) } else { 0 }
             $avgPacketsTx = if ($packetsTx) { [math]::Round(($packetsTx | Measure-Object -Property Value -Average).Average, 2) } else { 0 }
-            
+
             $networkMetric = [PSCustomObject]@{
                 VM = $vm.Name
                 MetricType = "Network"
@@ -427,14 +427,14 @@ function Get-NetworkMetrics {
                 NetworkAdapters = ($vm | Get-NetworkAdapter).Count
                 Timestamp = Get-Date
             }
-            
+
             $networkMetrics += $networkMetric
         }
         catch {
             Write-Warning "Failed to get network metrics for VM '$($vm.Name)': $($_.Exception.Message)"
         }
     }
-    
+
     return $networkMetrics
 }
 
@@ -446,9 +446,9 @@ function Test-AlertThresholds {
         $MemoryThreshold,
         $DiskLatencyThreshold
     )
-    
+
     $alerts = @()
-    
+
     foreach ($metric in $Metrics) {
         switch ($metric.MetricType) {
             "CPU" {
@@ -489,14 +489,14 @@ function Test-AlertThresholds {
             }
         }
     }
-    
+
     return $alerts
 }
 
 # Function to display alerts
 function Show-Alerts {
     param($Alerts)
-    
+
     if ($Alerts.Count -gt 0) {
         Write-Host "`n=== PERFORMANCE ALERTS ===" -ForegroundColor Red
         foreach ($alert in $Alerts) {
@@ -508,7 +508,7 @@ function Show-Alerts {
             Write-Host "[$($alert.Severity)] $($alert.VM): $($alert.AlertType)" -ForegroundColor $color
             Write-Host "  Current: $($alert.CurrentValue) | Threshold: $($alert.Threshold)" -ForegroundColor White
         }
-        
+
         # Add to global alert history
         $global:AlertHistory += $Alerts
     }
@@ -521,7 +521,7 @@ function Export-Metrics {
         $OutputFormat,
         $OutputPath
     )
-    
+
     switch ($OutputFormat) {
         "Console" {
             if ($Metrics.Count -gt 0) {
@@ -557,52 +557,52 @@ function Start-ContinuousMonitoring {
         $MemoryThreshold,
         $DiskLatencyThreshold
     )
-    
+
     Write-Host "`n=== Starting Continuous Monitoring ===" -ForegroundColor Cyan
     Write-Host "Press Ctrl+C to stop monitoring" -ForegroundColor Yellow
     Write-Host "Refresh interval: $RefreshInterval seconds" -ForegroundColor White
     Write-Host ""
-    
+
     $global:MonitoringActive = $true
-    
+
     # Register event handler for Ctrl+C
     Register-EngineEvent -SourceIdentifier PowerShell.Exiting -Action {
         $global:MonitoringActive = $false
     }
-    
+
     try {
         while ($global:MonitoringActive) {
             $timestamp = Get-Date
             Write-Host "[$($timestamp.ToString('yyyy-MM-dd HH:mm:ss'))] Collecting metrics..." -ForegroundColor Green
-            
+
             # Collect real-time metrics (short duration, small interval)
             $allMetrics = @()
-            
+
             if ($MetricType -eq "All" -or $MetricType -eq "CPU") {
                 $cpuMetrics = Get-CPUMetrics -VMs $VMs -Duration 5 -SampleInterval 20
                 $allMetrics += $cpuMetrics
             }
-            
+
             if ($MetricType -eq "All" -or $MetricType -eq "Memory") {
                 $memoryMetrics = Get-MemoryMetrics -VMs $VMs -Duration 5 -SampleInterval 20
                 $allMetrics += $memoryMetrics
             }
-            
+
             if ($MetricType -eq "All" -or $MetricType -eq "Disk") {
                 $diskMetrics = Get-DiskMetrics -VMs $VMs -Duration 5 -SampleInterval 20
                 $allMetrics += $diskMetrics
             }
-            
+
             if ($MetricType -eq "All" -or $MetricType -eq "Network") {
                 $networkMetrics = Get-NetworkMetrics -VMs $VMs -Duration 5 -SampleInterval 20
                 $allMetrics += $networkMetrics
             }
-            
+
             # Display current metrics summary
             foreach ($vm in $VMs) {
                 $vmMetrics = $allMetrics | Where-Object { $_.VM -eq $vm.Name }
                 Write-Host "  VM: $($vm.Name)" -ForegroundColor Cyan
-                
+
                 foreach ($metric in $vmMetrics) {
                     switch ($metric.MetricType) {
                         "CPU" { Write-Host "    CPU: $($metric.AvgUsagePercent)% (Ready: $($metric.AvgReadyTime)ms)" -ForegroundColor White }
@@ -612,15 +612,15 @@ function Start-ContinuousMonitoring {
                     }
                 }
             }
-            
+
             # Check alerts if enabled
             if ($AlertThresholds) {
                 $alerts = Test-AlertThresholds -Metrics $allMetrics -CPUThreshold $CPUThreshold -MemoryThreshold $MemoryThreshold -DiskLatencyThreshold $DiskLatencyThreshold
                 Show-Alerts -Alerts $alerts
             }
-            
+
             Write-Host ""
-            
+
             # Wait for next refresh
             Start-Sleep -Seconds $RefreshInterval
         }
@@ -643,24 +643,24 @@ try {
     Write-Host "=== vSphere VM Performance Monitoring ===" -ForegroundColor Cyan
     Write-Host "Target vCenter: $VCenterServer" -ForegroundColor White
     Write-Host "Metric Type: $MetricType" -ForegroundColor White
-    
+
     if (-not $ContinuousMonitoring) {
         Write-Host "Duration: $Duration minutes" -ForegroundColor White
         Write-Host "Sample Interval: $SampleInterval seconds" -ForegroundColor White
     }
     Write-Host ""
-    
+
     # Check and install PowerCLI
     if (-not (Test-PowerCLIInstallation)) {
         throw "PowerCLI installation failed"
     }
-    
+
     # Connect to vCenter
     $connection = Connect-ToVCenter -Server $VCenterServer
-    
+
     # Get target VMs
     $targetVMs = Get-TargetVMs -VMName $VMName -VMNames $VMNames -ClusterName $ClusterName
-    
+
     if ($ContinuousMonitoring) {
         # Start continuous monitoring
         Start-ContinuousMonitoring -VMs $targetVMs -MetricType $MetricType -RefreshInterval $RefreshInterval -AlertThresholds:$AlertThresholds -CPUThreshold $CPUThreshold -MemoryThreshold $MemoryThreshold -DiskLatencyThreshold $DiskLatencyThreshold
@@ -668,37 +668,37 @@ try {
     else {
         # Single-run monitoring
         $allMetrics = @()
-        
+
         if ($MetricType -eq "All" -or $MetricType -eq "CPU") {
             $cpuMetrics = Get-CPUMetrics -VMs $targetVMs -Duration $Duration -SampleInterval $SampleInterval
             $allMetrics += $cpuMetrics
         }
-        
+
         if ($MetricType -eq "All" -or $MetricType -eq "Memory") {
             $memoryMetrics = Get-MemoryMetrics -VMs $targetVMs -Duration $Duration -SampleInterval $SampleInterval
             $allMetrics += $memoryMetrics
         }
-        
+
         if ($MetricType -eq "All" -or $MetricType -eq "Disk") {
             $diskMetrics = Get-DiskMetrics -VMs $targetVMs -Duration $Duration -SampleInterval $SampleInterval
             $allMetrics += $diskMetrics
         }
-        
+
         if ($MetricType -eq "All" -or $MetricType -eq "Network") {
             $networkMetrics = Get-NetworkMetrics -VMs $targetVMs -Duration $Duration -SampleInterval $SampleInterval
             $allMetrics += $networkMetrics
         }
-        
+
         # Check alerts if enabled
         if ($AlertThresholds) {
             $alerts = Test-AlertThresholds -Metrics $allMetrics -CPUThreshold $CPUThreshold -MemoryThreshold $MemoryThreshold -DiskLatencyThreshold $DiskLatencyThreshold
             Show-Alerts -Alerts $alerts
         }
-        
+
         # Export metrics
         Export-Metrics -Metrics $allMetrics -OutputFormat $OutputFormat -OutputPath $OutputPath
     }
-    
+
     Write-Host "`n=== Performance Monitoring Completed ===" -ForegroundColor Green
 }
 catch {
@@ -708,7 +708,7 @@ catch {
 finally {
     # Cleanup
     $global:MonitoringActive = $false
-    
+
     # Disconnect from vCenter if connected
     if ($global:DefaultVIServers) {
         Write-Host "`nDisconnecting from vCenter..." -ForegroundColor Yellow

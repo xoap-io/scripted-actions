@@ -33,6 +33,7 @@ Restoration script to selectively reverse optimizations if needed.
 ### Services Management
 
 Disables unnecessary services including:
+
 - AllJoyn Router Service
 - Bluetooth Support
 - Background Intelligent Transfer Service (BITS)
@@ -58,6 +59,7 @@ Disables unnecessary services including:
 - **Audit Policy**: Enhanced command line auditing
 
 ### RDS-Specific Settings
+
 - **Session Timeouts**: Optimized for persistent connections
 - **Keep-Alive**: Enhanced session stability
 - **Printer Redirection**: Optimized settings
@@ -102,7 +104,7 @@ Disables unnecessary services including:
 # Shows detailed resource validation:
 # Resource validation complete:
 #   Services: 38 found, 2 missing
-#   Tasks: 35 found, 5 missing  
+#   Tasks: 35 found, 5 missing
 #   Features: 1 found, 0 missing
 ```
 
@@ -153,31 +155,31 @@ Disables unnecessary services including:
 
 ### Main Optimization Script
 
-| Parameter | Type | Description | Default |
-|-----------|------|-------------|---------|
-| `DisableServices` | String[] | Additional services to disable | Empty |
-| `KeepServices` | String[] | Services to keep enabled (overrides disable list) | Empty |
-| `HideLocalDrives` | Switch | Hide local drives from users | Enabled by default |
-| `DisableServerManager` | Switch | Disable Server Manager auto-start | Enabled by default |
-| `EnableVerboseLogging` | Switch | Enable detailed logging | Disabled |
-| `PersistentDriveLetter` | String | Drive letter for persistent storage | None |
-| `EventLogLocation` | String | Custom event log location | Default location |
-| `RDSLicenseServer` | String | FQDN of RDS License Server | None |
-| `RDSLicenseMode` | String | RDS licensing mode (PerUser/PerDevice) | NotConfigured |
-| `UserProfilePath` | String | UNC path for roaming profiles | None |
-| `UserProfileDiskPath` | String | UNC path for User Profile Disks | None |
-| `ProfileDiskMaxSizeGB` | Integer | Max size in GB for UPD (1-1000) | 30 |
-| `DryRun` | Switch | Preview changes without applying | False |
+| Parameter               | Type     | Description                                       | Default            |
+| ----------------------- | -------- | ------------------------------------------------- | ------------------ |
+| `DisableServices`       | String[] | Additional services to disable                    | Empty              |
+| `KeepServices`          | String[] | Services to keep enabled (overrides disable list) | Empty              |
+| `HideLocalDrives`       | Switch   | Hide local drives from users                      | Enabled by default |
+| `DisableServerManager`  | Switch   | Disable Server Manager auto-start                 | Enabled by default |
+| `EnableVerboseLogging`  | Switch   | Enable detailed logging                           | Disabled           |
+| `PersistentDriveLetter` | String   | Drive letter for persistent storage               | None               |
+| `EventLogLocation`      | String   | Custom event log location                         | Default location   |
+| `RDSLicenseServer`      | String   | FQDN of RDS License Server                        | None               |
+| `RDSLicenseMode`        | String   | RDS licensing mode (PerUser/PerDevice)            | NotConfigured      |
+| `UserProfilePath`       | String   | UNC path for roaming profiles                     | None               |
+| `UserProfileDiskPath`   | String   | UNC path for User Profile Disks                   | None               |
+| `ProfileDiskMaxSizeGB`  | Integer  | Max size in GB for UPD (1-1000)                   | 30                 |
+| `DryRun`                | Switch   | Preview changes without applying                  | False              |
 
 ### Restoration Script
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `RestoreServices` | String[] | Services to restore |
-| `RestoreLocalDrives` | Switch | Restore local drive visibility |
-| `RestoreServerManager` | Switch | Re-enable Server Manager |
-| `RestoreScheduledTasks` | String[] | Scheduled tasks to re-enable |
-| `DryRun` | Switch | Preview changes without applying |
+| Parameter               | Type     | Description                      |
+| ----------------------- | -------- | -------------------------------- |
+| `RestoreServices`       | String[] | Services to restore              |
+| `RestoreLocalDrives`    | Switch   | Restore local drive visibility   |
+| `RestoreServerManager`  | Switch   | Re-enable Server Manager         |
+| `RestoreScheduledTasks` | String[] | Scheduled tasks to re-enable     |
+| `DryRun`                | Switch   | Preview changes without applying |
 
 ## Important Notes
 

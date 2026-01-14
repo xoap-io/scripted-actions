@@ -5,7 +5,7 @@
 .DESCRIPTION
     This script lists various Azure network resources using the Azure CLI.
     Provides comprehensive visibility into network infrastructure across subscriptions and resource groups.
-    
+
     The script uses various Azure CLI commands: az network * list
 
 .PARAMETER ResourceGroup
@@ -27,17 +27,17 @@
 
 .EXAMPLE
     .\az-cli-list-network-resources.ps1
-    
+
     Lists all network resources in the current subscription.
 
 .EXAMPLE
     .\az-cli-list-network-resources.ps1 -ResourceGroup "MyRG" -ResourceType "VNet" -ShowDetails
-    
+
     Lists all virtual networks in a specific resource group with details.
 
 .EXAMPLE
     .\az-cli-list-network-resources.ps1 -ResourceType "PublicIP" -Location "eastus" -OutputFormat "Json"
-    
+
     Lists all public IP addresses in East US region in JSON format.
 
 .NOTES
@@ -104,19 +104,19 @@ try {
             [string[]]$Command,
             [string]$ResourceName
         )
-        
+
         $azParams = $Command
-        
+
         if ($ResourceGroup) {
             $azParams += '--resource-group', $ResourceGroup
         }
-        
+
         $azParams += $outputFlag
-        
+
         Write-Host "📋 Listing $ResourceName..." -ForegroundColor Yellow
-        
+
         $result = & az @azParams 2>&1
-        
+
         if ($LASTEXITCODE -eq 0) {
             if ($OutputFormat -eq 'Table') {
                 $result | Out-Host
@@ -145,14 +145,14 @@ try {
             Invoke-AzCommand -Command @('network', 'public-ip', 'list') -ResourceName "Public IP Addresses"
             Invoke-AzCommand -Command @('network', 'lb', 'list') -ResourceName "Load Balancers"
             Invoke-AzCommand -Command @('network', 'route-table', 'list') -ResourceName "Route Tables"
-            
+
             if (-not $ResourceGroup) {
                 Write-Host "ℹ Note: Use -ResourceGroup parameter to list subnets and peerings" -ForegroundColor Blue
             } else {
                 # List subnets for all VNets in the resource group
                 $vnetListCmd = @('network', 'vnet', 'list', '--resource-group', $ResourceGroup, '--output', 'json')
                 $vnets = & az @vnetListCmd 2>$null | ConvertFrom-Json
-                
+
                 if ($vnets) {
                     foreach ($vnet in $vnets) {
                         Write-Host "📋 Listing Subnets in VNet: $($vnet.name)..." -ForegroundColor Yellow
@@ -173,7 +173,7 @@ try {
             # List all VNets first, then their subnets
             $vnetListCmd = @('network', 'vnet', 'list', '--resource-group', $ResourceGroup, '--output', 'json')
             $vnets = & az @vnetListCmd 2>$null | ConvertFrom-Json
-            
+
             if ($vnets) {
                 foreach ($vnet in $vnets) {
                     Write-Host "📋 Listing Subnets in VNet: $($vnet.name)..." -ForegroundColor Yellow
@@ -214,7 +214,7 @@ try {
             # List all VNets first, then their peerings
             $vnetListCmd = @('network', 'vnet', 'list', '--resource-group', $ResourceGroup, '--output', 'json')
             $vnets = & az @vnetListCmd 2>$null | ConvertFrom-Json
-            
+
             if ($vnets) {
                 foreach ($vnet in $vnets) {
                     Write-Host "📋 Listing Peerings for VNet: $($vnet.name)..." -ForegroundColor Yellow

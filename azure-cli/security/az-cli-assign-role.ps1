@@ -6,7 +6,7 @@
     This script assigns Azure RBAC roles using the Azure CLI with advanced validation and security best practices.
     Supports role assignment to users, groups, service principals, and managed identities.
     Includes scope validation, role definition verification, and assignment conflict checking.
-    
+
     The script uses the Azure CLI command: az role assignment create
 
 .PARAMETER Role
@@ -65,7 +65,7 @@
     Date: 2025-08-05
     Version: 1.0.0
     Requires: Azure CLI version 2.0 or later
-    
+
     RBAC Best Practices:
     - Use least privilege principle
     - Assign roles at appropriate scope
@@ -140,13 +140,13 @@ function Test-AzureCLI {
         if ($LASTEXITCODE -ne 0) {
             throw "Azure CLI is not installed or not functioning correctly"
         }
-        
+
         Write-Host "🔍 Checking Azure CLI authentication..." -ForegroundColor Cyan
         $null = az account show 2>$null
         if ($LASTEXITCODE -ne 0) {
             throw "Not authenticated to Azure CLI. Please run 'az login' first"
         }
-        
+
         Write-Host "✅ Azure CLI validation successful" -ForegroundColor Green
         return $true
     }
@@ -159,24 +159,24 @@ function Test-AzureCLI {
 # Function to validate role definition exists
 function Test-RoleDefinition {
     param($RoleName)
-    
+
     try {
         Write-Host "🔍 Validating role definition '$RoleName'..." -ForegroundColor Cyan
-        
+
         # Try to get role by name first
         $role = az role definition list --name $RoleName --output json | ConvertFrom-Json
-        
+
         if (-not $role -or $role.Count -eq 0) {
             # Try by role ID if it looks like a GUID
             if ($RoleName -match '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$') {
                 $role = az role definition show --name $RoleName --output json | ConvertFrom-Json
             }
         }
-        
+
         if (-not $role) {
             throw "Role definition '$RoleName' not found"
         }
-        
+
         Write-Host "✅ Role definition found: $($role.roleName)" -ForegroundColor Green
         return $role
     }
@@ -189,11 +189,11 @@ function Test-RoleDefinition {
 # Function to resolve assignee information
 function Get-AssigneeInfo {
     param($Assignee, $ObjectId)
-    
+
     try {
         if ($ObjectId) {
             Write-Host "🔍 Getting assignee info by object ID '$ObjectId'..." -ForegroundColor Cyan
-            
+
             # Try to get user first
             $user = az ad user show --id $ObjectId --output json 2>$null | ConvertFrom-Json
             if ($LASTEXITCODE -eq 0 -and $user) {
@@ -204,7 +204,7 @@ function Get-AssigneeInfo {
                     Principal = $user.userPrincipalName
                 }
             }
-            
+
             # Try to get group
             $group = az ad group show --group $ObjectId --output json 2>$null | ConvertFrom-Json
             if ($LASTEXITCODE -eq 0 -and $group) {
@@ -215,7 +215,7 @@ function Get-AssigneeInfo {
                     Principal = $group.displayName
                 }
             }
-            
+
             # Try to get service principal
             $sp = az ad sp show --id $ObjectId --output json 2>$null | ConvertFrom-Json
             if ($LASTEXITCODE -eq 0 -and $sp) {
@@ -226,12 +226,12 @@ function Get-AssigneeInfo {
                     Principal = $sp.appDisplayName
                 }
             }
-            
+
             throw "Assignee with object ID '$ObjectId' not found"
         }
         elseif ($Assignee) {
             Write-Host "🔍 Resolving assignee '$Assignee'..." -ForegroundColor Cyan
-            
+
             # Try email/UPN for user
             if ($Assignee -match '@') {
                 $user = az ad user show --id $Assignee --output json 2>$null | ConvertFrom-Json
@@ -244,7 +244,7 @@ function Get-AssigneeInfo {
                     }
                 }
             }
-            
+
             # Try as group name
             $group = az ad group show --group $Assignee --output json 2>$null | ConvertFrom-Json
             if ($LASTEXITCODE -eq 0 -and $group) {
@@ -255,7 +255,7 @@ function Get-AssigneeInfo {
                     Principal = $group.displayName
                 }
             }
-            
+
             # Try as service principal display name
             $sp = az ad sp list --display-name $Assignee --output json 2>$null | ConvertFrom-Json
             if ($LASTEXITCODE -eq 0 -and $sp -and $sp.Count -gt 0) {
@@ -266,7 +266,7 @@ function Get-AssigneeInfo {
                     Principal = $sp[0].appDisplayName
                 }
             }
-            
+
             throw "Assignee '$Assignee' not found"
         }
         else {
@@ -282,46 +282,46 @@ function Get-AssigneeInfo {
 # Function to build and validate scope
 function Get-ValidatedScope {
     param($Scope, $ResourceGroup, $Resource, $ResourceType)
-    
+
     try {
         if ($Scope) {
             Write-Host "🔍 Validating provided scope '$Scope'..." -ForegroundColor Cyan
-            
+
             # Validate scope format
             if ($Scope -notmatch '^/subscriptions/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}') {
                 throw "Invalid scope format. Must start with /subscriptions/{subscription-id}"
             }
-            
+
             Write-Host "✅ Scope format is valid" -ForegroundColor Green
             return $Scope
         }
-        
+
         # Build scope from components
         $subscription = az account show --query "id" --output tsv
         $builtScope = "/subscriptions/$subscription"
-        
+
         if ($ResourceGroup) {
             Write-Host "🔍 Validating resource group '$ResourceGroup'..." -ForegroundColor Cyan
             $null = az group show --name $ResourceGroup --query "name" --output tsv 2>$null
             if ($LASTEXITCODE -ne 0) {
                 throw "Resource group '$ResourceGroup' not found"
             }
-            
+
             $builtScope += "/resourceGroups/$ResourceGroup"
-            
+
             if ($Resource -and $ResourceType) {
                 Write-Host "🔍 Validating resource '$Resource' of type '$ResourceType'..." -ForegroundColor Cyan
-                
+
                 # Check if resource exists
                 $null = az resource show --resource-group $ResourceGroup --name $Resource --resource-type $ResourceType --query "name" --output tsv 2>$null
                 if ($LASTEXITCODE -ne 0) {
                     throw "Resource '$Resource' of type '$ResourceType' not found in resource group '$ResourceGroup'"
                 }
-                
+
                 $builtScope += "/providers/$ResourceType/$Resource"
             }
         }
-        
+
         Write-Host "✅ Built scope: $builtScope" -ForegroundColor Green
         return $builtScope
     }
@@ -334,16 +334,16 @@ function Get-ValidatedScope {
 # Function to check for existing role assignments
 function Test-ExistingAssignment {
     param($AssigneeObjectId, $Role, $Scope)
-    
+
     try {
         Write-Host "🔍 Checking for existing role assignments..." -ForegroundColor Cyan
-        
+
         $existingAssignments = az role assignment list --assignee $AssigneeObjectId --scope $Scope --output json | ConvertFrom-Json
-        
-        $conflictingAssignment = $existingAssignments | Where-Object { 
-            $_.roleDefinitionName -eq $Role -or $_.roleDefinitionId -eq $Role 
+
+        $conflictingAssignment = $existingAssignments | Where-Object {
+            $_.roleDefinitionName -eq $Role -or $_.roleDefinitionId -eq $Role
         }
-        
+
         if ($conflictingAssignment) {
             Write-Host "⚠️ Existing assignment found:" -ForegroundColor Yellow
             Write-Host "   Role: $($conflictingAssignment.roleDefinitionName)" -ForegroundColor White
@@ -351,7 +351,7 @@ function Test-ExistingAssignment {
             Write-Host "   Created: $($conflictingAssignment.createdOn)" -ForegroundColor White
             return $conflictingAssignment
         }
-        
+
         Write-Host "✅ No conflicting assignments found" -ForegroundColor Green
         return $null
     }
@@ -364,22 +364,22 @@ function Test-ExistingAssignment {
 # Function to display assignment summary
 function Show-AssignmentSummary {
     param($Role, $Assignee, $Scope, $Description, $Condition)
-    
+
     Write-Host "`n📋 Role Assignment Summary:" -ForegroundColor Yellow
     Write-Host "   Role: $($Role.roleName)" -ForegroundColor White
     Write-Host "   Role Type: $($Role.roleType)" -ForegroundColor White
     Write-Host "   Assignee: $($Assignee.DisplayName) ($($Assignee.Type))" -ForegroundColor White
     Write-Host "   Principal: $($Assignee.Principal)" -ForegroundColor White
     Write-Host "   Scope: $Scope" -ForegroundColor White
-    
+
     if ($Description) {
         Write-Host "   Description: $Description" -ForegroundColor White
     }
-    
+
     if ($Condition) {
         Write-Host "   Condition: $Condition" -ForegroundColor White
     }
-    
+
     Write-Host "`n📄 Role Permissions:" -ForegroundColor Yellow
     if ($Role.permissions -and $Role.permissions.Count -gt 0) {
         foreach ($permission in $Role.permissions) {
@@ -400,15 +400,15 @@ function Show-AssignmentSummary {
 # Function to get user confirmation
 function Get-UserConfirmation {
     param($Role, $Assignee, $Scope)
-    
+
     Write-Host "❗ ROLE ASSIGNMENT CONFIRMATION" -ForegroundColor Red
     Write-Host "You are about to assign the following role:" -ForegroundColor Yellow
     Write-Host "   Role: $($Role.roleName)" -ForegroundColor White
     Write-Host "   To: $($Assignee.DisplayName) ($($Assignee.Type))" -ForegroundColor White
     Write-Host "   Scope: $Scope" -ForegroundColor White
-    
+
     Write-Host "`n⚠️ This will grant the specified permissions!" -ForegroundColor Yellow
-    
+
     do {
         $confirmation = Read-Host "`nType 'ASSIGN' to confirm, or 'CANCEL' to abort"
         if ($confirmation -eq 'CANCEL') {
@@ -427,30 +427,30 @@ function Get-UserConfirmation {
 try {
     Write-Host "🚀 Starting Azure RBAC Role Assignment" -ForegroundColor Green
     Write-Host "======================================" -ForegroundColor Green
-    
+
     # Validate Azure CLI
     if (-not (Test-AzureCLI)) {
         exit 1
     }
-    
+
     # Validate role definition
     $roleDefinition = Test-RoleDefinition -RoleName $Role
     if (-not $roleDefinition) {
         exit 1
     }
-    
+
     # Resolve assignee information
     $assigneeInfo = Get-AssigneeInfo -Assignee $Assignee -ObjectId $AssigneeObjectId
     if (-not $assigneeInfo) {
         exit 1
     }
-    
+
     # Build and validate scope
     $validatedScope = Get-ValidatedScope -Scope $Scope -ResourceGroup $ResourceGroup -Resource $Resource -ResourceType $ResourceType
     if (-not $validatedScope) {
         exit 1
     }
-    
+
     # Check for existing assignments
     $existingAssignment = Test-ExistingAssignment -AssigneeObjectId $assigneeInfo.ObjectId -Role $Role -Scope $validatedScope
     if ($existingAssignment) {
@@ -462,23 +462,23 @@ try {
             }
         }
     }
-    
+
     # Display assignment summary
     Show-AssignmentSummary -Role $roleDefinition -Assignee $assigneeInfo -Scope $validatedScope -Description $Description -Condition $Condition
-    
+
     # WhatIf mode
     if ($WhatIf) {
         Write-Host "🔍 WHAT-IF MODE: The following role would be assigned:" -ForegroundColor Cyan
         Write-Host "✅ WhatIf analysis completed - no changes made" -ForegroundColor Green
         exit 0
     }
-    
+
     # Validation only mode
     if ($ValidateOnly) {
         Write-Host "✅ Validation completed - assignment is valid and ready to create" -ForegroundColor Green
         exit 0
     }
-    
+
     # Get confirmation unless Force is specified
     if (-not $Force) {
         if (-not (Get-UserConfirmation -Role $roleDefinition -Assignee $assigneeInfo -Scope $validatedScope)) {
@@ -486,7 +486,7 @@ try {
             exit 0
         }
     }
-    
+
     # Build assignment parameters
     $azParams = @(
         'role', 'assignment', 'create',
@@ -495,21 +495,21 @@ try {
         '--assignee-principal-type', $assigneeInfo.Type,
         '--scope', $validatedScope
     )
-    
+
     # Add optional parameters
     if ($Description) { $azParams += '--description', $Description }
-    if ($Condition) { 
+    if ($Condition) {
         $azParams += '--condition', $Condition
         $azParams += '--condition-version', $ConditionVersion
     }
-    
+
     # Create the role assignment
     Write-Host "🔧 Creating role assignment..." -ForegroundColor Cyan
     $assignment = az @azParams --output json | ConvertFrom-Json
-    
+
     if ($LASTEXITCODE -eq 0) {
         Write-Host "✅ Role assignment created successfully!" -ForegroundColor Green
-        
+
         # Display assignment details
         Write-Host "`n📝 Assignment Details:" -ForegroundColor Yellow
         Write-Host "   Assignment ID: $($assignment.id)" -ForegroundColor White
@@ -517,11 +517,11 @@ try {
         Write-Host "   Principal: $($assignment.principalName)" -ForegroundColor White
         Write-Host "   Scope: $($assignment.scope)" -ForegroundColor White
         Write-Host "   Created: $($assignment.createdOn)" -ForegroundColor White
-        
+
         if ($assignment.description) {
             Write-Host "   Description: $($assignment.description)" -ForegroundColor White
         }
-        
+
         # Show verification command
         Write-Host "`n💡 To verify the assignment:" -ForegroundColor Cyan
         Write-Host "   az role assignment list --assignee `"$($assigneeInfo.ObjectId)`" --scope `"$validatedScope`"" -ForegroundColor Gray

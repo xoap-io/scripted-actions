@@ -6,7 +6,7 @@
     This script creates a VPN connection between an Azure VPN Gateway and a Local Network Gateway using the Azure CLI.
     Supports both IPSec/IKE site-to-site connections and BGP-enabled connections.
     Configures shared keys, connection protocols, and routing preferences.
-    
+
     The script uses the Azure CLI command: az network vpn-connection create
 
 .PARAMETER ConnectionName
@@ -47,12 +47,12 @@
 
 .EXAMPLE
     .\az-cli-create-vpn-connection.ps1 -ConnectionName "azure-to-onprem" -ResourceGroup "network-rg" -Location "East US" -VPNGatewayName "azure-vpn-gw" -LocalGatewayName "onprem-lgw" -SharedKey "MySecureKey123!"
-    
+
     Creates a basic site-to-site VPN connection.
 
 .EXAMPLE
     .\az-cli-create-vpn-connection.ps1 -ConnectionName "azure-to-onprem-bgp" -ResourceGroup "network-rg" -Location "East US" -VPNGatewayName "azure-vpn-gw" -LocalGatewayName "onprem-lgw-bgp" -SharedKey "MySecureKey123!" -EnableBGP -RoutingWeight 100
-    
+
     Creates a VPN connection with BGP enabled and custom routing weight.
 
 .NOTES
@@ -242,7 +242,7 @@ try {
     Write-Host "  Local Gateway: $LocalGatewayName" -ForegroundColor White
     Write-Host "  Shared Key: [Protected]" -ForegroundColor White
     Write-Host "  Routing Weight: $RoutingWeight" -ForegroundColor White
-    
+
     if ($EnableBGP) {
         Write-Host "  BGP: Enabled" -ForegroundColor Green
         Write-Host "    Azure ASN: $($vpnGwInfo.bgpSettings.asn)" -ForegroundColor White
@@ -250,7 +250,7 @@ try {
     } else {
         Write-Host "  BGP: Disabled (Static Routing)" -ForegroundColor White
     }
-    
+
     if ($IKEv2Protocol) {
         Write-Host "  Protocol: IKEv2" -ForegroundColor White
     }
@@ -269,10 +269,10 @@ try {
 
     # Execute Azure CLI command
     $result = & az @azParams 2>&1
-    
+
     if ($LASTEXITCODE -eq 0) {
         $connectionInfo = $result | ConvertFrom-Json
-        
+
         Write-Host "✓ VPN connection created successfully!" -ForegroundColor Green
         Write-Host "VPN Connection Details:" -ForegroundColor Cyan
         Write-Host "  Name: $($connectionInfo.name)" -ForegroundColor White
@@ -280,13 +280,13 @@ try {
         Write-Host "  Provisioning State: $($connectionInfo.provisioningState)" -ForegroundColor White
         Write-Host "  Connection Status: $($connectionInfo.connectionStatus)" -ForegroundColor White
         Write-Host "  Connection Type: $($connectionInfo.connectionType)" -ForegroundColor White
-        
+
         if ($connectionInfo.enableBgp) {
             Write-Host "  BGP: Enabled" -ForegroundColor Green
         } else {
             Write-Host "  BGP: Disabled" -ForegroundColor White
         }
-        
+
         Write-Host "" -ForegroundColor White
         Write-Host "Next steps:" -ForegroundColor Yellow
         Write-Host "• Configure your on-premises VPN device with these settings:" -ForegroundColor White
@@ -300,7 +300,7 @@ try {
         }
         Write-Host "• Test connectivity once both ends are configured" -ForegroundColor White
         Write-Host "• Monitor connection status in Azure portal" -ForegroundColor White
-        
+
         Write-Host "" -ForegroundColor White
         Write-Host "To check connection status:" -ForegroundColor Cyan
         Write-Host "az network vpn-connection show --name $ConnectionName --resource-group $ResourceGroup --query 'connectionStatus'" -ForegroundColor White

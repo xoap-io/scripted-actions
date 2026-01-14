@@ -210,7 +210,7 @@ if ($EdgeZone) {
 # Set Error Action to Stop
 $ErrorActionPreference = "Stop"
 
-try {   
+try {
     # Create the virtual network and capture the result
     $result = New-AzVirtualNetwork @parameters
 

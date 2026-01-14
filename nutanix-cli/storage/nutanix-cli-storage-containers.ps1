@@ -159,7 +159,7 @@ $ErrorActionPreference = 'Stop'
 # Function to check and install Nutanix PowerShell SDK if needed
 function Test-NutanixSDKInstallation {
     Write-Host "Checking Nutanix PowerShell SDK installation..." -ForegroundColor Yellow
-    
+
     try {
         $nutanixModule = Get-Module -Name Nutanix.PowerShell.SDK -ListAvailable
         if (-not $nutanixModule) {
@@ -170,10 +170,10 @@ function Test-NutanixSDKInstallation {
             $version = $nutanixModule | Sort-Object Version -Descending | Select-Object -First 1
             Write-Host "Nutanix PowerShell SDK version $($version.Version) found." -ForegroundColor Green
         }
-        
+
         # Import the module
         Import-Module Nutanix.PowerShell.SDK -Force
-        
+
         return $true
     }
     catch {
@@ -185,16 +185,16 @@ function Test-NutanixSDKInstallation {
 # Function to connect to Prism Central or Element
 function Connect-ToNutanix {
     param($Server, $ServerType)
-    
+
     try {
         Write-Host "Connecting to $ServerType`: $Server" -ForegroundColor Yellow
-        
+
         # Check if already connected
         if ($global:DefaultNTNXConnection -and $global:DefaultNTNXConnection.Server -eq $Server) {
             Write-Host "Already connected to $Server" -ForegroundColor Green
             return $global:DefaultNTNXConnection
         }
-        
+
         # Connect to Nutanix
         $connection = Connect-NTNXCluster -Server $Server -AcceptInvalidSSLCerts
         Write-Host "Successfully connected to $ServerType`: $($connection.Server)" -ForegroundColor Green
@@ -209,7 +209,7 @@ function Connect-ToNutanix {
 # Function to resolve cluster information
 function Get-ClusterInfo {
     param($ClusterName, $ClusterUUID)
-    
+
     try {
         if ($ClusterUUID) {
             $cluster = Get-NTNXCluster | Where-Object { $_.clusterUuid -eq $ClusterUUID }
@@ -229,7 +229,7 @@ function Get-ClusterInfo {
             }
             Write-Warning "No cluster specified, using: $($cluster.name)"
         }
-        
+
         return @{
             Name = $cluster.name
             UUID = $cluster.clusterUuid
@@ -250,10 +250,10 @@ function Get-TargetContainers {
         $ContainerUUID,
         $ClusterUUID
     )
-    
+
     try {
         $containers = @()
-        
+
         if ($ContainerUUID) {
             # Get container by UUID
             $containers = Get-NTNXStorageContainer | Where-Object { $_.storageContainerUuid -eq $ContainerUUID }
@@ -282,7 +282,7 @@ function Get-TargetContainers {
                 $containers = Get-NTNXStorageContainer
             }
         }
-        
+
         return $containers
     }
     catch {
@@ -305,78 +305,78 @@ function New-StorageContainer {
         $MaxCapacityGB,
         $AdvertisedCapacityGB
     )
-    
+
     try {
         Write-Host "Creating storage container: $ContainerName" -ForegroundColor Cyan
-        
+
         # Check if container already exists
-        $existingContainer = Get-NTNXStorageContainer | Where-Object { 
-            $_.name -eq $ContainerName -and $_.clusterUuid -eq $ClusterUUID 
+        $existingContainer = Get-NTNXStorageContainer | Where-Object {
+            $_.name -eq $ContainerName -and $_.clusterUuid -eq $ClusterUUID
         }
         if ($existingContainer) {
             throw "Storage container '$ContainerName' already exists"
         }
-        
+
         # Create container specification
         $containerSpec = New-Object Nutanix.Prism.Model.StorageContainerSpec
         $containerSpec.name = $ContainerName
         $containerSpec.clusterUuid = $ClusterUUID
         $containerSpec.replicationFactor = $ReplicationFactor
-        
+
         # Set storage optimizations
         if ($EnableCompression) {
             $containerSpec.compressionEnabled = $true
             $containerSpec.compressionDelayInSecs = $CompressionDelay
             Write-Host "  ✓ Compression enabled (delay: $CompressionDelay seconds)" -ForegroundColor Green
         }
-        
+
         if ($EnableDeduplication) {
             $containerSpec.fingerPrintOnWrite = "ON"
             $containerSpec.onDiskDedup = "ON"
             Write-Host "  ✓ Deduplication enabled" -ForegroundColor Green
         }
-        
+
         if ($EnableErasureCoding) {
             $containerSpec.erasureCode = "ON"
             Write-Host "  ✓ Erasure coding enabled" -ForegroundColor Green
         }
-        
+
         # Set capacity limits
         if ($MaxCapacityGB) {
             $containerSpec.maxCapacity = $MaxCapacityGB * 1024 * 1024 * 1024
             Write-Host "  ✓ Max capacity set to $MaxCapacityGB GB" -ForegroundColor Green
         }
-        
+
         if ($AdvertisedCapacityGB) {
             $containerSpec.advertisedCapacity = $AdvertisedCapacityGB * 1024 * 1024 * 1024
             Write-Host "  ✓ Advertised capacity set to $AdvertisedCapacityGB GB" -ForegroundColor Green
         }
-        
+
         # Set storage pool if specified
         if ($StoragePoolUUID) {
             $containerSpec.storagePoolId = $StoragePoolUUID
             Write-Host "  ✓ Storage pool UUID: $StoragePoolUUID" -ForegroundColor Green
         }
-        
+
         # Create the container
         $task = New-NTNXStorageContainer -StorageContainerSpec $containerSpec
         Write-Host "  ✓ Storage container creation task initiated" -ForegroundColor Green
-        
+
         # Wait for creation to complete
         $timeout = (Get-Date).AddMinutes(10)
         $containerCreated = $false
         $createdContainer = $null
-        
+
         while ((Get-Date) -lt $timeout -and -not $containerCreated) {
             Start-Sleep -Seconds 10
-            $createdContainer = Get-NTNXStorageContainer | Where-Object { 
-                $_.name -eq $ContainerName -and $_.clusterUuid -eq $ClusterUUID 
+            $createdContainer = Get-NTNXStorageContainer | Where-Object {
+                $_.name -eq $ContainerName -and $_.clusterUuid -eq $ClusterUUID
             }
             if ($createdContainer) {
                 $containerCreated = $true
             }
         }
-        
+
         if ($containerCreated) {
             Write-Host "  ✓ Storage container created successfully: $($createdContainer.name)" -ForegroundColor Green
             return @{
@@ -411,17 +411,17 @@ function Update-StorageContainer {
         $MaxCapacityGB,
         $AdvertisedCapacityGB
     )
-    
+
     try {
         Write-Host "Updating storage container: $($Container.name)" -ForegroundColor Cyan
-        
+
         # Create update specification
         $updateSpec = New-Object Nutanix.Prism.Model.StorageContainerSpec
         $updateSpec.name = $Container.name
         $updateSpec.storageContainerUuid = $Container.storageContainerUuid
-        
+
         $changes = @()
-        
+
         # Update compression settings
         if ($PSBoundParameters.ContainsKey('EnableCompression')) {
             $updateSpec.compressionEnabled = $EnableCompression
@@ -432,7 +432,7 @@ function Update-StorageContainer {
                 $changes += "Compression: $EnableCompression"
             }
         }
-        
+
         # Update deduplication settings
         if ($PSBoundParameters.ContainsKey('EnableDeduplication')) {
             if ($EnableDeduplication) {
@@ -445,24 +445,24 @@ function Update-StorageContainer {
                 $changes += "Deduplication: Disabled"
             }
         }
-        
+
         # Update erasure coding
         if ($PSBoundParameters.ContainsKey('EnableErasureCoding')) {
             $updateSpec.erasureCode = if ($EnableErasureCoding) { "ON" } else { "OFF" }
             $changes += "Erasure Coding: $EnableErasureCoding"
         }
-        
+
         # Update capacity limits
         if ($MaxCapacityGB) {
             $updateSpec.maxCapacity = $MaxCapacityGB * 1024 * 1024 * 1024
             $changes += "Max Capacity: $MaxCapacityGB GB"
         }
-        
+
         if ($AdvertisedCapacityGB) {
             $updateSpec.advertisedCapacity = $AdvertisedCapacityGB * 1024 * 1024 * 1024
             $changes += "Advertised Capacity: $AdvertisedCapacityGB GB"
         }
-        
+
         if ($changes.Count -eq 0) {
             Write-Host "  ⚠ No changes specified for update" -ForegroundColor Yellow
             return @{
@@ -472,16 +472,16 @@ function Update-StorageContainer {
                 Changes = @()
             }
         }
-        
+
         # Apply updates
         $task = Update-NTNXStorageContainer -StorageContainerUuid $Container.storageContainerUuid -StorageContainerSpec $updateSpec
-        
+
         foreach ($change in $changes) {
             Write-Host "  ✓ $change" -ForegroundColor Green
         }
-        
+
         Write-Host "  ✓ Storage container update task initiated" -ForegroundColor Green
-        
+
         return @{
             Success = $true
             Container = $Container
@@ -505,24 +505,24 @@ function Update-StorageContainer {
 # Function to delete storage container
 function Remove-StorageContainer {
     param($Container, $Force)
-    
+
     try {
         Write-Host "Deleting storage container: $($Container.name)" -ForegroundColor Cyan
-        
+
         # Check if container is in use
-        $vmsUsingContainer = Get-NTNXVM | Where-Object { 
+        $vmsUsingContainer = Get-NTNXVM | Where-Object {
             $_.vmDiskInfo | Where-Object { $_.storageContainerUuid -eq $Container.storageContainerUuid }
         }
-        
+
         if ($vmsUsingContainer.Count -gt 0 -and -not $Force) {
             $vmNames = $vmsUsingContainer | Select-Object -ExpandProperty vmName
             throw "Container is in use by $($vmsUsingContainer.Count) VM(s): $($vmNames -join ', '). Use -Force to override."
         }
-        
+
         # Delete the container
         $task = Remove-NTNXStorageContainer -StorageContainerUuid $Container.storageContainerUuid
         Write-Host "  ✓ Storage container deletion task initiated" -ForegroundColor Green
-        
+
         return @{
             Success = $true
             Container = $Container
@@ -544,27 +544,27 @@ function Remove-StorageContainer {
 # Function to get container performance metrics
 function Get-ContainerMetrics {
     param($Container)
-    
+
     try {
         # Get container stats
         $stats = Get-NTNXStorageContainerStats -StorageContainerUuid $Container.storageContainerUuid
-        
+
         # Calculate utilization percentages
         $totalCapacityBytes = $Container.maxCapacity
         $usedBytes = $stats.storageStats.storageUsageBytes
-        $utilizationPercent = if ($totalCapacityBytes -gt 0) { 
-            [math]::Round(($usedBytes / $totalCapacityBytes) * 100, 2) 
+        $utilizationPercent = if ($totalCapacityBytes -gt 0) {
+            [math]::Round(($usedBytes / $totalCapacityBytes) * 100, 2)
         } else { 0 }
-        
+
         # Get savings from deduplication and compression
-        $compressionSavings = if ($stats.storageStats.compressionSavingBytes) { 
-            [math]::Round($stats.storageStats.compressionSavingBytes / 1GB, 2) 
+        $compressionSavings = if ($stats.storageStats.compressionSavingBytes) {
+            [math]::Round($stats.storageStats.compressionSavingBytes / 1GB, 2)
         } else { 0 }
-        
-        $dedupSavings = if ($stats.storageStats.dedupSavingBytes) { 
-            [math]::Round($stats.storageStats.dedupSavingBytes / 1GB, 2) 
+
+        $dedupSavings = if ($stats.storageStats.dedupSavingBytes) {
+            [math]::Round($stats.storageStats.dedupSavingBytes / 1GB, 2)
         } else { 0 }
-        
+
         return @{
             Name = $Container.name
             UUID = $Container.storageContainerUuid
@@ -599,37 +599,37 @@ function Get-ContainerMetrics {
 # Function to optimize container performance
 function Optimize-StorageContainer {
     param($Container)
-    
+
     try {
         Write-Host "Optimizing storage container: $($Container.name)" -ForegroundColor Cyan
-        
+
         $optimizations = @()
-        
+
         # Check if compression should be enabled
         if (-not $Container.compressionEnabled) {
             Write-Host "  ⚠ Compression is disabled - consider enabling for space savings" -ForegroundColor Yellow
             $optimizations += "Enable compression for space savings"
         }
-        
+
         # Check if deduplication should be enabled
         if ($Container.fingerPrintOnWrite -ne "ON") {
             Write-Host "  ⚠ Deduplication is disabled - consider enabling for space savings" -ForegroundColor Yellow
             $optimizations += "Enable deduplication for space savings"
         }
-        
+
         # Check erasure coding for large containers
         $containerSizeGB = $Container.maxCapacity / 1GB
         if ($containerSizeGB -gt 1000 -and $Container.erasureCode -ne "ON") {
             Write-Host "  ⚠ Large container without erasure coding - consider enabling" -ForegroundColor Yellow
             $optimizations += "Enable erasure coding for large container efficiency"
         }
-        
+
         # Check replication factor
         if ($Container.replicationFactor -eq 1) {
             Write-Host "  ⚠ Replication factor is 1 - consider RF2 for redundancy" -ForegroundColor Yellow
             $optimizations += "Consider replication factor 2 for redundancy"
         }
-        
+
         # Trigger storage optimization tasks
         try {
             # Start deduplication if enabled
@@ -637,24 +637,24 @@ function Optimize-StorageContainer {
                 Write-Host "  ✓ Triggering deduplication optimization..." -ForegroundColor Green
                 # Nutanix SDK might have specific optimization commands
             }
-            
+
             # Start compression optimization if enabled
             if ($Container.compressionEnabled) {
                 Write-Host "  ✓ Triggering compression optimization..." -ForegroundColor Green
             }
-            
+
             $optimizations += "Storage optimization tasks initiated"
         }
         catch {
             Write-Warning "  Failed to trigger optimization tasks: $($_.Exception.Message)"
             $optimizations += "Failed to trigger optimization tasks"
         }
-        
+
         if ($optimizations.Count -eq 0) {
             $optimizations += "Container appears to be optimally configured"
             Write-Host "  ✓ Container appears to be optimally configured" -ForegroundColor Green
         }
-        
+
         return @{
             Success = $true
             Container = $Container
@@ -676,9 +676,9 @@ function Optimize-StorageContainer {
 # Function to display results
 function Show-ContainerResults {
     param($Results, $Operation, $OutputFormat, $OutputPath)
-    
+
     Write-Host "`n=== Storage Container $Operation Results ===" -ForegroundColor Cyan
-    
+
     switch ($Operation) {
         "List" {
             if ($OutputFormat -eq "Console") {
@@ -707,11 +707,11 @@ function Show-ContainerResults {
         default {
             $successful = $Results | Where-Object { $_.Success -eq $true }
             $failed = $Results | Where-Object { $_.Success -eq $false }
-            
+
             Write-Host "Total Containers: $($Results.Count)" -ForegroundColor White
             Write-Host "Successful: $($successful.Count)" -ForegroundColor Green
             Write-Host "Failed: $($failed.Count)" -ForegroundColor Red
-            
+
             if ($failed.Count -gt 0) {
                 Write-Host "`nFailed Operations:" -ForegroundColor Red
                 foreach ($result in $failed) {
@@ -720,7 +720,7 @@ function Show-ContainerResults {
             }
         }
     }
-    
+
     # Export results if requested
     if ($OutputFormat -ne "Console") {
         switch ($OutputFormat) {
@@ -745,37 +745,37 @@ function Show-ContainerResults {
 # Main execution
 try {
     Write-Host "=== Nutanix Storage Container Management ===" -ForegroundColor Cyan
-    
+
     # Determine target server
     $targetServer = if ($PrismCentral) { $PrismCentral } else { $PrismElement }
     $serverType = if ($PrismCentral) { "Prism Central" } else { "Prism Element" }
-    
+
     if (-not $targetServer) {
         throw "Either PrismCentral or PrismElement parameter must be specified"
     }
-    
+
     Write-Host "Target $serverType`: $targetServer" -ForegroundColor White
     Write-Host "Operation: $Operation" -ForegroundColor White
     Write-Host ""
-    
+
     # Check and install Nutanix PowerShell SDK
     if (-not (Test-NutanixSDKInstallation)) {
         throw "Nutanix PowerShell SDK installation failed"
     }
-    
+
     # Connect to Nutanix
     $connection = Connect-ToNutanix -Server $targetServer -ServerType $serverType
-    
+
     # Resolve cluster information if needed
     $clusterInfo = $null
     if ($ClusterName -or $ClusterUUID -or $Operation -eq "Create") {
         $clusterInfo = Get-ClusterInfo -ClusterName $ClusterName -ClusterUUID $ClusterUUID
         Write-Host "Target Cluster: $($clusterInfo.Name) [$($clusterInfo.UUID)]" -ForegroundColor White
     }
-    
+
     # Perform operations
     $results = @()
-    
+
     switch ($Operation) {
         "Create" {
             if (-not $ContainerName) {
@@ -784,44 +784,44 @@ try {
             if (-not $clusterInfo) {
                 throw "ClusterName or ClusterUUID parameter is required for Create operation"
             }
-            
+
             $result = New-StorageContainer -ContainerName $ContainerName -ClusterUUID $clusterInfo.UUID -ReplicationFactor $ReplicationFactor -EnableCompression:$EnableCompression -EnableDeduplication:$EnableDeduplication -EnableErasureCoding:$EnableErasureCoding -CompressionDelay $CompressionDelay -StoragePoolUUID $StoragePoolUUID -MaxCapacityGB $MaxCapacityGB -AdvertisedCapacityGB $AdvertisedCapacityGB
             $results += $result
         }
-        
+
         "List" {
             $containers = Get-TargetContainers -ContainerName $ContainerName -ContainerNames $ContainerNames -ContainerUUID $ContainerUUID -ClusterUUID $clusterInfo.UUID
             Write-Host "Found $($containers.Count) storage container(s)" -ForegroundColor Green
-            
+
             foreach ($container in $containers) {
                 $metrics = Get-ContainerMetrics -Container $container
                 $results += $metrics
             }
         }
-        
+
         "Monitor" {
             $containers = Get-TargetContainers -ContainerName $ContainerName -ContainerNames $ContainerNames -ContainerUUID $ContainerUUID -ClusterUUID $clusterInfo.UUID
             Write-Host "Monitoring $($containers.Count) storage container(s)" -ForegroundColor Green
-            
+
             foreach ($container in $containers) {
                 $metrics = Get-ContainerMetrics -Container $container
                 $results += $metrics
             }
         }
-        
+
         "Status" {
             $containers = Get-TargetContainers -ContainerName $ContainerName -ContainerNames $ContainerNames -ContainerUUID $ContainerUUID -ClusterUUID $clusterInfo.UUID
             Write-Host "Getting status for $($containers.Count) storage container(s)" -ForegroundColor Green
-            
+
             foreach ($container in $containers) {
                 $metrics = Get-ContainerMetrics -Container $container
                 $results += $metrics
             }
         }
-        
+
         "Update" {
             $containers = Get-TargetContainers -ContainerName $ContainerName -ContainerNames $ContainerNames -ContainerUUID $ContainerUUID -ClusterUUID $clusterInfo.UUID
-            
+
             if (-not $Force -and $containers.Count -gt 1) {
                 $confirmation = Read-Host "`nProceed with updating $($containers.Count) container(s)? (y/N)"
                 if ($confirmation -notmatch '^[Yy]$') {
@@ -829,16 +829,16 @@ try {
                     exit 0
                 }
             }
-            
+
             foreach ($container in $containers) {
                 $result = Update-StorageContainer -Container $container -EnableCompression:$EnableCompression -EnableDeduplication:$EnableDeduplication -EnableErasureCoding:$EnableErasureCoding -CompressionDelay $CompressionDelay -MaxCapacityGB $MaxCapacityGB -AdvertisedCapacityGB $AdvertisedCapacityGB
                 $results += $result
             }
         }
-        
+
         "Delete" {
             $containers = Get-TargetContainers -ContainerName $ContainerName -ContainerNames $ContainerNames -ContainerUUID $ContainerUUID -ClusterUUID $clusterInfo.UUID
-            
+
             if (-not $Force) {
                 $confirmation = Read-Host "`nProceed with deleting $($containers.Count) container(s)? This action cannot be undone! (y/N)"
                 if ($confirmation -notmatch '^[Yy]$') {
@@ -846,26 +846,26 @@ try {
                     exit 0
                 }
             }
-            
+
             foreach ($container in $containers) {
                 $result = Remove-StorageContainer -Container $container -Force:$Force
                 $results += $result
             }
         }
-        
+
         "Optimize" {
             $containers = Get-TargetContainers -ContainerName $ContainerName -ContainerNames $ContainerNames -ContainerUUID $ContainerUUID -ClusterUUID $clusterInfo.UUID
-            
+
             foreach ($container in $containers) {
                 $result = Optimize-StorageContainer -Container $container
                 $results += $result
             }
         }
     }
-    
+
     # Display results
     Show-ContainerResults -Results $results -Operation $Operation -OutputFormat $OutputFormat -OutputPath $OutputPath
-    
+
     Write-Host "`n=== Storage Container Management Completed ===" -ForegroundColor Green
 }
 catch {

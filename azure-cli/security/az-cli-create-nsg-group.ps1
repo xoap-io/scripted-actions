@@ -6,7 +6,7 @@
     This script creates an Azure Network Security Group using the Azure CLI with comprehensive validation and security best practices.
     Supports location validation, tagging, and automatic default rule creation.
     Includes conflict checking and resource validation with detailed reporting.
-    
+
     The script uses the Azure CLI command: az network nsg create
 
 .PARAMETER Name
@@ -89,13 +89,13 @@ function Test-AzureCLI {
         if ($LASTEXITCODE -ne 0) {
             throw "Azure CLI is not installed or not functioning correctly"
         }
-        
+
         Write-Host "🔍 Checking Azure CLI authentication..." -ForegroundColor Cyan
         $null = az account show 2>$null
         if ($LASTEXITCODE -ne 0) {
             throw "Not authenticated to Azure CLI. Please run 'az login' first"
         }
-        
+
         Write-Host "✅ Azure CLI validation successful" -ForegroundColor Green
         return $true
     }
@@ -108,7 +108,7 @@ function Test-AzureCLI {
 # Function to validate resource group exists
 function Test-ResourceGroupExists {
     param($ResourceGroup)
-    
+
     try {
         Write-Host "🔍 Validating resource group '$ResourceGroup' exists..." -ForegroundColor Cyan
         $rg = az group show --name $ResourceGroup --query "name" --output tsv 2>$null
@@ -127,7 +127,7 @@ function Test-ResourceGroupExists {
 # Function to validate location
 function Test-AzureLocation {
     param($Location)
-    
+
     try {
         Write-Host "🔍 Validating Azure location '$Location'..." -ForegroundColor Cyan
         $validLocations = az account list-locations --query "[].name" --output tsv
@@ -146,7 +146,7 @@ function Test-AzureLocation {
 # Function to check if NSG already exists
 function Test-NSGExists {
     param($ResourceGroup, $NsgName)
-    
+
     try {
         Write-Host "🔍 Checking if NSG '$NsgName' already exists..." -ForegroundColor Cyan
         $nsg = az network nsg show --resource-group $ResourceGroup --name $NsgName --query "name" --output tsv 2>$null
@@ -165,40 +165,40 @@ function Test-NSGExists {
 # Function to parse and validate tags
 function Get-ValidatedTags {
     param($TagString)
-    
+
     if ([string]::IsNullOrEmpty($TagString)) {
         return @()
     }
-    
+
     $tagPairs = $TagString -split '\s+'
     $azTags = @()
-    
+
     foreach ($pair in $tagPairs) {
         if ($pair -match '^([^=]+)=(.+)$') {
             $key = $Matches[1]
             $value = $Matches[2]
-            
+
             # Validate tag key and value
             if ($key.Length -gt 512 -or $value.Length -gt 256) {
                 throw "Tag key must be ≤ 512 chars and value ≤ 256 chars: $pair"
             }
-            
+
             $azTags += $pair
         }
         else {
             throw "Invalid tag format: $pair (use key=value format)"
         }
     }
-    
+
     return $azTags
 }
 
 # Function to get default rules based on profile
 function Get-DefaultRules {
     param($RuleProfile)
-    
+
     $rules = @()
-    
+
     switch ($RuleProfile) {
         'Basic' {
             $rules = @(
@@ -230,20 +230,20 @@ function Get-DefaultRules {
             )
         }
     }
-    
+
     return $rules
 }
 
 # Function to create default rules
 function New-DefaultRules {
     param($ResourceGroup, $NsgName, $Rules)
-    
+
     Write-Host "🔧 Creating default security rules..." -ForegroundColor Cyan
-    
+
     foreach ($rule in $Rules) {
         try {
             Write-Host "   Creating rule: $($rule.Name)" -ForegroundColor Gray
-            
+
             $ruleParams = @(
                 'network', 'nsg', 'rule', 'create',
                 '--resource-group', $ResourceGroup,
@@ -259,7 +259,7 @@ function New-DefaultRules {
                 '--destination-port-ranges', $rule.DestinationPort,
                 '--description', $rule.Description
             )
-            
+
             $null = az @ruleParams
             if ($LASTEXITCODE -eq 0) {
                 Write-Host "   ✅ Rule '$($rule.Name)' created successfully" -ForegroundColor Green
@@ -277,16 +277,16 @@ function New-DefaultRules {
 # Function to display NSG summary
 function Show-NSGSummary {
     param($Parameters)
-    
+
     Write-Host "`n📋 NSG Configuration Summary:" -ForegroundColor Yellow
     Write-Host "   NSG Name: $($Parameters.Name)" -ForegroundColor White
     Write-Host "   Resource Group: $($Parameters.ResourceGroup)" -ForegroundColor White
     Write-Host "   Location: $($Parameters.Location)" -ForegroundColor White
-    
+
     if ($Parameters.Tags) {
         Write-Host "   Tags: $($Parameters.Tags)" -ForegroundColor White
     }
-    
+
     if ($Parameters.CreateDefaultRules) {
         Write-Host "   Default Rules: Yes ($($Parameters.DefaultRuleProfile) profile)" -ForegroundColor White
     }
@@ -300,33 +300,33 @@ function Show-NSGSummary {
 try {
     Write-Host "🚀 Starting Azure NSG Creation" -ForegroundColor Green
     Write-Host "==============================" -ForegroundColor Green
-    
+
     # Validate Azure CLI
     if (-not (Test-AzureCLI)) {
         exit 1
     }
-    
+
     # Validate resource group exists
     if (-not (Test-ResourceGroupExists -ResourceGroup $ResourceGroup)) {
         exit 1
     }
-    
+
     # Validate location
     if (-not (Test-AzureLocation -Location $Location)) {
         exit 1
     }
-    
+
     # Check if NSG already exists
     if (-not (Test-NSGExists -ResourceGroup $ResourceGroup -NsgName $Name)) {
         exit 1
     }
-    
+
     # Validate and process tags
     $validatedTags = @()
     if ($Tags) {
         $validatedTags = Get-ValidatedTags -TagString $Tags
     }
-    
+
     # Display configuration summary
     $paramSummary = @{
         Name = $Name
@@ -337,7 +337,7 @@ try {
         DefaultRuleProfile = $DefaultRuleProfile
     }
     Show-NSGSummary -Parameters $paramSummary
-    
+
     # Build parameters array
     $azParams = @(
         'network', 'nsg', 'create',
@@ -345,31 +345,31 @@ try {
         '--name', $Name,
         '--location', $Location
     )
-    
+
     # Add tags if provided
     if ($validatedTags.Count -gt 0) {
         $azParams += '--tags'
         $azParams += $validatedTags
     }
-    
+
     # Create the NSG
     Write-Host "🔧 Creating Network Security Group '$Name'..." -ForegroundColor Cyan
     $null = az @azParams
-    
+
     if ($LASTEXITCODE -eq 0) {
         Write-Host "✅ NSG '$Name' created successfully!" -ForegroundColor Green
-        
+
         # Create default rules if requested
         if ($CreateDefaultRules) {
             $defaultRules = Get-DefaultRules -RuleProfile $DefaultRuleProfile
             New-DefaultRules -ResourceGroup $ResourceGroup -NsgName $Name -Rules $defaultRules
         }
-        
+
         # Display created NSG details
         Write-Host "`n📝 NSG Details:" -ForegroundColor Yellow
         $nsgDetails = az network nsg show --resource-group $ResourceGroup --name $Name --output table
         Write-Host $nsgDetails -ForegroundColor White
-        
+
         # Show rules summary
         Write-Host "`n📋 Security Rules Summary:" -ForegroundColor Yellow
         $rulesDetails = az network nsg rule list --resource-group $ResourceGroup --nsg-name $Name --output table

@@ -121,7 +121,7 @@ try {
     # Check for dependencies if requested
     if ($CheckDependencies) {
         Write-Host "Checking for dependencies..." -ForegroundColor Cyan
-        
+
         # Check if snapshot is used by any AMIs
         try {
             $amiResult = aws ec2 describe-images --filters "Name=block-device-mapping.snapshot-id,Values=$SnapshotId" @awsArgs --output json 2>&1
@@ -163,7 +163,7 @@ try {
     # Perform the deletion
     Write-Host "Deleting snapshot $SnapshotId..." -ForegroundColor Cyan
     $deleteResult = aws ec2 delete-snapshot --snapshot-id $SnapshotId @awsArgs 2>&1
-    
+
     if ($LASTEXITCODE -ne 0) {
         throw "Failed to delete snapshot: $deleteResult"
     }

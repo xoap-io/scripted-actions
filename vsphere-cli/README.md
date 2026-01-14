@@ -17,18 +17,21 @@ vsphere-cli/
 ### VM Provisioning & Management
 
 1. **`vsphere-cli-create-vm-from-template.ps1`** - Create new VMs from templates
+
    - Template-based VM creation with guest OS customization
    - Resource allocation (CPU, memory) override
    - Network configuration and datastore placement
    - PowerCLI auto-installation and vCenter connection management
 
 2. **`vsphere-cli-clone-vm.ps1`** - Clone VMs and templates
+
    - Full clones and linked clones support
    - Bulk cloning with auto-generated naming
    - Resource modification during cloning
    - Asynchronous operations support
 
 3. **`vsphere-cli-vm-power-operations.ps1`** - Advanced VM power management
+
    - Start, stop, restart, suspend, reset operations
    - Graceful vs. hard power operations with VMware Tools integration
    - Sequential startup with configurable delays
@@ -37,12 +40,14 @@ vsphere-cli/
    - Comprehensive status reporting with uptime tracking
 
 4. **`vsphere-cli-snapshot-vm.ps1`** - Snapshot management
+
    - Create, list, revert, delete snapshots
    - Snapshot cleanup with retention policies
    - Memory and quiesce options
    - Batch operations across multiple VMs
 
 5. **`vsphere-cli-migrate-vm.ps1`** - VM migration operations
+
    - vMotion (compute migration) between hosts
    - Storage vMotion between datastores
    - Migration validation and compatibility checking
@@ -81,18 +86,21 @@ vsphere-cli/
 ## 🔧 Key Features
 
 ### PowerCLI Integration
+
 - **Automatic Installation**: All scripts check for and install PowerCLI if missing
 - **Version Compatibility**: Supports PowerCLI 13.x+ and vSphere 7.0+
 - **Connection Management**: Automatic vCenter connection with credential caching
 - **Error Handling**: Comprehensive error handling with meaningful messages
 
 ### Parameter Validation
+
 - **Resource IDs**: Validation for VM names, datastore names, cluster names
 - **Network Configuration**: Port group and VLAN validation
 - **Resource Limits**: CPU core and memory limits validation
 - **PowerShell Best Practices**: CmdletBinding with parameter sets
 
 ### Operational Safety
+
 - **Confirmation Prompts**: Force parameter to bypass confirmations
 - **Pre-flight Checks**: Validation of all required vSphere objects
 - **Idempotency**: Safe to run multiple times without side effects
@@ -101,11 +109,13 @@ vsphere-cli/
 ## 📋 Prerequisites
 
 ### Software Requirements
+
 - **PowerShell 5.1** or later (Windows PowerShell or PowerShell Core)
 - **VMware PowerCLI 13.x** or later (auto-installed if missing)
 - **vSphere 7.0** or later (tested with vSphere 9.0)
 
 ### vSphere Permissions
+
 Scripts require appropriate vSphere permissions based on operations:
 
 - **VM Operations**: Virtual machine power operations, configuration changes
@@ -114,6 +124,7 @@ Scripts require appropriate vSphere permissions based on operations:
 - **Performance**: Statistics read access for monitoring operations
 
 ### Network Requirements
+
 - **vCenter Connectivity**: Network access to vCenter Server (port 443)
 - **DNS Resolution**: Proper DNS resolution for vCenter FQDN
 - **Firewall**: Outbound HTTPS (443) access for PowerCLI module installation
@@ -121,6 +132,7 @@ Scripts require appropriate vSphere permissions based on operations:
 ## 🎯 Usage Examples
 
 ### Single VM Creation from Template
+
 ```powershell
 .\vsphere-cli-create-vm-from-template.ps1 `
     -VCenterServer "vcenter.domain.com" `
@@ -135,6 +147,7 @@ Scripts require appropriate vSphere permissions based on operations:
 ```
 
 ### Bulk VM Cloning
+
 ```powershell
 .\vsphere-cli-clone-vm.ps1 `
     -VCenterServer "vcenter.domain.com" `
@@ -148,6 +161,7 @@ Scripts require appropriate vSphere permissions based on operations:
 ```
 
 ### Performance Monitoring with Alerts
+
 ```powershell
 .\vsphere-cli-get-vm-performance.ps1 `
     -VCenterServer "vcenter.domain.com" `
@@ -161,6 +175,7 @@ Scripts require appropriate vSphere permissions based on operations:
 ```
 
 ### Infrastructure Inventory Report
+
 ```powershell
 .\vsphere-cli-describe-inventory.ps1 `
     -VCenterServer "vcenter.domain.com" `
@@ -171,6 +186,7 @@ Scripts require appropriate vSphere permissions based on operations:
 ```
 
 ### Bulk VM Power Management
+
 ```powershell
 # Start multiple VMs with snapshot creation
 .\vsphere-cli-vm-power-operations.ps1 `
@@ -196,6 +212,7 @@ Scripts require appropriate vSphere permissions based on operations:
 ```
 
 ### Windows Update Management
+
 ```powershell
 # Install critical and security updates
 .\vsphere-cli-windows-updates.ps1 `
@@ -226,16 +243,19 @@ Scripts require appropriate vSphere permissions based on operations:
 ## 🔐 Security Considerations
 
 ### Credential Management
+
 - Scripts use Windows credential manager for vCenter authentication
 - No passwords stored in plain text within scripts
 - Support for domain-integrated authentication
 
 ### Certificate Handling
+
 - PowerCLI certificate warnings disabled for lab environments
 - Production environments should use proper SSL certificates
 - Scripts can be modified to enforce certificate validation
 
 ### Permissions
+
 - Follow principle of least privilege for vSphere service accounts
 - Create dedicated service accounts for automation tasks
 - Regular review and rotation of automation credentials
@@ -243,14 +263,18 @@ Scripts require appropriate vSphere permissions based on operations:
 ## 🛠️ Customization & Extension
 
 ### Adding New Scripts
+
 Follow the established patterns:
+
 1. **Parameter Validation**: Use `[ValidateSet]`, `[ValidatePattern]`, `[ValidateRange]`
 2. **Error Handling**: Set `$ErrorActionPreference = 'Stop'` and use try/catch blocks
 3. **PowerCLI Check**: Include the `Test-PowerCLIInstallation` function
 4. **Documentation**: Complete PowerShell help with `.SYNOPSIS`, `.DESCRIPTION`, `.PARAMETER`, `.EXAMPLE`
 
 ### Script Templates
+
 Reference existing scripts for:
+
 - Parameter block structure
 - vCenter connection handling
 - Object validation patterns
@@ -261,27 +285,33 @@ Reference existing scripts for:
 ### Common Issues
 
 **PowerCLI Installation Fails**
+
 - Ensure PowerShell execution policy allows module installation
 - Run PowerShell as administrator if needed
 - Check internet connectivity for PowerShell Gallery access
 
 **vCenter Connection Issues**
+
 - Verify vCenter FQDN/IP address accessibility
 - Check firewall rules for port 443 outbound
 - Validate credentials and permissions
 
 **VM Creation Failures**
+
 - Verify datastore has sufficient free space
 - Check cluster resource availability
 - Ensure templates exist and are accessible
 
 **Performance Data Missing**
+
 - Verify statistics collection is enabled in vCenter
 - Check statistics levels and collection intervals
 - Ensure appropriate permissions for statistics access
 
 ### Debug Mode
+
 Enable PowerShell verbose output:
+
 ```powershell
 $VerbosePreference = "Continue"
 # Run script with -Verbose parameter
@@ -290,11 +320,13 @@ $VerbosePreference = "Continue"
 ## 📚 Additional Resources
 
 ### VMware Documentation
+
 - [vSphere 9.0 Documentation](https://docs.vmware.com/en/VMware-vSphere/9.0/)
 - [PowerCLI User's Guide](https://developer.vmware.com/docs/powercli/)
 - [vSphere API Reference](https://developer.vmware.com/docs/vsphere-automation/)
 
 ### PowerShell Resources
+
 - [PowerShell Documentation](https://docs.microsoft.com/en-us/powershell/)
 - [PowerShell Best Practices](https://docs.microsoft.com/en-us/powershell/scripting/dev-cross-plat/performance/script-authoring-considerations)
 
@@ -302,14 +334,14 @@ $VerbosePreference = "Continue"
 
 ## 📄 Script Inventory Summary
 
-| Script | Purpose | Key Features |
-|--------|---------|--------------|
+| Script                                    | Purpose                    | Key Features                                             |
+| ----------------------------------------- | -------------------------- | -------------------------------------------------------- |
 | `vsphere-cli-create-vm-from-template.ps1` | VM creation from templates | Guest customization, resource allocation, network config |
-| `vsphere-cli-clone-vm.ps1` | VM cloning operations | Full/linked clones, bulk operations, async support |
-| `vsphere-cli-power-vm-operations.ps1` | VM power management | Start/stop/restart, graceful operations, bulk support |
-| `vsphere-cli-snapshot-vm.ps1` | Snapshot management | Create/revert/delete, cleanup policies, batch operations |
-| `vsphere-cli-describe-inventory.ps1` | Infrastructure reporting | Comprehensive inventory, multiple formats, metrics |
-| `vsphere-cli-get-vm-performance.ps1` | Performance monitoring | Real-time metrics, alerting, continuous monitoring |
+| `vsphere-cli-clone-vm.ps1`                | VM cloning operations      | Full/linked clones, bulk operations, async support       |
+| `vsphere-cli-power-vm-operations.ps1`     | VM power management        | Start/stop/restart, graceful operations, bulk support    |
+| `vsphere-cli-snapshot-vm.ps1`             | Snapshot management        | Create/revert/delete, cleanup policies, batch operations |
+| `vsphere-cli-describe-inventory.ps1`      | Infrastructure reporting   | Comprehensive inventory, multiple formats, metrics       |
+| `vsphere-cli-get-vm-performance.ps1`      | Performance monitoring     | Real-time metrics, alerting, continuous monitoring       |
 
 ## 🚀 Getting Started
 

@@ -11,7 +11,7 @@ This project has adopted this [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## Change log
 
-A full list of changes in each version can be found in the  [Releases](https://github.com/xoap-io/scripted-actions/releases).
+A full list of changes in each version can be found in the [Releases](https://github.com/xoap-io/scripted-actions/releases).
 
 ## Documentation
 

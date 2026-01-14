@@ -6,7 +6,7 @@
     This script performs comprehensive auditing of Azure Key Vault access policies, permissions, and security configurations.
     Analyzes access patterns, identifies security risks, generates compliance reports, and provides recommendations.
     Supports multiple Key Vaults, detailed permission analysis, and security best practice validation.
-    
+
     The script uses Azure CLI commands: az keyvault show, az keyvault network-rule list, az keyvault secret list, etc.
 
 .PARAMETER VaultName
@@ -62,7 +62,7 @@
     Date: 2025-08-05
     Version: 1.0.0
     Requires: Azure CLI version 2.0 or later
-    
+
     Audit Coverage:
     - Access policies and permissions
     - Network security rules
@@ -154,13 +154,13 @@ function Test-AzureCLI {
         if ($LASTEXITCODE -ne 0) {
             throw "Azure CLI is not installed or not functioning correctly"
         }
-        
+
         Write-Host "🔍 Checking Azure CLI authentication..." -ForegroundColor Cyan
         $null = az account show 2>$null
         if ($LASTEXITCODE -ne 0) {
             throw "Not authenticated to Azure CLI. Please run 'az login' first"
         }
-        
+
         Write-Host "✅ Azure CLI validation successful" -ForegroundColor Green
         return $true
     }
@@ -173,12 +173,12 @@ function Test-AzureCLI {
 # Function to get Key Vaults to audit
 function Get-KeyVaultsToAudit {
     param($VaultName, $ResourceGroup)
-    
+
     try {
         Write-Host "🔍 Identifying Key Vaults to audit..." -ForegroundColor Cyan
-        
+
         $vaults = @()
-        
+
         if ($VaultName) {
             # Audit specific vault
             if ($ResourceGroup) {
@@ -187,7 +187,7 @@ function Get-KeyVaultsToAudit {
             else {
                 $vault = az keyvault show --name $VaultName --output json 2>$null | ConvertFrom-Json
             }
-            
+
             if ($vault) {
                 $vaults += $vault
             }
@@ -203,12 +203,12 @@ function Get-KeyVaultsToAudit {
             # Audit all vaults in subscription
             $vaults = az keyvault list --output json | ConvertFrom-Json
         }
-        
+
         if ($vaults.Count -eq 0) {
             Write-Warning "No Key Vaults found to audit"
             return @()
         }
-        
+
         Write-Host "✅ Found $($vaults.Count) Key Vault(s) to audit" -ForegroundColor Green
         return $vaults
     }
@@ -221,13 +221,13 @@ function Get-KeyVaultsToAudit {
 # Function to audit access policies
 function Get-AccessPolicyAudit {
     param($Vault)
-    
+
     try {
         Write-Host "   🔐 Auditing access policies..." -ForegroundColor Gray
-        
+
         $findings = @()
         $policies = $Vault.properties.accessPolicies
-        
+
         if (-not $policies -or $policies.Count -eq 0) {
             $findings += @{
                 Type = "AccessPolicy"
@@ -244,7 +244,7 @@ function Get-AccessPolicyAudit {
                 if ($policy.permissions.keys) { $permissions += $policy.permissions.keys }
                 if ($policy.permissions.secrets) { $permissions += $policy.permissions.secrets }
                 if ($policy.permissions.certificates) { $permissions += $policy.permissions.certificates }
-                
+
                 # Check for "all" permissions
                 if ($permissions -contains "all" -or $permissions -contains "*") {
                     $findings += @{
@@ -256,7 +256,7 @@ function Get-AccessPolicyAudit {
                         Principal = $policy.objectId
                     }
                 }
-                
+
                 # Check for excessive key permissions
                 $highRiskKeyPerms = @("delete", "purge", "recover")
                 $hasHighRiskPerms = $policy.permissions.keys | Where-Object { $_ -in $highRiskKeyPerms }
@@ -270,7 +270,7 @@ function Get-AccessPolicyAudit {
                         Principal = $policy.objectId
                     }
                 }
-                
+
                 # Check for secret management permissions
                 $secretMgmtPerms = @("delete", "purge", "set")
                 $hasSecretMgmt = $policy.permissions.secrets | Where-Object { $_ -in $secretMgmtPerms }
@@ -285,7 +285,7 @@ function Get-AccessPolicyAudit {
                     }
                 }
             }
-            
+
             # Check for too many access policies
             if ($policies.Count -gt 20) {
                 $findings += @{
@@ -297,7 +297,7 @@ function Get-AccessPolicyAudit {
                 }
             }
         }
-        
+
         return $findings
     }
     catch {
@@ -309,15 +309,15 @@ function Get-AccessPolicyAudit {
 # Function to audit network rules
 function Get-NetworkRulesAudit {
     param($Vault)
-    
+
     try {
         Write-Host "   🌐 Auditing network rules..." -ForegroundColor Gray
-        
+
         $findings = @()
-        
+
         # Get network rules
         $networkRules = az keyvault network-rule list --name $Vault.name --output json 2>$null | ConvertFrom-Json
-        
+
         if ($networkRules) {
             # Check default action
             if ($networkRules.defaultAction -eq "Allow") {
@@ -329,7 +329,7 @@ function Get-NetworkRulesAudit {
                     Vault = $Vault.name
                 }
             }
-            
+
             # Check for overly broad IP rules
             if ($networkRules.ipRules) {
                 foreach ($ipRule in $networkRules.ipRules) {
@@ -342,7 +342,7 @@ function Get-NetworkRulesAudit {
                             Vault = $Vault.name
                         }
                     }
-                    
+
                     # Check for large CIDR blocks
                     if ($ipRule.value -match "/\d+$") {
                         $cidrBits = [int]($ipRule.value -split "/")[-1]
@@ -358,7 +358,7 @@ function Get-NetworkRulesAudit {
                     }
                 }
             }
-            
+
             # Check virtual network rules
             if ($networkRules.virtualNetworkRules -and $networkRules.virtualNetworkRules.Count -eq 0 -and $networkRules.defaultAction -eq "Deny") {
                 $findings += @{
@@ -379,7 +379,7 @@ function Get-NetworkRulesAudit {
                 Vault = $Vault.name
             }
         }
-        
+
         return $findings
     }
     catch {
@@ -391,27 +391,27 @@ function Get-NetworkRulesAudit {
 # Function to audit secrets
 function Get-SecretsAudit {
     param($Vault)
-    
+
     try {
         Write-Host "   🔒 Auditing secrets..." -ForegroundColor Gray
-        
+
         $findings = @()
-        
+
         # Get secrets list (metadata only)
         $secrets = az keyvault secret list --vault-name $Vault.name --output json 2>$null | ConvertFrom-Json
-        
+
         if ($secrets) {
             $totalSecrets = $secrets.Count
             $expiredSecrets = 0
             $expiringSoon = 0
             $noExpiration = 0
-            
+
             foreach ($secret in $secrets) {
                 # Check expiration
                 if ($secret.attributes.expires) {
                     $expiryDate = [DateTime]$secret.attributes.expires
                     $daysToExpiry = ($expiryDate - (Get-Date)).Days
-                    
+
                     if ($daysToExpiry -lt 0) {
                         $expiredSecrets++
                     }
@@ -422,7 +422,7 @@ function Get-SecretsAudit {
                 else {
                     $noExpiration++
                 }
-                
+
                 # Check if disabled
                 if ($secret.attributes.enabled -eq $false) {
                     $findings += @{
@@ -435,7 +435,7 @@ function Get-SecretsAudit {
                     }
                 }
             }
-            
+
             # Generate findings based on analysis
             if ($expiredSecrets -gt 0) {
                 $findings += @{
@@ -447,7 +447,7 @@ function Get-SecretsAudit {
                     Count = $expiredSecrets
                 }
             }
-            
+
             if ($expiringSoon -gt 0) {
                 $findings += @{
                     Type = "SecretManagement"
@@ -458,7 +458,7 @@ function Get-SecretsAudit {
                     Count = $expiringSoon
                 }
             }
-            
+
             if ($noExpiration -gt ($totalSecrets * 0.5)) {
                 $findings += @{
                     Type = "SecretManagement"
@@ -469,7 +469,7 @@ function Get-SecretsAudit {
                     Count = $noExpiration
                 }
             }
-            
+
             if ($totalSecrets -gt 100) {
                 $findings += @{
                     Type = "SecretManagement"
@@ -481,7 +481,7 @@ function Get-SecretsAudit {
                 }
             }
         }
-        
+
         return $findings
     }
     catch {
@@ -493,12 +493,12 @@ function Get-SecretsAudit {
 # Function to audit keys and certificates
 function Get-KeysCertificatesAudit {
     param($Vault)
-    
+
     try {
         Write-Host "   🔑 Auditing keys and certificates..." -ForegroundColor Gray
-        
+
         $findings = @()
-        
+
         # Audit keys
         $keys = az keyvault key list --vault-name $Vault.name --output json 2>$null | ConvertFrom-Json
         if ($keys) {
@@ -507,7 +507,7 @@ function Get-KeysCertificatesAudit {
                 if ($key.attributes.expires) {
                     $expiryDate = [DateTime]$key.attributes.expires
                     $daysToExpiry = ($expiryDate - (Get-Date)).Days
-                    
+
                     if ($daysToExpiry -lt 0) {
                         $findings += @{
                             Type = "KeyManagement"
@@ -531,7 +531,7 @@ function Get-KeysCertificatesAudit {
                 }
             }
         }
-        
+
         # Audit certificates
         $certificates = az keyvault certificate list --vault-name $Vault.name --output json 2>$null | ConvertFrom-Json
         if ($certificates) {
@@ -540,7 +540,7 @@ function Get-KeysCertificatesAudit {
                 if ($cert.attributes.expires) {
                     $expiryDate = [DateTime]$cert.attributes.expires
                     $daysToExpiry = ($expiryDate - (Get-Date)).Days
-                    
+
                     if ($daysToExpiry -lt 0) {
                         $findings += @{
                             Type = "CertificateManagement"
@@ -564,7 +564,7 @@ function Get-KeysCertificatesAudit {
                 }
             }
         }
-        
+
         return $findings
     }
     catch {
@@ -576,12 +576,12 @@ function Get-KeysCertificatesAudit {
 # Function to audit security configuration
 function Get-SecurityConfigAudit {
     param($Vault)
-    
+
     try {
         Write-Host "   🛡️ Auditing security configuration..." -ForegroundColor Gray
-        
+
         $findings = @()
-        
+
         # Check soft delete
         if ($Vault.properties.enableSoftDelete -ne $true) {
             $findings += @{
@@ -592,7 +592,7 @@ function Get-SecurityConfigAudit {
                 Vault = $Vault.name
             }
         }
-        
+
         # Check purge protection
         if ($Vault.properties.enablePurgeProtection -ne $true) {
             $findings += @{
@@ -603,7 +603,7 @@ function Get-SecurityConfigAudit {
                 Vault = $Vault.name
             }
         }
-        
+
         # Check RBAC authorization
         if ($Vault.properties.enableRbacAuthorization -ne $true) {
             $findings += @{
@@ -614,7 +614,7 @@ function Get-SecurityConfigAudit {
                 Vault = $Vault.name
             }
         }
-        
+
         # Check disk encryption enabled
         if ($Vault.properties.enabledForDiskEncryption -eq $true) {
             $findings += @{
@@ -625,7 +625,7 @@ function Get-SecurityConfigAudit {
                 Vault = $Vault.name
             }
         }
-        
+
         return $findings
     }
     catch {
@@ -637,12 +637,12 @@ function Get-SecurityConfigAudit {
 # Function to generate recommendations
 function Get-SecurityRecommendations {
     param($Vault, $Findings)
-    
+
     $recommendations = @()
-    
+
     # Group findings by type
     $findingsByType = $Findings | Group-Object -Property Type
-    
+
     foreach ($group in $findingsByType) {
         switch ($group.Name) {
             "AccessPolicy" {
@@ -683,16 +683,16 @@ function Get-SecurityRecommendations {
             }
         }
     }
-    
+
     return $recommendations
 }
 
 # Function to validate compliance
 function Test-ComplianceStandard {
     param($Vault, $Findings, $Standard)
-    
+
     $complianceIssues = @()
-    
+
     switch ($Standard) {
         "SOC2" {
             # SOC2 requires access controls and monitoring
@@ -705,7 +705,7 @@ function Test-ComplianceStandard {
                     Vault = $Vault.name
                 }
             }
-            
+
             $networkIssues = $Findings | Where-Object { $_.Type -eq "NetworkSecurity" -and $_.Severity -in @("High", "Critical") }
             if ($networkIssues.Count -gt 0) {
                 $complianceIssues += @{
@@ -716,7 +716,7 @@ function Test-ComplianceStandard {
                 }
             }
         }
-        
+
         "ISO27001" {
             # ISO27001 requires comprehensive security controls
             $securityConfigIssues = $Findings | Where-Object { $_.Type -eq "SecurityConfiguration" }
@@ -729,7 +729,7 @@ function Test-ComplianceStandard {
                 }
             }
         }
-        
+
         "PCI-DSS" {
             # PCI-DSS requires strong access controls and encryption
             $accessIssues = $Findings | Where-Object { $_.Type -eq "AccessPolicy" -and $_.Severity -eq "Critical" }
@@ -743,48 +743,48 @@ function Test-ComplianceStandard {
             }
         }
     }
-    
+
     return $complianceIssues
 }
 
 # Function to perform full vault audit
 function Invoke-VaultAudit {
     param($Vault, $AuditType, $IncludeSecrets, $IncludeKeys, $CheckNetworkRules, $ValidateCompliance, $ComplianceStandard, $IncludeRecommendations)
-    
+
     try {
         Write-Host "🔍 Auditing Key Vault: $($Vault.name)" -ForegroundColor Cyan
-        
+
         $vaultFindings = @()
-        
+
         # Always audit access policies and security config
         $vaultFindings += Get-AccessPolicyAudit -Vault $Vault
         $vaultFindings += Get-SecurityConfigAudit -Vault $Vault
-        
+
         # Conditional audits based on parameters
         if ($CheckNetworkRules -or $AuditType -in @("Full", "Security")) {
             $vaultFindings += Get-NetworkRulesAudit -Vault $Vault
         }
-        
+
         if ($IncludeSecrets -or $AuditType -in @("Full", "Standard")) {
             $vaultFindings += Get-SecretsAudit -Vault $Vault
         }
-        
+
         if ($IncludeKeys -or $AuditType -in @("Full", "Standard")) {
             $vaultFindings += Get-KeysCertificatesAudit -Vault $Vault
         }
-        
+
         # Generate recommendations
         $recommendations = @()
         if ($IncludeRecommendations -or $AuditType -eq "Full") {
             $recommendations = Get-SecurityRecommendations -Vault $Vault -Findings $vaultFindings
         }
-        
+
         # Validate compliance
         $complianceIssues = @()
         if ($ValidateCompliance) {
             $complianceIssues = Test-ComplianceStandard -Vault $Vault -Findings $vaultFindings -Standard $ComplianceStandard
         }
-        
+
         # Update global results
         $global:AuditResults.VaultsAudited += @{
             Vault = $Vault
@@ -792,20 +792,20 @@ function Invoke-VaultAudit {
             Recommendations = $recommendations
             ComplianceIssues = $complianceIssues
         }
-        
+
         $global:AuditResults.SecurityFindings += $vaultFindings
         $global:AuditResults.Recommendations += $recommendations
         $global:AuditResults.ComplianceIssues += $complianceIssues
-        
+
         # Update summary counts
         $global:AuditResults.Summary.TotalVaults++
         $global:AuditResults.Summary.HighRiskFindings += ($vaultFindings | Where-Object { $_.Severity -in @("High", "Critical") }).Count
         $global:AuditResults.Summary.MediumRiskFindings += ($vaultFindings | Where-Object { $_.Severity -eq "Medium" }).Count
         $global:AuditResults.Summary.LowRiskFindings += ($vaultFindings | Where-Object { $_.Severity -eq "Low" }).Count
         $global:AuditResults.Summary.RecommendationCount += $recommendations.Count
-        
+
         Write-Host "✅ Audit completed for $($Vault.name)" -ForegroundColor Green
-        
+
     }
     catch {
         Write-Error "Error auditing vault '$($Vault.name)': $($_.Exception.Message)"
@@ -815,21 +815,21 @@ function Invoke-VaultAudit {
 # Function to display console results
 function Show-AuditResults {
     param($Results)
-    
+
     Write-Host "`n📊 Key Vault Security Audit Results" -ForegroundColor Yellow
     Write-Host "====================================" -ForegroundColor Yellow
-    
+
     Write-Host "`n📈 Summary:" -ForegroundColor Cyan
     Write-Host "   Vaults Audited: $($Results.Summary.TotalVaults)" -ForegroundColor White
     Write-Host "   High Risk Findings: $($Results.Summary.HighRiskFindings)" -ForegroundColor Red
     Write-Host "   Medium Risk Findings: $($Results.Summary.MediumRiskFindings)" -ForegroundColor Yellow
     Write-Host "   Low Risk Findings: $($Results.Summary.LowRiskFindings)" -ForegroundColor Gray
     Write-Host "   Recommendations: $($Results.Summary.RecommendationCount)" -ForegroundColor Cyan
-    
+
     # Show findings by vault
     foreach ($vaultAudit in $Results.VaultsAudited) {
         Write-Host "`n🔐 Vault: $($vaultAudit.Vault.name)" -ForegroundColor Yellow
-        
+
         if ($vaultAudit.Findings.Count -gt 0) {
             Write-Host "   Security Findings:" -ForegroundColor Red
             foreach ($finding in $vaultAudit.Findings) {
@@ -843,14 +843,14 @@ function Show-AuditResults {
                 Write-Host "     [$($finding.Severity)] $($finding.Issue): $($finding.Details)" -ForegroundColor $color
             }
         }
-        
+
         if ($vaultAudit.Recommendations.Count -gt 0) {
             Write-Host "   Recommendations:" -ForegroundColor Cyan
             foreach ($rec in $vaultAudit.Recommendations) {
                 Write-Host "     [$($rec.Priority)] $($rec.Recommendation): $($rec.Details)" -ForegroundColor Cyan
             }
         }
-        
+
         if ($vaultAudit.ComplianceIssues.Count -gt 0) {
             Write-Host "   Compliance Issues:" -ForegroundColor Magenta
             foreach ($issue in $vaultAudit.ComplianceIssues) {
@@ -863,14 +863,14 @@ function Show-AuditResults {
 # Function to generate detailed report
 function New-AuditReport {
     param($Results, $Format, $Path)
-    
+
     try {
         $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
-        
+
         if (-not $Path) {
             $Path = ".\keyvault-audit-report-$timestamp"
         }
-        
+
         switch ($Format) {
             'HTML' {
                 $reportFile = "$Path.html"
@@ -901,7 +901,7 @@ function New-AuditReport {
         <p><strong>Generated:</strong> $(Get-Date)</p>
         <p><strong>Audit Duration:</strong> $((Get-Date) - $Results.StartTime)</p>
     </div>
-    
+
     <div class="summary">
         <h2>📊 Executive Summary</h2>
         <p><strong>Vaults Audited:</strong> $($Results.Summary.TotalVaults)</p>
@@ -911,19 +911,19 @@ function New-AuditReport {
         <p><strong>Recommendations:</strong> $($Results.Summary.RecommendationCount)</p>
     </div>
 "@
-                
+
                 foreach ($vaultAudit in $Results.VaultsAudited) {
                     $html += @"
     <div class="vault-section">
         <h3>🔐 Key Vault: $($vaultAudit.Vault.name)</h3>
         <p><strong>Resource Group:</strong> $($vaultAudit.Vault.resourceGroup)</p>
         <p><strong>Location:</strong> $($vaultAudit.Vault.location)</p>
-        
+
         <h4>Security Findings</h4>
         <table>
             <tr><th>Severity</th><th>Type</th><th>Issue</th><th>Details</th></tr>
 "@
-                    
+
                     foreach ($finding in $vaultAudit.Findings) {
                         $severityClass = $finding.Severity.ToLower()
                         $html += @"
@@ -935,9 +935,9 @@ function New-AuditReport {
             </tr>
 "@
                     }
-                    
+
                     $html += "</table>"
-                    
+
                     if ($vaultAudit.Recommendations.Count -gt 0) {
                         $html += "<h4>Recommendations</h4><ul>"
                         foreach ($rec in $vaultAudit.Recommendations) {
@@ -945,19 +945,19 @@ function New-AuditReport {
                         }
                         $html += "</ul>"
                     }
-                    
+
                     $html += "</div>"
                 }
-                
+
                 $html += "</body></html>"
                 $html | Out-File -FilePath $reportFile -Encoding UTF8
             }
-            
+
             'JSON' {
                 $reportFile = "$Path.json"
                 $Results | ConvertTo-Json -Depth 10 | Out-File -FilePath $reportFile -Encoding UTF8
             }
-            
+
             'CSV' {
                 $reportFile = "$Path.csv"
                 $csvData = @()
@@ -976,7 +976,7 @@ function New-AuditReport {
                 $csvData | Export-Csv -Path $reportFile -NoTypeInformation
             }
         }
-        
+
         Write-Host "📄 Audit report generated: $reportFile" -ForegroundColor Green
         return $reportFile
     }
@@ -990,25 +990,25 @@ function New-AuditReport {
 try {
     Write-Host "🔐 Starting Key Vault Security Audit" -ForegroundColor Green
     Write-Host "====================================" -ForegroundColor Green
-    
+
     # Validate Azure CLI
     if (-not (Test-AzureCLI)) {
         exit 1
     }
-    
+
     # Get Key Vaults to audit
     $vaults = Get-KeyVaultsToAudit -VaultName $VaultName -ResourceGroup $ResourceGroup
-    
+
     if ($vaults.Count -eq 0) {
         Write-Warning "No Key Vaults found to audit"
         exit 0
     }
-    
+
     # Audit each vault
     foreach ($vault in $vaults) {
         Invoke-VaultAudit -Vault $vault -AuditType $AuditType -IncludeSecrets $IncludeSecrets -IncludeKeys $IncludeKeys -CheckNetworkRules $CheckNetworkRules -ValidateCompliance $ValidateCompliance -ComplianceStandard $ComplianceStandard -IncludeRecommendations $IncludeRecommendations
     }
-    
+
     # Calculate compliance score
     if ($global:AuditResults.SecurityFindings.Count -gt 0) {
         $totalIssues = $global:AuditResults.SecurityFindings.Count
@@ -1018,29 +1018,29 @@ try {
     else {
         $global:AuditResults.Summary.ComplianceScore = 100
     }
-    
+
     # Display results
     if ($OutputFormat -eq 'Console') {
         Show-AuditResults -Results $global:AuditResults
     }
-    
+
     # Generate detailed report
     if ($OutputFormat -ne 'Console' -or $ReportPath) {
         $reportFile = New-AuditReport -Results $global:AuditResults -Format $OutputFormat -Path $ReportPath
     }
-    
+
     # Export findings if requested
     if ($ExportFindings) {
         $findingsPath = "keyvault-findings-$(Get-Date -Format 'yyyyMMdd-HHmmss').json"
         $global:AuditResults.SecurityFindings | ConvertTo-Json -Depth 5 | Out-File -FilePath $findingsPath -Encoding UTF8
         Write-Host "📄 Detailed findings exported: $findingsPath" -ForegroundColor Cyan
     }
-    
+
     Write-Host "`n📊 Audit Summary:" -ForegroundColor Yellow
     Write-Host "   Compliance Score: $($global:AuditResults.Summary.ComplianceScore)%" -ForegroundColor $(if ($global:AuditResults.Summary.ComplianceScore -ge 80) { "Green" } elseif ($global:AuditResults.Summary.ComplianceScore -ge 60) { "Yellow" } else { "Red" })
     Write-Host "   Total Issues: $($global:AuditResults.SecurityFindings.Count)" -ForegroundColor White
     Write-Host "   Action Items: $($global:AuditResults.Summary.HighRiskFindings + $global:AuditResults.Summary.MediumRiskFindings)" -ForegroundColor Yellow
-    
+
 }
 catch {
     Write-Error "❌ Key Vault audit failed: $($_.Exception.Message)"

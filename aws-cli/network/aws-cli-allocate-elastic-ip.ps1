@@ -127,15 +127,15 @@ try {
 
     # Check current Elastic IP usage and limits
     Write-Output "`n🔍 Checking current Elastic IP usage..."
-    
+
     $currentEipsResult = aws ec2 describe-addresses @awsArgs --output json 2>&1
-    
+
     if ($LASTEXITCODE -eq 0) {
         $currentEipsData = $currentEipsResult | ConvertFrom-Json
         $currentCount = $currentEipsData.Addresses.Count
-        
+
         Write-Output "Current Elastic IPs: $currentCount"
-        
+
         # Check regional limits (default is 5 per region)
         if (($currentCount + $Count) -gt 5) {
             Write-Warning "⚠️  This allocation may exceed the default Elastic IP limit (5 per region)"
@@ -147,16 +147,16 @@ try {
     if ($PublicIpv4Pool) {
         Write-Output "`n🔍 Validating IPv4 pool..."
         $poolResult = aws ec2 describe-public-ipv4-pools --pool-ids $PublicIpv4Pool @awsArgs --output json 2>&1
-        
+
         if ($LASTEXITCODE -eq 0) {
             $poolData = $poolResult | ConvertFrom-Json
             $pool = $poolData.PublicIpv4Pools[0]
-            
+
             Write-Output "✅ IPv4 Pool validated:"
             Write-Output "  Pool ID: $($pool.PoolId)"
             Write-Output "  Description: $($pool.Description)"
             Write-Output "  Available addresses: $($pool.TotalAvailableAddressCount)"
-            
+
             if ($pool.TotalAvailableAddressCount -lt $Count) {
                 Write-Warning "⚠️  Pool may not have enough available addresses"
             }
@@ -199,12 +199,12 @@ try {
 
             if ($LASTEXITCODE -eq 0) {
                 $eipData = $allocateResult | ConvertFrom-Json
-                
+
                 Write-Output "✅ Elastic IP allocated successfully:"
                 Write-Output "  Public IP: $($eipData.PublicIp)"
                 Write-Output "  Allocation ID: $($eipData.AllocationId)"
                 Write-Output "  Domain: $($eipData.Domain)"
-                
+
                 if ($eipData.PublicIpv4Pool) {
                     Write-Output "  IPv4 Pool: $($eipData.PublicIpv4Pool)"
                 }
@@ -228,16 +228,16 @@ try {
                     Write-Output "`n🏷️  Applying tags to $($eipData.PublicIp)..."
                     try {
                         $tagsArray = $Tags | ConvertFrom-Json
-                        
+
                         # Add allocation index to tags if allocating multiple
                         if ($Count -gt 1) {
                             $tagsArray += @{Key = "AllocationIndex"; Value = $i.ToString()}
                         }
-                        
+
                         $tagsJson = $tagsArray | ConvertTo-Json -Depth 3 -Compress
-                        
+
                         $tagResult = aws ec2 create-tags --resources $eipData.AllocationId --tags $tagsJson @awsArgs 2>&1
-                        
+
                         if ($LASTEXITCODE -eq 0) {
                             Write-Output "✅ Tags applied successfully"
                         } else {
@@ -250,7 +250,7 @@ try {
 
             } else {
                 Write-Warning "Failed to allocate Elastic IP $i : $allocateResult"
-                
+
                 # If we're allocating a specific address and it fails, stop
                 if ($Address) {
                     Write-Error "Failed to allocate specific address $Address"
@@ -273,7 +273,7 @@ try {
     if (-not $DryRun -and $allocatedAddresses.Count -gt 0) {
         Write-Output "`n📊 Allocation Summary:"
         Write-Output "Successfully allocated: $($allocatedAddresses.Count) of $Count requested"
-        
+
         Write-Output "`n📋 Allocated Elastic IPs:"
         foreach ($addr in $allocatedAddresses) {
             Write-Output "  $($addr.Index). $($addr.PublicIp) (Allocation ID: $($addr.AllocationId))"
@@ -284,7 +284,7 @@ try {
         Write-Output "• Elastic IPs are FREE when associated with running instances"
         Write-Output "• Elastic IPs cost $0.005 per hour when NOT associated with instances"
         Write-Output "• Additional Elastic IPs on the same instance cost $0.005 per hour"
-        
+
         $monthlyCostUnassociated = $allocatedAddresses.Count * 0.005 * 24 * 30
         Write-Output "• Monthly cost if unassociated: ~$([math]::Round($monthlyCostUnassociated, 2))"
 

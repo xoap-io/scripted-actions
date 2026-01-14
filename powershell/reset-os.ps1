@@ -1,4 +1,4 @@
-<# 
+<#
 .SYNOPSIS
   Stage unattend.xml for Push-Button Reset and trigger a Windows Reset via the Intune CSP (RemoteWipe) using the MDM Bridge.
 

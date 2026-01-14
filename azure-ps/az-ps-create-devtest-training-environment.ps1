@@ -156,17 +156,17 @@ param(
     [string]$SubscriptionId,
     [string[]]$TrainingUserEmails = @(),
     [string[]]$InstructorEmails = @(),
-    
+
     # German training scenario parameters
     [ValidateRange(1,20)][int]$StudentCount = 5,
     [bool]$IncludeTrainer = $true,
     [bool]$UseJumphost = $true,
     [ValidateSet('Standard_B2s', 'Standard_B2ms', 'Standard_D2s_v3', 'Standard_D4s_v3')][string]$JumphostSize = 'Standard_B2ms',
-    
+
     # Legacy parameters for compatibility
     [ValidateRange(0,50)][int]$WindowsVMCount = 0,
     [ValidateRange(0,50)][int]$LinuxVMCount = 0,
-    
+
     [ValidateSet('Standard_B1s', 'Standard_B2s', 'Standard_B2ms', 'Standard_D2s_v3', 'Standard_D4s_v3', 'Standard_E2s_v3')][string]$VMSize = 'Standard_B2s',
     [bool]$AllowPublicIP = $true,
     [ValidatePattern('^([01]?[0-9]|2[0-3])[0-5][0-9]$')][string]$AutoShutdownTime = '1800',
@@ -214,10 +214,10 @@ Write-Host "Using subscription: $($azContext.Subscription.Name) ($($azContext.Su
 # Function to create resource group
 function New-TrainingResourceGroup {
     param($Name, $Location)
-    
+
     Write-Host "Checking if resource group '$Name' exists..." -ForegroundColor Cyan
     $rg = Get-AzResourceGroup -Name $Name -ErrorAction SilentlyContinue
-    
+
     if (-not $rg) {
         Write-Host "Creating resource group '$Name' in '$Location'..." -ForegroundColor Yellow
         $rg = New-AzResourceGroup -Name $Name -Location $Location
@@ -231,9 +231,9 @@ function New-TrainingResourceGroup {
 # Function to create DevTest Lab
 function New-TrainingDevTestLab {
     param($LabName, $ResourceGroupName, $Location)
-    
+
     Write-Host "Creating DevTest Lab '$LabName'..." -ForegroundColor Cyan
-    
+
     # Create the lab using ARM template approach since New-AzDtlLab may not be available
     $labTemplate = @{
         '$schema' = 'https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#'
@@ -270,7 +270,7 @@ function New-TrainingDevTestLab {
             }
         )
     }
-    
+
     # Deploy the lab
     try {
         $deployment = New-AzResourceGroupDeployment `
@@ -278,7 +278,7 @@ function New-TrainingDevTestLab {
             -TemplateObject $labTemplate `
             -Name "DevTestLab-$LabName-$(Get-Date -Format 'yyyyMMdd-HHmmss')" `
             -Force
-        
+
         Write-Host "DevTest Lab created successfully." -ForegroundColor Green
         return $deployment
     } catch {
@@ -289,9 +289,9 @@ function New-TrainingDevTestLab {
 # Function to set lab policies
 function Set-TrainingLabPolicies {
     param($LabName, $ResourceGroupName)
-    
+
     Write-Host "Configuring lab policies..." -ForegroundColor Cyan
-    
+
     # Set allowed VM sizes policy
     Write-Host "Setting allowed VM sizes policy..." -ForegroundColor Yellow
     Set-AzDtlAllowedVMSizesPolicy -LabName $LabName -ResourceGroupName $ResourceGroupName -AllowedVmSizes @($VMSize) -Enable
@@ -309,7 +309,7 @@ function Set-TrainingLabPolicies {
     Set-AzDtlAutoShutdownPolicy -LabName $LabName -ResourceGroupName $ResourceGroupName -Time $AutoShutdownTime -TimeZoneId $TimeZoneId -Enable
 
     # Set auto-start policy
-    Write-Host "Setting auto-start policy (startup at: $AutoStartupTime $TimeZoneId)..." -ForegroundColor Yellow  
+    Write-Host "Setting auto-start policy (startup at: $AutoStartupTime $TimeZoneId)..." -ForegroundColor Yellow
     Set-AzDtlAutoStartPolicy -LabName $LabName -ResourceGroupName $ResourceGroupName -Time $AutoStartupTime -TimeZoneId $TimeZoneId -Enable
 
     Write-Host "Lab policies configured successfully." -ForegroundColor Green
@@ -318,32 +318,32 @@ function Set-TrainingLabPolicies {
 # Function to add users to lab
 function Add-TrainingLabUsers {
     param($LabName, $ResourceGroupName, $UserEmails, $Role = 'DevTest Labs User')
-    
+
     if ($UserEmails.Count -eq 0) {
         Write-Host "No user emails provided, skipping user assignment." -ForegroundColor Yellow
         return
     }
-    
+
     Write-Host "Adding $($UserEmails.Count) users to lab with role '$Role'..." -ForegroundColor Cyan
-    
+
     # Get lab resource ID
     $lab = Get-AzResource -ResourceGroupName $ResourceGroupName -ResourceType 'Microsoft.DevTestLab/labs' -Name $LabName
-    
+
     foreach ($email in $UserEmails) {
         try {
             Write-Host "Adding user: $email" -ForegroundColor Yellow
-            
+
             # Get user object ID from Azure AD
             $user = Get-AzADUser -Mail $email -ErrorAction SilentlyContinue
             if (-not $user) {
                 Write-Warning "User $email not found in Azure AD, skipping..."
                 continue
             }
-            
+
             # Assign role to user
             New-AzRoleAssignment -ObjectId $user.Id -RoleDefinitionName $Role -Scope $lab.ResourceId -ErrorAction SilentlyContinue
             Write-Host "User $email added successfully." -ForegroundColor Green
-            
+
         } catch {
             Write-Warning "Failed to add user $email`: $_"
         }
@@ -353,13 +353,13 @@ function Add-TrainingLabUsers {
 # Function to create VM formulas
 function New-TrainingVMFormulas {
     param($LabName, $ResourceGroupName)
-    
+
     Write-Host "Creating VM formulas for training..." -ForegroundColor Cyan
-    
+
     # Common artifacts for training VMs
     $commonWindowsArtifacts = @()
     $commonLinuxArtifacts = @()
-    
+
     if ($InstallCommonTools) {
         $commonWindowsArtifacts = @(
             @{
@@ -372,7 +372,7 @@ function New-TrainingVMFormulas {
                 artifactId = '/subscriptions/{subscription-id}/resourceGroups/{resource-group}/providers/Microsoft.DevTestLab/labs/{lab-name}/artifactSources/public repo/artifacts/windows-vscode'
             }
         )
-        
+
         $commonLinuxArtifacts = @(
             @{
                 artifactId = '/subscriptions/{subscription-id}/resourceGroups/{resource-group}/providers/Microsoft.DevTestLab/labs/{lab-name}/artifactSources/public repo/artifacts/linux-apt-package'
@@ -385,7 +385,7 @@ function New-TrainingVMFormulas {
             }
         )
     }
-    
+
     # Create Windows VM formula
     if ($WindowsVMCount -gt 0) {
         Write-Host "Creating Windows VM formula..." -ForegroundColor Yellow
@@ -427,7 +427,7 @@ function New-TrainingVMFormulas {
             }
         }
     }
-    
+
     # Create Linux VM formula
     if ($LinuxVMCount -gt 0) {
         Write-Host "Creating Linux VM formula..." -ForegroundColor Yellow
@@ -469,9 +469,9 @@ function New-TrainingVMFormulas {
             }
         }
     }
-    
+
     Write-Host "VM formulas created successfully." -ForegroundColor Green
-    
+
     # Return formulas for potential use
     return @{
         WindowsFormula = if ($WindowsVMCount -gt 0) { $windowsFormula } else { $null }
@@ -482,22 +482,22 @@ function New-TrainingVMFormulas {
 # Function to create German training VM sets
 function New-GermanTrainingVMSets {
     param($LabName, $ResourceGroupName)
-    
+
     Write-Host "Creating German training VM sets..." -ForegroundColor Cyan
-    
+
     # Calculate total VMs needed
     $participantCount = $StudentCount + ($IncludeTrainer ? 1 : 0)
     $totalVMs = $participantCount * 5  # Each participant gets 5 VMs
     if ($UseJumphost) {
         $totalVMs += $participantCount  # Add jumphost for each participant
     }
-    
+
     Write-Host "Creating VMs for $StudentCount students$(if($IncludeTrainer){' + 1 trainer'})" -ForegroundColor Yellow
     Write-Host "Total VMs to create: $totalVMs" -ForegroundColor Yellow
     if ($UseJumphost) {
         Write-Host "Using jumphost architecture (recommended)" -ForegroundColor Green
     }
-    
+
     # VM specifications based on German requirements
     $vmSpecs = @{
         'ServerDC' = @{
@@ -516,7 +516,7 @@ function New-GermanTrainingVMSets {
         'ServerTS' = @{
             OS = 'Windows Server 2019'
             CPU = 2
-            RAM = '4 GB' 
+            RAM = '4 GB'
             Disk = '50 GB'
             Image = @{
                 offer = 'WindowsServer'
@@ -566,19 +566,19 @@ function New-GermanTrainingVMSets {
             }
         }
     }
-    
+
     # Create VMs for each participant
     for ($participant = 1; $participant -le $participantCount; $participant++) {
         $participantType = if ($participant -le $StudentCount) { "Student" } else { "Trainer" }
         $participantId = if ($participant -le $StudentCount) { "S$($participant.ToString('00'))" } else { "T01" }
-        
+
         Write-Host "Creating VM set for $participantType $participantId..." -ForegroundColor Yellow
-        
+
         # Create jumphost if enabled
         if ($UseJumphost) {
             $jumphostName = "Jumphost-$participantId"
             Write-Host "  Creating jumphost: $jumphostName" -ForegroundColor Cyan
-            
+
             $jumphostConfig = @{
                 name = $jumphostName
                 location = $Location
@@ -611,19 +611,19 @@ function New-GermanTrainingVMSets {
                     }
                 }
             }
-            
+
             # Store jumphost config for later implementation
             $null = $jumphostConfig
             Write-Host "    Jumphost $jumphostName configured" -ForegroundColor Green
         }
-        
+
         # Create the 5 VMs for this participant
         foreach ($vmType in @('ServerDC', 'ServerTS', 'Server01', 'Client01', 'Client02')) {
             $vmName = "$vmType-$participantId"
             $spec = $vmSpecs[$vmType]
-            
+
             Write-Host "  Creating $vmType`: $vmName ($($spec.OS))" -ForegroundColor Gray
-            
+
             $vmConfig = @{
                 name = $vmName
                 location = $Location
@@ -659,22 +659,22 @@ function New-GermanTrainingVMSets {
                     }
                 }
             }
-            
+
             # Store VM config for later implementation
             $null = $vmConfig
             Write-Host "    $vmName configured" -ForegroundColor Green
         }
-        
+
         Write-Host "  VM set for $participantType $participantId completed" -ForegroundColor Green
     }
-    
+
     # Create additional VMs if specified (legacy support)
     if ($WindowsVMCount -gt 0 -or $LinuxVMCount -gt 0) {
         Write-Host "Creating additional VMs (legacy parameters)..." -ForegroundColor Yellow
         # Call existing function for additional VMs
         New-TrainingClaimableVMs -LabName $LabName -ResourceGroupName $ResourceGroupName
     }
-    
+
     Write-Host "German training VM sets creation completed!" -ForegroundColor Green
     Write-Host "Summary:" -ForegroundColor Cyan
     Write-Host "- Participants: $participantCount ($StudentCount students$(if($IncludeTrainer){', 1 trainer'}))" -ForegroundColor White
@@ -686,17 +686,17 @@ function New-GermanTrainingVMSets {
 # Function to create claimable VMs
 function New-TrainingClaimableVMs {
     param($LabName, $ResourceGroupName)
-    
+
     Write-Host "Creating claimable training VMs..." -ForegroundColor Cyan
-    
+
     $totalVMs = $WindowsVMCount + $LinuxVMCount
     Write-Host "Creating $totalVMs total VMs ($WindowsVMCount Windows, $LinuxVMCount Linux)..." -ForegroundColor Yellow
-    
+
     # Create Windows VMs
     for ($i = 1; $i -le $WindowsVMCount; $i++) {
         $vmName = "TrainingWin$($i.ToString('00'))"
         Write-Host "Creating Windows VM: $vmName" -ForegroundColor Yellow
-        
+
         # Use REST API call since PowerShell cmdlets might not be fully available
         $vm = @{
             location = $Location
@@ -742,7 +742,7 @@ function New-TrainingClaimableVMs {
                 }
             }
         }
-        
+
         try {
             # This would need to be implemented via REST API calls in a real scenario
             # For now, we'll show the structure - store formula for later use
@@ -752,12 +752,12 @@ function New-TrainingClaimableVMs {
             Write-Warning "Failed to create VM $vmName`: $_"
         }
     }
-    
+
     # Create Linux VMs
     for ($i = 1; $i -le $LinuxVMCount; $i++) {
         $vmName = "TrainingLinux$($i.ToString('00'))"
         Write-Host "Creating Linux VM: $vmName" -ForegroundColor Yellow
-        
+
         $vm = @{
             location = $Location
             properties = @{
@@ -802,7 +802,7 @@ function New-TrainingClaimableVMs {
                 }
             }
         }
-        
+
         try {
             # This would need to be implemented via REST API calls in a real scenario
             # Store VM configuration for later use
@@ -812,38 +812,38 @@ function New-TrainingClaimableVMs {
             Write-Warning "Failed to create VM $vmName`: $_"
         }
     }
-    
+
     Write-Host "Claimable VMs creation process completed." -ForegroundColor Green
 }
 
 # Function to get lab status
 function Get-TrainingLabStatus {
     param($LabName, $ResourceGroupName)
-    
+
     Write-Host "Getting training lab status..." -ForegroundColor Cyan
-    
+
     try {
         $lab = Get-AzResource -ResourceGroupName $ResourceGroupName -ResourceType 'Microsoft.DevTestLab/labs' -Name $LabName -ErrorAction Stop
-        
+
         Write-Host "Lab Status Report:" -ForegroundColor Green
         Write-Host "==================" -ForegroundColor Green
         Write-Host "Lab Name: $($lab.Name)" -ForegroundColor White
         Write-Host "Resource Group: $($lab.ResourceGroupName)" -ForegroundColor White
         Write-Host "Location: $($lab.Location)" -ForegroundColor White
         Write-Host "Status: Active" -ForegroundColor Green
-        
+
         # Get VMs in the lab
         try {
             $labVMs = Get-AzResource -ResourceGroupName $ResourceGroupName -ResourceType 'Microsoft.DevTestLab/labs/virtualmachines'
             Write-Host "Total VMs: $($labVMs.Count)" -ForegroundColor White
-            
+
             foreach ($vm in $labVMs) {
                 Write-Host "  - $($vm.Name)" -ForegroundColor Gray
             }
         } catch {
             Write-Host "VMs: Unable to retrieve VM list" -ForegroundColor Yellow
         }
-        
+
         # Get users
         try {
             $roleAssignments = Get-AzRoleAssignment -Scope $lab.ResourceId
@@ -852,7 +852,7 @@ function Get-TrainingLabStatus {
         } catch {
             Write-Host "Users: Unable to retrieve user list" -ForegroundColor Yellow
         }
-        
+
         return $lab
     } catch {
         Write-Host "Lab '$LabName' not found in resource group '$ResourceGroupName'" -ForegroundColor Red
@@ -863,25 +863,25 @@ function Get-TrainingLabStatus {
 # Function to delete training environment
 function Remove-TrainingEnvironment {
     param($LabName, $ResourceGroupName)
-    
+
     Write-Host "WARNING: This will delete the entire training environment including all VMs and data!" -ForegroundColor Red
     $confirmation = Read-Host "Type 'DELETE' to confirm deletion"
-    
+
     if ($confirmation -ne 'DELETE') {
         Write-Host "Deletion cancelled." -ForegroundColor Yellow
         return
     }
-    
+
     Write-Host "Deleting training environment..." -ForegroundColor Cyan
-    
+
     try {
         # Delete the entire resource group (fastest way to clean up everything)
         Write-Host "Deleting resource group '$ResourceGroupName' and all contained resources..." -ForegroundColor Yellow
         Remove-AzResourceGroup -Name $ResourceGroupName -Force -AsJob
-        
+
         Write-Host "Deletion initiated. This process may take several minutes to complete." -ForegroundColor Green
         Write-Host "You can check the status in the Azure portal." -ForegroundColor Green
-        
+
     } catch {
         Write-Error "Failed to delete training environment: $_"
     }
@@ -890,28 +890,28 @@ function Remove-TrainingEnvironment {
 # Function to start/stop all VMs in lab
 function Set-TrainingVMsState {
     param($LabName, $ResourceGroupName, $State)
-    
+
     Write-Host "$($State)ing all VMs in training lab..." -ForegroundColor Cyan
-    
+
     try {
         $labVMs = Get-AzResource -ResourceGroupName $ResourceGroupName -ResourceType 'Microsoft.DevTestLab/labs/virtualmachines'
-        
+
         Write-Host "Found $($labVMs.Count) VMs to $($State.ToLower())..." -ForegroundColor Yellow
-        
+
         foreach ($vm in $labVMs) {
             Write-Host "$($State)ing VM: $($vm.Name)" -ForegroundColor Yellow
-            
+
             if ($State -eq 'Start') {
                 # Start VM - would need REST API call
                 Write-Host "VM $($vm.Name) start initiated" -ForegroundColor Green
             } else {
-                # Stop VM - would need REST API call  
+                # Stop VM - would need REST API call
                 Write-Host "VM $($vm.Name) stop initiated" -ForegroundColor Green
             }
         }
-        
+
         Write-Host "All VMs $($State.ToLower()) process initiated." -ForegroundColor Green
-        
+
     } catch {
         Write-Error "Failed to $($State.ToLower()) VMs: $_"
     }
@@ -924,31 +924,31 @@ Write-Host "=================================================" -ForegroundColor 
 switch ($Action) {
     'Create' {
         Write-Host "Creating training environment..." -ForegroundColor Green
-        
+
         # Create resource group
         New-TrainingResourceGroup -Name $ResourceGroupName -Location $Location
-        
+
         # Create DevTest Lab
         New-TrainingDevTestLab -LabName $LabName -ResourceGroupName $ResourceGroupName -Location $Location
-        
+
         # Wait a moment for lab to be fully provisioned
         Start-Sleep -Seconds 30
-        
+
         # Set lab policies
         Set-TrainingLabPolicies -LabName $LabName -ResourceGroupName $ResourceGroupName
-        
+
         # Add users
         if ($TrainingUserEmails.Count -gt 0) {
             Add-TrainingLabUsers -LabName $LabName -ResourceGroupName $ResourceGroupName -UserEmails $TrainingUserEmails -Role 'DevTest Labs User'
         }
-        
+
         if ($InstructorEmails.Count -gt 0) {
             Add-TrainingLabUsers -LabName $LabName -ResourceGroupName $ResourceGroupName -UserEmails $InstructorEmails -Role 'Owner'
         }
-        
+
         # Create VM formulas
         New-TrainingVMFormulas -LabName $LabName -ResourceGroupName $ResourceGroupName
-        
+
         # Create German training VM sets or legacy VMs
         if ($StudentCount -gt 0 -or $IncludeTrainer) {
             Write-Host "Creating German training environment..." -ForegroundColor Green
@@ -959,14 +959,14 @@ switch ($Action) {
         } else {
             Write-Host "No VMs specified for creation." -ForegroundColor Yellow
         }
-        
+
         Write-Host ""
         Write-Host "Training environment created successfully!" -ForegroundColor Green
         Write-Host "=========================================" -ForegroundColor Green
         Write-Host "Lab Name: $LabName" -ForegroundColor White
         Write-Host "Resource Group: $ResourceGroupName" -ForegroundColor White
         Write-Host "Location: $Location" -ForegroundColor White
-        
+
         if ($StudentCount -gt 0 -or $IncludeTrainer) {
             $participantCount = $StudentCount + ($IncludeTrainer ? 1 : 0)
             $totalVMs = $participantCount * 5 + ($UseJumphost ? $participantCount : 0)
@@ -978,13 +978,13 @@ switch ($Action) {
             Write-Host "- Total VMs: $totalVMs" -ForegroundColor White
             Write-Host "- Jumphost: $(if($UseJumphost){'Enabled (recommended)'}else{'Disabled'})" -ForegroundColor White
         }
-        
+
         if ($WindowsVMCount -gt 0 -or $LinuxVMCount -gt 0) {
             Write-Host "Additional VMs:" -ForegroundColor Cyan
             Write-Host "- Windows VMs: $WindowsVMCount" -ForegroundColor White
             Write-Host "- Linux VMs: $LinuxVMCount" -ForegroundColor White
         }
-        
+
         Write-Host "Auto-shutdown: $AutoShutdownTime $TimeZoneId" -ForegroundColor White
         Write-Host "Auto-startup: $AutoStartupTime $TimeZoneId" -ForegroundColor White
         Write-Host "Max VMs per user: $MaxVMsPerUser" -ForegroundColor White
@@ -996,19 +996,19 @@ switch ($Action) {
         Write-Host ""
         Write-Host "Lab URL: https://portal.azure.com/#resource/subscriptions/$((Get-AzContext).Subscription.Id)/resourceGroups/$ResourceGroupName/providers/Microsoft.DevTestLab/labs/$LabName" -ForegroundColor Yellow
     }
-    
+
     'Delete' {
         Remove-TrainingEnvironment -LabName $LabName -ResourceGroupName $ResourceGroupName
     }
-    
+
     'Status' {
         Get-TrainingLabStatus -LabName $LabName -ResourceGroupName $ResourceGroupName
     }
-    
+
     'Start' {
         Set-TrainingVMsState -LabName $LabName -ResourceGroupName $ResourceGroupName -State 'Start'
     }
-    
+
     'Stop' {
         Set-TrainingVMsState -LabName $LabName -ResourceGroupName $ResourceGroupName -State 'Stop'
     }

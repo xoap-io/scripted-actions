@@ -203,7 +203,7 @@ $ErrorActionPreference = 'Stop'
 # Function to check and install Nutanix PowerShell SDK if needed
 function Test-NutanixSDKInstallation {
     Write-Host "Checking Nutanix PowerShell SDK installation..." -ForegroundColor Yellow
-    
+
     try {
         $nutanixModule = Get-Module -Name Nutanix.PowerShell.SDK -ListAvailable
         if (-not $nutanixModule) {
@@ -214,10 +214,10 @@ function Test-NutanixSDKInstallation {
             $version = $nutanixModule | Sort-Object Version -Descending | Select-Object -First 1
             Write-Host "Nutanix PowerShell SDK version $($version.Version) found." -ForegroundColor Green
         }
-        
+
         # Import the module
         Import-Module Nutanix.PowerShell.SDK -Force
-        
+
         return $true
     }
     catch {
@@ -229,16 +229,16 @@ function Test-NutanixSDKInstallation {
 # Function to connect to Prism Central or Element
 function Connect-ToNutanix {
     param($Server, $ServerType)
-    
+
     try {
         Write-Host "Connecting to $ServerType`: $Server" -ForegroundColor Yellow
-        
+
         # Check if already connected
         if ($global:DefaultNTNXConnection -and $global:DefaultNTNXConnection.Server -eq $Server) {
             Write-Host "Already connected to $Server" -ForegroundColor Green
             return $global:DefaultNTNXConnection
         }
-        
+
         # Connect to Nutanix (will prompt for credentials if not provided)
         $connection = Connect-NTNXCluster -Server $Server -AcceptInvalidSSLCerts
         Write-Host "Successfully connected to $ServerType`: $($connection.Server)" -ForegroundColor Green
@@ -253,7 +253,7 @@ function Connect-ToNutanix {
 # Function to resolve cluster UUID
 function Get-ClusterInfo {
     param($ClusterName, $ClusterUUID)
-    
+
     try {
         if ($ClusterUUID) {
             $cluster = Get-NTNXCluster | Where-Object { $_.clusterUuid -eq $ClusterUUID }
@@ -273,7 +273,7 @@ function Get-ClusterInfo {
             }
             Write-Warning "No cluster specified, using: $($cluster.name)"
         }
-        
+
         return @{
             Name = $cluster.name
             UUID = $cluster.clusterUuid
@@ -289,7 +289,7 @@ function Get-ClusterInfo {
 # Function to resolve storage container UUID
 function Get-ContainerInfo {
     param($ContainerName, $ContainerUUID, $ClusterUUID)
-    
+
     try {
         if ($ContainerUUID) {
             $container = Get-NTNXStorageContainer | Where-Object { $_.storageContainerUuid -eq $ContainerUUID }
@@ -315,7 +315,7 @@ function Get-ContainerInfo {
             }
             Write-Warning "No container specified, using: $($container.name)"
         }
-        
+
         return @{
             Name = $container.name
             UUID = $container.storageContainerUuid
@@ -331,7 +331,7 @@ function Get-ContainerInfo {
 # Function to resolve network UUID
 function Get-NetworkInfo {
     param($NetworkName, $NetworkUUID)
-    
+
     try {
         if ($NetworkUUID) {
             $network = Get-NTNXNetwork | Where-Object { $_.uuid -eq $NetworkUUID }
@@ -351,7 +351,7 @@ function Get-NetworkInfo {
             }
             Write-Warning "No network specified, using: $($network.name)"
         }
-        
+
         return @{
             Name = $network.name
             UUID = $network.uuid
@@ -367,7 +367,7 @@ function Get-NetworkInfo {
 # Function to resolve image information
 function Get-ImageInfo {
     param($ImageName, $ImageUUID)
-    
+
     try {
         if ($ImageUUID) {
             $image = Get-NTNXImage | Where-Object { $_.uuid -eq $ImageUUID }
@@ -382,7 +382,7 @@ function Get-ImageInfo {
         } else {
             return $null
         }
-        
+
         return @{
             Name = $image.name
             UUID = $image.uuid
@@ -398,7 +398,7 @@ function Get-ImageInfo {
 # Function to get source VM information
 function Get-SourceVMInfo {
     param($SourceVMName, $SourceVMUUID)
-    
+
     try {
         if ($SourceVMUUID) {
             $vm = Get-NTNXVM | Where-Object { $_.uuid -eq $SourceVMUUID }
@@ -413,7 +413,7 @@ function Get-SourceVMInfo {
         } else {
             return $null
         }
-        
+
         return @{
             Name = $vm.vmName
             UUID = $vm.uuid
@@ -429,9 +429,9 @@ function Get-SourceVMInfo {
 # Function to generate VM names
 function Get-VMNames {
     param($VMName, $VMNames, $VMCount, $NamePrefix)
-    
+
     $names = @()
-    
+
     if ($VMName) {
         $names += $VMName
     } elseif ($VMNames) {
@@ -443,7 +443,7 @@ function Get-VMNames {
     } else {
         throw "Must specify VMName, VMNames, or VMCount"
     }
-    
+
     return $names
 }
 
@@ -462,20 +462,20 @@ function New-VMSpecification {
         $ImageInfo,
         $SourceVMInfo
     )
-    
+
     try {
         Write-Host "    Creating VM specification for: $VMName" -ForegroundColor Gray
-        
+
         # Create VM specification
         $vmSpec = New-Object Nutanix.Prism.Model.VmSpec
         $vmSpec.name = $VMName
         $vmSpec.numVcpus = $CPUCores
         $vmSpec.numCoresPerVcpu = $CPUSockets
         $vmSpec.memoryMb = $MemoryGB * 1024
-        
+
         # VM disks
         $vmDisks = @()
-        
+
         # Primary disk
         $primaryDisk = New-Object Nutanix.Prism.Model.VmDisk
         if ($ImageInfo) {
@@ -497,9 +497,9 @@ function New-VMSpecification {
             $primaryDisk.vmDiskCreate.diskAddress.deviceBus = "SCSI"
             $primaryDisk.vmDiskCreate.diskAddress.deviceIndex = 0
         }
-        
+
         $vmDisks += $primaryDisk
-        
+
         # Additional disks
         if ($AdditionalDisks) {
             for ($i = 0; $i -lt $AdditionalDisks.Count; $i++) {
@@ -513,9 +513,9 @@ function New-VMSpecification {
                 $vmDisks += $additionalDisk
             }
         }
-        
+
         $vmSpec.vmDisks = $vmDisks
-        
+
         # Network configuration
         $vmNics = @()
         $nic = New-Object Nutanix.Prism.Model.VmNic
@@ -523,7 +523,7 @@ function New-VMSpecification {
         $nic.macAddress = ""  # Auto-generate MAC address
         $vmNics += $nic
         $vmSpec.vmNics = $vmNics
-        
+
         return $vmSpec
     }
     catch {
@@ -540,20 +540,20 @@ function New-NutanixVM {
         $PowerOnAfterCreation,
         $InstallNGT
     )
-    
+
     try {
         Write-Host "    Creating VM: $($VMSpec.name)" -ForegroundColor Cyan
-        
+
         # Create the VM
         $createTask = New-NTNXVM -VmSpec $VMSpec
-        
+
         Write-Host "    ✓ VM creation task initiated" -ForegroundColor Green
-        
+
         # Wait for VM creation to complete
         $timeout = (Get-Date).AddMinutes(10)
         $vmCreated = $false
         $createdVM = $null
-        
+
         while ((Get-Date) -lt $timeout -and -not $vmCreated) {
             Start-Sleep -Seconds 10
             $createdVM = Get-NTNXVM | Where-Object { $_.vmName -eq $VMSpec.name }
@@ -561,13 +561,13 @@ function New-NutanixVM {
                 $vmCreated = $true
             }
         }
-        
+
         if (-not $vmCreated) {
             throw "VM creation timed out"
         }
-        
+
         Write-Host "    ✓ VM created successfully: $($createdVM.vmName)" -ForegroundColor Green
-        
+
         # Install NGT if requested
         if ($InstallNGT) {
             try {
@@ -579,7 +579,7 @@ function New-NutanixVM {
                 Write-Warning "    Failed to install NGT: $($_.Exception.Message)"
             }
         }
-        
+
         # Power on if requested
         if ($PowerOnAfterCreation) {
             try {
@@ -591,7 +591,7 @@ function New-NutanixVM {
                 Write-Warning "    Failed to power on VM: $($_.Exception.Message)"
             }
         }
-        
+
         return @{
             VM = $createdVM
             Status = "Success"
@@ -616,25 +616,25 @@ function Copy-NutanixVM {
         $NewVMName,
         $PowerOnAfterCreation
     )
-    
+
     try {
         Write-Host "    Cloning VM from: $($SourceVMInfo.Name)" -ForegroundColor Cyan
-        
+
         # Create clone specification
         $cloneSpec = New-Object Nutanix.Prism.Model.CloneSpec
         $cloneSpec.name = $NewVMName
         $cloneSpec.uuid = $SourceVMInfo.UUID
-        
+
         # Clone the VM
         $cloneTask = Copy-NTNXVM -Vmid $SourceVMInfo.UUID -CloneSpec $cloneSpec
-        
+
         Write-Host "    ✓ VM clone task initiated" -ForegroundColor Green
-        
+
         # Wait for clone to complete
         $timeout = (Get-Date).AddMinutes(15)
         $vmCloned = $false
         $clonedVM = $null
-        
+
         while ((Get-Date) -lt $timeout -and -not $vmCloned) {
             Start-Sleep -Seconds 10
             $clonedVM = Get-NTNXVM | Where-Object { $_.vmName -eq $NewVMName }
@@ -642,13 +642,13 @@ function Copy-NutanixVM {
                 $vmCloned = $true
             }
         }
-        
+
         if (-not $vmCloned) {
             throw "VM clone timed out"
         }
-        
+
         Write-Host "    ✓ VM cloned successfully: $($clonedVM.vmName)" -ForegroundColor Green
-        
+
         # Power on if requested
         if ($PowerOnAfterCreation) {
             try {
@@ -660,7 +660,7 @@ function Copy-NutanixVM {
                 Write-Warning "    Failed to power on cloned VM: $($_.Exception.Message)"
             }
         }
-        
+
         return @{
             VM = $clonedVM
             Status = "Success"
@@ -681,16 +681,16 @@ function Copy-NutanixVM {
 # Function to display creation results
 function Show-CreationResults {
     param($Results, $OutputFormat, $OutputPath)
-    
+
     Write-Host "`n=== VM Creation Results ===" -ForegroundColor Cyan
-    
+
     $successful = $Results | Where-Object { $_.Status -eq "Success" }
     $failed = $Results | Where-Object { $_.Status -eq "Failed" }
-    
+
     Write-Host "Total VMs: $($Results.Count)" -ForegroundColor White
     Write-Host "Successful: $($successful.Count)" -ForegroundColor Green
     Write-Host "Failed: $($failed.Count)" -ForegroundColor Red
-    
+
     if ($successful.Count -gt 0) {
         Write-Host "`nSuccessfully Created VMs:" -ForegroundColor Green
         foreach ($result in $successful) {
@@ -698,14 +698,14 @@ function Show-CreationResults {
             Write-Host "  ✓ $($vm.vmName) [UUID: $($vm.uuid)] [State: $($vm.powerState)]" -ForegroundColor White
         }
     }
-    
+
     if ($failed.Count -gt 0) {
         Write-Host "`nFailed VM Creations:" -ForegroundColor Red
         foreach ($result in $failed) {
             Write-Host "  ✗ $($result.VMName): $($result.Message)" -ForegroundColor White
         }
     }
-    
+
     # Export results if requested
     if ($OutputFormat -ne "Console") {
         $exportData = $Results | ForEach-Object {
@@ -721,7 +721,7 @@ function Show-CreationResults {
                 Timestamp = Get-Date
             }
         }
-        
+
         switch ($OutputFormat) {
             "CSV" {
                 if (-not $OutputPath) {
@@ -744,56 +744,56 @@ function Show-CreationResults {
 # Main execution
 try {
     Write-Host "=== Nutanix AHV VM Creation ===" -ForegroundColor Cyan
-    
+
     # Determine target server
     $targetServer = if ($PrismCentral) { $PrismCentral } else { $PrismElement }
     $serverType = if ($PrismCentral) { "Prism Central" } else { "Prism Element" }
-    
+
     if (-not $targetServer) {
         throw "Either PrismCentral or PrismElement parameter must be specified"
     }
-    
+
     Write-Host "Target $serverType`: $targetServer" -ForegroundColor White
     Write-Host ""
-    
+
     # Check and install Nutanix PowerShell SDK
     if (-not (Test-NutanixSDKInstallation)) {
         throw "Nutanix PowerShell SDK installation failed"
     }
-    
+
     # Connect to Nutanix
     $connection = Connect-ToNutanix -Server $targetServer -ServerType $serverType
-    
+
     # Resolve cluster information
     $clusterInfo = Get-ClusterInfo -ClusterName $ClusterName -ClusterUUID $ClusterUUID
     Write-Host "Target Cluster: $($clusterInfo.Name) [$($clusterInfo.UUID)]" -ForegroundColor White
-    
+
     # Resolve storage container information
     $containerInfo = Get-ContainerInfo -ContainerName $ContainerName -ContainerUUID $ContainerUUID -ClusterUUID $clusterInfo.UUID
     Write-Host "Storage Container: $($containerInfo.Name) [$($containerInfo.UUID)]" -ForegroundColor White
-    
+
     # Resolve network information
     $networkInfo = Get-NetworkInfo -NetworkName $NetworkName -NetworkUUID $NetworkUUID
     Write-Host "Network: $($networkInfo.Name) [$($networkInfo.UUID)]" -ForegroundColor White
-    
+
     # Resolve image information if specified
     $imageInfo = Get-ImageInfo -ImageName $ImageName -ImageUUID $ImageUUID
     if ($imageInfo) {
         Write-Host "Base Image: $($imageInfo.Name) [$($imageInfo.UUID)]" -ForegroundColor White
     }
-    
+
     # Resolve source VM information if specified
     $sourceVMInfo = Get-SourceVMInfo -SourceVMName $SourceVMName -SourceVMUUID $SourceVMUUID
     if ($sourceVMInfo) {
         Write-Host "Source VM: $($sourceVMInfo.Name) [$($sourceVMInfo.UUID)]" -ForegroundColor White
     }
-    
+
     # Generate VM names
     $vmNames = Get-VMNames -VMName $VMName -VMNames $VMNames -VMCount $VMCount -NamePrefix $NamePrefix
     Write-Host "VMs to create: $($vmNames.Count)" -ForegroundColor White
     Write-Host "VM Names: $($vmNames -join ', ')" -ForegroundColor White
     Write-Host ""
-    
+
     # Confirm operation if not using Force and creating multiple VMs
     if (-not $Force -and $vmNames.Count -gt 1) {
         $confirmation = Read-Host "Proceed with creating $($vmNames.Count) VM(s)? (y/N)"
@@ -802,15 +802,15 @@ try {
             exit 0
         }
     }
-    
+
     # Create VMs
     Write-Host "Creating VMs..." -ForegroundColor Yellow
     $results = @()
-    
+
     foreach ($vmName in $vmNames) {
         try {
             Write-Host "  Processing VM: $vmName" -ForegroundColor Cyan
-            
+
             if ($sourceVMInfo) {
                 # Clone from existing VM
                 $result = Copy-NutanixVM -SourceVMInfo $sourceVMInfo -NewVMName $vmName -PowerOnAfterCreation:$PowerOnAfterCreation
@@ -819,7 +819,7 @@ try {
             } else {
                 # Create new VM
                 $vmSpec = New-VMSpecification -VMName $vmName -ClusterUUID $clusterInfo.UUID -ContainerUUID $containerInfo.UUID -NetworkUUID $networkInfo.UUID -CPUCores $CPUCores -CPUSockets $CPUSockets -MemoryGB $MemoryGB -DiskSizeGB $DiskSizeGB -AdditionalDisks $AdditionalDisks -ImageInfo $imageInfo -SourceVMInfo $sourceVMInfo
-                
+
                 $result = New-NutanixVM -VMSpec $vmSpec -ClusterUUID $clusterInfo.UUID -PowerOnAfterCreation:$PowerOnAfterCreation -InstallNGT:$InstallNGT
                 $result.VMName = $vmName
                 $results += $result
@@ -836,10 +836,10 @@ try {
             Write-Host "    ✗ Failed to create VM: $($_.Exception.Message)" -ForegroundColor Red
         }
     }
-    
+
     # Display results
     Show-CreationResults -Results $results -OutputFormat $OutputFormat -OutputPath $OutputPath
-    
+
     Write-Host "`n=== VM Creation Completed ===" -ForegroundColor Green
 }
 catch {

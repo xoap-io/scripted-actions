@@ -12,7 +12,7 @@
         --group-id $AwsSecurityGroupId
 
     The script sets the ErrorActionPreference to SilentlyContinue to suppress error messages.
-    
+
     It does not return any output.
 
 .NOTES

@@ -5,7 +5,7 @@
 .DESCRIPTION
     This script deletes a peering connection from an Azure Virtual Network using the Azure CLI.
     Includes safety checks and confirmation prompts to prevent accidental deletion.
-    
+
     The script uses the Azure CLI command: az network vnet peering delete
 
 .PARAMETER VNetName
@@ -22,12 +22,12 @@
 
 .EXAMPLE
     .\az-cli-delete-vnet-peering.ps1 -VNetName "hub-vnet" -ResourceGroup "hub-rg" -PeeringName "hub-to-spoke1"
-    
+
     Deletes a VNet peering connection with confirmation.
 
 .EXAMPLE
     .\az-cli-delete-vnet-peering.ps1 -VNetName "hub-vnet" -ResourceGroup "hub-rg" -PeeringName "hub-to-spoke1" -Force
-    
+
     Forces deletion without confirmation prompts.
 
 .NOTES
@@ -85,7 +85,7 @@ try {
     if (-not $peeringCheck) {
         throw "VNet peering '$PeeringName' not found in virtual network '$VNetName' in resource group '$ResourceGroup'"
     }
-    
+
     $peeringInfo = $peeringCheck | ConvertFrom-Json
     Write-Host "✓ VNet peering '$PeeringName' found" -ForegroundColor Green
 
@@ -115,7 +115,7 @@ try {
         Write-Host "Note: This only deletes peering from the source VNet." -ForegroundColor Blue
         Write-Host "The reverse peering (if it exists) will remain and should be deleted separately." -ForegroundColor Blue
         Write-Host "" -ForegroundColor White
-        
+
         $confirmation = Read-Host "Are you sure you want to delete this peering? (yes/no)"
         if ($confirmation -ne "yes") {
             Write-Host "Deletion cancelled by user." -ForegroundColor Yellow
@@ -138,7 +138,7 @@ try {
 
     # Execute Azure CLI command
     $result = & az @azParams 2>&1
-    
+
     if ($LASTEXITCODE -eq 0) {
         Write-Host "✓ VNet peering deleted successfully!" -ForegroundColor Green
         Write-Host "Peering '$PeeringName' has been removed from virtual network '$VNetName'" -ForegroundColor White

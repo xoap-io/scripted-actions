@@ -5,7 +5,7 @@
 .DESCRIPTION
     This script adds a custom route to an existing Azure Route Table using the Azure CLI.
     Custom routes override Azure's default system routes and control how traffic is routed from subnets.
-    
+
     The script uses the Azure CLI command: az network route-table route create
 
 .PARAMETER RouteTableName
@@ -29,17 +29,17 @@
 
 .EXAMPLE
     .\az-cli-add-route.ps1 -RouteTableName "app-routes" -ResourceGroup "MyRG" -RouteName "ToInternet" -AddressPrefix "0.0.0.0/0" -NextHopType "Internet"
-    
+
     Creates a default route to the internet.
 
 .EXAMPLE
     .\az-cli-add-route.ps1 -RouteTableName "secure-routes" -ResourceGroup "MyRG" -RouteName "ToFirewall" -AddressPrefix "10.1.0.0/16" -NextHopType "VirtualAppliance" -NextHopIpAddress "10.0.1.4"
-    
+
     Creates a route through a network virtual appliance (like a firewall).
 
 .EXAMPLE
     .\az-cli-add-route.ps1 -RouteTableName "hub-routes" -ResourceGroup "MyRG" -RouteName "ToOnPrem" -AddressPrefix "192.168.0.0/16" -NextHopType "VirtualNetworkGateway"
-    
+
     Creates a route to on-premises networks through a VPN/ExpressRoute gateway.
 
 .NOTES
@@ -131,8 +131,8 @@ try {
     )
 
     # Add next hop IP address if specified
-    if ($NextHopIpAddress) { 
-        $azParams += '--next-hop-ip-address', $NextHopIpAddress 
+    if ($NextHopIpAddress) {
+        $azParams += '--next-hop-ip-address', $NextHopIpAddress
     }
 
     Write-Host "Creating route in Route Table..." -ForegroundColor Yellow
@@ -147,10 +147,10 @@ try {
 
     # Execute Azure CLI command
     $result = & az @azParams 2>&1
-    
+
     if ($LASTEXITCODE -eq 0) {
         Write-Host "✓ Route created successfully!" -ForegroundColor Green
-        
+
         # Parse and display route information
         try {
             $routeInfo = $result | ConvertFrom-Json
@@ -158,29 +158,29 @@ try {
             Write-Host "  Name: $($routeInfo.name)" -ForegroundColor White
             Write-Host "  Address Prefix: $($routeInfo.addressPrefix)" -ForegroundColor White
             Write-Host "  Next Hop Type: $($routeInfo.nextHopType)" -ForegroundColor White
-            
+
             if ($routeInfo.nextHopIpAddress) {
                 Write-Host "  Next Hop IP: $($routeInfo.nextHopIpAddress)" -ForegroundColor White
             }
-            
+
             Write-Host "  Provisioning State: $($routeInfo.provisioningState)" -ForegroundColor White
-            
+
             # Provide helpful information about route types
             switch ($routeInfo.nextHopType) {
-                'Internet' { 
-                    Write-Host "  ℹ This route directs traffic to the internet" -ForegroundColor Blue 
+                'Internet' {
+                    Write-Host "  ℹ This route directs traffic to the internet" -ForegroundColor Blue
                 }
-                'VirtualNetworkGateway' { 
-                    Write-Host "  ℹ This route directs traffic through VPN/ExpressRoute gateway" -ForegroundColor Blue 
+                'VirtualNetworkGateway' {
+                    Write-Host "  ℹ This route directs traffic through VPN/ExpressRoute gateway" -ForegroundColor Blue
                 }
-                'VirtualAppliance' { 
-                    Write-Host "  ℹ This route directs traffic through a network virtual appliance" -ForegroundColor Blue 
+                'VirtualAppliance' {
+                    Write-Host "  ℹ This route directs traffic through a network virtual appliance" -ForegroundColor Blue
                 }
-                'VnetLocal' { 
-                    Write-Host "  ℹ This route keeps traffic within the virtual network" -ForegroundColor Blue 
+                'VnetLocal' {
+                    Write-Host "  ℹ This route keeps traffic within the virtual network" -ForegroundColor Blue
                 }
-                'None' { 
-                    Write-Host "  ℹ This route drops traffic (black hole route)" -ForegroundColor Blue 
+                'None' {
+                    Write-Host "  ℹ This route drops traffic (black hole route)" -ForegroundColor Blue
                 }
             }
         }

@@ -44,4 +44,3 @@ try {
     Write-Error "Failed to start Workspace: $_"
     exit 1
 }
-    

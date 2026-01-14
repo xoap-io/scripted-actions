@@ -18,6 +18,7 @@ The `rds-deployment.ps1` script automates the deployment of a complete Remote De
 ## Architecture
 
 ### Full Deployment (Default)
+
 ```
 ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐
 │   File Server   │  │ RD Session Host │  │  RD Gateway     │
@@ -40,6 +41,7 @@ The `rds-deployment.ps1` script automates the deployment of a complete Remote De
 ```
 
 ### Minimal Deployment (with Skip Options)
+
 ```
 ┌─────────────────┐  ┌─────────────────┐
 │   File Server   │  │ RD Session Host │
@@ -190,11 +192,13 @@ The `rds-deployment.ps1` script automates the deployment of a complete Remote De
 The script follows this sequential process:
 
 1. **Pre-checks**
+
    - Validates execution context
    - Tests PowerShell Remoting to all servers
    - Imports required modules
 
 2. **Windows Features Installation**
+
    - File Server: FS-FileServer, FS-Resource-Manager
    - Connection Broker/Web: RDS-Connection-Broker, RDS-Web-Access
    - Session Host: RDS-RD-Server
@@ -202,24 +206,29 @@ The script follows this sequential process:
    - Gateway Server: RDS-Gateway (if not skipped)
 
 3. **File Share Creation**
+
    - Creates UPD and Profile directories on File Server
    - Configures SMB shares with proper permissions
    - Sets NTFS permissions using language-agnostic SIDs
 
 4. **Server Manager Integration**
+
    - Adds all servers to Server Manager computer pool
    - Enables centralized management
 
 5. **RDS Deployment Setup**
+
    - Creates new RDS deployment or extends existing
    - Configures Connection Broker and Web Access
    - Adds Session Host to deployment
 
 6. **Optional Component Configuration**
+
    - RD Licensing: Adds licensing server and sets license mode
    - RD Gateway: Adds gateway server and configures access
 
 7. **Session Collection Creation**
+
    - Creates RDS session collection
    - Configures user group access
    - Enables User Profile Disks
@@ -238,6 +247,7 @@ The script follows this sequential process:
 ### Permissions Applied
 
 - **Share Permissions**:
+
   - BUILTIN\Administrators: Full Control
   - NT AUTHORITY\SYSTEM: Full Control
   - Domain Users: Change
@@ -271,10 +281,13 @@ The script follows this sequential process:
 ### Common Issues
 
 #### PowerShell Remoting Failures
+
 ```
 Error: Cannot connect to server via PowerShell Remoting
 ```
+
 **Solution:**
+
 - Verify WinRM is enabled: `winrm quickconfig`
 - Check firewall rules for PowerShell Remoting
 - Ensure proper DNS resolution between servers
@@ -286,24 +299,31 @@ Error: Access denied when creating shares or setting permissions
 ```
 
 **Solution:**
+
 - Run script with domain administrator account
 - Verify account has local admin rights on File Server
 - Check if UAC is interfering with remote operations
 
 #### Feature Installation Failures
+
 ```
 Error: Failed to install Windows Feature
 ```
+
 **Solution:**
+
 - Verify Windows Update services are running
 - Check if server requires restart from previous installations
 - Ensure sufficient disk space for feature installation
 
 #### License Server Issues
+
 ```
 Error: Failed to set RD License configuration
 ```
+
 **Solution:**
+
 - Verify RD Licensing server is activated
 - Check if appropriate CALs are installed
 - Ensure license server is reachable from Connection Broker
@@ -335,10 +355,12 @@ Get-SmbShare | Where-Object {$_.Name -like "*RDS*"}
 ### Immediate Tasks
 
 1. **Activate RD Licensing Server**
+
    - Install appropriate CALs (User or Device)
    - Verify license server activation
 
 2. **Configure RD Gateway Policies** (if deployed)
+
    - Set up Connection Authorization Policies (CAP)
    - Configure Resource Authorization Policies (RAP)
 
@@ -349,10 +371,12 @@ Get-SmbShare | Where-Object {$_.Name -like "*RDS*"}
 ### Optional Enhancements
 
 1. **Group Policy Configuration**
+
    - Configure RDS-specific Group Policy settings
    - Set session timeout and reconnection policies
 
 2. **Monitoring Setup**
+
    - Configure performance monitoring
    - Set up event log monitoring
 

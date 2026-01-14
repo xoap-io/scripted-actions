@@ -6,7 +6,7 @@
     This script monitors Azure resource health and status using the Azure CLI.
     Provides comprehensive health checks, availability monitoring, and alerting capabilities.
     Includes resource dependency analysis, performance metrics, and health history reporting.
-    
+
     The script uses the Azure CLI commands: az resource list, az monitor metrics list
 
 .PARAMETER ResourceGroup
@@ -47,22 +47,22 @@
 
 .EXAMPLE
     .\az-cli-monitor-health.ps1 -ResourceGroup "production-rg" -MonitoringMode "FullCheck" -ExportReport "health-report.json"
-    
+
     Performs full health check on production Resource Group.
 
 .EXAMPLE
     .\az-cli-monitor-health.ps1 -Resources @("/subscriptions/.../resourceGroups/rg/providers/Microsoft.Compute/virtualMachines/vm1") -IncludeMetrics
-    
+
     Monitors specific VM with performance metrics.
 
 .EXAMPLE
     .\az-cli-monitor-health.ps1 -ResourceGroup "web-rg" -ContinuousMonitoring -HealthCheckInterval 300 -MaxIterations 12
-    
+
     Runs continuous monitoring every 5 minutes for 1 hour.
 
 .EXAMPLE
     .\az-cli-monitor-health.ps1 -MonitoringMode "QuickScan" -IncludeDependencies -VerboseOutput
-    
+
     Quick health scan with dependency analysis and verbose output.
 
 .NOTES
@@ -137,7 +137,7 @@ function Test-ResourceHealth {
         [bool]$IncludeMetrics = $false,
         [bool]$VerboseOutput = $false
     )
-    
+
     $healthStatus = @{
         ResourceId = $Resource.id
         ResourceName = $Resource.name
@@ -150,34 +150,34 @@ function Test-ResourceHealth {
         Metrics = @{}
         LastChecked = (Get-Date).ToString("yyyy-MM-ddTHH:mm:ssZ")
     }
-    
+
     # Determine health based on provisioning state
     switch ($Resource.properties.provisioningState) {
-        "Succeeded" { 
-            $healthStatus.HealthStatus = "Healthy" 
+        "Succeeded" {
+            $healthStatus.HealthStatus = "Healthy"
         }
-        "Failed" { 
+        "Failed" {
             $healthStatus.HealthStatus = "Unhealthy"
             $healthStatus.Issues += "Resource provisioning failed"
         }
-        "Creating" { 
+        "Creating" {
             $healthStatus.HealthStatus = "Transitioning"
             $healthStatus.Issues += "Resource is being created"
         }
-        "Updating" { 
+        "Updating" {
             $healthStatus.HealthStatus = "Transitioning"
             $healthStatus.Issues += "Resource is being updated"
         }
-        "Deleting" { 
+        "Deleting" {
             $healthStatus.HealthStatus = "Transitioning"
             $healthStatus.Issues += "Resource is being deleted"
         }
-        default { 
+        default {
             $healthStatus.HealthStatus = "Unknown"
             $healthStatus.Issues += "Unknown provisioning state: $($Resource.properties.provisioningState)"
         }
     }
-    
+
     # Resource-specific health checks
     switch ($Resource.type) {
         "Microsoft.Compute/virtualMachines" {
@@ -185,13 +185,13 @@ function Test-ResourceHealth {
             if ($VerboseOutput) {
                 Write-Host "    Checking VM power state..." -ForegroundColor Gray
             }
-            
+
             # Check if VM has required properties
             if (-not $Resource.properties.hardwareProfile) {
                 $healthStatus.Issues += "VM hardware profile not configured"
                 $healthStatus.HealthStatus = "Warning"
             }
-            
+
             # Additional VM checks could be added here
         }
         "Microsoft.Storage/storageAccounts" {
@@ -199,7 +199,7 @@ function Test-ResourceHealth {
             if ($VerboseOutput) {
                 Write-Host "    Checking storage account configuration..." -ForegroundColor Gray
             }
-            
+
             if ($Resource.properties.accessTier -eq "Hot" -and $Resource.properties.kind -eq "BlobStorage") {
                 # This might indicate suboptimal configuration
                 $healthStatus.Issues += "Consider using Cool or Archive tier for infrequently accessed blobs"
@@ -213,7 +213,7 @@ function Test-ResourceHealth {
             if ($VerboseOutput) {
                 Write-Host "    Checking public IP allocation..." -ForegroundColor Gray
             }
-            
+
             if ($Resource.properties.publicIPAllocationMethod -eq "Dynamic" -and -not $Resource.properties.ipAddress) {
                 $healthStatus.Issues += "Dynamic public IP not allocated"
                 if ($healthStatus.HealthStatus -eq "Healthy") {
@@ -222,13 +222,13 @@ function Test-ResourceHealth {
             }
         }
     }
-    
+
     # Get basic metrics if requested (simplified)
     if ($IncludeMetrics) {
         if ($VerboseOutput) {
             Write-Host "    Retrieving metrics..." -ForegroundColor Gray
         }
-        
+
         # Note: Actual metrics retrieval would require more complex Azure CLI calls
         # This is a placeholder for metrics functionality
         $healthStatus.Metrics = @{
@@ -237,7 +237,7 @@ function Test-ResourceHealth {
             "Note" = "Metrics functionality requires Azure Monitor API access"
         }
     }
-    
+
     return $healthStatus
 }
 
@@ -247,9 +247,9 @@ function Get-ResourceDependencies {
         [Parameter(Mandatory)]
         [array]$Resources
     )
-    
+
     $dependencies = @()
-    
+
     foreach ($resource in $Resources) {
         $dependency = @{
             ResourceId = $resource.id
@@ -257,7 +257,7 @@ function Get-ResourceDependencies {
             Dependencies = @()
             Dependents = @()
         }
-        
+
         # Analyze dependencies based on resource type and properties
         switch ($resource.type) {
             "Microsoft.Compute/virtualMachines" {
@@ -287,10 +287,10 @@ function Get-ResourceDependencies {
                 }
             }
         }
-        
+
         $dependencies += $dependency
     }
-    
+
     return $dependencies
 }
 
@@ -332,7 +332,7 @@ try {
         if (-not $rgCheck) {
             throw "Resource Group '$ResourceGroup' not found in subscription '$($azAccount.name)'"
         }
-        
+
         $rgInfo = $rgCheck | ConvertFrom-Json
         Write-Host "✓ Resource Group '$ResourceGroup' found" -ForegroundColor Green
         Write-Host "  Location: $($rgInfo.location)" -ForegroundColor White
@@ -340,7 +340,7 @@ try {
 
     # Get resources to monitor
     $resourcesToMonitor = @()
-    
+
     if ($Resources -and $Resources.Count -gt 0) {
         Write-Host "Loading specified resources..." -ForegroundColor Yellow
         foreach ($resourceId in $Resources) {
@@ -394,11 +394,11 @@ try {
     # Main monitoring loop
     $iteration = 0
     $healthHistory = @()
-    
+
     do {
         $iteration++
         $startTime = Get-Date
-        
+
         if ($ContinuousMonitoring) {
             Write-Host ""
             Write-Host "🔄 Health Check Iteration $iteration/$MaxIterations" -ForegroundColor Blue
@@ -420,16 +420,16 @@ try {
         # Perform health checks
         Write-Host ""
         Write-Host "Checking resource health..." -ForegroundColor Yellow
-        
+
         foreach ($resource in $resourcesToMonitor) {
             if ($VerboseOutput) {
                 Write-Host "  Checking: $($resource.name) ($($resource.type))" -ForegroundColor Blue
             }
-            
+
             $healthResult = Test-ResourceHealth -Resource $resource -IncludeMetrics:$IncludeMetrics -VerboseOutput:$VerboseOutput
             $healthResults += $healthResult
             $healthSummary[$healthResult.HealthStatus]++
-            
+
             # Display immediate results if verbose
             if ($VerboseOutput) {
                 $statusColor = switch ($healthResult.HealthStatus) {
@@ -457,10 +457,10 @@ try {
 
         # Calculate health metrics
         $totalResources = $healthResults.Count
-        $healthPercentage = if ($totalResources -gt 0) { 
-            [math]::Round(($healthSummary.Healthy / $totalResources) * 100, 2) 
-        } else { 
-            0 
+        $healthPercentage = if ($totalResources -gt 0) {
+            [math]::Round(($healthSummary.Healthy / $totalResources) * 100, 2)
+        } else {
+            0
         }
 
         # Display results
@@ -473,10 +473,10 @@ try {
         Write-Host "Check completed at: $($endTime.ToString('yyyy-MM-dd HH:mm:ss'))" -ForegroundColor Gray
         Write-Host "Check duration: $([math]::Round($checkDuration, 2)) seconds" -ForegroundColor Gray
         Write-Host ""
-        
+
         Write-Host "Overall Health: $healthPercentage% healthy" -ForegroundColor $(if ($healthPercentage -ge $AlertThresholds.HealthyThreshold) { 'Green' } elseif ($healthPercentage -ge $AlertThresholds.WarningThreshold) { 'Yellow' } else { 'Red' })
         Write-Host ""
-        
+
         Write-Host "Status Breakdown:" -ForegroundColor Blue
         Write-Host "  ✅ Healthy: $($healthSummary.Healthy)" -ForegroundColor Green
         Write-Host "  ⚠️  Warning: $($healthSummary.Warning)" -ForegroundColor Yellow
@@ -512,7 +512,7 @@ try {
         if ($ExportReport -and (-not $ContinuousMonitoring -or $iteration -eq $MaxIterations)) {
             Write-Host ""
             Write-Host "💾 Exporting health report..." -ForegroundColor Yellow
-            
+
             $reportData = @{
                 timestamp = (Get-Date).ToString("yyyy-MM-ddTHH:mm:ssZ")
                 subscription = $azAccount.id
@@ -531,7 +531,7 @@ try {
                     iterations = $iteration
                 }
             }
-            
+
             $reportData | ConvertTo-Json -Depth 10 | Out-File -FilePath $ExportReport -Encoding UTF8
             Write-Host "✓ Health report exported to: $ExportReport" -ForegroundColor Green
         }
@@ -551,12 +551,12 @@ try {
         Write-Host "📈 Monitoring Summary:" -ForegroundColor Cyan
         Write-Host "Total iterations: $iteration" -ForegroundColor White
         Write-Host "Total monitoring time: $([math]::Round((Get-Date).Subtract($startTime).TotalMinutes, 2)) minutes" -ForegroundColor White
-        
+
         if ($healthHistory.Count -gt 1) {
             $avgHealth = ($healthHistory | Measure-Object -Property HealthPercentage -Average).Average
             $minHealth = ($healthHistory | Measure-Object -Property HealthPercentage -Minimum).Minimum
             $maxHealth = ($healthHistory | Measure-Object -Property HealthPercentage -Maximum).Maximum
-            
+
             Write-Host "Average health: $([math]::Round($avgHealth, 2))%" -ForegroundColor White
             Write-Host "Health range: $([math]::Round($minHealth, 2))% - $([math]::Round($maxHealth, 2))%" -ForegroundColor White
         }

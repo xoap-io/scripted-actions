@@ -27,15 +27,15 @@ az login --use-device-code
 
 ## Directory Structure
 
-| Folder | Description | Service Focus |
-|--------|-------------|---------------|
-| [`avd/`](./avd/) | Azure Virtual Desktop | Virtual desktop infrastructure |
-| [`network/`](./network/) | Virtual networking | VNets, subnets, NSGs, load balancers |
-| [`resource-manager/`](./resource-manager/) | Resource management | Resource groups, templates, deployments |
-| [`security/`](./security/) | Security and identity | Key Vault, managed identities, RBAC |
-| [`storage/`](./storage/) | Storage services | Storage accounts, blobs, file shares |
-| [`vms/`](./vms/) | Virtual machines | VM creation, management, extensions |
-| [`xoap/`](./xoap/) | XOAP-specific integrations | Custom automation workflows |
+| Folder                                     | Description                | Service Focus                           |
+| ------------------------------------------ | -------------------------- | --------------------------------------- |
+| [`avd/`](./avd/)                           | Azure Virtual Desktop      | Virtual desktop infrastructure          |
+| [`network/`](./network/)                   | Virtual networking         | VNets, subnets, NSGs, load balancers    |
+| [`resource-manager/`](./resource-manager/) | Resource management        | Resource groups, templates, deployments |
+| [`security/`](./security/)                 | Security and identity      | Key Vault, managed identities, RBAC     |
+| [`storage/`](./storage/)                   | Storage services           | Storage accounts, blobs, file shares    |
+| [`vms/`](./vms/)                           | Virtual machines           | VM creation, management, extensions     |
+| [`xoap/`](./xoap/)                         | XOAP-specific integrations | Custom automation workflows             |
 
 ## Common Usage Patterns
 
@@ -80,7 +80,7 @@ $ErrorActionPreference = 'Stop'
 try {
     $result = az vm create --name $VmName --resource-group $ResourceGroupName `
               --image $ImageName --location $Location --output json | ConvertFrom-Json
-    
+
     if ($LASTEXITCODE -ne 0) {
         throw "Azure CLI command failed with exit code $LASTEXITCODE"
     }
