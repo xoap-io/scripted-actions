@@ -3,157 +3,25 @@
     Creates a complete Azure DevTest Labs training environment with multiple VMs and user access.
 
 .DESCRIPTION
-    This script automates the creation of a comprehensive training environment using Azure DevTest Labs.
-    Supports German training scenarios with multiple VMs per student and jumphost functionality.
-    Features include:
-    - Creates DevTest Lab with cost management policies
-    - Deploys Windows Server and Client VMs for each student
-    - Sets up jumphost for simplified student access (recommended)
-    - Configures internet access through public IPs or jumphost
-    - Implements auto-shutdown and startup policies for cost optimization
-    - Creates claimable VMs organized by student groups
-    - Sets up artifacts for common training tools
-    - Supports German Azure environments
-    - Provides simple spin-up and tear-down functionality
+    Automates a comprehensive training environment using Azure DevTest Labs.
+    Includes lab+VNet+NAT, subnet enablement for VM creation, policies, jumphost-first pattern,
+    and validation/diagnostics for the external VNet default subnet and DTL lab VNets.
 
-.NOTES
-    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
-    The use of the scripts does not require XOAP, but it will make your life easier.
-    You are allowed to pull the script from the repository and use it with XOAP or other solutions
-    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no liability for the function,
-    the use and the consequences of the use of this freely available script.
-    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
-
-.COMPONENT
-    PowerShell, Azure PowerShell, Azure DevTest Labs
-
-.LINK
-    https://github.com/xoap-io/scripted-actions
-
-.PARAMETER LabName
-    Name of the DevTest Lab to create.
-
-.PARAMETER ResourceGroupName
-    Name of the Azure Resource Group to create or use.
-
-.PARAMETER Location
-    Azure region where resources will be created.
-
-.PARAMETER SubscriptionId
-    Azure subscription ID to deploy resources.
-
-.PARAMETER TrainingUserEmails
-    Array of email addresses for training participants.
-
-.PARAMETER InstructorEmails
-    Array of email addresses for instructors (will get Owner permissions).
-
-.PARAMETER StudentCount
-    Number of students (each gets full VM set: DC, TS, Server01, Client01, Client02).
-
-.PARAMETER IncludeTrainer
-    Whether to include trainer VMs (same set as students).
-
-.PARAMETER UseJumphost
-    Create jumphost VMs for simplified student access (recommended).
-
-.PARAMETER JumphostSize
-    VM size for jumphost machines if enabled.
-
-.PARAMETER WindowsVMCount
-    Number of additional Windows training VMs to create (legacy parameter).
-
-.PARAMETER LinuxVMCount
-    Number of additional Linux training VMs to create (legacy parameter).
-
-.PARAMETER VMSize
-    Size of VMs to create (e.g., Standard_B2s, Standard_D2s_v3).
-
-.PARAMETER AllowPublicIP
-    Whether to allow public IP addresses for VMs (enables internet access).
-
-.PARAMETER AutoShutdownTime
-    Time for automatic VM shutdown (24-hour format, e.g., "1800" for 6 PM).
-
-.PARAMETER AutoStartupTime
-    Time for automatic VM startup (24-hour format, e.g., "0800" for 8 AM).
-
-.PARAMETER MaxVMsPerUser
-    Maximum number of VMs each user can create.
-
-.PARAMETER MaxVMsPerLab
-    Maximum number of VMs allowed in the entire lab.
-
-.PARAMETER CostThreshold
-    Cost threshold in USD for cost alerts.
-
-.PARAMETER TimeZoneId
-    Time zone ID for scheduling (e.g., "UTC", "Eastern Standard Time").
-
-.PARAMETER TrainingDuration
-    Number of days the training environment should remain active.
-
-.PARAMETER InstallCommonTools
-    Whether to install common training tools via artifacts.
-
-.PARAMETER EnableVPNGateway
-    Whether to create a VPN Gateway for secure remote access.
-
-.PARAMETER Action
-    Action to perform: Create, Delete, Start, Stop, or Status.
-
-.EXAMPLE
-    # Create German training environment for 5 students + 1 trainer with jumphost
-    .\az-ps-create-devtest-training-environment.ps1 `
-        -LabName "WindowsServerSchulung2025" `
-        -ResourceGroupName "training-rg-de" `
-        -Location "Germany West Central" `
-        -StudentCount 5 `
-        -IncludeTrainer $true `
-        -UseJumphost $true `
-        -TrainingUserEmails @("student1@firma.de", "student2@firma.de") `
-        -InstructorEmails @("trainer@firma.de") `
-        -AutoShutdownTime "1800" `
-        -AutoStartupTime "0800" `
-        -Action Create
-
-.EXAMPLE
-    # Create a complete training environment for 20 students
-    .\az-ps-create-devtest-training-environment.ps1 `
-        -LabName "PowerShellTraining2025" `
-        -ResourceGroupName "training-rg" `
-        -Location "East US 2" `
-        -TrainingUserEmails @("student1@contoso.com", "student2@contoso.com") `
-        -InstructorEmails @("instructor@contoso.com") `
-        -WindowsVMCount 15 `
-        -LinuxVMCount 5 `
-        -AllowPublicIP $true `
-        -AutoShutdownTime "1800" `
-        -AutoStartupTime "0800" `
-        -Action Create
-
-.EXAMPLE
-    # Check status of existing training environment
-    .\az-ps-create-devtest-training-environment.ps1 `
-        -LabName "PowerShellTraining2025" `
-        -ResourceGroupName "training-rg" `
-        -Action Status
-
-.EXAMPLE
-    # Delete training environment and all resources
-    .\az-ps-create-devtest-training-environment.ps1 `
-        -LabName "PowerShellTraining2025" `
-        -ResourceGroupName "training-rg" `
-        -Action Delete
-
+    Key points:
+    - Removes $schema fields from ARM TemplateObjects to avoid “Variable reference is not valid … ':' … ${}” preprocessing errors
+    - Precomputed resource IDs (no ARM [resourceId()] with $variables)
+    - Subnet/NAT checks & DTL subnetOverrides(useInVmCreation) validation
+    - Start/Stop actions via Invoke-AzResourceAction
 #>
 
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)][ValidatePattern('^[a-zA-Z0-9-]{3,50}$')][string]$LabName,
     [Parameter(Mandatory)][ValidatePattern('^[a-zA-Z0-9-_.()]{1,90}$')][string]$ResourceGroupName,
-    [Parameter(Mandatory)][ValidateSet('East US', 'East US 2', 'West US', 'West US 2', 'Central US', 'North Central US', 'South Central US', 'West Central US', 'Canada Central', 'Canada East', 'North Europe', 'West Europe', 'UK South', 'UK West', 'Germany West Central', 'Switzerland North', 'France Central', 'Australia East', 'Australia Southeast', 'Japan East', 'Japan West', 'Korea Central', 'South India', 'Central India', 'East Asia', 'Southeast Asia')][string]$Location = 'Germany West Central',
-    [string]$SubscriptionId,
+    [Parameter(Mandatory)]
+    [ValidateSet('East US','East US 2','West US','West US 2','Central US','North Central US','South Central US','West Central US','Canada Central','Canada East','North Europe','West Europe','UK South','UK West','Germany West Central','Switzerland North','France Central','Australia East','Australia Southeast','Japan East','Japan West','Korea Central','South India','Central India','East Asia','Southeast Asia')]
+    [string]$Location = 'Germany West Central',
+
     [string[]]$TrainingUserEmails = @(),
     [string[]]$InstructorEmails = @(),
 
@@ -169,8 +37,9 @@ param(
 
     [ValidateSet('Standard_B1s', 'Standard_B2s', 'Standard_B2ms', 'Standard_D2s_v3', 'Standard_D4s_v3', 'Standard_E2s_v3')][string]$VMSize = 'Standard_B2s',
     [bool]$AllowPublicIP = $true,
+
     [ValidatePattern('^([01]?[0-9]|2[0-3])[0-5][0-9]$')][string]$AutoShutdownTime = '1800',
-    [ValidatePattern('^([01]?[0-9]|2[0-3])[0-5][0-9]$')][string]$AutoStartupTime = '0800',
+    [ValidatePattern('^([01]?[0-9]|2[0-3])[0-5][0-9]$')][string]$AutoStartupTime  = '0800',
     [ValidateRange(1,20)][int]$MaxVMsPerUser = 3,
     [ValidateRange(5,100)][int]$MaxVMsPerLab = 50,
     [ValidateRange(50,10000)][int]$CostThreshold = 500,
@@ -178,29 +47,35 @@ param(
     [ValidateRange(1,90)][int]$TrainingDuration = 7,
     [bool]$InstallCommonTools = $true,
     [bool]$EnableVPNGateway = $false,
-    [ValidateSet('Create', 'Delete', 'Start', 'Stop', 'Status')][string]$Action = 'Create'
+    [ValidateSet('Create','Delete','Start','Stop','Status')][string]$Action = 'Create',
+
+    [switch]$EnableDebugOutput
 )
 
 $ErrorActionPreference = 'Stop'
 
-# Import required modules
-Write-Host "Importing required Azure modules..." -ForegroundColor Cyan
+Write-Host "[STARTUP] Script initialization started..." -ForegroundColor Magenta
+Write-Host "[STARTUP] PowerShell version: $($PSVersionTable.PSVersion)" -ForegroundColor Gray
+
+# Modules
+Write-Host "[Information] Importing required Azure modules..." -ForegroundColor Cyan
 try {
-    Import-Module Az.Accounts -Force
-    Import-Module Az.Resources -Force
-    Import-Module Az.DevTestLabs -Force
-    Import-Module Az.Network -Force
-    Import-Module Az.Compute -Force
+    Import-Module Az.Accounts    -Force; Write-Host "[Information] Loaded 'Az.Accounts'"    -ForegroundColor Green
+    Import-Module Az.Resources   -Force; Write-Host "[Information] Loaded 'Az.Resources'"   -ForegroundColor Green
+    Import-Module Az.DevTestLabs -Force; Write-Host "[Information] Loaded 'Az.DevTestLabs'" -ForegroundColor Green
+    Import-Module Az.Network     -Force; Write-Host "[Information] Loaded 'Az.Network'"     -ForegroundColor Green
+    Import-Module Az.Compute     -Force; Write-Host "[Information] Loaded 'Az.Compute'"     -ForegroundColor Green
 } catch {
-    throw "Failed to import required Azure PowerShell modules. Please install the Az module: Install-Module -Name Az -AllowClobber -Force"
+    Write-Host "[ERROR] Failed to import Az modules: $($_.Exception.Message)" -ForegroundColor Red
+    throw "Install-Module Az -AllowClobber -Force"
 }
 
-# Authenticate and set context
-Write-Host "Checking Azure authentication..." -ForegroundColor Cyan
+# Auth
+Write-Host "[Information] Checking Azure authentication..." -ForegroundColor Cyan
 $azContext = Get-AzContext
 if (-not $azContext) {
-    Write-Host "No Azure context found. Please authenticate..." -ForegroundColor Yellow
-    Connect-AzAccount
+    Write-Host "[STARTUP] No Azure context found. Please authenticate..." -ForegroundColor Yellow
+    Connect-AzAccount | Out-Null
     $azContext = Get-AzContext
 }
 
@@ -244,27 +119,33 @@ function New-TrainingDevTestLab {
                 value = $LabName
             }
         }
-        resources = @(
-            @{
-                type = 'Microsoft.DevTestLab/labs'
-                apiVersion = '2018-09-15'
-                name = $LabName
-                location = $Location
-                properties = @{
-                    labStorageType = 'Standard'
-                    mandatoryArtifactsResourceIdsLinux = @()
-                    mandatoryArtifactsResourceIdsWindows = @()
-                    premiumDataDisks = 'Enabled'
-                    environmentPermission = 'Reader'
-                    announcement = @{
-                        title = 'Welcome to Training Lab'
-                        markdown = "Welcome to the **$LabName** training environment. Please follow the instructor's guidance for accessing your assigned VMs."
-                        enabled = 'Enabled'
-                        expirationDate = (Get-Date).AddDays($TrainingDuration).ToString('yyyy-MM-ddTHH:mm:ssZ')
-                    }
-                    support = @{
-                        enabled = 'Enabled'
-                        markdown = 'For technical support, please contact your instructor or IT administrator.'
+    }
+
+    Write-Host "[HEALTH] Validating DevTest Lab VNet subnetOverrides/useInVmCreation..." -ForegroundColor Cyan
+    $lab = Get-AzResource -ResourceGroupName $ResourceGroupName -ResourceType 'Microsoft.DevTestLab/labs' -Name $LabName -ErrorAction SilentlyContinue
+    if ($lab) {
+        $labVnets = Get-AzResource -ResourceId "$($lab.ResourceId)/virtualnetworks" -ErrorAction SilentlyContinue
+        if (-not $labVnets) {
+            [void]$problems.Add("No DevTest Lab virtual networks found under lab '$LabName'.")
+        } else {
+            foreach ($lv in $labVnets) {
+                $props = (Get-AzResource -ResourceId $lv.ResourceId -ExpandProperties -ErrorAction SilentlyContinue).Properties
+                $extId = if ($props) { $props.externalProviderResourceId } else { $null }
+                $over  = if ($props) { $props.subnetOverrides } else { $null }
+
+                if (-not $extId) { [void]$problems.Add("Lab VNet '$($lv.Name)' has no externalProviderResourceId (not linked).") }
+
+                if (-not $over -or @($over).Count -eq 0) {
+                    [void]$problems.Add("Lab VNet '$($lv.Name)' has no subnetOverrides. Default subnet must be enabled for VM creation.")
+                } else {
+                    $def = $over | Where-Object { $_.resourceId -match "/subnets/default($|[/?])" }
+                    if (-not $def) { [void]$problems.Add("Lab VNet '$($lv.Name)' has overrides, but none for 'default' subnet.") }
+                    else {
+                        $enabled = $false
+                        foreach ($d in $def) {
+                            if (($d.useInVmCreation -eq $true) -or (("$($d.useInVmCreation)") -imatch '^true$')) { $enabled = $true }
+                        }
+                        if (-not $enabled) { [void]$problems.Add("Lab VNet '$($lv.Name)' default subnet override exists but useInVmCreation is not TRUE.") }
                     }
                 }
             }
@@ -392,38 +273,64 @@ function New-TrainingVMFormulas {
         $windowsFormula = @{
             location = $Location
             properties = @{
-                description = 'Windows training VM with common development tools'
-                osType = 'Windows'
-                formulaContent = @{
-                    properties = @{
-                        size = $VMSize
-                        userName = 'trainee'
-                        password = 'Training123!'
-                        isAuthenticationWithSshKey = $false
-                        labSubnetName = 'default'
-                        labVirtualNetworkId = "/subscriptions/$((Get-AzContext).Subscription.Id)/resourceGroups/$ResourceGroupName/providers/Microsoft.DevTestLab/labs/$LabName/virtualnetworks/default"
-                        notes = 'Windows training virtual machine'
-                        artifacts = $commonWindowsArtifacts
-                        galleryImageReference = @{
-                            offer = 'WindowsServer'
-                            publisher = 'MicrosoftWindowsServer'
-                            sku = '2019-Datacenter'
-                            osType = 'Windows'
-                            version = 'latest'
-                        }
-                        networkInterface = @{
-                            sharedPublicIpAddressConfiguration = @{
-                                inboundNatRules = @(
-                                    @{
-                                        transportProtocol = 'tcp'
-                                        backendPort = 3389
-                                    }
-                                )
-                            }
-                        }
-                        disallowPublicIpAddress = -not $AllowPublicIP
-                    }
+                description = $labVnetResource.Properties.description
+                externalProviderResourceId = $labVnetResource.Properties.externalProviderResourceId
+                subnetOverrides = $newSubnetOverrides
+            }
+        }
+        Set-AzResource -ResourceId $labVnetResource.ResourceId -Properties $updateBody.properties -Force -ErrorAction Stop | Out-Null
+        Start-Sleep -Seconds 3
+        $verify = Get-AzResource -ResourceId $labVnetResource.ResourceId -ExpandProperties -ErrorAction SilentlyContinue
+        $ok = $verify.Properties.subnetOverrides | Where-Object { $_.resourceId -eq $subnetResourceId -and $_.useInVmCreation -eq $true }
+        if ($ok) { Write-Host "[Enable-Subnet] Subnet '$SubnetName' enabled." -ForegroundColor Green; return $true }
+        Write-Warning "[Enable-Subnet] Verification failed for '$SubnetName'."
+        return $false
+    } catch {
+        Write-Warning "[Enable-Subnet] Error: $($_.Exception.Message)"
+        return $false
+    }
+}
+
+function Resolve-LabVirtualNetwork {
+    param(
+        [Parameter(Mandatory)][string]$LabName,
+        [Parameter(Mandatory)][string]$ResourceGroupName,
+        [ValidateRange(10,600)][int]$TimeoutSeconds = 180,
+        [ValidateRange(2,60)][int]$PollSeconds = 10
+    )
+    $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
+    $desired = "external-$LabName-vnet"
+    do {
+        $labVnets = Get-AzResource -ResourceGroupName $ResourceGroupName -ResourceType 'Microsoft.DevTestLab/labs/virtualnetworks' -ExpandProperties -ErrorAction SilentlyContinue | Where-Object { $_.Name -like "$LabName/*" }
+        if ($labVnets) {
+            $attached = $labVnets | Where-Object { $_.Name -eq "$LabName/$desired" } | Select-Object -First 1
+            $candidates = if ($attached) { @($attached) + @($labVnets) } else { $labVnets }
+            foreach ($lv in $candidates) {
+                $overs = $lv.Properties.subnetOverrides
+                if (-not $overs) { continue }
+                $def = $overs | Where-Object { $_.resourceId -match "/subnets/default($|[/?])" }
+                $enabled = $false
+                foreach ($d in $def) {
+                    if (($d.useInVmCreation -eq $true) -or (("$($d.useInVmCreation)") -imatch '^true$')) { $enabled = $true }
                 }
+                if ($enabled) {
+                    $parts = $lv.Name -split '/'
+                    return [pscustomobject]@{ Name=$parts[1]; SubnetName='default' }
+                }
+            }
+        }
+        Start-Sleep -Seconds $PollSeconds
+    } while ((Get-Date) -lt $deadline)
+
+    Write-Warning "[Resolver] Timeout waiting for lab VNet with default subnet enabled. Attempting manual enablement..."
+    try {
+        $lab = Get-AzResource -ResourceGroupName $ResourceGroupName -ResourceType 'Microsoft.DevTestLab/labs' -Name $LabName -ErrorAction SilentlyContinue
+        if ($lab) {
+            $labVnets = Get-AzResource -ResourceId "$($lab.ResourceId)/virtualnetworks" -ErrorAction SilentlyContinue
+            if ($labVnets -and $labVnets.Count -gt 0) {
+                $first = $labVnets | Select-Object -First 1
+                $ok = Enable-LabVNetSubnet -LabName $LabName -ResourceGroupName $ResourceGroupName -LabVNetName $first.Name -SubnetName 'default'
+                if ($ok) { return [pscustomobject]@{ Name=$first.Name; SubnetName='default' } }
             }
         }
     }
@@ -627,21 +534,14 @@ function New-GermanTrainingVMSets {
             $vmConfig = @{
                 name = $vmName
                 location = $Location
+                dependsOn = @($Ids.Lab, $Ids.VNet, $Ids.NatGw)
                 properties = @{
-                    size = $VMSize
-                    userName = 'administrator'
-                    password = 'Training123!'
-                    isAuthenticationWithSshKey = $false
-                    labSubnetName = 'default'
-                    labVirtualNetworkId = "/subscriptions/$((Get-AzContext).Subscription.Id)/resourceGroups/$ResourceGroupName/providers/Microsoft.DevTestLab/labs/$LabName/virtualnetworks/default"
-                    notes = "$($spec.OS) - $vmType for $participantType $participantId"
-                    allowClaim = $true
-                    storageType = 'Standard'
-                    galleryImageReference = $spec.Image
-                    disallowPublicIpAddress = $UseJumphost  # No public IP if using jumphost
-                    networkInterface = if ($UseJumphost) {
+                    description = 'External VNet for training lab'
+                    externalProviderResourceId = $Ids.VNet
+                    subnetOverrides = @(
                         @{
-                            # Internal network only when using jumphost
+                            resourceId = $Ids.SubnetDefault
+                            useInVmCreation = 'Allow'
                             sharedPublicIpAddressConfiguration = @{
                                 inboundNatRules = @()
                             }
@@ -855,12 +755,11 @@ function Get-TrainingLabStatus {
 
         return $lab
     } catch {
-        Write-Host "Lab '$LabName' not found in resource group '$ResourceGroupName'" -ForegroundColor Red
+        Write-Host "Lab '$LabName' not found in RG '$ResourceGroupName'." -ForegroundColor Red
         return $null
     }
 }
 
-# Function to delete training environment
 function Remove-TrainingEnvironment {
     param($LabName, $ResourceGroupName)
 
@@ -917,9 +816,9 @@ function Set-TrainingVMsState {
     }
 }
 
-# Main execution logic
-Write-Host "Azure DevTest Labs Training Environment Manager" -ForegroundColor Cyan
-Write-Host "=================================================" -ForegroundColor Cyan
+# ---------- Main ----------
+Write-Host "[Information] Azure DevTest Labs Training Environment Manager" -ForegroundColor Cyan
+Write-Host "[STARTUP] Action: $Action" -ForegroundColor Gray
 
 switch ($Action) {
     'Create' {
@@ -951,13 +850,11 @@ switch ($Action) {
 
         # Create German training VM sets or legacy VMs
         if ($StudentCount -gt 0 -or $IncludeTrainer) {
-            Write-Host "Creating German training environment..." -ForegroundColor Green
             New-GermanTrainingVMSets -LabName $LabName -ResourceGroupName $ResourceGroupName
-        } elseif ($WindowsVMCount -gt 0 -or $LinuxVMCount -gt 0) {
-            Write-Host "Creating legacy training VMs..." -ForegroundColor Green
+        } elseif ($WindowsVMCount -gt 0) {
             New-TrainingClaimableVMs -LabName $LabName -ResourceGroupName $ResourceGroupName
         } else {
-            Write-Host "No VMs specified for creation." -ForegroundColor Yellow
+            Write-Host "No VMs requested." -ForegroundColor Yellow
         }
 
         Write-Host ""
@@ -989,12 +886,9 @@ switch ($Action) {
         Write-Host "Auto-startup: $AutoStartupTime $TimeZoneId" -ForegroundColor White
         Write-Host "Max VMs per user: $MaxVMsPerUser" -ForegroundColor White
         Write-Host ""
-        Write-Host "Next Steps:" -ForegroundColor Cyan
-        Write-Host "1. Share the lab URL with participants" -ForegroundColor White
-        Write-Host "2. Instruct users on how to claim VMs" -ForegroundColor White
-        Write-Host "3. Monitor lab usage and costs" -ForegroundColor White
-        Write-Host ""
-        Write-Host "Lab URL: https://portal.azure.com/#resource/subscriptions/$((Get-AzContext).Subscription.Id)/resourceGroups/$ResourceGroupName/providers/Microsoft.DevTestLab/labs/$LabName" -ForegroundColor Yellow
+        Write-Host "Training environment created successfully." -ForegroundColor Green
+        Write-Host "Lab URL:" -ForegroundColor Yellow
+        Write-Host ("https://portal.azure.com/#resource/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.DevTestLab/labs/{2}" -f (Get-AzContext).Subscription.Id,$ResourceGroupName,$LabName)
     }
 
     'Delete' {
@@ -1014,5 +908,4 @@ switch ($Action) {
     }
 }
 
-Write-Host ""
 Write-Host "Operation completed." -ForegroundColor Green
