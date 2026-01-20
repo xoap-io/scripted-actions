@@ -58,7 +58,7 @@
 
 .NOTES
     Author: Azure CLI Script
-    Version: 1.0
+
     Requires: Azure CLI
     Warning: Resource moves can take significant time and may cause downtime for some services.
 

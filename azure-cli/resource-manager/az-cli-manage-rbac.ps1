@@ -73,7 +73,7 @@
 
 .NOTES
     Author: Azure CLI Script
-    Version: 1.0
+
     Requires: Azure CLI
 
 .LINK

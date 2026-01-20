@@ -61,9 +61,9 @@
     .\xenserver-cli-create-vm-from-template.ps1 -Server "xenserver.local" -TemplateUUID "12345678-1234-1234-1234-123456789012" -VMName "DBServer" -CPUCount 8 -MemoryGB 16 -StorageRepository "SSD-Storage"
 
 .NOTES
-    Author: Generated for scripted-actions
+    Author: XOAP.io
     Requires: XenServerPSModule (PowerShell SDK)
-    Version: 1.0
+
 #>
 
 [CmdletBinding()]

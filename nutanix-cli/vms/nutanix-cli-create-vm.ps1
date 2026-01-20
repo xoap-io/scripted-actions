@@ -96,9 +96,9 @@
     .\nutanix-cli-create-vm.ps1 -PrismCentral "pc.domain.com" -VMName "ClonedVM" -SourceVMName "Template-VM" -ClusterName "Production" -PowerOnAfterCreation
 
 .NOTES
-    Author: Generated for scripted-actions
+    Author: XOAP.io
     Requires: Nutanix PowerShell SDK, AOS 6.0+
-    Version: 1.0
+
 #>
 
 [CmdletBinding()]

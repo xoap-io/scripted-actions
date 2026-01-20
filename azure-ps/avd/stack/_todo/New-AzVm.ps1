@@ -30,7 +30,7 @@
 .NOTES
     Author: Sinisa Sokolic, Ante Mlinarevic
     Date: August 27, 2024
-    Version: 1.0
+
 #>
 
 [CmdletBinding()]

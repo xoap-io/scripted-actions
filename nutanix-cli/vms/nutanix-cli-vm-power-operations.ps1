@@ -84,9 +84,9 @@
     .\nutanix-cli-vm-power-operations.ps1 -PrismCentral "pc.domain.com" -Operation "Status" -OutputFormat "CSV" -OutputPath "vm-power-status.csv"
 
 .NOTES
-    Author: Generated for scripted-actions
+    Author: XOAP.io
     Requires: Nutanix PowerShell SDK, AOS 6.0+, NGT (for graceful operations)
-    Version: 1.0
+
 #>
 
 [CmdletBinding()]

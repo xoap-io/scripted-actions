@@ -90,7 +90,7 @@
 .NOTES
     Author: XOAP
     Date: 2025-08-06
-    Version: 1.0
+
     Requires: AWS CLI v2.16+
 
 .LINK

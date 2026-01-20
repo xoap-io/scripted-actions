@@ -75,9 +75,9 @@
     .\vsphere-cli-vm-power-operations.ps1 -VCenterServer "vcenter.domain.com" -Operation "Status" -OutputFormat "CSV" -OutputPath "vm-power-status.csv"
 
 .NOTES
-    Author: Generated for scripted-actions
+    Author: XOAP.io
     Requires: VMware PowerCLI 13.x or later, vSphere 7.0 or later, VMware Tools (for graceful operations)
-    Version: 1.0
+
 #>
 
 [CmdletBinding()]

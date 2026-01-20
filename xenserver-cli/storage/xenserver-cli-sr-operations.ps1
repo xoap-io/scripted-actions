@@ -55,7 +55,7 @@
     .\xenserver-cli-sr-operations.ps1 -Server "xenserver.local" -Operation "Scan" -SRUUID "12345678-abcd-1234-abcd-123456789012"
 
 .NOTES
-    Author: Generated for scripted-actions
+    Author: XOAP.io
     Requires: XenServerPSModule (PowerShell SDK)
     Version: 2.0
 #>

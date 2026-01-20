@@ -81,9 +81,9 @@
     .\nutanix-cli-protection-domains.ps1 -PrismCentral "pc.domain.com" -Operation "CreateSchedule" -ProtectionDomainName "PD-WebServers" -ScheduleName "Daily-Backup" -ScheduleType "Daily" -IntervalMinutes 1440 -RetentionCount 7
 
 .NOTES
-    Author: Generated for scripted-actions
+    Author: XOAP.io
     Requires: Nutanix PowerShell SDK, AOS 6.0+
-    Version: 1.0
+
 #>
 
 [CmdletBinding()]
