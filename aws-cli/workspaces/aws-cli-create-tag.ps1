@@ -30,15 +30,34 @@
     Defines the tags for the AWS Workspace.
 
 #>
+
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string]$AwsWorkspaceId = "myWorkspaceId"
+    [ValidatePattern('^ws-[a-zA-Z0-9]{8,}$')]
+    [string]$AwsWorkspaceId,
+    [Parameter(Mandatory)]
+    [string]$AwsTagSpecifications
 )
 
-#Set Error Action to Silently Continue
-$ErrorActionPreference =  "Stop"
+$ErrorActionPreference = 'Stop'
 
-aws workspaces create-tags `
-    --resource-id $AwsWorkspaceId `
-    --tags $AwsTagSpecifications
+# Check for AWS CLI
+if (-not (Get-Command aws -ErrorAction SilentlyContinue)) {
+    Write-Error 'AWS CLI is not installed or not in PATH.'
+    exit 127
+}
+
+try {
+    $result = aws workspaces create-tags --resource-id $AwsWorkspaceId --tags $AwsTagSpecifications --output json 2>&1
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "Tags created successfully for workspace." -ForegroundColor Green
+        Write-Host $result
+    } else {
+        Write-Error "Failed to create tags: $result"
+        exit $LASTEXITCODE
+    }
+} catch {
+    Write-Error "Unexpected error: $_"
+    exit 1
+}

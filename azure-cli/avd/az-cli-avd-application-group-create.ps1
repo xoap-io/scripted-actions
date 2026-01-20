@@ -3,45 +3,39 @@
     Create an Azure Virtual Desktop Application Group with the Azure CLI.
 
 .DESCRIPTION
-    This script creates an Azure Virtual Desktop Application Group with the Azure CLI.
-    The script uses the following Azure CLI command:
-    az desktopvirtualization applicationgroup create --resource-group $AzResourceGroup --name $AzAppGroupName --location $AzLocation --host-pool-arm-path $AzHostPoolArmPath --application-group-type $AzAppGroupType
+    This script creates an Azure Virtual Desktop Application Group using Azure CLI.
+    It includes validation for Azure CLI availability and login status.
 
 .PARAMETER AppGroupType
-    Defines the type of the Azure Virtual Desktop Application Group.
+    The type of the Azure Virtual Desktop Application Group.
+    Valid values: 'Desktop', 'RemoteApp'
 
 .PARAMETER HostPoolArmPath
-    Defines the ARM path of the Azure Virtual Desktop Host Pool.
+    The ARM path of the Azure Virtual Desktop Host Pool.
 
 .PARAMETER Name
-    Defines the name of the Azure Virtual Desktop Application Group.
+    The name of the Azure Virtual Desktop Application Group.
 
 .PARAMETER ResourceGroup
-    Defines the name of the Azure Resource Group.
+    The name of the Azure Resource Group.
 
 .PARAMETER Description
-    Defines the description of the Azure Virtual Desktop Application Group.
+    Optional description of the Azure Virtual Desktop Application Group.
 
 .PARAMETER FriendlyName
-    Defines the friendly name of the Azure Virtual Desktop Application Group.
+    Optional friendly name of the Azure Virtual Desktop Application Group.
 
 .PARAMETER Location
-    Defines the location of the Azure Virtual Desktop Application Group.
+    Optional location of the Azure Virtual Desktop Application Group.
 
 .PARAMETER Tags
-    Defines the tags for the Azure Virtual Desktop Application Group.
+    Optional tags for the Azure Virtual Desktop Application Group in the format 'key1=value1 key2=value2'.
 
 .EXAMPLE
-    .\az-cli-avd-applicationgroup-create.ps1 -AzResourceGroup "MyResourceGroup" -AzAppGroupName "MyAppGroup" -AzLocation "eastus" -AzHostPoolArmPath "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.DesktopVirtualization/hostPools/myHostPool" -AzAppGroupType "RemoteApp"
+    .\az-cli-avd-application-group-create.ps1 -ResourceGroup "MyResourceGroup" -Name "MyAppGroup" -Location "eastus" -HostPoolArmPath "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.DesktopVirtualization/hostPools/myHostPool" -AppGroupType "RemoteApp"
 
 .LINK
     https://learn.microsoft.com/en-us/cli/azure/desktopvirtualization/applicationgroup
-
-.LINK
-    https://learn.microsoft.com/en-us/cli/azure/desktopvirtualization/applicationgroup?view=azure-cli-latest
-
-.LINK
-    https://github.com/xoap-io/scripted-actions
 
 .COMPONENT
     Azure CLI
@@ -49,34 +43,31 @@
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory=$true)]
-    [ValidateNotNullOrEmpty()]
-    [ValidateSet(
-        'Desktop',
-        'RemoteApp'
-    )]
+    [Parameter(Mandatory)]
+    [ValidateSet('Desktop', 'RemoteApp')]
     [string]$AppGroupType,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory)]
     [ValidateNotNullOrEmpty()]
     [string]$HostPoolArmPath,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory)]
     [ValidateNotNullOrEmpty()]
     [string]$Name,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory)]
     [ValidateNotNullOrEmpty()]
     [string]$ResourceGroup,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter()]
+    [ValidateNotNullOrEmpty()]
     [string]$Description,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter()]
+    [ValidateNotNullOrEmpty()]
     [string]$FriendlyName,
 
-    [Parameter(Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
+    [Parameter()]
     [ValidateSet(
         'eastus', 'eastus2', 'southcentralus', 'westus2',
         'westus3', 'australiaeast', 'southeastasia', 'northeurope',
@@ -84,60 +75,76 @@ param(
         'southafricanorth', 'centralindia', 'eastasia', 'japaneast',
         'koreacentral', 'canadacentral', 'francecentral', 'germanywestcentral',
         'italynorth', 'norwayeast', 'polandcentral', 'switzerlandnorth',
-        'uaenorth', 'brazilsouth', 'israelcentral', 'qatarcentral',
-        'asia', 'asiapacific', 'australia', 'brazil',
-        'canada', 'europe', 'france',
-        'global', 'india', 'japan', 'korea',
-        'norway', 'singapore', 'southafrica', 'sweden',
-        'switzerland', 'unitedstates', 'northcentralus', 'westus',
-        'japanwest', 'centraluseuap', 'eastus2euap', 'westcentralus',
-        'southafricawest', 'australiacentral', 'australiacentral2', 'australiasoutheast',
-        'koreasouth', 'southindia', 'westindia', 'canadaeast',
-        'francesouth', 'germanynorth', 'norwaywest', 'switzerlandwest',
-        'ukwest', 'uaecentral', 'brazilsoutheast'
+        'uaenorth', 'brazilsouth', 'israelcentral', 'qatarcentral'
     )]
     [string]$Location,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter()]
     [ValidateNotNullOrEmpty()]
     [string]$Tags
 )
 
-# Splatting parameters for better readability
-$parameters = `
-    '--application-group-type', $AppGroupType 
-    '--resource-group', $ResourceGroup
-    '--name', $AppGroupName 
-    '--host-pool-arm-path', $HostPoolArmPath
-
-if ($Description) {
-    $parameters += '--description', $Description
-}
-
-if ($FriendlyName) {
-    $parameters += '--friendly-name', $FriendlyName
-}
-
-if ($Tags) {
-    $parameters += '--tags', $Tags
-}
-
-# Set Error Action to Stop
-$ErrorActionPreference = "Stop"
+$ErrorActionPreference = 'Stop'
 
 try {
-    # Create the Azure Virtual Desktop Application Group
-    az desktopvirtualization applicationgroup create @parameters
+    Write-Host "Validating Azure CLI is available..." -ForegroundColor Cyan
+    $azVersion = az version --output tsv --query '"azure-cli"' 2>$null
+    if (-not $azVersion) {
+        throw "Azure CLI is not installed or not available in PATH"
+    }
 
-    # Output the result
-    Write-Output "Azure Virtual Desktop Application Group created successfully."
+    Write-Host "Checking Azure CLI login status..." -ForegroundColor Cyan
+    $account = az account show --output json 2>$null | ConvertFrom-Json
+    if (-not $account) {
+        throw "Not logged in to Azure CLI. Please run 'az login' first"
+    }
+    Write-Host "Logged in as: $($account.user.name)" -ForegroundColor Green
 
+    Write-Host "Creating Azure Virtual Desktop Application Group..." -ForegroundColor Cyan
+
+    # Build command parameters
+    $azParams = @(
+        'desktopvirtualization', 'applicationgroup', 'create',
+        '--resource-group', $ResourceGroup,
+        '--name', $Name,
+        '--application-group-type', $AppGroupType,
+        '--host-pool-arm-path', $HostPoolArmPath
+    )
+
+    if ($Location) {
+        $azParams += '--location', $Location
+    }
+
+    if ($Description) {
+        $azParams += '--description', $Description
+    }
+
+    if ($FriendlyName) {
+        $azParams += '--friendly-name', $FriendlyName
+    }
+
+    if ($Tags) {
+        $azParams += '--tags', $Tags
+    }
+
+    $azParams += '--output', 'json'
+
+    $result = & az @azParams
+    if ($LASTEXITCODE -ne 0) {
+        throw "Azure CLI command failed with exit code: $LASTEXITCODE"
+    }
+
+    $appGroup = $result | ConvertFrom-Json
+
+    Write-Host "Azure Virtual Desktop Application Group created successfully:" -ForegroundColor Green
+    Write-Host "  Name: $($appGroup.name)" -ForegroundColor White
+    Write-Host "  Resource Group: $($appGroup.resourceGroup)" -ForegroundColor White
+    Write-Host "  Location: $($appGroup.location)" -ForegroundColor White
+    Write-Host "  Type: $($appGroup.applicationGroupType)" -ForegroundColor White
+    Write-Host "  ID: $($appGroup.id)" -ForegroundColor White
+
+    return $appGroup
 } catch {
-    # Log the error to the console
-    Write-Output "Error message $errorMessage"
-    Write-Error "Failed to create the Azure Virtual Desktop Application Group: $($_.Exception.Message)"
-
-} finally {
-    # Cleanup code if needed
-    Write-Output "Script execution completed."
+    Write-Error "Failed to create Azure Virtual Desktop Application Group: $_"
+    exit 1
 }

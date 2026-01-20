@@ -5,9 +5,9 @@
 .DESCRIPTION
     This script creates an AWS EC2 security group. The script uses the following AWS CLI commands:
     aws ec2 create-security-group --group-name $AwsSecurityGroupName --description $AwsSecurityGroupDescription --vpc-id $AwsVpcId
- 
+
     The script sets the ErrorActionPreference to SilentlyContinue to suppress error messages.
-    
+
     It does not return any output.
 
 .NOTES
@@ -37,24 +37,43 @@
     Defines the CIDR of the AWS EC2 security group.
 
 #>
+
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string]$AwsSecurityGroupId = "sg-1234567890abcdef0",
+    [ValidatePattern('^sg-[a-zA-Z0-9]{8,}$')]
+    [string]$AwsSecurityGroupId,
     [Parameter(Mandatory)]
-    [string]$AwsSecurityGroupProtocol = "tcp",
+    [ValidateSet('tcp','udp','icmp','all')]
+    [string]$AwsSecurityGroupProtocol,
     [Parameter(Mandatory)]
-    [string]$AwsSecurityGroupPort = "80",
-    [Parameter(Mandatory)]
-    [string]$AwsSecurityGroupCidr = "10.0.0.0/16"
-    
+    [ValidatePattern('^\d{1,5}$')]
+    [string]$AwsSecurityGroupPort
     )
 
-#Set Error Action to Silently Continue
-$ErrorActionPreference =  "Stop"
+$ErrorActionPreference = 'Stop'
 
-aws ec2 authorize-security-group-ingress `
-    --group-id $AwsSecurityGroupId `
-    --protocol $AwsSecurityGroupProtocol `
-    --port $AwsSecurityGroupPort `
-    --cidr $AwsSecurityGroupCidr
+# Check for AWS CLI
+if (-not (Get-Command aws -ErrorAction SilentlyContinue)) {
+    Write-Error 'AWS CLI is not installed or not in PATH.'
+    exit 127
+}
+
+try {
+    $result = aws ec2 authorize-security-group-ingress `
+        --group-id $AwsSecurityGroupId `
+        --protocol $AwsSecurityGroupProtocol `
+        --port $AwsSecurityGroupPort `
+        --cidr $AwsSecurityGroupCidr `
+        --output json 2>&1
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "Security group ingress rule authorized successfully." -ForegroundColor Green
+        Write-Host $result
+    } else {
+        Write-Error "Failed to authorize security group ingress: $result"
+        exit $LASTEXITCODE
+    }
+} catch {
+    Write-Error "Unexpected error: $_"
+    exit 1
+}

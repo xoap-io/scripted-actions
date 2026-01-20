@@ -31,11 +31,16 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string]$AwsWorkspaceId = "myWorkspaceId"
+    [ValidatePattern('^ws-[a-zA-Z0-9]{8,}$')]
+    [string]$AwsWorkspaceId
 )
 
-#Set Error Action to Silently Continue
-$ErrorActionPreference =  "Stop"
-
-aws workspaces terminate-workspaces `
-    --terminate-workspace-requests $AwsWorkspaceId
+$ErrorActionPreference = 'Stop'
+try {
+    aws workspaces terminate-workspaces `
+        --terminate-workspace-requests $AwsWorkspaceId
+    Write-Host "Successfully terminated Workspace $AwsWorkspaceId."
+} catch {
+    Write-Error "Failed to terminate Workspace: $_"
+    exit 1
+}

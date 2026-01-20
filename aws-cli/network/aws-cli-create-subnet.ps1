@@ -7,7 +7,7 @@
     aws ec2 create-subnet --vpc-id $AwsVpcId --cidr-block $AwsCidrBlock --ipv6-cidr-block $AwsIpv6CidrBlock --tag-specifications $AwsTagSpecifications
 
     The script sets the ErrorActionPreference to SilentlyContinue to suppress error messages.
-    
+
     It does not return any output.
 
 .NOTES
@@ -37,23 +37,46 @@
     Defines the tag specifications of the AWS subnet.
 
 #>
+
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string]$AwsVpcId = "myVpcId",
+    [ValidatePattern('^vpc-[a-zA-Z0-9]{8,}$')]
+    [string]$AwsVpcId,
     [Parameter(Mandatory)]
-    [string]$AwsCidrBlock = "myCidrBlock",
+    [ValidatePattern('^(?:\d{1,3}\.){3}\d{1,3}/\d{1,2}$')]
+    [string]$AwsCidrBlock,
     [Parameter(Mandatory)]
-    [string]$AwsIpv6CidrBlock = "myIpv6CidrBlock",
+    [ValidatePattern('^([a-fA-F0-9:]+:+)+[a-fA-F0-9]+/\d{1,3}$')]
+    [string]$AwsIpv6CidrBlock,
     [Parameter(Mandatory)]
-    [string]$AwsTagSpecifications = "myTagSpecifications"
+    [string]$AwsTagSpecifications
 )
 
-#Set Error Action to Silently Continue
-$ErrorActionPreference =  "Stop"
 
-aws ec2 create-subnet `
-    --vpc-id $AwsVpcId `
-    --cidr-block $AwsCidrBlock `
-    --ipv6-cidr-block $AwsIpv6CidrBlock `
-    --tag-specifications $AwsTagSpecifications
+$ErrorActionPreference = 'Stop'
+
+# Check for AWS CLI
+if (-not (Get-Command aws -ErrorAction SilentlyContinue)) {
+    Write-Error 'AWS CLI is not installed or not in PATH.'
+    exit 127
+}
+
+try {
+    $result = aws ec2 create-subnet `
+        --vpc-id $AwsVpcId `
+        --cidr-block $AwsCidrBlock `
+        --ipv6-cidr-block $AwsIpv6CidrBlock `
+        --tag-specifications $AwsTagSpecifications `
+        --output json 2>&1
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "Subnet created successfully." -ForegroundColor Green
+        Write-Host $result
+    } else {
+        Write-Error "Failed to create subnet: $result"
+        exit $LASTEXITCODE
+    }
+} catch {
+    Write-Error "Unexpected error: $_"
+    exit 1
+}

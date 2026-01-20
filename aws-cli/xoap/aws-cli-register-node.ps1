@@ -43,22 +43,32 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string]$AwsInstanceId = "myInstanceId",
+    [ValidatePattern('^i-[a-zA-Z0-9]{8,}$')]
+    [string]$AwsInstanceId,
     [Parameter(Mandatory)]
-    [string]$AwsSsmDocumentName = "myDocumentName",
+    [ValidateNotNullOrEmpty()]
+    [string]$AwsSsmDocumentName,
     [Parameter(Mandatory)]
-    [string]$AwsSsmDocumentComment = "myDocumentComment",
+    [ValidateNotNullOrEmpty()]
+    [string]$AwsSsmDocumentComment,
     [Parameter(Mandatory)]
-    [string]$XOAPWorkspaceId = "myWorkspaceId",
+    [ValidatePattern('^ws-[a-zA-Z0-9]{8,}$')]
+    [string]$XOAPWorkspaceId,
     [Parameter(Mandatory)]
-    [string]$XOAPGroupName = "XOAP unassigned"
+    [ValidatePattern('^[a-zA-Z0-9._@\- ]{1,64}$')]
+    [string]$XOAPGroupName
 )
 
-#Set Error Action to Silently Continue
-$ErrorActionPreference =  "Stop"
-
-Send-SSMCommand `
-    --instance-ids @($AwsInstanceId) `
-    --document-name $AwsSsmDocumentName `
-    --comment $AwsSsmDocumentComment `
-    --parameters @{'commands'=@('"Invoke-Expression ((New-Object System.Net.WebClient).DownloadString(\"https://api.dev.xoap.io/dsc/Policy/$XOAPWorkspaceId/Download/$XOAPGroupName\"))"')}
+$ErrorActionPreference = 'Stop'
+try {
+    $commandString = "Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://api.xoap.io/dsc/Policy/$XOAPWorkspaceId/Download/$XOAPGroupName'))"
+    aws ssm send-command `
+        --instance-ids $AwsInstanceId `
+        --document-name $AwsSsmDocumentName `
+        --comment $AwsSsmDocumentComment `
+        --parameters commands="[$([char]34)$commandString$([char]34)]"
+    Write-Host "Successfully registered node $AwsInstanceId with XOAP group $XOAPGroupName in workspace $XOAPWorkspaceId."
+} catch {
+    Write-Error "Failed to register node: $_"
+    exit 1
+}

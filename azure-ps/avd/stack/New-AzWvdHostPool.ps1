@@ -264,7 +264,7 @@ param (
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
     [ValidateSet(
-        'Direct', 
+        'Direct',
         'Automatic'
     )]
     [string]$PersonalDesktopAssignmentType,
@@ -532,7 +532,7 @@ if ($ValidationEnvironment) {
 
 # Set Error Action to Stop
 $ErrorActionPreference = "Stop"
-  
+
 try {
     # Create the host pool and capture the result
     $result = New-AzWvdHostPool @parameters

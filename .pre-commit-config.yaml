@@ -1,40 +1,112 @@
 ---
 repos:
   - repo: https://github.com/compilerla/conventional-pre-commit
-    rev: v2.4.0
+    rev: v3.6.0
     hooks:
       - id: conventional-pre-commit
         stages: [commit-msg]
         args: []
+
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.4.0
+    rev: v5.0.0
     hooks:
       - id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
       - id: end-of-file-fixer
+        exclude: ^TestResults/
       - id: check-yaml
+        args: [--allow-multiple-documents]
       - id: check-added-large-files
+        args: [--maxkb=1024]
       - id: check-builtin-literals
       - id: fix-byte-order-marker
       - id: check-json
       - id: check-xml
-      - id: check-yaml
       - id: check-merge-conflict
-      - id: check-shebang-scripts-are-executable
       - id: check-symlinks
       - id: mixed-line-ending
+        args: [--fix=lf]
       - id: detect-private-key
       - id: no-commit-to-branch
-        args:
-          - -b master
-      - id: no-commit-to-branch
-        args:
-          - -b main
+        args: [--branch, master, --branch, main]
+      - id: check-case-conflict
+      #- id: check-executables-have-shebangs
+      #  exclude: \.ps1$
+      - id: check-toml
+      - id: check-vcs-permalinks
+
   - repo: https://github.com/sirosen/check-jsonschema
-    rev: 0.27.0
+    rev: 0.30.0
     hooks:
       - id: check-github-workflows
+      - id: check-github-actions
+
   - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: v3.0.3
+    rev: v3.1.0
     hooks:
       - id: prettier
-        stages: [commit]
+        stages: [pre-commit]
+        types_or: [yaml, markdown]
+        exclude: ^TestResults/
+
+  - repo: https://github.com/jumanjihouse/pre-commit-hooks
+    rev: 3.0.0
+    hooks:
+      - id: shellcheck
+        args: [--severity=warning]
+        exclude: \.ps1$
+      - id: script-must-have-extension
+        exclude: ^\.github/
+      - id: forbid-binary
+        exclude: ^TestResults/
+
+  - repo: https://github.com/Lucas-C/pre-commit-hooks
+    rev: v1.5.5
+    hooks:
+      - id: remove-tabs
+        exclude: \.ps1$|Makefile
+      - id: forbid-crlf
+        exclude: \.ps1$
+      - id: remove-crlf
+        exclude: \.ps1$
+
+  #- repo: https://github.com/codespell-project/codespell
+  #  rev: v2.3.0
+  #  hooks:
+  #    - id: codespell
+  #      args:
+  #        - --ignore-words-list=te,sur,nd,ue,ect,unexpect,fo,workd
+  #        - --skip="*.json,*.csv,*.lock,TestResults/*"
+  #        - --quiet-level=2
+
+  # PowerShell specific checks
+  - repo: local
+    hooks:
+      #- id: powershell-syntax-check
+      #  name: PowerShell Syntax Check
+      #  entry: pwsh -NoProfile -Command "try { $null = [System.Management.Automation.PSParser]::Tokenize((Get-Content -Raw -Path $args[0]), [ref]$null); exit 0 } catch { Write-Error $_.Exception.Message; exit 1 }"
+      #  language: system
+      #  files: \.ps1$
+      #  pass_filenames: true
+
+      #- id: check-powershell-encoding
+      #  name: Check PowerShell UTF-8 Encoding
+      #  entry: bash -c 'for file in "$@"; do if ! file -b "$file" | grep -q "UTF-8"; then echo "File $file is not UTF-8 encoded"; exit 1; fi; done' --
+      #  language: system
+      #  files: \.ps1$
+      #  pass_filenames: true
+
+      - id: check-powershell-bom
+        name: Check PowerShell Files Don't Have BOM
+        entry: bash -c 'for file in "$@"; do if head -c 3 "$file" | od -An -tx1 | grep -q "ef bb bf"; then echo "File $file has UTF-8 BOM (remove it)"; exit 1; fi; done' --
+        language: system
+        files: \.ps1$
+        pass_filenames: true
+
+      - id: check-readme-exists
+        name: Check README exists in directories with scripts
+        entry: bash -c 'for file in "$@"; do dir=$(dirname "$file"); if [ ! -f "$dir/README.md" ] && [ "$dir" != "." ] && [ "$dir" != "templates" ]; then echo "Missing README.md in $dir"; exit 1; fi; done' --
+        language: system
+        files: \.ps1$
+        pass_filenames: true
+        exclude: ^templates/

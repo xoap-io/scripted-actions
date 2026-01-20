@@ -34,12 +34,20 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string]$AwsWorkspaceId = "myWorkspaceId"
+    [ValidatePattern('^ws-[a-zA-Z0-9]{8,}$')]
+    [string]$AwsWorkspaceId,
+    [Parameter(Mandatory)]
+    [ValidateNotNullOrEmpty()]
+    [string[]]$AwsTagKeys
 )
 
-#Set Error Action to Silently Continue
-$ErrorActionPreference =  "Stop"
-
-aws workspaces delete-tags `
-    --resource-id $AwsWorkspaceId `
-    --tag-keys $AwsTagKeys
+$ErrorActionPreference = 'Stop'
+try {
+    aws workspaces delete-tags `
+        --resource-id $AwsWorkspaceId `
+        --tag-keys $AwsTagKeys
+    Write-Host "Successfully deleted tags from Workspace $AwsWorkspaceId."
+} catch {
+    Write-Error "Failed to delete tags: $_"
+    exit 1
+}

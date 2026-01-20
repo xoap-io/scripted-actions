@@ -62,27 +62,27 @@ param (
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
     [string]$Description = "Default Description",
-    
+
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
     [string]$ExclusionTag = "Default Exclusion Tag",
-    
+
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
     [string]$FriendlyName = "Default Friendly Name",
-    
+
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
     [IScalingHostPoolReference[]]$HostPoolReference,
-    
+
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
     [IScalingSchedule[]]$Schedule,
-    
+
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
     [hashtable]$Tags,
-    
+
     [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
     [string]$TimeZone = "UTC"

@@ -1,49 +1,54 @@
-<#
+
+<#!
 .SYNOPSIS
-    This script creates an AWS WorkSpace.
+    Creates an AWS WorkSpace using AWS.Tools.WorkSpaces (2025).
 
 .DESCRIPTION
-    This script creates an AWS WorkSpace.
-    The script uses the AWS PowerShell module to create the specified AWS WorkSpace.
-    The script uses the following AWS PowerShell command:
-    New-WKSWorkspace -Workspace @{"BundleID" = $AwsWorkspaceBundleIdBundleId; "DirectoryId" = $AwsWorkspaceDirectoryId; "UserName" = $AwsWorkspaceUserName}
-    The script sets the ErrorActionPreference to SilentlyContinue to suppress error messages.
-    It does not return any output.
+    This script creates an AWS WorkSpace using the latest AWS PowerShell module. It validates parameters and provides robust error handling.
 
-.NOTES
-    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
-    The use of the scripts does not require XOAP, but it will make your life easier.
-    You are allowed to pull the script from the repository and use it with XOAP or other solutions
-    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no liability for the function,
-    the use and the consequences of the use of this freely available script.
-    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+.PARAMETER BundleId
+    The identifier of the bundle to create the WorkSpace from.
+.PARAMETER DirectoryId
+    The identifier of the directory for the WorkSpace.
+.PARAMETER UserName
+    The user name of the user for the WorkSpace.
 
-.COMPONENT
-    AWS PowerShell
+.EXAMPLE
+    .\aws-ps-create-workspace.ps1 -BundleId wsb-abc12345 -DirectoryId d-1234567890 -UserName myuser
 
 .LINK
     https://github.com/xoap-io/scripted-actions
-
-.PARAMETER AwsWorkspaceBundleIdBundleId
-    The identifier of the bundle to create the WorkSpace from.
-
-.PARAMETER AwsWorkspaceDirectoryId
-    The identifier of the directory for the WorkSpace.
-
-.PARAMETER AwsWorkspaceUserName
-    The user name of the user for the WorkSpace.
 #>
+
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string]$AwsWorkspaceBundleIdBundleId = "myBundleId",
+    [ValidatePattern('^wsb-[a-zA-Z0-9]{8,}$')]
+    [string]$BundleId,
     [Parameter(Mandatory)]
-    [string]$AwsWorkspaceDirectoryId = "myDirectoryId",
-    [Parameter(Mandatory)]
-    [string]$AwsWorkspaceUserName = "myUserName"
+    [ValidatePattern('^d-[a-zA-Z0-9]{8,}$')]
+    [string]$DirectoryId,
+[Parameter(Mandatory)]
+[ValidatePattern('^[a-zA-Z0-9._@\-]{1,64}$')]
+[string]$UserName
 )
 
-#Set Error Action to Silently Continue
-$ErrorActionPreference =  "Stop"
+$ErrorActionPreference = 'Stop'
 
-New-WKSWorkspace -Workspace @{"BundleID" = $AwsWorkspaceBundleIdBundleId; "DirectoryId" = $AwsWorkspaceDirectoryId; "UserName" = $AwsWorkspaceUserName}
+try {
+    $workspaceRequest = New-Object Amazon.WorkSpaces.Model.WorkspaceRequest
+    $workspaceRequest.BundleId = $BundleId
+    $workspaceRequest.DirectoryId = $DirectoryId
+    $workspaceRequest.UserName = $UserName
+    $result = New-WKSWorkspace -Workspace $workspaceRequest 2>&1
+    if ($?) {
+        Write-Host "WorkSpace for user '$UserName' created successfully in directory '$DirectoryId' with bundle '$BundleId'." -ForegroundColor Green
+        Write-Host $result
+    } else {
+        Write-Error "Failed to create WorkSpace: $result"
+        exit 1
+    }
+} catch {
+    Write-Error "Unexpected error: $_"
+    exit 1
+}

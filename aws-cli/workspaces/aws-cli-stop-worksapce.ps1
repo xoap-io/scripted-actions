@@ -31,11 +31,16 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string]$AzResourceGroup = "myResourceGroup"
+    [ValidatePattern('^ws-[a-zA-Z0-9]{8,}$')]
+    [string]$AwsWorkspaceId
 )
 
-#Set Error Action to Silently Continue
-$ErrorActionPreference =  "Stop"
-
-aws workspaces stop-workspaces `
-    --stop-workspace-requests WorkspaceId=$AwsWorkspaceId
+$ErrorActionPreference = 'Stop'
+try {
+    aws workspaces stop-workspaces `
+        --stop-workspace-requests WorkspaceId=$AwsWorkspaceId
+    Write-Host "Successfully stopped Workspace $AwsWorkspaceId."
+} catch {
+    Write-Error "Failed to stop Workspace: $_"
+    exit 1
+}

@@ -12,7 +12,7 @@
         --group-id $AwsSecurityGroupId
 
     The script sets the ErrorActionPreference to SilentlyContinue to suppress error messages.
-    
+
     It does not return any output.
 
 .NOTES
@@ -33,14 +33,32 @@
     Defines the ID of the AWS Security Group.
 
 #>
+
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string]$AwsSecurityGroupId = "mySecurityGroupId"
+    [ValidatePattern('^sg-[a-zA-Z0-9]{8,}$')]
+    [string]$AwsSecurityGroupId
 )
 
-#Set Error Action to Silently Continue
-$ErrorActionPreference =  "Stop"
+$ErrorActionPreference = 'Stop'
 
-aws ec2 delete-security-group `
-    --group-id $AwsSecurityGroupId
+# Check for AWS CLI
+if (-not (Get-Command aws -ErrorAction SilentlyContinue)) {
+    Write-Error 'AWS CLI is not installed or not in PATH.'
+    exit 127
+}
+
+try {
+    $result = aws ec2 delete-security-group --group-id $AwsSecurityGroupId --output json 2>&1
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "Security group deleted successfully." -ForegroundColor Green
+        Write-Host $result
+    } else {
+        Write-Error "Failed to delete security group: $result"
+        exit $LASTEXITCODE
+    }
+} catch {
+    Write-Error "Unexpected error: $_"
+    exit 1
+}

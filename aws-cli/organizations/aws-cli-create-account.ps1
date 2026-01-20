@@ -7,7 +7,7 @@
     aws organizations create-account --email $AwsAccountEmail --account-name $AwsAccountName
 
     The script sets the ErrorActionPreference to SilentlyContinue to suppress error messages.
-    
+
     It does not return any output.
 
 .NOTES
@@ -31,17 +31,34 @@
     Defines the name of the AWS account.
 
 #>
+
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string]$AwsAccountEmail = "myEmail",
+    [ValidatePattern('^[^@\s]+@[^@\s]+\.[^@\s]+$')]
+    [string]$AwsAccountEmail,
     [Parameter(Mandatory)]
-    [string]$AwsAccountName = "myAccountName"
+    [string]$AwsAccountName
 )
 
-#Set Error Action to Silently Continue
-$ErrorActionPreference =  "Stop"
+$ErrorActionPreference = 'Stop'
 
-aws organizations create-account `
-    --email $AwsAccountEmail `
-    --account-name $AwsAccountName
+# Check for AWS CLI
+if (-not (Get-Command aws -ErrorAction SilentlyContinue)) {
+    Write-Error 'AWS CLI is not installed or not in PATH.'
+    exit 127
+}
+
+try {
+    $result = aws organizations create-account --email $AwsAccountEmail --account-name $AwsAccountName --output json 2>&1
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "AWS account creation initiated successfully." -ForegroundColor Green
+        Write-Host $result
+    } else {
+        Write-Error "Failed to create AWS account: $result"
+        exit $LASTEXITCODE
+    }
+} catch {
+    Write-Error "Unexpected error: $_"
+    exit 1
+}

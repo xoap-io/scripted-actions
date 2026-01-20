@@ -34,14 +34,21 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string]$AwsWorkspaceId = "myWorkspaceId",
+    [ValidatePattern('^ws-[a-zA-Z0-9]{8,}$')]
+    [string]$AwsWorkspaceId,
     [Parameter(Mandatory)]
-    [string]$AWsWorkspaceState = "myWorkspaceState"
+    [ValidateSet('AVAILABLE','ERROR','REBOOTING','STARTING','STOPPED','STOPPING','TERMINATED')]
+    [string]$AwsWorkspaceState
 )
 
-#Set Error Action to Silently Continue
-$ErrorActionPreference =  "Stop"
 
-aws workspaces modify-workspace-state `
-    --workspace-id $AwsWorkspaceId `
-    --workspace-state $AWsWorkspaceState
+$ErrorActionPreference = 'Stop'
+try {
+    aws workspaces modify-workspace-state `
+        --workspace-id $AwsWorkspaceId `
+        --workspace-state $AwsWorkspaceState
+    Write-Host "Successfully modified state of Workspace $AwsWorkspaceId to $AwsWorkspaceState."
+} catch {
+    Write-Error "Failed to modify Workspace state: $_"
+    exit 1
+}

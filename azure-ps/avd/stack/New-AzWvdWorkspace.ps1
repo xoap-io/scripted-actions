@@ -271,7 +271,7 @@ if ($Tags) {
 }
 
 # Set Error Action to Stop
-$ErrorActionPreference = "Stop" 
+$ErrorActionPreference = "Stop"
 
 try {
     # Create the workspace and capture the result

@@ -5,9 +5,9 @@
 .DESCRIPTION
     This script creates an AWS EC2 security group. The script uses the following AWS CLI commands:
     aws ec2 create-security-group --group-name $AwsSecurityGroupName --description $AwsSecurityGroupDescription --vpc-id $AwsVpcId
- 
+
     The script sets the ErrorActionPreference to SilentlyContinue to suppress error messages.
-    
+
     It does not return any output.
 
 .NOTES
@@ -34,26 +34,54 @@
     Defines the ID of the AWS VPC.
 
 #>
+
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string]$AwsSecurityGroupName = "mySecurityGroup",
+    [string]$AwsSecurityGroupName,
     [Parameter(Mandatory)]
-    [string]$AwsSecurityGroupDescription = "MySecurityGroupDescription",
+    [string]$AwsSecurityGroupDescription,
     [Parameter(Mandatory)]
-    [string]$AwsVpcId = "myVpcId"
+    [ValidatePattern('^vpc-[a-zA-Z0-9]{8,}$')]
+    [string]$AwsVpcId,
+    [Parameter(Mandatory)]
+    [ValidateSet('tcp','udp','icmp','all')]
+    [string]$Protocol,
+    [Parameter(Mandatory)]
+    [ValidatePattern('^\d{1,5}$')]
+    [string]$Port,
+    [Parameter(Mandatory)]
+    [ValidatePattern('^(?:\d{1,3}\.){3}\d{1,3}/\d{1,2}$')]
+    [string]$Cidr
 )
 
-#Set Error Action to Silently Continue
-$ErrorActionPreference =  "Stop"
+$ErrorActionPreference = 'Stop'
 
-aws ec2 create-security-group `
-    --group-name $AwsSecurityGroupName `
-    --description $AwsSecurityGroupDescription `
-    --vpc-id $AwsVpcId
+# Check for AWS CLI
+if (-not (Get-Command aws -ErrorAction SilentlyContinue)) {
+    Write-Error 'AWS CLI is not installed or not in PATH.'
+    exit 127
+}
 
-aws ec2 authorize-security-group-ingress `
-    --group-id sg-903004f8 `
-    --protocol tcp `
-    --port 3389 `
-    --cidr x.x.x.x/x
+try {
+    $sgResult = aws ec2 create-security-group --group-name $AwsSecurityGroupName --description $AwsSecurityGroupDescription --vpc-id $AwsVpcId --output json 2>&1
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "Security group created successfully." -ForegroundColor Green
+        Write-Host $sgResult
+        $sgId = (ConvertFrom-Json $sgResult).GroupId
+        $ingressResult = aws ec2 authorize-security-group-ingress --group-id $sgId --protocol $Protocol --port $Port --cidr $Cidr --output json 2>&1
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "Ingress rule authorized successfully." -ForegroundColor Green
+            Write-Host $ingressResult
+        } else {
+            Write-Error "Failed to authorize ingress rule: $ingressResult"
+            exit $LASTEXITCODE
+        }
+    } else {
+        Write-Error "Failed to create security group: $sgResult"
+        exit $LASTEXITCODE
+    }
+} catch {
+    Write-Error "Unexpected error: $_"
+    exit 1
+}

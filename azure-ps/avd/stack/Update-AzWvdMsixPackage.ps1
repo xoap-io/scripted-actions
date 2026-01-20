@@ -89,7 +89,7 @@ if ($IsRegularRegistration) {
     $parameters['IsRegularRegistration'], $IsRegularRegistration
 }
 
-try {    
+try {
     # Update the Azure Virtual Desktop MSIX Package and capture the result
     $result = Update-AzWvdMsixPackage @parameters
 

@@ -1,40 +1,40 @@
-<#
+
+<#!
 .SYNOPSIS
-    This script reboots an AWS WorkSpace.
+    Reboots an AWS WorkSpace using AWS.Tools.WorkSpaces (2025).
 
 .DESCRIPTION
-    This script reboots an AWS WorkSpace.
-    The script uses the AWS PowerShell module to reboot the specified AWS WorkSpace.
-    The script uses the following AWS PowerShell command:
-    Restart-WKSWorkspace -WorkspaceId $AwsWorkspaceId
-    The script sets the ErrorActionPreference to SilentlyContinue to suppress error messages.
-    It does not return any output.
+    This script reboots an AWS WorkSpace using the latest AWS PowerShell module. It validates parameters and provides robust error handling.
 
-.NOTES
-    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
-    The use of the scripts does not require XOAP, but it will make your life easier.
-    You are allowed to pull the script from the repository and use it with XOAP or other solutions
-    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no liability for the function,
-    the use and the consequences of the use of this freely available script.
-    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+.PARAMETER WorkspaceId
+    The ID of the WorkSpace to reboot.
 
-.COMPONENT
-    AWS PowerShell
+.EXAMPLE
+    .\aws-ps-reboot-workspace.ps1 -WorkspaceId ws-abc12345
 
 .LINK
     https://github.com/xoap-io/scripted-actions
-
-.PARAMETER AwsWorkspaceId
-    The ID of the WorkSpace to reboot.
-
 #>
+
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string]$AwsWorkspaceId = "myWorkspaceId"
+    [ValidatePattern('^ws-[a-zA-Z0-9]{8,}$')]
+    [string]$WorkspaceId
 )
 
-#Set Error Action to Stop
-$ErrorActionPreference =  "Stop"
+$ErrorActionPreference = 'Stop'
 
-Restart-WKSWorkspace -WorkspaceId $AwsWorkspaceId
+try {
+    $result = Restart-WKSWorkspace -WorkspaceId $WorkspaceId 2>&1
+    if ($?) {
+        Write-Host "WorkSpace '$WorkspaceId' rebooted successfully." -ForegroundColor Green
+        Write-Host $result
+    } else {
+        Write-Error "Failed to reboot WorkSpace '$WorkspaceId': $result"
+        exit 1
+    }
+} catch {
+    Write-Error "Unexpected error: $_"
+    exit 1
+}

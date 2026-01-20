@@ -81,7 +81,7 @@ param (
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
     [string]$VirtualNetworkName,
-    
+
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
     [string]$SubnetName,
@@ -116,7 +116,7 @@ try {
     exit
 }
 
-$SecurePassword = ConvertTo-SecureString -String $Password -AsPlainText -Force 
+$SecurePassword = ConvertTo-SecureString -String $Password -AsPlainText -Force
 $Credential = New-Object System.Management.Automation.PSCredential ($UserName, $SecurePassword)
 
 # Create the VM configuration
@@ -149,9 +149,9 @@ try {
 # Assign tags to the VM
 try {
     $VirtualMachine = Get-AzVM -ResourceGroup $ResourceGroup -Name $VMName
-    Update-AzTag -ResourceId $VirtualMachine.Id -Tag $tags -Operation Merge 
+    Update-AzTag -ResourceId $VirtualMachine.Id -Tag $tags -Operation Merge
     Write-Output "Tags are added to the virtual machine: $_"
-    
+
 } catch {
     Write-Error "Error adding tags to the virtual machine: $_"
 }

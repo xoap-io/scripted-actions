@@ -30,12 +30,17 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string]$AwsDirectoryId = "myDirectoryId"
+    [ValidatePattern('^d-[a-zA-Z0-9]{8,}$')]
+    [string]$AwsDirectoryId
 )
 
-#Set Error Action to Silently Continue
-$ErrorActionPreference =  "Stop"
-
-aws workspaces register-workspace-directory `
-    --directory-id $AwsDirectoryId `
-    --no-enable-work-docs
+$ErrorActionPreference = 'Stop'
+try {
+    aws workspaces register-workspace-directory `
+        --directory-id $AwsDirectoryId `
+        --no-enable-work-docs
+    Write-Host "Successfully registered directory $AwsDirectoryId with WorkSpaces."
+} catch {
+    Write-Error "Failed to register directory: $_"
+    exit 1
+}

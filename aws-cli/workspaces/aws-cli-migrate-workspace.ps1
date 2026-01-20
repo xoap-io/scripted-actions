@@ -34,14 +34,21 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string]$AwsSourceWorkspaceId = "myWorkspaceId",
+    [ValidatePattern('^ws-[a-zA-Z0-9]{8,}$')]
+    [string]$AwsSourceWorkspaceId,
     [Parameter(Mandatory)]
-    [string]$AwsWorkspaceBundleId  = "myWorkspaceBundleId"
+    [ValidatePattern('^wsb-[a-zA-Z0-9]{8,}$')]
+    [string]$AwsWorkspaceBundleId
 )
 
-#Set Error Action to Silently Continue
-$ErrorActionPreference =  "Stop"
 
-aws workspaces migrate-workspace `
-    --source-workspace-id $AwsSourceWorkspaceId `
-    --bundle-id $AwsWorkspaceBundleId `
+$ErrorActionPreference = 'Stop'
+try {
+    aws workspaces migrate-workspace `
+        --source-workspace-id $AwsSourceWorkspaceId `
+        --bundle-id $AwsWorkspaceBundleId
+    Write-Host "Successfully migrated Workspace $AwsSourceWorkspaceId to bundle $AwsWorkspaceBundleId."
+} catch {
+    Write-Error "Failed to migrate Workspace: $_"
+    exit 1
+}
