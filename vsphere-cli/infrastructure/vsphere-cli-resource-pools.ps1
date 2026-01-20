@@ -72,9 +72,9 @@
     .\vsphere-cli-resource-pools.ps1 -VCenterServer "vcenter.domain.com" -Operation "CreateChildResourcePool" -ClusterName "Production" -ParentResourcePoolName "WebServers" -ResourcePoolName "Frontend"
 
 .NOTES
-    Author: Generated for scripted-actions
+    Author: XOAP.io
     Requires: VMware PowerCLI 13.x or later, vSphere 7.0 or later
-    Version: 1.0
+
 #>
 
 [CmdletBinding()]

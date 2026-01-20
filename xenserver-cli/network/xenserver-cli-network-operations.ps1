@@ -49,7 +49,7 @@
     .\xenserver-cli-network-operations.ps1 -Server "xenserver.local" -Operation "CreateBond" -NetworkName "bond0" -PIFUUIDs @("uuid1","uuid2") -BondMode "active-backup"
 
 .NOTES
-    Author: Generated for scripted-actions
+    Author: XOAP.io
     Requires: XenServerPSModule (PowerShell SDK)
     Version: 2.0
 #>

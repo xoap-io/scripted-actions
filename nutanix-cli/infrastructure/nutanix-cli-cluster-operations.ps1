@@ -75,9 +75,9 @@
     .\nutanix-cli-cluster-operations.ps1 -PrismCentral "pc.domain.com" -Operation "Report" -IncludeVMs -IncludeHosts -IncludeStorage -OutputFormat "HTML" -OutputPath "cluster-report.html"
 
 .NOTES
-    Author: Generated for scripted-actions
+    Author: XOAP.io
     Requires: Nutanix PowerShell SDK, AOS 6.0+
-    Version: 1.0
+
 #>
 
 [CmdletBinding()]

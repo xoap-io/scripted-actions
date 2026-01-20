@@ -69,7 +69,7 @@
     conflicts. Some resources may take time to delete completely.
 
     Author: XOAP.io
-    Version: 1.0
+
     Last Updated: September 2025
 #>
 

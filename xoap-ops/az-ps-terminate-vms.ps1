@@ -50,7 +50,7 @@
 
 .NOTES
     Author: Azure PowerShell Script
-    Version: 1.0.0
+.0
     Requires: Az PowerShell module (Install-Module -Name Az)
     Requires: Azure PowerShell authentication (Connect-AzAccount)
 

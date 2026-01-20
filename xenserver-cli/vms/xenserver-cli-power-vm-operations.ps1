@@ -47,7 +47,7 @@
     .\xenserver-cli-power-vm-operations.ps1 -Server "xenserver.domain.com" -VMNames @("VM01","VM02","VM03") -Operation "Start" -Async
 
 .NOTES
-    Author: Generated for scripted-actions
+    Author: XOAP.io
     Requires: XenServerPSModule (PowerShell SDK)
     Version: 2.0
 #>

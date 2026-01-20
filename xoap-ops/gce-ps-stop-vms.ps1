@@ -64,7 +64,7 @@
 
 .NOTES
     Author: Google Cloud PowerShell Script
-    Version: 1.0.0
+.0
     Requires: Google Cloud PowerShell module (Install-Module -Name GoogleCloud)
     Requires: Google Cloud authentication (gcloud auth login or service account)
 

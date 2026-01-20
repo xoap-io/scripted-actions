@@ -53,9 +53,9 @@
     .\vsphere-cli-create-vm-from-template.ps1 -VCenterServer "vcenter.domain.com" -VMName "TestVM01" -TemplateName "Ubuntu22-Template" -DatastoreName "Datastore2" -ClusterName "Test-Cluster" -PortGroupName "VLAN200-Test" -CPUCount 2 -MemoryGB 4 -PowerOnAfterCreation
 
 .NOTES
-    Author: Generated for scripted-actions
+    Author: XOAP.io
     Requires: VMware PowerCLI 13.x or later, vSphere 7.0 or later
-    Version: 1.0
+
 #>
 
 [CmdletBinding()]

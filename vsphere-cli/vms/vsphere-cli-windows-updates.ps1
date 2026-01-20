@@ -90,10 +90,10 @@
     .\vsphere-cli-windows-updates.ps1 -VCenterServer "vcenter.domain.com" -Operation "Report" -OutputFormat "CSV" -OutputPath "windows-updates-report.csv"
 
 .NOTES
-    Author: Generated for scripted-actions
+    Author: XOAP.io
     Requires: VMware PowerCLI 13.x or later, PowerShell 5.1+, PSWindowsUpdate module on target VMs
     Dependencies: Windows VMs must have PowerShell remoting enabled and PSWindowsUpdate module installed
-    Version: 1.0
+
 #>
 
 [CmdletBinding()]

@@ -82,9 +82,9 @@
     .\nutanix-cli-windows-updates.ps1 -PrismCentral "pc.domain.com" -VMNames @("web01", "web02") -UpdateCategories @("Security") -CreateSnapshots -MaxConcurrentVMs 2 -DomainCredential (Get-Credential)
 
 .NOTES
-    Author: Generated for scripted-actions
+    Author: XOAP.io
     Requires: Nutanix PowerShell SDK, PSWindowsUpdate module, PowerShell remoting enabled
-    Version: 1.0
+
 #>
 
 [CmdletBinding()]

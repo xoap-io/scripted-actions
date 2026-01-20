@@ -51,9 +51,9 @@
     .\vsphere-cli-describe-inventory.ps1 -VCenterServer "vcenter.domain.com" -ReportType "Hosts" -DatacenterName "MainDC" -OutputFormat "HTML" -OutputPath "hosts-report.html"
 
 .NOTES
-    Author: Generated for scripted-actions
+    Author: XOAP.io
     Requires: VMware PowerCLI 13.x or later, vSphere 7.0 or later
-    Version: 1.0
+
 #>
 
 [CmdletBinding()]

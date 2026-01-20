@@ -75,9 +75,9 @@
     .\nutanix-cli-host-operations.ps1 -PrismCentral "pc.domain.com" -Operation "Report" -IncludeVMs -IncludeHardware -IncludePerformance -OutputFormat "HTML" -OutputPath "host-report.html"
 
 .NOTES
-    Author: Generated for scripted-actions
+    Author: XOAP.io
     Requires: Nutanix PowerShell SDK, AOS 6.0+
-    Version: 1.0
+
 #>
 
 [CmdletBinding()]

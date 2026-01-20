@@ -78,9 +78,9 @@
     .\vsphere-cli-clone-vm.ps1 -VCenterServer "vcenter.domain.com" -SourceVM "Template-Ubuntu" -NewVMNames @("Web01","Web02","Web03") -DatastoreName "Datastore2" -ClusterName "Production" -CPUCount 4 -MemoryGB 8 -PowerOnAfterClone
 
 .NOTES
-    Author: Generated for scripted-actions
+    Author: XOAP.io
     Requires: VMware PowerCLI 13.x or later, vSphere 7.0 or later
-    Version: 1.0
+
 #>
 
 [CmdletBinding()]

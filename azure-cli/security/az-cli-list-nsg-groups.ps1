@@ -20,7 +20,7 @@
 .NOTES
     Author: XOAP.IO
     Date: 2025-08-05
-    Version: 1.0.0
+.0
     Requires: Azure CLI version 2.0 or later
 #>
 [CmdletBinding()]

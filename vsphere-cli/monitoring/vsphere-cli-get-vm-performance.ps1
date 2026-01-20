@@ -65,9 +65,9 @@
     .\vsphere-cli-get-vm-performance.ps1 -VCenterServer "vcenter.domain.com" -VMName "CriticalVM*" -ContinuousMonitoring -RefreshInterval 15 -AlertThresholds
 
 .NOTES
-    Author: Generated for scripted-actions
+    Author: XOAP.io
     Requires: VMware PowerCLI 13.x or later, vSphere 7.0 or later
-    Version: 1.0
+
 #>
 
 [CmdletBinding()]

@@ -66,7 +66,7 @@
     Arc-enabled resources may need to be disconnected from Azure Arc before deletion.
 
     Author: Azure Infrastructure Team
-    Version: 1.0
+
     Last Updated: September 2025
 #>
 

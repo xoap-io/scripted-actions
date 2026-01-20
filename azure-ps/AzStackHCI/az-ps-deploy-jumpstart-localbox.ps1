@@ -70,7 +70,7 @@
     Template source: https://github.com/microsoft/azure_arc/tree/main/azure_jumpstart_hcibox
 
     Author: XOAP.io
-    Version: 1.0
+
     Last Updated: September 2025
 #>
 

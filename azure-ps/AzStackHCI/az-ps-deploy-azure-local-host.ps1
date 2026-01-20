@@ -69,7 +69,7 @@
     Standard_F16s_v2, Standard_F32s_v2
 
     Author: Azure Infrastructure Team
-    Version: 1.0
+
     Last Updated: September 2025
 #>
 

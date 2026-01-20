@@ -75,9 +75,9 @@
     .\nutanix-cli-network-operations.ps1 -PrismCentral "pc.domain.com" -Operation "CreateWithPool" -NetworkName "VLAN200" -VlanId 200 -IPPoolStart "192.168.200.10" -IPPoolEnd "192.168.200.100" -Gateway "192.168.200.1" -SubnetMask "255.255.255.0"
 
 .NOTES
-    Author: Generated for scripted-actions
+    Author: XOAP.io
     Requires: Nutanix PowerShell SDK, AOS 6.0+
-    Version: 1.0
+
 #>
 
 [CmdletBinding()]

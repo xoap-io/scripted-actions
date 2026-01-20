@@ -43,7 +43,7 @@
     .\xenserver-cli-vm-clone.ps1 -Server "xenserver.local" -VMName "Template-Win" -NamePrefix "TestVM" -Count 5
 
 .NOTES
-    Author: Generated for scripted-actions
+    Author: XOAP.io
     Requires: XenServerPSModule (PowerShell SDK)
     Version: 2.0
 #>

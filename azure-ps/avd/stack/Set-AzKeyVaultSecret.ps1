@@ -35,7 +35,7 @@
 .NOTES
     Author: Your Name
     Date:   2024-09-30
-    Version: 1.0
+
     Requires: Az.KeyVault module
 
 .LINK

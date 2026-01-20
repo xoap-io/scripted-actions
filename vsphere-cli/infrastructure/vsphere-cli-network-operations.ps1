@@ -69,9 +69,9 @@
     .\vsphere-cli-network-operations.ps1 -VCenterServer "vcenter.domain.com" -Operation "ConfigureUplinkTeaming" -HostName "esx01.domain.com" -SwitchName "vSwitch0" -PhysicalAdapters @("vmnic0", "vmnic1")
 
 .NOTES
-    Author: Generated for scripted-actions
+    Author: XOAP.io
     Requires: VMware PowerCLI 13.x or later, vSphere 7.0 or later
-    Version: 1.0
+
 #>
 
 [CmdletBinding()]

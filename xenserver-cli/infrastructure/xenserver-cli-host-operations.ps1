@@ -37,7 +37,7 @@
     .\xenserver-cli-host-operations.ps1 -Server "xenserver.local" -HostUUID "12345678-abcd-1234-abcd-123456789012" -Operation "Reboot" -Force
 
 .NOTES
-    Author: Generated for scripted-actions
+    Author: XOAP.io
     Requires: XenServerPSModule (PowerShell SDK)
     Version: 2.0
 #>
