@@ -64,75 +64,83 @@
     .\aws-cli-replace-route.ps1 -RouteTableId "rtb-12345678" -DestinationCidrBlock "0.0.0.0/0" -NatGatewayId "nat-87654321" -Force
 
 .NOTES
-    Author: XOAP
-    Date: 2025-08-06
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
 
-    Requires: AWS CLI v2.16+
+    Author: XOAP.IO
+    Requires: AWS CLI v2 (https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
 
 .LINK
-    https://github.com/xoap-io/scripted-actions
+    https://docs.aws.amazon.com/cli/latest/reference/ec2/replace-route.html
+
+.COMPONENT
+    AWS CLI Network
 #>
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The ID of the route table containing the route to replace")]
     [ValidatePattern('^rtb-[a-zA-Z0-9]{8,}$')]
     [string]$RouteTableId,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The IPv4 CIDR block of the route to replace")]
     [ValidatePattern('^(?:\d{1,3}\.){3}\d{1,3}/\d{1,2}$')]
     [string]$DestinationCidrBlock,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The IPv6 CIDR block of the route to replace")]
     [ValidatePattern('^([a-fA-F0-9:]+:+)+[a-fA-F0-9]+/\d{1,3}$')]
     [string]$DestinationIpv6CidrBlock,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The new ID of an internet gateway or VPC gateway for the route")]
     [ValidatePattern('^(igw|vgw)-[a-zA-Z0-9]{8,}$')]
     [string]$GatewayId,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The new ID of a NAT gateway for the route")]
     [ValidatePattern('^nat-[a-zA-Z0-9]{8,}$')]
     [string]$NatGatewayId,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The new ID of a network interface for the route")]
     [ValidatePattern('^eni-[a-zA-Z0-9]{8,}$')]
     [string]$NetworkInterfaceId,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The new ID of an EC2 instance for the route")]
     [ValidatePattern('^i-[a-zA-Z0-9]{8,}$')]
     [string]$InstanceId,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The new ID of a VPC peering connection for the route")]
     [ValidatePattern('^pcx-[a-zA-Z0-9]{8,}$')]
     [string]$VpcPeeringConnectionId,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The new ID of a transit gateway for the route")]
     [ValidatePattern('^tgw-[a-zA-Z0-9]{8,}$')]
     [string]$TransitGatewayId,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The new ID of a local gateway for the route")]
     [ValidatePattern('^lgw-[a-zA-Z0-9]{8,}$')]
     [string]$LocalGatewayId,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The new ID of a carrier gateway for the route")]
     [ValidatePattern('^cagw-[a-zA-Z0-9]{8,}$')]
     [string]$CarrierGatewayId,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The new ID of a VPC endpoint for the route")]
     [ValidatePattern('^vpce-[a-zA-Z0-9]{8,}$')]
     [string]$VpcEndpointId,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Perform a dry run to validate parameters without replacing the route")]
     [switch]$DryRun,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Skip confirmation prompts for potentially disruptive replacements")]
     [switch]$Force,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "AWS region")]
     [string]$Region,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "AWS CLI profile to use")]
     [string]$Profile
 )
 
@@ -391,8 +399,8 @@ try {
     }
 
 } catch {
-    Write-Error "Failed to replace route: $($_.Exception.Message)"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
 } finally {
-    Write-Output "Script execution completed."
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

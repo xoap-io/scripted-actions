@@ -63,59 +63,71 @@
     .\vsphere-cli-manage-datastores.ps1 -VCenterServer "vcenter.domain.com" -Operation "Report" -OutputFormat "CSV" -OutputPath "datastore-report.csv"
 
 .NOTES
-    Author: XOAP.io
-    Requires: VMware PowerCLI 13.x or later, vSphere 7.0 or later
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
 
+    Author: XOAP.IO
+    Requires: VMware PowerCLI (Install-Module -Name VMware.PowerCLI)
+
+.LINK
+    https://developer.vmware.com/docs/powercli/
+
+.COMPONENT
+    VMware vSphere PowerCLI
 #>
 
 [CmdletBinding()]
 param (
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The vCenter Server FQDN or IP address to connect to.")]
     [ValidateNotNullOrEmpty()]
     [string]$VCenterServer,
 
-    [Parameter(Mandatory = $false, ParameterSetName = "SingleDatastore")]
+    [Parameter(Mandatory = $false, ParameterSetName = "SingleDatastore", HelpMessage = "The name of the datastore to manage. Supports wildcards.")]
     [ValidateNotNullOrEmpty()]
     [string]$DatastoreName,
 
-    [Parameter(Mandatory = $false, ParameterSetName = "MultipleDatastores")]
+    [Parameter(Mandatory = $false, ParameterSetName = "MultipleDatastores", HelpMessage = "An array of specific datastore names for batch operations.")]
     [ValidateNotNullOrEmpty()]
     [string[]]$DatastoreNames,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Filter datastores by cluster location.")]
     [string]$ClusterName,
 
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The datastore operation to perform (Monitor, Browse, Cleanup, Report, FileOperations, or Maintenance).")]
     [ValidateSet("Monitor", "Browse", "Cleanup", "Report", "FileOperations", "Maintenance")]
     [string]$Operation,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Space usage threshold percentage for alerts (default: 85).")]
     [ValidateRange(1, 100)]
     [int]$ThresholdPercent = 85,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Remove orphaned files during cleanup operation.")]
     [switch]$CleanupOrphanedFiles,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Remove old snapshot files during cleanup operation.")]
     [switch]$CleanupSnapshots,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Remove old log files during cleanup operation.")]
     [switch]$CleanupLogs,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "File path for file operations (relative to datastore root).")]
     [string]$FilePath,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Output format for reports (Console, CSV, or JSON).")]
     [ValidateSet("Console", "CSV", "JSON")]
     [string]$OutputFormat = "Console",
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Path to save the report file.")]
     [string]$OutputPath,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Force operations without confirmation prompts.")]
     [switch]$Force,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Show what would be done without actually performing operations.")]
     [switch]$DryRun
 )
 
@@ -693,10 +705,11 @@ try {
     Write-Host "`n=== Operation Completed ===" -ForegroundColor Green
 }
 catch {
-    Write-Error "Script execution failed: $($_.Exception.Message)"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
 }
 finally {
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
     # Disconnect from vCenter if connected
     if ($global:DefaultVIServers) {
         Write-Host "`nDisconnecting from vCenter..." -ForegroundColor Yellow

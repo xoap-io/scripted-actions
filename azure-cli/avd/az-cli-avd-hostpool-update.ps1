@@ -90,115 +90,126 @@
 .EXAMPLE
     .\az-cli-avd-hostpool-update.ps1 -IDs "/subscriptions/sub-id/resourceGroups/rg/providers/Microsoft.DesktopVirtualization/hostPools/mypool" -FriendlyName "Updated Pool"
 
+.NOTES
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: Azure CLI (https://docs.microsoft.com/en-us/cli/azure/install-azure-cli)
+
 .LINK
     https://learn.microsoft.com/en-us/cli/azure/desktopvirtualization/hostpool
 
 .COMPONENT
-    Azure CLI
+    Azure CLI Virtual Desktop
 #>
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory)]
+    [Parameter(Mandatory, HelpMessage = "The name of the Azure Virtual Desktop Host Pool to update")]
     [ValidateNotNullOrEmpty()]
     [string]$Name,
 
-    [Parameter(Mandatory)]
+    [Parameter(Mandatory, HelpMessage = "The name of the Azure Resource Group")]
     [ValidateNotNullOrEmpty()]
     [string]$ResourceGroup,
 
-    [Parameter()]
+    [Parameter(HelpMessage = "Add an object to a list of objects by specifying a path and key value pairs")]
     [ValidateNotNullOrEmpty()]
     [string]$Add,
 
-    [Parameter()]
+    [Parameter(HelpMessage = "Custom RDP property for the host pool")]
     [ValidateNotNullOrEmpty()]
     [string]$CustomRdpProperty,
 
-    [Parameter()]
+    [Parameter(HelpMessage = "Optional new description for the host pool")]
     [ValidateNotNullOrEmpty()]
     [string]$Description,
 
-    [Parameter()]
+    [Parameter(HelpMessage = "Replace a string value with another string value")]
     [ValidateNotNullOrEmpty()]
     [ValidateSet('0', '1', 'f', 'false', 'n', 'no', 't', 'true', 'y', 'yes')]
     [string]$ForceString,
 
-    [Parameter()]
+    [Parameter(HelpMessage = "Optional new friendly name for the host pool")]
     [ValidateNotNullOrEmpty()]
     [string]$FriendlyName,
 
-    [Parameter()]
+    [Parameter(HelpMessage = "One or more resource IDs (space-delimited). When provided, Name and ResourceGroup are ignored")]
     [ValidateNotNullOrEmpty()]
     [string]$IDs,
 
-    [Parameter()]
+    [Parameter(HelpMessage = "Load balancer type for the host pool. Valid values: 'BreadthFirst', 'DepthFirst', 'Persistent'")]
     [ValidateNotNullOrEmpty()]
     [ValidateSet('BreadthFirst', 'DepthFirst', 'Persistent')]
     [string]$LoadBalancerType,
 
-    [Parameter()]
+    [Parameter(HelpMessage = "Maximum session limit for pooled host pools (1-999999)")]
     [ValidateRange(1, 999999)]
     [int]$MaxSessionLimit,
 
-    [Parameter()]
+    [Parameter(HelpMessage = "Assignment type for personal host pools. Valid values: 'Automatic', 'Direct'")]
     [ValidateNotNullOrEmpty()]
     [ValidateSet('Automatic', 'Direct')]
     [string]$PersonalDesktopAssignmentType,
 
-    [Parameter()]
+    [Parameter(HelpMessage = "Preferred application group type. Valid values: 'Desktop', 'None', 'RailApplications'")]
     [ValidateNotNullOrEmpty()]
     [ValidateSet('Desktop', 'None', 'RailApplications')]
     [string]$PreferredAppGroupType,
 
-    [Parameter()]
+    [Parameter(HelpMessage = "Registration information for the host pool")]
     [ValidateNotNullOrEmpty()]
     [string]$RegistrationInfo,
 
-    [Parameter()]
+    [Parameter(HelpMessage = "Remove a property or an element from a list")]
     [ValidateNotNullOrEmpty()]
     [string]$Remove,
 
-    [Parameter()]
+    [Parameter(HelpMessage = "Ring for the host pool")]
     [ValidateNotNullOrEmpty()]
     [string]$Ring,
 
-    [Parameter()]
+    [Parameter(HelpMessage = "Update an object by specifying a property path and value to set")]
     [ValidateNotNullOrEmpty()]
     [string]$Set,
 
-    [Parameter()]
+    [Parameter(HelpMessage = "SSO client ID for the host pool")]
     [ValidateNotNullOrEmpty()]
     [string]$SsoClientId,
 
-    [Parameter()]
+    [Parameter(HelpMessage = "SSO client secret key vault path for the host pool")]
     [ValidateNotNullOrEmpty()]
     [string]$SsoClientSecretKeyVaultPath,
 
-    [Parameter()]
+    [Parameter(HelpMessage = "SSO secret type for the host pool. Valid values: 'Certificate', 'CertificateInKeyVault', 'SharedKey', 'SharedKeyInKeyVault'")]
     [ValidateNotNullOrEmpty()]
     [ValidateSet('Certificate', 'CertificateInKeyVault', 'SharedKey', 'SharedKeyInKeyVault')]
     [string]$SsoSecretType,
 
-    [Parameter()]
+    [Parameter(HelpMessage = "SSO ADFS authority for the host pool")]
     [ValidateNotNullOrEmpty()]
     [string]$SsoAdfsAuthority,
 
-    [Parameter()]
+    [Parameter(HelpMessage = "Enable start VM on connect for the host pool")]
     [ValidateNotNullOrEmpty()]
     [ValidateSet('0', '1', 'f', 'false', 'n', 'no', 't', 'true', 'y', 'yes')]
     [string]$StartVmOnConnect,
 
-    [Parameter()]
+    [Parameter(HelpMessage = "Optional tags in the format 'key1=value1 key2=value2'")]
     [ValidateNotNullOrEmpty()]
     [string]$Tags,
 
-    [Parameter()]
+    [Parameter(HelpMessage = "Mark as validation environment for the host pool")]
     [ValidateNotNullOrEmpty()]
     [ValidateSet('0', '1', 'f', 'false', 'n', 'no', 't', 'true', 'y', 'yes')]
     [string]$ValidationEnvironment,
 
-    [Parameter()]
+    [Parameter(HelpMessage = "VM template for the host pool")]
     [ValidateNotNullOrEmpty()]
     [string]$VmTemplate
 )
@@ -404,6 +415,8 @@ try {
 
     return $updatedHostPool
 } catch {
-    Write-Error "Failed to update Azure Virtual Desktop Host Pool: $_"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
+} finally {
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

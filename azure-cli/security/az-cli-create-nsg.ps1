@@ -64,22 +64,21 @@
     .\az-cli-create-nsg.ps1 -Name "AllowSSHFromJumpbox" -NsgName "app-nsg" -Priority 200 -ResourceGroup "rg-app" -Access "Allow" -Protocol "Tcp" -Direction "Inbound" -SourceAddressPrefixes "10.0.0.10/32" -DestinationAddressPrefixes "10.0.2.0/24" -DestinationPortRanges "22" -Description "Allow SSH from jumpbox to app servers"
 
 .NOTES
-    Author: XOAP.IO
-    Date: 2025-08-05
-    Version: 2.0.0
-    Requires: Azure CLI version 2.0 or later
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
 
-    Priority ranges:
-    - 100-999: High priority rules (critical services)
-    - 1000-2999: Medium priority rules (standard services)
-    - 3000-3999: Low priority rules (less critical)
-    - 4000-4096: Cleanup rules (deny all, etc.)
+    Author: XOAP.IO
+    Requires: Azure CLI (https://docs.microsoft.com/en-us/cli/azure/install-azure-cli)
 
 .LINK
     https://docs.microsoft.com/en-us/cli/azure/network/nsg/rule
 
 .COMPONENT
-    Azure CLI Network Security
+    Azure CLI Security
 #>
 
 [CmdletBinding()]
@@ -422,7 +421,7 @@ try {
     }
 }
 catch {
-    Write-Error "❌ Failed to create NSG rule: $($_.Exception.Message)"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
 }
 finally {

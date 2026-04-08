@@ -33,33 +33,47 @@
 .EXAMPLE
     .\az-cli-delete-image-builder-windows.ps1 -AzResourceGroup "MyResourceGroup" -AzImageBuildName "MyImageBuild" -AzAssignee "MyAssignee" -AzRoleDefinitionName "MyRoleDefinition" -AzSubscriptionID "00000000-0000-0000-0000-000000000000" -AzResourceId "00000000-0000-0000-0000-000000000000"
 
+.NOTES
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: Azure CLI (https://docs.microsoft.com/en-us/cli/azure/install-azure-cli)
+
 .LINK
     https://learn.microsoft.com/en-us/cli/azure/vm
+
+.COMPONENT
+    Azure CLI Virtual Machines
 #>
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The name of the Azure Resource Group")]
     [ValidateNotNullOrEmpty()]
     [string]$AzResourceGroup = "MyResourceGroup",
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The name of the Azure Image Builder")]
     [ValidateNotNullOrEmpty()]
     [string]$AzImageBuildName = "MyImageBuild",
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The name of the Azure Role Assignee")]
     [ValidateNotNullOrEmpty()]
     [string]$AzAssignee = "MyAssignee",
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The name of the Azure Role Definition")]
     [ValidateNotNullOrEmpty()]
     [string]$AzRoleDefinitionName = "MyRoleDefinition",
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The ID of the Azure Subscription")]
     [ValidateNotNullOrEmpty()]
     [string]$AzSubscriptionID = "00000000-0000-0000-0000-000000000000",
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The ID of the Azure Resource")]
     [ValidateNotNullOrEmpty()]
     [string]$AzResourceId = "00000000-0000-0000-0000-000000000000"
 )
@@ -101,15 +115,10 @@ try {
     az group delete @parameters
 
     # Output the result
-    Write-Output "Azure Image Builder Windows VM deleted successfully."
+    Write-Host "✅ Azure Image Builder Windows VM deleted successfully." -ForegroundColor Green
 } catch {
-    # Log the error to the console
-
-Write-Output "Error message $errorMessage"
-
-
-    Write-Error "Failed to delete the Azure Image Builder Windows VM: $($_.Exception.Message)"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
+    exit 1
 } finally {
-    # Cleanup code if needed
-    Write-Output "Script execution completed."
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

@@ -37,16 +37,21 @@
     .\az-cli-create-nsg-group.ps1 -Name "custom-nsg" -ResourceGroup "rg-custom" -Location "northeurope"
 
 .NOTES
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
     Author: XOAP.IO
-    Date: 2025-08-05
-.0
-    Requires: Azure CLI version 2.0 or later
+    Requires: Azure CLI (https://docs.microsoft.com/en-us/cli/azure/install-azure-cli)
 
 .LINK
     https://docs.microsoft.com/en-us/cli/azure/network/nsg
 
 .COMPONENT
-    Azure CLI Network Security
+    Azure CLI Security
 #>
 
 [CmdletBinding()]
@@ -380,7 +385,7 @@ try {
     }
 }
 catch {
-    Write-Error "❌ Failed to create NSG: $($_.Exception.Message)"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
 }
 finally {

@@ -49,22 +49,30 @@
     .\aws-cli-modify-instance-attribute.ps1 -InstanceId "i-1234567890abcdef0" -UserDataFile "C:\scripts\userdata.txt"
 
 .NOTES
-    Author: XOAP
-    Date: 2025-08-06
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
 
-    Requires: AWS CLI v2.16+
+    Author: XOAP.IO
+    Requires: AWS CLI v2 (https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
 
 .LINK
-    https://github.com/xoap-io/scripted-actions
+    https://docs.aws.amazon.com/cli/latest/reference/ec2/modify-instance-attribute.html
+
+.COMPONENT
+    AWS CLI EC2
 #>
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The ID of the EC2 instance to modify.")]
     [ValidatePattern('^i-[a-zA-Z0-9]{8,}$')]
     [string]$InstanceId,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The new instance type for the instance (requires instance to be stopped).")]
     [ValidateSet('t2.nano','t2.micro','t2.small','t2.medium','t2.large','t2.xlarge','t2.2xlarge',
                 't3.nano','t3.micro','t3.small','t3.medium','t3.large','t3.xlarge','t3.2xlarge',
                 't3a.nano','t3a.micro','t3a.small','t3a.medium','t3a.large','t3a.xlarge','t3a.2xlarge',
@@ -74,33 +82,33 @@ param(
                 'r5.large','r5.xlarge','r5.2xlarge','r5.4xlarge','r5.8xlarge','r5.12xlarge','r5.16xlarge','r5.24xlarge')]
     [string]$InstanceType,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Comma-separated list of security group IDs to assign to the instance.")]
     [string]$SecurityGroupIds,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Enable or disable source/destination checking for the instance.")]
     [bool]$SourceDestCheck,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Enable or disable termination protection for the instance.")]
     [bool]$DisableApiTermination,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Enable or disable enhanced networking support.")]
     [bool]$EnaSupport,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Enable or disable SR-IOV networking support.")]
     [ValidateSet('simple')]
     [string]$SriovNetSupport,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Base64-encoded user data to assign to the instance.")]
     [string]$UserData,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Path to a file containing user data to assign to the instance.")]
     [ValidateScript({Test-Path $_ -PathType Leaf})]
     [string]$UserDataFile,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The AWS region to use (optional, uses default if not specified).")]
     [string]$Region,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The AWS CLI profile to use (optional).")]
     [string]$Profile
 )
 
@@ -227,8 +235,8 @@ try {
     Write-Output "Instance attribute modification completed for: $InstanceId"
 
 } catch {
-    Write-Error "Failed to modify instance attributes: $($_.Exception.Message)"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
 } finally {
-    Write-Output "Script execution completed."
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

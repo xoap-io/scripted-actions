@@ -49,50 +49,58 @@
     .\aws-cli-allocate-elastic-ip.ps1 -Address "203.0.113.12" -Domain "vpc"
 
 .NOTES
-    Author: XOAP
-    Date: 2025-08-06
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
 
-    Requires: AWS CLI v2.16+
+    Author: XOAP.IO
+    Requires: AWS CLI v2 (https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
 
 .LINK
-    https://github.com/xoap-io/scripted-actions
+    https://docs.aws.amazon.com/cli/latest/reference/ec2/allocate-address.html
+
+.COMPONENT
+    AWS CLI Network
 #>
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The domain for the Elastic IP address: vpc or standard")]
     [ValidateSet('vpc', 'standard')]
     [string]$Domain = 'vpc',
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The IP address to allocate from Amazon's pool")]
     [ValidatePattern('^(?:\d{1,3}\.){3}\d{1,3}$')]
     [string]$Address,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The ID of the address pool from which to allocate")]
     [ValidatePattern('^ipv4pool-[a-zA-Z0-9-]+$')]
     [string]$PublicIpv4Pool,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The set of Availability Zones from which AWS advertises IP addresses")]
     [string]$NetworkBorderGroup,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The ID of a customer-owned address pool")]
     [ValidatePattern('^ipv4pool-coip-[a-zA-Z0-9-]+$')]
     [string]$CustomerOwnedIpv4Pool,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "JSON string of tags to apply to the Elastic IP address")]
     [string]$Tags,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Number of Elastic IP addresses to allocate (max: 10)")]
     [ValidateRange(1, 10)]
     [int]$Count = 1,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Perform a dry run to validate parameters without allocating")]
     [switch]$DryRun,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "AWS region")]
     [string]$Region,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "AWS CLI profile to use")]
     [string]$Profile
 )
 
@@ -319,8 +327,8 @@ try {
     Write-Output "`n✅ Elastic IP allocation process completed."
 
 } catch {
-    Write-Error "Failed to allocate Elastic IP address: $($_.Exception.Message)"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
 } finally {
-    Write-Output "Script execution completed."
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

@@ -66,32 +66,43 @@
 .EXAMPLE
     .\az-cli-avd-bastion-host-create.ps1 -BastionName "MyBastion" -PublicIpAddress "/subscriptions/sub-id/resourceGroups/rg/providers/Microsoft.Network/publicIPAddresses/ip" -ResourceGroup "MyRG" -VnetName "MyVnet" -Location "eastus2" -ScaleUnits 5
 
+.NOTES
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: Azure CLI (https://docs.microsoft.com/en-us/cli/azure/install-azure-cli)
+
 .LINK
     https://learn.microsoft.com/en-us/cli/azure/network/bastion
 
 .COMPONENT
-    Azure CLI
+    Azure CLI Virtual Desktop
 #>
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory)]
+    [Parameter(Mandatory, HelpMessage = "The name of the Azure Bastion Host")]
     [ValidateNotNullOrEmpty()]
     [string]$BastionName,
 
-    [Parameter(Mandatory)]
+    [Parameter(Mandatory, HelpMessage = "The name or ID of the public IP address to associate with the Bastion Host")]
     [ValidateNotNullOrEmpty()]
     [string]$PublicIpAddress,
 
-    [Parameter(Mandatory)]
+    [Parameter(Mandatory, HelpMessage = "The name of the Azure Resource Group")]
     [ValidateNotNullOrEmpty()]
     [string]$ResourceGroup,
 
-    [Parameter(Mandatory)]
+    [Parameter(Mandatory, HelpMessage = "The name of the Azure Virtual Network")]
     [ValidateNotNullOrEmpty()]
     [string]$VnetName,
 
-    [Parameter(Mandatory)]
+    [Parameter(Mandatory, HelpMessage = "The Azure region for the Bastion Host")]
     [ValidateSet(
         'eastus', 'eastus2', 'southcentralus', 'westus2',
         'westus3', 'australiaeast', 'southeastasia', 'northeurope',
@@ -103,43 +114,43 @@ param(
     )]
     [string]$Location,
 
-    [Parameter()]
+    [Parameter(HelpMessage = "Disable copy and paste functionality")]
     [switch]$DisableCopyPaste,
 
-    [Parameter()]
+    [Parameter(HelpMessage = "Enable IP Connect feature")]
     [switch]$EnableIpConnect,
 
-    [Parameter()]
+    [Parameter(HelpMessage = "Enable tunneling feature")]
     [switch]$EnableTunneling,
 
-    [Parameter()]
+    [Parameter(HelpMessage = "Enable file copy feature")]
     [switch]$FileCopy,
 
-    [Parameter()]
+    [Parameter(HelpMessage = "Enable Kerberos authentication")]
     [switch]$Kerberos,
 
-    [Parameter()]
+    [Parameter(HelpMessage = "Do not wait for the long-running operation to finish")]
     [switch]$NoWait,
 
-    [Parameter()]
+    [Parameter(HelpMessage = "The number of scale units for the Bastion Host (2-50)")]
     [ValidateRange(2, 50)]
     [int]$ScaleUnits,
 
-    [Parameter()]
+    [Parameter(HelpMessage = "Enable session recording feature")]
     [switch]$SessionRecording,
 
-    [Parameter()]
+    [Parameter(HelpMessage = "Enable shareable link feature")]
     [switch]$ShareableLink,
 
-    [Parameter()]
+    [Parameter(HelpMessage = "The SKU of the Bastion Host. Valid values: 'Basic', 'Standard'")]
     [ValidateSet('Basic', 'Standard')]
     [string]$Sku,
 
-    [Parameter()]
+    [Parameter(HelpMessage = "Optional tags in the format 'key1=value1 key2=value2'")]
     [ValidateNotNullOrEmpty()]
     [string]$Tags,
 
-    [Parameter()]
+    [Parameter(HelpMessage = "Availability zones for the Bastion Host (space-delimited)")]
     [ValidateNotNullOrEmpty()]
     [string]$Zones
 )
@@ -298,6 +309,8 @@ try {
         return $bastionHost
     }
 } catch {
-    Write-Error "Failed to create Azure Bastion Host: $_"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
+} finally {
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

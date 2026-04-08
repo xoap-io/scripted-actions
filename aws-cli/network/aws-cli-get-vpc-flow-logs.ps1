@@ -1,7 +1,82 @@
+<#
+.SYNOPSIS
+    Describes AWS VPC Flow Logs.
+
+.DESCRIPTION
+    This script retrieves detailed information about VPC Flow Logs in your AWS account.
+    Flow logs capture information about IP traffic going to and from network interfaces in your VPC.
+    Uses aws ec2 describe-flow-logs to perform the operation.
+
+.PARAMETER FlowLogIds
+    Comma-separated list of specific Flow Log IDs to describe. Must be in the format 'fl-xxxxxxxxx'.
+
+.PARAMETER ResourceId
+    Filter flow logs by the resource ID (VPC ID, subnet ID, or network interface ID).
+
+.PARAMETER ResourceType
+    Filter by resource type: VPC, Subnet, or NetworkInterface.
+
+.PARAMETER FlowLogStatus
+    Filter by flow log status: ACTIVE or INACTIVE.
+
+.PARAMETER TrafficType
+    Filter by traffic type: ACCEPT, REJECT, or ALL.
+
+.PARAMETER Profile
+    The AWS CLI profile to use for the operation.
+
+.PARAMETER Region
+    The AWS region to query for VPC Flow Logs.
+
+.PARAMETER OutputFormat
+    The output format for the results (json, table, text, yaml).
+
+.PARAMETER ShowRecommendations
+    Show configuration recommendations for flow log optimization.
+
+.EXAMPLE
+    .\aws-cli-get-vpc-flow-logs.ps1
+
+.EXAMPLE
+    .\aws-cli-get-vpc-flow-logs.ps1 -ResourceId vpc-12345678
+
+.EXAMPLE
+    .\aws-cli-get-vpc-flow-logs.ps1 -ResourceType Subnet -TrafficType REJECT
+
+.EXAMPLE
+    .\aws-cli-get-vpc-flow-logs.ps1 -FlowLogStatus ACTIVE -ShowRecommendations
+
+.EXAMPLE
+    .\aws-cli-get-vpc-flow-logs.ps1 -FlowLogIds fl-12345678,fl-87654321
+
+.NOTES
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: AWS CLI v2 (https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
+
+    IMPORTANT NOTES:
+    - Flow logs can be configured at VPC, subnet, or network interface level
+    - Logs are delivered to CloudWatch Logs, S3, or Kinesis Data Firehose
+    - Flow logs do not capture all traffic (e.g., DHCP, DNS to Amazon DNS resolver)
+    - There are charges for flow log data ingestion and storage
+
+.LINK
+    https://docs.aws.amazon.com/cli/latest/reference/ec2/describe-flow-logs.html
+
+.COMPONENT
+    AWS CLI Network
+#>
+
 [CmdletBinding()]
 param (
     [Parameter(Mandatory = $false, HelpMessage = "Specific Flow Log IDs to describe")]
-    [ValidatePattern('^fl-[a-zA-Z0-9]+(,fl-[a-zA-Z0-9]+)*$', ErrorMessage = "FlowLogIds must be comma-separated valid Flow Log IDs (format: fl-xxxxxxxxx)")]
+    [ValidatePattern('^fl-[a-zA-Z0-9]+(,fl-[a-zA-Z0-9]+)*$')]
     [string]$FlowLogIds,
 
     [Parameter(Mandatory = $false, HelpMessage = "Filter by resource ID (VPC, subnet, or network interface)")]
@@ -32,77 +107,6 @@ param (
     [Parameter(Mandatory = $false, HelpMessage = "Show configuration recommendations")]
     [switch]$ShowRecommendations
 )
-
-<#
-.SYNOPSIS
-Describes AWS VPC Flow Logs.
-
-.DESCRIPTION
-This script retrieves detailed information about VPC Flow Logs in your AWS account. Flow logs capture information about IP traffic going to and from network interfaces in your VPC.
-
-.PARAMETER FlowLogIds
-Comma-separated list of specific Flow Log IDs to describe. Must be in the format 'fl-xxxxxxxxx'.
-
-.PARAMETER ResourceId
-Filter flow logs by the resource ID (VPC ID, subnet ID, or network interface ID).
-
-.PARAMETER ResourceType
-Filter by resource type: VPC, Subnet, or NetworkInterface.
-
-.PARAMETER FlowLogStatus
-Filter by flow log status: ACTIVE or INACTIVE.
-
-.PARAMETER TrafficType
-Filter by traffic type: ACCEPT, REJECT, or ALL.
-
-.PARAMETER Profile
-The AWS CLI profile to use for the operation.
-
-.PARAMETER Region
-The AWS region to query for VPC Flow Logs.
-
-.PARAMETER OutputFormat
-The output format for the results (json, table, text, yaml).
-
-.PARAMETER ShowRecommendations
-Show configuration recommendations for flow log optimization.
-
-.EXAMPLE
-.\aws-cli-get-vpc-flow-logs.ps1
-
-Lists all VPC Flow Logs in the default region.
-
-.EXAMPLE
-.\aws-cli-get-vpc-flow-logs.ps1 -ResourceId vpc-12345678
-
-Lists flow logs for a specific VPC.
-
-.EXAMPLE
-.\aws-cli-get-vpc-flow-logs.ps1 -ResourceType Subnet -TrafficType REJECT
-
-Lists flow logs for subnets that capture only rejected traffic.
-
-.EXAMPLE
-.\aws-cli-get-vpc-flow-logs.ps1 -FlowLogStatus ACTIVE -ShowRecommendations
-
-Lists active flow logs with configuration recommendations.
-
-.EXAMPLE
-.\aws-cli-get-vpc-flow-logs.ps1 -FlowLogIds fl-12345678,fl-87654321
-
-Shows details for specific flow logs.
-
-.NOTES
-Author: Your Name
-Date: 2024
-Requires: AWS CLI v2.16+ and appropriate IAM permissions
-
-IMPORTANT NOTES:
-- Flow logs can be configured at VPC, subnet, or network interface level
-- Logs are delivered to CloudWatch Logs, S3, or Kinesis Data Firehose
-- Flow logs do not capture all traffic (e.g., DHCP, DNS to Amazon DNS resolver)
-- There are charges for flow log data ingestion and storage
-#>
 
 $ErrorActionPreference = 'Stop'
 
@@ -316,6 +320,8 @@ try {
     }
 
 } catch {
-    Write-Error "An error occurred: $($_.Exception.Message)"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
+} finally {
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

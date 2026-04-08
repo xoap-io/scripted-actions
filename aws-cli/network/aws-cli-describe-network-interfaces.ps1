@@ -1,19 +1,91 @@
+<#
+.SYNOPSIS
+    Describes AWS Elastic Network Interfaces (ENIs).
+
+.DESCRIPTION
+    This script retrieves detailed information about Elastic Network Interfaces in your AWS account.
+    ENIs are virtual network interfaces that can be attached to EC2 instances.
+    Uses aws ec2 describe-network-interfaces to perform the operation.
+
+.PARAMETER NetworkInterfaceIds
+    Comma-separated list of specific network interface IDs to describe. Must be in the format 'eni-xxxxxxxxx'.
+
+.PARAMETER VpcId
+    Filter network interfaces by VPC ID.
+
+.PARAMETER SubnetId
+    Filter network interfaces by subnet ID.
+
+.PARAMETER InstanceId
+    Filter network interfaces by the instance they are attached to.
+
+.PARAMETER Status
+    Filter by interface status: available, associated, attaching, in-use, or detaching.
+
+.PARAMETER InterfaceType
+    Filter by interface type: interface, natGateway, efa, or trunk.
+
+.PARAMETER Profile
+    The AWS CLI profile to use for the operation.
+
+.PARAMETER Region
+    The AWS region to query for network interfaces.
+
+.PARAMETER OutputFormat
+    The output format for the results (json, table, text, yaml).
+
+.PARAMETER Detailed
+    Show detailed information including security groups, IP addresses, and associations.
+
+.EXAMPLE
+    .\aws-cli-describe-network-interfaces.ps1
+
+.EXAMPLE
+    .\aws-cli-describe-network-interfaces.ps1 -VpcId vpc-12345678
+
+.EXAMPLE
+    .\aws-cli-describe-network-interfaces.ps1 -InstanceId i-12345678
+
+.EXAMPLE
+    .\aws-cli-describe-network-interfaces.ps1 -Status available
+
+.EXAMPLE
+    .\aws-cli-describe-network-interfaces.ps1 -NetworkInterfaceIds eni-12345678,eni-87654321 -Detailed
+
+.NOTES
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: AWS CLI v2 (https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
+
+.LINK
+    https://docs.aws.amazon.com/cli/latest/reference/ec2/describe-network-interfaces.html
+
+.COMPONENT
+    AWS CLI Network
+#>
+
 [CmdletBinding()]
 param (
     [Parameter(Mandatory = $false, HelpMessage = "Specific Network Interface IDs to describe")]
-    [ValidatePattern('^eni-[a-zA-Z0-9]+(,eni-[a-zA-Z0-9]+)*$', ErrorMessage = "NetworkInterfaceIds must be comma-separated valid ENI IDs (format: eni-xxxxxxxxx)")]
+    [ValidatePattern('^eni-[a-zA-Z0-9]+(,eni-[a-zA-Z0-9]+)*$')]
     [string]$NetworkInterfaceIds,
 
     [Parameter(Mandatory = $false, HelpMessage = "Filter by VPC ID")]
-    [ValidatePattern('^vpc-[a-zA-Z0-9]+$', ErrorMessage = "VpcId must be a valid VPC ID (format: vpc-xxxxxxxxx)")]
+    [ValidatePattern('^vpc-[a-zA-Z0-9]+$')]
     [string]$VpcId,
 
     [Parameter(Mandatory = $false, HelpMessage = "Filter by subnet ID")]
-    [ValidatePattern('^subnet-[a-zA-Z0-9]+$', ErrorMessage = "SubnetId must be a valid subnet ID (format: subnet-xxxxxxxxx)")]
+    [ValidatePattern('^subnet-[a-zA-Z0-9]+$')]
     [string]$SubnetId,
 
     [Parameter(Mandatory = $false, HelpMessage = "Filter by instance ID")]
-    [ValidatePattern('^i-[a-zA-Z0-9]+$', ErrorMessage = "InstanceId must be a valid EC2 instance ID (format: i-xxxxxxxxx)")]
+    [ValidatePattern('^i-[a-zA-Z0-9]+$')]
     [string]$InstanceId,
 
     [Parameter(Mandatory = $false, HelpMessage = "Filter by interface status")]
@@ -37,74 +109,6 @@ param (
     [Parameter(Mandatory = $false, HelpMessage = "Show detailed security group and IP information")]
     [switch]$Detailed
 )
-
-<#
-.SYNOPSIS
-Describes AWS Elastic Network Interfaces (ENIs).
-
-.DESCRIPTION
-This script retrieves detailed information about Elastic Network Interfaces in your AWS account. ENIs are virtual network interfaces that can be attached to EC2 instances.
-
-.PARAMETER NetworkInterfaceIds
-Comma-separated list of specific network interface IDs to describe. Must be in the format 'eni-xxxxxxxxx'.
-
-.PARAMETER VpcId
-Filter network interfaces by VPC ID.
-
-.PARAMETER SubnetId
-Filter network interfaces by subnet ID.
-
-.PARAMETER InstanceId
-Filter network interfaces by the instance they are attached to.
-
-.PARAMETER Status
-Filter by interface status: available, associated, attaching, in-use, or detaching.
-
-.PARAMETER InterfaceType
-Filter by interface type: interface, natGateway, efa, or trunk.
-
-.PARAMETER Profile
-The AWS CLI profile to use for the operation.
-
-.PARAMETER Region
-The AWS region to query for network interfaces.
-
-.PARAMETER OutputFormat
-The output format for the results (json, table, text, yaml).
-
-.PARAMETER Detailed
-Show detailed information including security groups, IP addresses, and associations.
-
-.EXAMPLE
-.\aws-cli-describe-network-interfaces.ps1
-
-Lists all network interfaces in the default region.
-
-.EXAMPLE
-.\aws-cli-describe-network-interfaces.ps1 -VpcId vpc-12345678
-
-Lists all network interfaces in a specific VPC.
-
-.EXAMPLE
-.\aws-cli-describe-network-interfaces.ps1 -InstanceId i-12345678
-
-Lists network interfaces attached to a specific instance.
-
-.EXAMPLE
-.\aws-cli-describe-network-interfaces.ps1 -Status available
-
-Lists available (unattached) network interfaces.
-
-.EXAMPLE
-.\aws-cli-describe-network-interfaces.ps1 -NetworkInterfaceIds eni-12345678,eni-87654321 -Detailed
-
-Shows detailed information for specific network interfaces.
-
-.NOTES
-Author: Your Name
-Date: 2024
-Requires: AWS CLI v2.16+ and appropriate IAM permissions
-#>
 
 $ErrorActionPreference = 'Stop'
 
@@ -323,6 +327,8 @@ try {
     Write-Host "- Network appliances: Dedicated ENIs for specific network functions" -ForegroundColor White
 
 } catch {
-    Write-Error "An error occurred: $($_.Exception.Message)"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
+} finally {
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

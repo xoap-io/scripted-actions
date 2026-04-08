@@ -1,71 +1,44 @@
-# AWS PowerShell - AppStream 2.0 Scripts
+# AppStream 2.0 Scripts
 
-This directory contains PowerShell scripts for managing Amazon AppStream 2.0 using the AWS Tools for PowerShell.
+PowerShell scripts for deploying and managing Amazon AppStream 2.0
+environments using AWS Tools for PowerShell.
 
 ## Prerequisites
 
-- AWS Tools for PowerShell installed (`Install-Module -Name AWS.Tools.AppStream`)
-- PowerShell 5.1 or later (PowerShell 7+ recommended)
-- AWS credentials configured (`Set-AWSCredential` or AWS credential file)
-- Appropriate IAM permissions for AppStream 2.0 operations
+- AWS Tools for PowerShell:
+  - `Install-Module -Name AWS.Tools.AppStream`
+  - `Install-Module -Name AWS.Tools.EC2`
+  - `Install-Module -Name AWS.Tools.IdentityManagement`
+- Appropriate AWS credentials configured
 
 ## Available Scripts
 
-Scripts in this directory manage AppStream 2.0 fleets, stacks, and streaming instances.
-
-### Key Operations
-
-- Fleet management (create, start, stop, delete)
-- Stack management
-- Image builder operations
-- User access management
-- Application catalog management
+| Script | Description |
+| --- | --- |
+| `appstream-quickstart.ps1` | Deploys a complete AppStream 2.0 environment including VPC, subnets, NAT gateway, IAM roles, and an image builder |
 
 ## Usage Examples
 
-### Typical Workflow
+### AppStream Quickstart
 
 ```powershell
-# Set AWS credentials
-Set-AWSCredential -ProfileName myprofile
-
-# Run scripts as needed
-.\appstream-operation.ps1 -Parameter Value
+.\appstream-quickstart.ps1 `
+    -CreateAS2Role true `
+    -Region us-east-1 `
+    -VpcCidr 10.0.0.0/16 `
+    -PublicSubnetCidr 10.0.1.0/24 `
+    -PrivateSubnet1Cidr 10.0.2.0/24 `
+    -PrivateSubnet2Cidr 10.0.3.0/24
 ```
 
-## AppStream 2.0 Best Practices
+## Notes
 
-- **Cost Management**:
-
-  - Stop fleets when not in use
-  - Use fleet auto-scaling
-  - Choose appropriate instance types
-
-- **Security**:
-
-  - Use VPC endpoints for private connectivity
-  - Implement application entitlements
-  - Enable user data backup
-
-- **Performance**:
-  - Deploy fleets in regions close to users
-  - Use SSD-backed instance types for better performance
-  - Monitor streaming quality metrics
-
-## Error Handling
-
-Scripts include:
-
-- Parameter validation
-- AWS service availability checks
-- Resource state verification
-- Comprehensive error messages
-
-## Related Documentation
-
-- [Amazon AppStream 2.0 Documentation](https://docs.aws.amazon.com/appstream2/)
-- [AWS Tools for PowerShell - AppStream](https://docs.aws.amazon.com/powershell/latest/reference/items/AppStream2_cmdlets.html)
-
-## Support
-
-For issues or questions, please refer to the main repository documentation.
+- The quickstart script creates all required networking resources
+  (VPC, internet gateway, NAT gateway, route tables) from scratch.
+- Set `-CreateAS2Role true` on first run to create the
+  `AmazonAppStreamServiceAccess` service-linked IAM role. If the role
+  already exists, set it to `false` to skip creation.
+- Supported regions: `us-east-1`, `us-west-2`, `eu-west-1`,
+  `ap-southeast-1`, `ap-northeast-2`.
+- The image builder is launched into the first private subnet using
+  the latest AWS-managed Windows Server 2022 general-purpose image.

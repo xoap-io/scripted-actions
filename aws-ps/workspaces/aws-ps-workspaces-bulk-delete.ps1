@@ -1,20 +1,79 @@
+<#
+.SYNOPSIS
+    Bulk delete AWS WorkSpaces by CSV, ID list, or filter criteria.
+
+.DESCRIPTION
+    This script terminates multiple AWS WorkSpaces in bulk using the Remove-WKSWorkspace and Get-WKSWorkspace cmdlets from AWS.Tools.WorkSpaces.
+    Input can be provided as a CSV file, an array of WorkSpace IDs, or filter criteria (DirectoryId, UserNamePattern, State).
+
+.PARAMETER CsvFilePath
+    Path to a CSV file containing WorkSpace IDs to delete (column: WorkspaceId).
+
+.PARAMETER WorkspaceIds
+    Array of WorkSpace IDs to delete.
+
+.PARAMETER DirectoryId
+    Directory ID to filter WorkSpaces for deletion.
+
+.PARAMETER UserNamePattern
+    Wildcard pattern to filter WorkSpaces by user name.
+
+.PARAMETER State
+    Filter WorkSpaces by state before deletion.
+
+.PARAMETER Force
+    Switch to skip confirmation prompts.
+
+.PARAMETER WhatIf
+    Switch to preview which WorkSpaces would be deleted without actually deleting them.
+
+.EXAMPLE
+    .\aws-ps-workspaces-bulk-delete.ps1 -CsvFilePath ./workspaces-to-delete.csv
+
+.EXAMPLE
+    .\aws-ps-workspaces-bulk-delete.ps1 -WorkspaceIds ws-abc12345,ws-def67890 -Force
+
+.NOTES
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: AWS.Tools.WorkSpaces
+
+.LINK
+    https://docs.aws.amazon.com/powershell/latest/reference/
+
+.COMPONENT
+    AWS PowerShell WorkSpaces
+#>
+
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory, ParameterSetName='CsvFile')]
+    [Parameter(Mandatory = $true, ParameterSetName = 'CsvFile', HelpMessage = "Path to the CSV file containing WorkSpace IDs to delete (column: WorkspaceId).")]
     [ValidateScript({Test-Path $_ -PathType Leaf})]
     [string]$CsvFilePath,
-    [Parameter(Mandatory, ParameterSetName='Array')]
+
+    [Parameter(Mandatory = $true, ParameterSetName = 'Array', HelpMessage = "Array of WorkSpace IDs to delete.")]
     [string[]]$WorkspaceIds,
-    [Parameter(Mandatory, ParameterSetName='Filter')]
+
+    [Parameter(Mandatory = $true, ParameterSetName = 'Filter', HelpMessage = "Directory ID to filter WorkSpaces for deletion.")]
     [string]$DirectoryId,
-    [Parameter(ParameterSetName='Filter')]
+
+    [Parameter(ParameterSetName = 'Filter', HelpMessage = "Wildcard pattern to filter WorkSpaces by user name.")]
     [string]$UserNamePattern,
-    [Parameter(ParameterSetName='Filter')]
+
+    [Parameter(ParameterSetName = 'Filter', HelpMessage = "Filter WorkSpaces by state before deletion.")]
     [ValidateSet('PENDING','AVAILABLE','IMPAIRED','UNHEALTHY','REBOOTING','STARTING','REBUILDING','RESTORING','MAINTENANCE','ADMIN_MAINTENANCE','TERMINATING','TERMINATED','SUSPENDED','UPDATING','STOPPING','STOPPED','ERROR')]
     [string]$State,
-    [Parameter()]
+
+    [Parameter(HelpMessage = "Switch to skip confirmation prompts.")]
     [switch]$Force,
-    [Parameter()]
+
+    [Parameter(HelpMessage = "Switch to preview which WorkSpaces would be deleted without actually deleting them.")]
     [switch]$WhatIf
 )
 
@@ -136,7 +195,11 @@ try {
     $results | ForEach-Object { [PSCustomObject]$_ } | Format-Table -AutoSize
 
     return $results
-} catch {
-    Write-Error "Bulk WorkSpace deletion failed: $_"
+}
+catch {
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
+}
+finally {
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

@@ -62,75 +62,86 @@
     .\az-ps-deploy-azure-local-host.ps1 -ResourceGroup "rg-test" -VmName "vm-test" -Location "West US 2" -AdminUser "admin" -DryRun
 
 .NOTES
-    Requires Azure PowerShell module (Az) to be installed and authenticated.
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: Az PowerShell module (Install-Module Az), Az.StackHCI
+
     VM sizes that support nested virtualization: Standard_D2s_v3, Standard_D4s_v3, Standard_D8s_v3,
     Standard_D16s_v3, Standard_D32s_v3, Standard_E2s_v3, Standard_E4s_v3, Standard_E8s_v3,
     Standard_E16s_v3, Standard_E32s_v3, Standard_F2s_v2, Standard_F4s_v2, Standard_F8s_v2,
     Standard_F16s_v2, Standard_F32s_v2
 
-    Author: Azure Infrastructure Team
+.LINK
+    https://learn.microsoft.com/en-us/azure/azure-local/
 
-    Last Updated: September 2025
+.COMPONENT
+    Azure PowerShell Stack HCI
 #>
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "Name of the Azure resource group to create or use.")]
     [ValidatePattern('^[a-zA-Z0-9\-_\.]{1,90}$')]
     [string]$ResourceGroup,
 
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "Name of the virtual machine to create.")]
     [ValidatePattern('^[a-zA-Z0-9\-_]{1,15}$')]
     [string]$VmName,
 
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "Azure region where resources will be created.")]
     [ValidateSet('East US', 'East US 2', 'West US', 'West US 2', 'West US 3', 'Central US', 'North Central US', 'South Central US', 'West Central US', 'Canada Central', 'Canada East', 'Brazil South', 'North Europe', 'West Europe', 'UK South', 'UK West', 'France Central', 'Germany West Central', 'Switzerland North', 'Norway East', 'Sweden Central', 'Australia East', 'Australia Southeast', 'East Asia', 'Southeast Asia', 'Japan East', 'Japan West', 'Korea Central', 'Korea South', 'Central India', 'South India', 'West India', 'UAE North', 'South Africa North')]
     [string]$Location,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Azure VM size that supports nested virtualization.")]
     [ValidateSet('Standard_D2s_v3', 'Standard_D4s_v3', 'Standard_D8s_v3', 'Standard_D16s_v3', 'Standard_D32s_v3', 'Standard_E2s_v3', 'Standard_E4s_v3', 'Standard_E8s_v3', 'Standard_E16s_v3', 'Standard_E32s_v3', 'Standard_F2s_v2', 'Standard_F4s_v2', 'Standard_F8s_v2', 'Standard_F16s_v2', 'Standard_F32s_v2', 'Standard_D8s_v5', 'Standard_D16s_v5', 'Standard_D32s_v5')]
     [string]$VmSize = 'Standard_D4s_v3',
 
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "Administrator username for the VM.")]
     [ValidatePattern('^[a-zA-Z0-9\-_]{1,20}$')]
     [string]$AdminUser,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Administrator password for the VM as SecureString.")]
     [SecureString]$AdminPassword,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Windows Server SKU to use for the VM.")]
     [ValidateSet('2019-datacenter', '2019-datacenter-core', '2022-datacenter', '2022-datacenter-core', '2022-datacenter-azure-edition', '2022-datacenter-azure-edition-core')]
     [string]$WindowsSku = '2022-datacenter-azure-edition',
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Address prefix for the virtual network in CIDR notation.")]
     [ValidatePattern('^(\d{1,3}\.){3}\d{1,3}\/\d{1,2}$')]
     [string]$VNetAddressPrefix = '10.10.0.0/16',
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Address prefix for the subnet in CIDR notation.")]
     [ValidatePattern('^(\d{1,3}\.){3}\d{1,3}\/\d{1,2}$')]
     [string]$SubnetAddressPrefix = '10.10.1.0/24',
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Name of the virtual network to create. Defaults to 'vnet-{VmName}'.")]
     [ValidatePattern('^[a-zA-Z0-9\-_]{2,64}$')]
     [string]$VNetName = "vnet-$VmName",
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Name of the subnet to create within the VNet. Defaults to 'subnet-default'.")]
     [ValidatePattern('^[a-zA-Z0-9\-_]{2,80}$')]
     [string]$SubnetName = "subnet-default",
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Name of the network security group to create. Defaults to 'nsg-{VmName}-rdp'.")]
     [ValidatePattern('^[a-zA-Z0-9\-_\.]{1,80}$')]
     [string]$NSGName = "nsg-$VmName-rdp",
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Name of the public IP address to create. Defaults to 'pip-{VmName}'.")]
     [ValidatePattern('^[a-zA-Z0-9\-_\.]{1,80}$')]
     [string]$PublicIPName = "pip-$VmName",
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Name of the network interface to create. Defaults to 'nic-{VmName}'.")]
     [ValidatePattern('^[a-zA-Z0-9\-_]{1,80}$')]
     [string]$NICName = "nic-$VmName",
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "If specified, performs a dry run without creating actual resources.")]
     [switch]$DryRun
 )
 

@@ -50,45 +50,57 @@
     .\vsphere-cli-power-vm-operations.ps1 -VCenterServer "vcenter.domain.com" -ClusterName "Test-Cluster" -Operation "Suspend" -Force
 
 .NOTES
-    Author: XOAP.io
-    Requires: VMware PowerCLI 13.x or later, vSphere 7.0 or later
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
 
+    Author: XOAP.IO
+    Requires: VMware PowerCLI (Install-Module -Name VMware.PowerCLI)
+
+.LINK
+    https://developer.vmware.com/docs/powercli/
+
+.COMPONENT
+    VMware vSphere PowerCLI
 #>
 
 [CmdletBinding()]
 param (
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The vCenter Server FQDN or IP address to connect to.")]
     [ValidateNotNullOrEmpty()]
     [string]$VCenterServer,
 
-    [Parameter(Mandatory = $false, ParameterSetName = "SingleVM")]
+    [Parameter(Mandatory = $false, ParameterSetName = "SingleVM", HelpMessage = "The name of the virtual machine(s). Supports wildcards.")]
     [ValidateNotNullOrEmpty()]
     [string]$VMName,
 
-    [Parameter(Mandatory = $false, ParameterSetName = "MultipleVMs")]
+    [Parameter(Mandatory = $false, ParameterSetName = "MultipleVMs", HelpMessage = "An array of specific VM names for batch operations.")]
     [ValidateNotNullOrEmpty()]
     [string[]]$VMNames,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Target VMs in a specific folder.")]
     [string]$FolderName,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Target VMs in a specific cluster.")]
     [string]$ClusterName,
 
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The power operation to perform (Start, Stop, Restart, Suspend, or Reset).")]
     [ValidateSet("Start", "Stop", "Restart", "Suspend", "Reset")]
     [string]$Operation,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Force the operation without confirmation prompts.")]
     [switch]$Force,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Wait for the operation to complete before continuing.")]
     [switch]$WaitForCompletion,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Use guest OS shutdown instead of hard power off (for Stop operation).")]
     [switch]$GracefulShutdown,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Timeout in minutes for operation completion (default: 10).")]
     [ValidateRange(1, 60)]
     [int]$TimeoutMinutes = 10
 )
@@ -479,10 +491,11 @@ try {
     Write-Host "`n=== Operation Completed ===" -ForegroundColor Green
 }
 catch {
-    Write-Error "Script execution failed: $($_.Exception.Message)"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
 }
 finally {
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
     # Disconnect from vCenter if connected
     if ($global:DefaultVIServers) {
         Write-Host "`nDisconnecting from vCenter..." -ForegroundColor Yellow

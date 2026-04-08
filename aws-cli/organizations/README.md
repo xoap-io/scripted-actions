@@ -1,36 +1,32 @@
-# AWS CLI - Organizations Scripts
+# Organizations Scripts
 
-This directory contains PowerShell scripts for managing AWS Organizations using the AWS CLI.
+PowerShell scripts for managing AWS Organizations using the AWS CLI.
+Covers account lifecycle, organizational unit (OU) management, and
+service control policy (SCP) operations. Scripts must be run from
+the organization's management account.
 
 ## Prerequisites
 
-- AWS CLI v2.16+ installed and configured
-- PowerShell 5.1 or later (PowerShell 7+ recommended)
-- AWS credentials with Organizations management permissions
-- Must be run from the organization's management account
+- AWS CLI v2
+- Appropriate AWS credentials configured
+- Must be executed from the organization's management account
 
 ## Available Scripts
 
-### Account Management
-
-- **aws-cli-create-account.ps1** - Creates new AWS accounts in the organization
-- **aws-cli-list-accounts.ps1** - Lists all accounts in the organization
-- **aws-cli-describe-account.ps1** - Retrieves detailed account information
-- **aws-cli-remove-account.ps1** - Removes accounts from the organization
-- **aws-cli-invite-account.ps1** - Invites existing accounts to join organization
-- **aws-cli-move-account.ps1** - Moves accounts between organizational units
-
-### Organizational Unit (OU) Management
-
-- **aws-cli-create-organizational-unit.ps1** - Creates organizational units
-- **aws-cli-list-organizational-units.ps1** - Lists OUs in the organization
-- **aws-cli-delete-organizational-unit.ps1** - Deletes organizational units
-
-### Policy Management
-
-- **aws-cli-list-policies.ps1** - Lists service control policies
-- **aws-cli-attach-policy.ps1** - Attaches policies to OUs or accounts
-- **aws-cli-detach-policy.ps1** - Detaches policies from OUs or accounts
+| Script | Description |
+| --- | --- |
+| `aws-cli-attach-policy.ps1` | Attaches a service control policy to an account, OU, or root |
+| `aws-cli-create-account.ps1` | Creates a new AWS account within the organization |
+| `aws-cli-create-organizational-unit.ps1` | Creates an organizational unit under a parent root or OU |
+| `aws-cli-delete-organizational-unit.ps1` | Deletes an empty organizational unit |
+| `aws-cli-describe-account.ps1` | Retrieves details about a specific AWS account |
+| `aws-cli-detach-policy.ps1` | Detaches a service control policy from an account, OU, or root |
+| `aws-cli-invite-account.ps1` | Invites an existing AWS account to join the organization |
+| `aws-cli-list-accounts.ps1` | Lists all accounts in the organization |
+| `aws-cli-list-organizational-units.ps1` | Lists organizational units under a specified parent |
+| `aws-cli-list-policies.ps1` | Lists service control policies in the organization |
+| `aws-cli-move-account.ps1` | Moves an account from one parent (root or OU) to another |
+| `aws-cli-remove-account.ps1` | Removes an account from the organization |
 
 ## Usage Examples
 
@@ -38,9 +34,33 @@ This directory contains PowerShell scripts for managing AWS Organizations using 
 
 ```powershell
 .\aws-cli-create-account.ps1 `
-    -AccountName "Development" `
-    -Email "dev-account@example.com" `
-    -RoleName "OrganizationAccountAccessRole"
+    -AwsAccountEmail "dev-team@example.com" `
+    -AwsAccountName "Development"
+```
+
+### Create an Organizational Unit
+
+```powershell
+.\aws-cli-create-organizational-unit.ps1 `
+    -Name "Production" `
+    -ParentId "r-ab12"
+```
+
+### Move an Account to a Different OU
+
+```powershell
+.\aws-cli-move-account.ps1 `
+    -AccountId "123456789012" `
+    -SourceParentId "r-ab12" `
+    -DestinationParentId "ou-ab12-12345678"
+```
+
+### Attach a Policy
+
+```powershell
+.\aws-cli-attach-policy.ps1 `
+    -PolicyId "p-12345678" `
+    -TargetId "ou-ab12-12345678"
 ```
 
 ### List All Accounts
@@ -49,62 +69,10 @@ This directory contains PowerShell scripts for managing AWS Organizations using 
 .\aws-cli-list-accounts.ps1
 ```
 
-### Create an Organizational Unit
+## Notes
 
-```powershell
-.\aws-cli-create-organizational-unit.ps1 `
-    -Name "Production" `
-    -ParentId r-abcd
-```
-
-### Move Account to OU
-
-```powershell
-.\aws-cli-move-account.ps1 `
-    -AccountId 123456789012 `
-    -SourceParentId ou-old-12345 `
-    -DestinationParentId ou-new-67890
-```
-
-### Attach Policy
-
-```powershell
-.\aws-cli-attach-policy.ps1 `
-    -PolicyId p-12345678 `
-    -TargetId ou-abcd-12345678
-```
-
-## Organization Best Practices
-
-- Use separate accounts for different environments (dev, staging, prod)
-- Organize accounts into OUs by function or business unit
-- Implement service control policies (SCPs) for governance
-- Enable CloudTrail in the management account
-- Use consolidated billing features
-- Regular audit of account and policy configurations
-
-## Security Considerations
-
-- Management account should have minimal direct usage
-- Use cross-account roles for access to member accounts
-- Implement least-privilege SCPs
-- Enable MFA for the management account root user
-- Monitor organization activity with AWS CloudTrail
-
-## Error Handling
-
-All scripts include:
-
-- Account ID and email validation
-- Parent/OU existence checks
-- Policy attachment validation
-- Comprehensive error messages
-
-## Related Documentation
-
-- [AWS Organizations Documentation](https://docs.aws.amazon.com/organizations/)
-- [AWS CLI Command Reference - Organizations](https://awscli.amazonaws.com/v2/documentation/api/latest/reference/organizations/index.html)
-
-## Support
-
-For issues or questions, please refer to the main repository documentation.
+- Account creation is asynchronous; the script initiates the request
+  and returns a status. Check progress with `describe-account`.
+- Organizational units must be empty before they can be deleted.
+- Service control policies apply to all accounts and OUs below the
+  target in the hierarchy.

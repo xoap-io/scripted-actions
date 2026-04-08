@@ -37,39 +37,47 @@
     .\aws-cli-delete-route.ps1 -RouteTableId "rtb-12345678" -DestinationIpv6CidrBlock "2001:db8::/32"
 
 .NOTES
-    Author: XOAP
-    Date: 2025-08-06
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
 
-    Requires: AWS CLI v2.16+
+    Author: XOAP.IO
+    Requires: AWS CLI v2 (https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
 
 .LINK
-    https://github.com/xoap-io/scripted-actions
+    https://docs.aws.amazon.com/cli/latest/reference/ec2/delete-route.html
+
+.COMPONENT
+    AWS CLI Network
 #>
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The ID of the route table from which to delete the route")]
     [ValidatePattern('^rtb-[a-zA-Z0-9]{8,}$')]
     [string]$RouteTableId,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The IPv4 CIDR block of the route to delete")]
     [ValidatePattern('^(?:\d{1,3}\.){3}\d{1,3}/\d{1,2}$')]
     [string]$DestinationCidrBlock,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The IPv6 CIDR block of the route to delete")]
     [ValidatePattern('^([a-fA-F0-9:]+:+)+[a-fA-F0-9]+/\d{1,3}$')]
     [string]$DestinationIpv6CidrBlock,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Perform a dry run to validate parameters without deleting the route")]
     [switch]$DryRun,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Skip confirmation prompts for potentially disruptive deletions")]
     [switch]$Force,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "AWS region")]
     [string]$Region,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "AWS CLI profile to use")]
     [string]$Profile
 )
 
@@ -264,8 +272,8 @@ try {
     }
 
 } catch {
-    Write-Error "Failed to delete route: $($_.Exception.Message)"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
 } finally {
-    Write-Output "Script execution completed."
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

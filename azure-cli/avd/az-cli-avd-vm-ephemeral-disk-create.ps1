@@ -70,9 +70,15 @@
     Creates an Ubuntu VM with ephemeral OS disk on cache disk with specific caching and tags.
 
 .NOTES
-    Author: Azure CLI Script
-    Version: 2.0
-    Requires: Azure CLI
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: Azure CLI (https://docs.microsoft.com/en-us/cli/azure/install-azure-cli)
 
 .LINK
     https://learn.microsoft.com/en-us/cli/azure/vm
@@ -81,7 +87,7 @@
     https://learn.microsoft.com/en-us/azure/virtual-machines/ephemeral-os-disks
 
 .COMPONENT
-    Azure CLI
+    Azure CLI Virtual Desktop
 #>
 
 [CmdletBinding()]
@@ -233,10 +239,9 @@ try {
     }
 }
 catch {
-    Write-Host "✗ Failed to create Azure Virtual Machine" -ForegroundColor Red
-    Write-Host "Error: $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
 }
 finally {
-    Write-Host "Script execution completed." -ForegroundColor Gray
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

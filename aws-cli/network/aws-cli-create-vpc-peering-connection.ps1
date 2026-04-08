@@ -1,15 +1,83 @@
+<#
+.SYNOPSIS
+    Creates an AWS VPC peering connection.
+
+.DESCRIPTION
+    This script creates a VPC peering connection between two VPCs. It supports same-region, cross-region,
+    and cross-account peering connections. Uses aws ec2 create-vpc-peering-connection to perform the operation.
+
+.PARAMETER VpcId
+    The ID of the VPC that will request the peering connection.
+
+.PARAMETER PeerVpcId
+    The ID of the VPC to peer with.
+
+.PARAMETER PeerOwnerId
+    The AWS account ID that owns the peer VPC (required for cross-account peering).
+
+.PARAMETER PeerRegion
+    The AWS region where the peer VPC is located (required for cross-region peering).
+
+.PARAMETER Profile
+    The AWS CLI profile to use for the operation.
+
+.PARAMETER Region
+    The AWS region where the requester VPC is located.
+
+.PARAMETER Tags
+    Tags to apply to the VPC peering connection in the format Key1=Value1,Key2=Value2.
+
+.PARAMETER Wait
+    Wait for the peering connection to reach the pending-acceptance or available state.
+
+.EXAMPLE
+    .\aws-cli-create-vpc-peering-connection.ps1 -VpcId vpc-12345678 -PeerVpcId vpc-87654321
+
+.EXAMPLE
+    .\aws-cli-create-vpc-peering-connection.ps1 -VpcId vpc-12345678 -PeerVpcId vpc-87654321 -PeerOwnerId 123456789012
+
+.EXAMPLE
+    .\aws-cli-create-vpc-peering-connection.ps1 -VpcId vpc-12345678 -PeerVpcId vpc-87654321 -PeerRegion us-west-2
+
+.EXAMPLE
+    .\aws-cli-create-vpc-peering-connection.ps1 -VpcId vpc-12345678 -PeerVpcId vpc-87654321 -Tags "Environment=Production,Project=WebApp" -Wait
+
+.NOTES
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: AWS CLI v2 (https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
+
+    IMPORTANT NOTES:
+    - Cross-account peering requires the peer account to accept the connection
+    - Cross-region peering may have additional charges
+    - Ensure CIDR blocks don't overlap between VPCs
+    - Route tables need to be updated separately after connection is accepted
+
+.LINK
+    https://docs.aws.amazon.com/cli/latest/reference/ec2/create-vpc-peering-connection.html
+
+.COMPONENT
+    AWS CLI Network
+#>
+
 [CmdletBinding()]
 param (
     [Parameter(Mandatory = $true, HelpMessage = "The ID of the VPC that will request the peering connection")]
-    [ValidatePattern('^vpc-[a-zA-Z0-9]+$', ErrorMessage = "VpcId must be a valid VPC ID (format: vpc-xxxxxxxxx)")]
+    [ValidatePattern('^vpc-[a-zA-Z0-9]+$')]
     [string]$VpcId,
 
     [Parameter(Mandatory = $true, HelpMessage = "The ID of the VPC to peer with")]
-    [ValidatePattern('^vpc-[a-zA-Z0-9]+$', ErrorMessage = "PeerVpcId must be a valid VPC ID (format: vpc-xxxxxxxxx)")]
+    [ValidatePattern('^vpc-[a-zA-Z0-9]+$')]
     [string]$PeerVpcId,
 
     [Parameter(Mandatory = $false, HelpMessage = "AWS account ID of the peer VPC (for cross-account peering)")]
-    [ValidatePattern('^\d{12}$', ErrorMessage = "PeerOwnerId must be a 12-digit AWS account ID")]
+    [ValidatePattern('^\d{12}$')]
     [string]$PeerOwnerId,
 
     [Parameter(Mandatory = $false, HelpMessage = "AWS region of the peer VPC (for cross-region peering)")]
@@ -27,69 +95,6 @@ param (
     [Parameter(Mandatory = $false, HelpMessage = "Wait for the peering connection to be available")]
     [switch]$Wait
 )
-
-<#
-.SYNOPSIS
-Creates an AWS VPC peering connection.
-
-.DESCRIPTION
-This script creates a VPC peering connection between two VPCs. It supports same-region, cross-region, and cross-account peering connections.
-
-.PARAMETER VpcId
-The ID of the VPC that will request the peering connection.
-
-.PARAMETER PeerVpcId
-The ID of the VPC to peer with.
-
-.PARAMETER PeerOwnerId
-The AWS account ID that owns the peer VPC (required for cross-account peering).
-
-.PARAMETER PeerRegion
-The AWS region where the peer VPC is located (required for cross-region peering).
-
-.PARAMETER Profile
-The AWS CLI profile to use for the operation.
-
-.PARAMETER Region
-The AWS region where the requester VPC is located.
-
-.PARAMETER Tags
-Tags to apply to the VPC peering connection in the format Key1=Value1,Key2=Value2.
-
-.PARAMETER Wait
-Wait for the peering connection to reach the pending-acceptance or available state.
-
-.EXAMPLE
-.\aws-cli-create-vpc-peering-connection.ps1 -VpcId vpc-12345678 -PeerVpcId vpc-87654321
-
-Creates a VPC peering connection between two VPCs in the same account and region.
-
-.EXAMPLE
-.\aws-cli-create-vpc-peering-connection.ps1 -VpcId vpc-12345678 -PeerVpcId vpc-87654321 -PeerOwnerId 123456789012
-
-Creates a cross-account VPC peering connection.
-
-.EXAMPLE
-.\aws-cli-create-vpc-peering-connection.ps1 -VpcId vpc-12345678 -PeerVpcId vpc-87654321 -PeerRegion us-west-2
-
-Creates a cross-region VPC peering connection.
-
-.EXAMPLE
-.\aws-cli-create-vpc-peering-connection.ps1 -VpcId vpc-12345678 -PeerVpcId vpc-87654321 -Tags "Environment=Production,Project=WebApp" -Wait
-
-Creates a VPC peering connection with tags and waits for it to be ready.
-
-.NOTES
-Author: Your Name
-Date: 2024
-Requires: AWS CLI v2.16+ and appropriate IAM permissions
-
-IMPORTANT NOTES:
-- Cross-account peering requires the peer account to accept the connection
-- Cross-region peering may have additional charges
-- Ensure CIDR blocks don't overlap between VPCs
-- Route tables need to be updated separately after connection is accepted
-#>
 
 $ErrorActionPreference = 'Stop'
 
@@ -162,7 +167,7 @@ try {
     $peeringInfo = $result | ConvertFrom-Json
     $peeringConnection = $peeringInfo.VpcPeeringConnection
 
-    Write-Host "`nVPC peering connection created successfully!" -ForegroundColor Green
+    Write-Host "`n✅ VPC peering connection created successfully!" -ForegroundColor Green
     Write-Host "  Peering Connection ID: $($peeringConnection.VpcPeeringConnectionId)" -ForegroundColor White
     Write-Host "  Status: $($peeringConnection.Status.Code)" -ForegroundColor White
     Write-Host "  Message: $($peeringConnection.Status.Message)" -ForegroundColor White
@@ -231,6 +236,8 @@ try {
     Write-Output $peeringConnection.VpcPeeringConnectionId
 
 } catch {
-    Write-Error "An error occurred: $($_.Exception.Message)"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
+} finally {
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

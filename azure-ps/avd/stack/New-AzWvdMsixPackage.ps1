@@ -4,6 +4,7 @@
 
 .DESCRIPTION
     This script creates a new MSIX package in an Azure Virtual Desktop environment with the specified parameters.
+    Uses the New-AzWvdMsixPackage cmdlet from the Az.DesktopVirtualization module.
 
 .PARAMETER HostPoolName
     The name of the host pool.
@@ -29,12 +30,6 @@
 .PARAMETER LastUpdated
     The last updated date and time of the MSIX package.
 
-.PARAMETER PackageApplication
-    The applications in the MSIX package.
-
-.PARAMETER PackageDependency
-    The dependencies of the MSIX package.
-
 .PARAMETER PackageFamilyName
     The family name of the MSIX package.
 
@@ -44,57 +39,65 @@
 .PARAMETER PackageRelativePath
     The relative path of the MSIX package.
 
+.PARAMETER PackageAlias
+    The alias of the MSIX package.
+
 .PARAMETER Version
     The version of the MSIX package.
 
 .EXAMPLE
-    PS C:\> .\New-AzWvdMsixPackage.ps1 -HostPoolName "MyHostPool" -ResourceGroup "MyResourceGroup" -FullName "MyMsixPackage"
+    PS C:\> .\New-AzWvdMsixPackage.ps1 -HostPoolName "MyHostPool" -ResourceGroup "MyResourceGroup" -FullName "MyMsixPackage" -DisplayName "My App"
 
-.LINK
-    https://learn.microsoft.com/en-us/powershell/module/az.DesktopVirtualization
+.NOTES
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: Az PowerShell module (Install-Module Az), Az.DesktopVirtualization
 
 .LINK
     https://learn.microsoft.com/en-us/powershell/module/az.desktopvirtualization/new-azwvdmsixpackage?view=azps-12.3.0
 
-.LINK
-    https://github.com/xoap-io/scripted-actions
-
 .COMPONENT
-    Azure PowerShell
+    Azure PowerShell Virtual Desktop
 
 #>
 
 [CmdletBinding()]
 param (
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$true, HelpMessage = "The name of the host pool.")]
     [ValidateNotNullOrEmpty()]
     [string]$HostPoolName,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$true, HelpMessage = "The name of the resource group.")]
     [ValidateNotNullOrEmpty()]
     [string]$ResourceGroup,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$true, HelpMessage = "The full name of the MSIX package.")]
     [ValidateNotNullOrEmpty()]
     [string]$FullName,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$true, HelpMessage = "The display name of the MSIX package.")]
     [ValidateNotNullOrEmpty()]
     [string]$DisplayName,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The image path of the MSIX package.")]
     [ValidateNotNullOrEmpty()]
     [string]$ImagePath,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "Indicates if the MSIX package is active.")]
     [ValidateNotNullOrEmpty()]
     [switch]$IsActive,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "Indicates if the MSIX package uses regular registration.")]
     [ValidateNotNullOrEmpty()]
     [switch]$IsRegularRegistration,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The last updated date and time of the MSIX package.")]
     [ValidateNotNullOrEmpty()]
     [datetime]$LastUpdated,
 
@@ -108,94 +111,92 @@ param (
     #[ValidateNotNullOrEmpty()]
     #[IMsixPackageDependencies[]]$PackageDependency,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The MSIX package family name.")]
     [ValidateNotNullOrEmpty()]
     [string]$PackageFamilyName,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The name of the MSIX package.")]
     [ValidateNotNullOrEmpty()]
     [string]$PackageName,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The relative path of the MSIX package.")]
     [ValidateNotNullOrEmpty()]
     [string]$PackageRelativePath,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The alias of the MSIX package.")]
     [ValidateNotNullOrEmpty()]
     [string]$PackageAlias,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The version string of the MSIX package.")]
     [ValidateNotNullOrEmpty()]
     [string]$Version
 )
 
+# Set Error Action to Stop
+$ErrorActionPreference = "Stop"
+
 # Splatting parameters for better readability
 $parameters = @{
     HostPoolName      = $HostPoolName
-    ResourceGroup = $ResourceGroup
+    ResourceGroupName = $ResourceGroup
     FullName          = $FullName
 }
 
 if ($DisplayName) {
-    $parameters['DisplayName'], $DisplayName
+    $parameters['DisplayName'] = $DisplayName
 }
 
 if ($ImagePath) {
-    $parameters['ImagePath'], $ImagePath
+    $parameters['ImagePath'] = $ImagePath
 }
 
 if ($IsActive) {
-    $parameters['IsActive'], $IsActive
+    $parameters['IsActive'] = $IsActive
 }
 
 if ($IsRegularRegistration) {
-    $parameters['IsRegularRegistration'], $IsRegularRegistration
+    $parameters['IsRegularRegistration'] = $IsRegularRegistration
 }
 
 if ($LastUpdated) {
-    $parameters['LastUpdated'], $LastUpdated
+    $parameters['LastUpdated'] = $LastUpdated
 }
 
 #if ($PackageApplication) {
-#    $parameters['PackageApplication'], $PackageApplication
+#    $parameters['PackageApplication'] = $PackageApplication
 #}
 
 #if ($PackageDependency) {
-#    $parameters['PackageDependency'], $PackageDependency
+#    $parameters['PackageDependency'] = $PackageDependency
 #}
 
 if ($PackageFamilyName) {
-    $parameters['PackageFamilyName'], $PackageFamilyName
+    $parameters['PackageFamilyName'] = $PackageFamilyName
 }
 
 if ($PackageName) {
-    $parameters['PackageName'], $PackageName
+    $parameters['PackageName'] = $PackageName
 }
 
 if ($PackageRelativePath) {
-    $parameters['PackageRelativePath'], $PackageRelativePath
+    $parameters['PackageRelativePath'] = $PackageRelativePath
 }
 
 if ($Version) {
-    $parameters['Version'], $Version
+    $parameters['Version'] = $Version
 }
-
-# Set Error Action to Stop
-$ErrorActionPreference = "Stop"
 
 try {
     # Create the MSIX package and capture the result
     $result = New-AzWvdMsixPackage @parameters
 
     # Output the result
-    Write-Output "MSIX package created successfully:"
+    Write-Host "✅ MSIX package created successfully:" -ForegroundColor Green
     Write-Output $result
 
-} catch [System.Exception] {
-
-    Write-Error "Failed to create the MSIX package: $($_.Exception.Message)"
-
+} catch {
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
+    exit 1
 } finally {
-    # Cleanup code if needed
-    Write-Output "Script execution completed."
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

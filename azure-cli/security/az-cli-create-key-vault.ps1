@@ -67,24 +67,21 @@
     .\az-cli-create-key-vault.ps1 -Name "kv-restricted" -ResourceGroup "rg-security" -Location "northeurope" -PublicNetworkAccess "Disabled" -DefaultAction "Deny" -AllowedIpRanges "203.0.113.0/24,198.51.100.0/24"
 
 .NOTES
-    Author: XOAP.IO
-    Date: 2025-08-05
-.0
-    Requires: Azure CLI version 2.0 or later
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
 
-    Key Vault Security Best Practices:
-    - Use Premium SKU for HSM-backed keys
-    - Enable soft delete and purge protection
-    - Implement network restrictions
-    - Use RBAC for granular access control
-    - Enable logging and monitoring
-    - Rotate keys and secrets regularly
+    Author: XOAP.IO
+    Requires: Azure CLI (https://docs.microsoft.com/en-us/cli/azure/install-azure-cli)
 
 .LINK
     https://docs.microsoft.com/en-us/cli/azure/keyvault
 
 .COMPONENT
-    Azure CLI Key Vault Security
+    Azure CLI Security
 #>
 
 [CmdletBinding()]
@@ -580,7 +577,7 @@ try {
     }
 }
 catch {
-    Write-Error "❌ Failed to create Key Vault: $($_.Exception.Message)"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
 }
 finally {

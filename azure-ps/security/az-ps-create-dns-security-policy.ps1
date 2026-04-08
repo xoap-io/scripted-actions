@@ -32,9 +32,15 @@
   Array of virtual networks to link. Each entry: @{ name = "vnet-name"; resource_group_name = "vnet-rg" }
 
 .NOTES
-  Author: XOAP
-  Version: 2.0
-  Requires: Az.Accounts, Az.Resources, Az.Monitor, Az.Network, Az.DnsResolver
+  This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+  The use of the scripts does not require XOAP, but it will make your life easier.
+  You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+  The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+  liability for the function, the use and the consequences of the use of this freely available script.
+  PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+  Author: XOAP.IO
+  Requires: Az PowerShell module (Install-Module Az), Az.DnsResolver, Az.Monitor
 
 .EXAMPLE
   .\az-ps-create-dns-security-policy.ps1 `
@@ -62,6 +68,11 @@
         @{ name = "vnet-prod-1"; resource_group_name = "rg-network-prod" }
       )
 
+.LINK
+  https://learn.microsoft.com/en-us/azure/dns/dns-resolver-overview
+
+.COMPONENT
+  Azure PowerShell DNS Security
 #>
 
 [CmdletBinding(SupportsShouldProcess)]

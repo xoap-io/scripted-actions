@@ -3,70 +3,69 @@
     Stop all running Google Cloud Compute Engine instances using Google Cloud PowerShell.
 
 .DESCRIPTION
-    This script identifies and stops all running Google Cloud Compute Engine instances in a specified project and zone.
-    Provides detailed output for each stopped instance including machine type, zone, labels, and cost information.
-    Supports dry-run mode for validation and selective stopping by instance name or label patterns.
+    This script identifies and stops all running Google Cloud Compute Engine instances
+    in a specified project and zone (or region / all zones). Supports filtering by
+    specific instance names, a wildcard name pattern, or a label key=value pair.
+    Writes a detailed log file recording every instance that was stopped.
+    Includes post-operation verification to confirm no instances remain in RUNNING state.
 
 .PARAMETER ProjectId
-    Google Cloud Project ID. If not specified, the default project from gcloud configuration will be used.
+    Google Cloud Project ID. If not specified, the default project from gcloud
+    configuration will be used.
 
 .PARAMETER Zone
-    Google Cloud zone to target (e.g., 'us-central1-a'). If not specified, all zones in the project will be checked.
+    Google Cloud zone to target (e.g., us-central1-a). If not specified, all zones
+    in the project will be checked.
 
 .PARAMETER Region
-    Google Cloud region to target (e.g., 'us-central1'). If specified, all zones in this region will be checked.
+    Google Cloud region to target (e.g., us-central1). All zones in this region
+    will be checked.
 
 .PARAMETER InstanceNames
-    Specific instance names to stop (comma-separated). If not specified, all running instances will be targeted.
+    Specific instance names to stop, separated by commas. If not specified, all
+    running instances in the target scope will be stopped.
 
 .PARAMETER NamePattern
-    Pattern to match instance names (supports wildcards). Only instances matching this pattern will be stopped.
+    Wildcard pattern to match instance names. Only matching instances are stopped.
 
 .PARAMETER LabelFilter
-    Filter instances by label in format 'key=value'. Supports wildcards in values.
+    Filter instances by label in the format 'key=value'. Supports wildcards in values.
 
 .PARAMETER WhatIf
-    Show what instances would be stopped without actually stopping them (dry-run mode).
+    Show what instances would be stopped without actually stopping them.
 
 .PARAMETER Force
-    Skip confirmation prompts and stop instances immediately.
+    Skip confirmation prompts.
 
 .PARAMETER AllZones
-    Check and stop instances across all zones in the project or region.
-
-.PARAMETER IncludeTerminated
-    Also show terminated instances in the output for comparison.
+    Check and stop instances across all zones in the project (or region).
 
 .EXAMPLE
-    .\gcp-ps-stop-running-instances.ps1
-
-    Stops all running instances in the default project and zone with confirmation prompts.
-
-.EXAMPLE
-    .\gcp-ps-stop-running-instances.ps1 -ProjectId "my-project" -Zone "us-central1-a" -WhatIf
-
-    Shows what instances would be stopped in the specified project and zone.
+    .\gce-ps-stop-vms.ps1 -ProjectId my-project -Zone us-central1-a -WhatIf
+    Shows which instances would be stopped in the specified zone.
 
 .EXAMPLE
-    .\gcp-ps-stop-running-instances.ps1 -NamePattern "web-*" -Force -AllZones
-
-    Stops all running instances with names starting with 'web-' across all zones without confirmation.
-
-.EXAMPLE
-    .\gcp-ps-stop-running-instances.ps1 -LabelFilter "environment=dev" -Region "us-central1"
-
-    Stops all running instances labeled with environment=dev in the us-central1 region.
+    .\gce-ps-stop-vms.ps1 -ProjectId my-project -AllZones -Force
+    Stops all running instances in the project across all zones without confirmation.
 
 .EXAMPLE
-    .\gcp-ps-stop-running-instances.ps1 -InstanceNames "instance-1,instance-2" -Zone "us-west1-a"
+    .\gce-ps-stop-vms.ps1 -ProjectId my-project -Region us-central1 -NamePattern "web-*" -Force
+    Stops all running instances whose names start with 'web-' in us-central1.
 
-    Stops specific instances by their names in the specified zone.
+.EXAMPLE
+    .\gce-ps-stop-vms.ps1 -ProjectId my-project -AllZones -LabelFilter "environment=dev" -Force
+    Stops all running instances labeled environment=dev across all zones.
 
 .NOTES
-    Author: Google Cloud PowerShell Script
-.0
-    Requires: Google Cloud PowerShell module (Install-Module -Name GoogleCloud)
-    Requires: Google Cloud authentication (gcloud auth login or service account)
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: GoogleCloud PowerShell module (Install-Module -Name GoogleCloud)
 
 .LINK
     https://cloud.google.com/powershell/docs/reference/GoogleCloudBeta/1.0.1.0/Stop-GceInstance
@@ -78,17 +77,14 @@
 [CmdletBinding()]
 param(
     [Parameter(HelpMessage = "Google Cloud Project ID")]
-    [ValidateNotNullOrEmpty()]
     [ValidatePattern('^[a-z][a-z0-9-]{4,28}[a-z0-9]$')]
     [string]$ProjectId,
 
-    [Parameter(HelpMessage = "Google Cloud zone (e.g., 'us-central1-a')")]
-    [ValidateNotNullOrEmpty()]
+    [Parameter(HelpMessage = "Google Cloud zone (e.g., us-central1-a)")]
     [ValidatePattern('^[a-z]+-[a-z]+\d+-[a-z]$')]
     [string]$Zone,
 
-    [Parameter(HelpMessage = "Google Cloud region (e.g., 'us-central1')")]
-    [ValidateNotNullOrEmpty()]
+    [Parameter(HelpMessage = "Google Cloud region (e.g., us-central1)")]
     [ValidatePattern('^[a-z]+-[a-z]+\d+$')]
     [string]$Region,
 
@@ -96,309 +92,254 @@ param(
     [ValidateNotNullOrEmpty()]
     [string]$InstanceNames,
 
-    [Parameter(HelpMessage = "Pattern to match instance names (supports wildcards)")]
+    [Parameter(HelpMessage = "Wildcard pattern to match instance names")]
     [ValidateNotNullOrEmpty()]
-    [string]$NamePattern = "*",
+    [string]$NamePattern,
 
     [Parameter(HelpMessage = "Filter instances by label in format 'key=value'")]
-    [ValidateNotNullOrEmpty()]
     [ValidatePattern('^[a-z][a-z0-9_-]*=[^=]*$')]
     [string]$LabelFilter,
 
     [Parameter(HelpMessage = "Show what instances would be stopped without actually stopping them")]
     [switch]$WhatIf,
 
-    [Parameter(HelpMessage = "Skip confirmation prompts and stop instances immediately")]
+    [Parameter(HelpMessage = "Skip confirmation prompts")]
     [switch]$Force,
 
     [Parameter(HelpMessage = "Check and stop instances across all zones")]
-    [switch]$AllZones,
-
-    [Parameter(HelpMessage = "Also show terminated instances in the output for comparison")]
-    [switch]$IncludeTerminated
+    [switch]$AllZones
 )
 
-# Set strict error handling
 $ErrorActionPreference = 'Stop'
 
+$LogFile = "gce-ps-stop-vms-$(Get-Date -Format 'yyyyMMdd-HHmmss').log"
+
+function Write-Log {
+    param(
+        [string]$Message,
+        [string]$Color = 'White'
+    )
+    $timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
+    Add-Content -Path $LogFile -Value "[$timestamp] $Message"
+    Write-Host $Message -ForegroundColor $Color
+}
+
 try {
-    Write-Host "🔍 Checking Google Cloud PowerShell module..." -ForegroundColor Cyan
+    Write-Log '===== GCE PowerShell Stop Instances Script Started =====' -Color Blue
+    Write-Log "Log file: $LogFile" -Color Cyan
 
-    # Check if GoogleCloud module is available
+    # Verify module
     if (-not (Get-Module -ListAvailable -Name GoogleCloud)) {
-        throw "Google Cloud PowerShell module is not installed. Please run: Install-Module -Name GoogleCloud"
+        throw "GoogleCloud module not found. Install with: Install-Module -Name GoogleCloud"
     }
+    Import-Module GoogleCloud -ErrorAction Stop
 
-    # Import the module
-    Import-Module GoogleCloud -Force
-
-    Write-Host "✅ Google Cloud PowerShell module available" -ForegroundColor Green
-
-    # Check authentication and get default project
-    try {
-        if (-not $ProjectId) {
-            # Try to get default project from gcloud config
-            $gcloudProject = & gcloud config get-value project 2>$null
-            if ($gcloudProject -and $gcloudProject -ne "(unset)") {
-                $ProjectId = $gcloudProject
-                Write-Host "Using default project from gcloud config: $ProjectId" -ForegroundColor Yellow
-            } else {
-                throw "No project specified and no default project found in gcloud config"
-            }
+    # Resolve project
+    if (-not $ProjectId) {
+        $gcloudProject = & gcloud config get-value project 2>$null
+        if ($gcloudProject -and $gcloudProject -ne '(unset)') {
+            $ProjectId = $gcloudProject
+            Write-Log "Project: $ProjectId (from gcloud config)" -Color Cyan
         }
-
-        # Test authentication by listing projects
-        $null = Get-GcpProject -ProjectId $ProjectId
-        Write-Host "✅ Authentication successful for project: $ProjectId" -ForegroundColor Green
-    } catch {
-        throw "Google Cloud authentication failed or project not accessible. Please run 'gcloud auth login' or configure service account authentication"
+        else {
+            throw "No project specified and no default project found in gcloud config."
+        }
+    }
+    else {
+        Write-Log "Project: $ProjectId" -Color Cyan
     }
 
-    # Determine zones to check
+    # Verify authentication
+    $null = Get-GcpProject -ProjectId $ProjectId
+    Write-Log "Authentication confirmed for project: $ProjectId" -Color Cyan
+
+    # Resolve zones to check
     $zonesToCheck = @()
 
-    if ($AllZones) {
-        Write-Host "🌍 Getting all zones in project..." -ForegroundColor Cyan
+    if ($AllZones -or $Region) {
+        Write-Log '🔍 Discovering zones...' -Color Cyan
+        $allGceZones = (Get-GceZone -Project $ProjectId).Name
         if ($Region) {
-            $zonesToCheck = (Get-GceZone | Where-Object { $_.Name -like "$Region-*" }).Name
-            Write-Host "   Found $($zonesToCheck.Count) zones in region $Region" -ForegroundColor Gray
-        } else {
-            $zonesToCheck = (Get-GceZone).Name
-            Write-Host "   Found $($zonesToCheck.Count) zones in project" -ForegroundColor Gray
+            $zonesToCheck = @($allGceZones | Where-Object { $_ -like "$Region-*" })
+            Write-Log "Found $($zonesToCheck.Count) zone(s) in region $Region" -Color Cyan
         }
-    } elseif ($Region) {
-        $zonesToCheck = (Get-GceZone | Where-Object { $_.Name -like "$Region-*" }).Name
-        Write-Host "📍 Checking all zones in region: $Region" -ForegroundColor Yellow
-    } elseif ($Zone) {
+        else {
+            $zonesToCheck = @($allGceZones)
+            Write-Log "Found $($zonesToCheck.Count) zone(s) in project" -Color Cyan
+        }
+    }
+    elseif ($Zone) {
         $zonesToCheck = @($Zone)
-    } else {
-        # Get default zone from gcloud config
+    }
+    else {
         $defaultZone = & gcloud config get-value compute/zone 2>$null
-        if ($defaultZone -and $defaultZone -ne "(unset)") {
+        if ($defaultZone -and $defaultZone -ne '(unset)') {
             $zonesToCheck = @($defaultZone)
-            Write-Host "Using default zone from gcloud config: $defaultZone" -ForegroundColor Yellow
-        } else {
-            throw "No zone specified and no default zone found in gcloud config. Please specify -Zone, -Region, or -AllZones"
+            Write-Log "Zone: $defaultZone (from gcloud config)" -Color Cyan
+        }
+        else {
+            throw "No zone specified and no default zone in gcloud config. Use -Zone, -Region, or -AllZones."
         }
     }
 
-    Write-Host "📍 Target zones: $($zonesToCheck -join ', ')" -ForegroundColor Yellow
+    Write-Log "Target zones: $($zonesToCheck -join ', ')" -Color Cyan
 
-    # Parse instance names if provided
+    # Parse filters
     $targetInstanceNames = @()
     if ($InstanceNames) {
-        $targetInstanceNames = $InstanceNames -split ',' | ForEach-Object { $_.Trim() }
-        Write-Host "🎯 Targeting specific instances: $($targetInstanceNames -join ', ')" -ForegroundColor Yellow
+        $targetInstanceNames = @($InstanceNames -split ',' | ForEach-Object { $_.Trim() })
+        Write-Log "Instance filter: $($targetInstanceNames -join ', ')" -Color Cyan
     }
 
-    # Parse label filter if provided
-    $labelKey = $null
+    $labelKey   = $null
     $labelValue = $null
     if ($LabelFilter) {
-        $labelParts = $LabelFilter -split '=', 2
-        $labelKey = $labelParts[0]
-        $labelValue = $labelParts[1]
-        Write-Host "🏷️ Label filter: $labelKey = $labelValue" -ForegroundColor Yellow
+        $parts      = $LabelFilter -split '=', 2
+        $labelKey   = $parts[0]
+        $labelValue = $parts[1]
+        Write-Log "Label filter: $labelKey = $labelValue" -Color Cyan
     }
 
-    # Collect all instances across zones
-    $allInstances = @()
+    # Discover instances
+    Write-Log '🔍 Discovering running instances...' -Color Cyan
     $runningInstances = @()
 
-    foreach ($currentZone in $zonesToCheck) {
-        Write-Host "🔍 Discovering instances in zone: $currentZone" -ForegroundColor Cyan
-
+    foreach ($z in $zonesToCheck) {
         try {
-            $zoneInstances = Get-GceInstance -Zone $currentZone -Project $ProjectId
+            $zoneInstances = @(Get-GceInstance -Zone $z -Project $ProjectId |
+                Where-Object { $_.Status -eq 'RUNNING' })
 
-            foreach ($instance in $zoneInstances) {
-                # Add zone info to instance object
-                $instance | Add-Member -NotePropertyName ZoneName -NotePropertyValue $currentZone -Force
-
-                $allInstances += $instance
-
-                # Filter running instances
-                if ($instance.Status -eq "RUNNING") {
-                    $runningInstances += $instance
-                }
+            foreach ($inst in $zoneInstances) {
+                $inst | Add-Member -NotePropertyName ZoneName -NotePropertyValue $z -Force
+                $runningInstances += $inst
             }
 
-            Write-Host "   Found $($zoneInstances.Count) instances" -ForegroundColor Gray
-        } catch {
-            Write-Host "   ⚠️ Unable to access zone $currentZone : $($_.Exception.Message)" -ForegroundColor Yellow
+            Write-Log "   $z — $($zoneInstances.Count) running" -Color Gray
         }
-    }
-
-    if ($allInstances.Count -eq 0) {
-        Write-Host "ℹ️ No instances found in the specified zones" -ForegroundColor Yellow
-        return
+        catch {
+            Write-Log "   ⚠️ Cannot access zone $($z): $($_.Exception.Message)" -Color Yellow
+        }
     }
 
     # Apply filters
-    $filteredRunningInstances = $runningInstances
+    $filtered = $runningInstances
 
-    # Filter by specific instance names
     if ($targetInstanceNames.Count -gt 0) {
-        $filteredRunningInstances = $filteredRunningInstances | Where-Object { $_.Name -in $targetInstanceNames }
+        $filtered = @($filtered | Where-Object { $_.Name -in $targetInstanceNames })
     }
 
-    # Filter by name pattern
-    if ($NamePattern -ne "*") {
-        $filteredRunningInstances = $filteredRunningInstances | Where-Object { $_.Name -like $NamePattern }
+    if ($NamePattern) {
+        $filtered = @($filtered | Where-Object { $_.Name -like $NamePattern })
     }
 
-    # Filter by label
     if ($LabelFilter) {
-        $filteredRunningInstances = $filteredRunningInstances | Where-Object {
-            $instance = $_
-            if ($instance.Labels -and $instance.Labels.ContainsKey($labelKey)) {
-                return $instance.Labels[$labelKey] -like $labelValue
-            }
-            return $false
-        }
+        $filtered = @($filtered | Where-Object {
+            $inst = $_
+            $inst.Labels -and $inst.Labels.ContainsKey($labelKey) -and
+                ($inst.Labels[$labelKey] -like $labelValue)
+        })
     }
 
-    # Categorize instances by status
-    $stoppedInstances = $allInstances | Where-Object { $_.Status -eq "TERMINATED" }
-    $otherStatusInstances = $allInstances | Where-Object { $_.Status -notin @("RUNNING", "TERMINATED") }
-
-    Write-Host "`n📊 Instance Status Summary:" -ForegroundColor White
-    Write-Host "   🟢 Running Instances: $($filteredRunningInstances.Count) (of $($runningInstances.Count) total)" -ForegroundColor Green
-    Write-Host "   🔴 Terminated Instances: $($stoppedInstances.Count)" -ForegroundColor Red
-    Write-Host "   🟡 Other Status: $($otherStatusInstances.Count)" -ForegroundColor Yellow
-    Write-Host "   📦 Total Instances: $($allInstances.Count)" -ForegroundColor Cyan
-
-    # Show terminated instances if requested
-    if ($IncludeTerminated -and $stoppedInstances.Count -gt 0) {
-        Write-Host "`n🔴 Terminated Instances (for reference):" -ForegroundColor Red
-        $stoppedInstances | ForEach-Object {
-            Write-Host "   • $($_.Name) [$($_.MachineType.Split('/')[-1])] in $($_.ZoneName)" -ForegroundColor Gray
-        }
+    if ($filtered.Count -eq 0) {
+        Write-Log 'ℹ️ No running instances found matching the specified criteria.' -Color Yellow
+        exit 0
     }
 
-    # Show other status instances
-    if ($otherStatusInstances.Count -gt 0) {
-        Write-Host "`n🟡 Instances in other status:" -ForegroundColor Yellow
-        $otherStatusInstances | ForEach-Object {
-            Write-Host "   • $($_.Name) [$($_.Status)] in $($_.ZoneName)" -ForegroundColor Gray
-        }
+    Write-Log "Found $($filtered.Count) running instance(s) to stop:" -Color Cyan
+    foreach ($inst in $filtered) {
+        $machineType = $inst.MachineType.Split('/')[-1]
+        Write-Log "   • $($inst.Name) | $machineType | $($inst.ZoneName)" -Color White
     }
 
-    if ($filteredRunningInstances.Count -eq 0) {
-        Write-Host "`nℹ️ No running instances found matching the specified criteria" -ForegroundColor Yellow
-        return
-    }
-
-    # Display running instances that will be stopped
-    Write-Host "`n🟢 Running instances that will be stopped:" -ForegroundColor Green
-    $filteredRunningInstances | ForEach-Object {
-        Write-Host "   • $($_.Name)" -ForegroundColor White
-        Write-Host "     └─ Machine Type: $($_.MachineType.Split('/')[-1])" -ForegroundColor Gray
-        Write-Host "     └─ Zone: $($_.ZoneName)" -ForegroundColor Gray
-        Write-Host "     └─ Created: $($_.CreationTimestamp)" -ForegroundColor Gray
-        Write-Host "     └─ Status: $($_.Status)" -ForegroundColor Gray
-        if ($_.Labels -and $_.Labels.Count -gt 0) {
-            $labelString = ($_.Labels.GetEnumerator() | ForEach-Object { "$($_.Key)=$($_.Value)" }) -join ", "
-            Write-Host "     └─ Labels: $labelString" -ForegroundColor Gray
-        }
-    }
-
-    # WhatIf mode - exit without stopping
     if ($WhatIf) {
-        Write-Host "`n🔍 WhatIf mode: No instances will be stopped" -ForegroundColor Cyan
-        Write-Host "   $($filteredRunningInstances.Count) instances would be stopped" -ForegroundColor Yellow
-        return
+        Write-Log '🔍 WhatIf mode — no changes will be made.' -Color Cyan
+        Write-Log "Would stop $($filtered.Count) instance(s)." -Color Yellow
+        exit 0
     }
 
-    # Confirmation prompt (unless Force is specified)
     if (-not $Force) {
-        Write-Host "`n⚠️ Warning: This will stop $($filteredRunningInstances.Count) running instance(s)" -ForegroundColor Yellow
-        $confirmation = Read-Host "Continue? (y/N)"
-        if ($confirmation -notmatch '^[Yy]$') {
-            Write-Host "❌ Operation cancelled by user" -ForegroundColor Red
-            return
+        Write-Log '' -Color White
+        Write-Log "⚠️  About to stop $($filtered.Count) instance(s) in project '$ProjectId'" -Color Yellow
+        $confirmation = Read-Host "Type 'YES' to confirm"
+        if ($confirmation -ne 'YES') {
+            Write-Log 'Operation cancelled by user.' -Color Yellow
+            exit 0
         }
     }
 
-    # Stop instances by zone
-    Write-Host "`n🛑 Stopping instances..." -ForegroundColor Cyan
-    $stopResults = @()
+    # Stop instances
+    Write-Log '🛑 Stopping instances...' -Color Cyan
+    $succeeded = 0
+    $failed    = 0
 
-    $instancesByZone = $filteredRunningInstances | Group-Object -Property ZoneName
+    foreach ($inst in $filtered) {
+        try {
+            Stop-GceInstance -Project $ProjectId -Zone $inst.ZoneName -Name $inst.Name | Out-Null
+            Write-Log "   ✅ Stopped: $($inst.Name) (zone: $($inst.ZoneName))" -Color Green
+            $succeeded++
+        }
+        catch {
+            Write-Log "   ❌ Failed to stop $($inst.Name): $($_.Exception.Message)" -Color Red
+            $failed++
+        }
+    }
 
-    foreach ($zoneGroup in $instancesByZone) {
-        $currentZone = $zoneGroup.Name
-        $zoneInstances = $zoneGroup.Group
+    # Post-operation verification
+    Write-Log '' -Color White
+    Write-Log '🔎 Verifying no running instances remain...' -Color Cyan
+    $stillRunning = @()
 
-        Write-Host "   Stopping $($zoneInstances.Count) instances in zone: $currentZone" -ForegroundColor Yellow
+    foreach ($z in $zonesToCheck) {
+        try {
+            $remaining = @(Get-GceInstance -Zone $z -Project $ProjectId |
+                Where-Object { $_.Status -eq 'RUNNING' })
 
-        foreach ($instance in $zoneInstances) {
-            try {
-                Write-Host "     Stopping: $($instance.Name)" -ForegroundColor Gray
-                $stopResult = Stop-GceInstance -Project $ProjectId -Zone $currentZone -Name $instance.Name
-
-                $stopResults += @{
-                    InstanceName = $instance.Name
-                    MachineType = $instance.MachineType.Split('/')[-1]
-                    Zone = $currentZone
-                    Success = $true
-                    Status = "Stopping"
-                    Error = $null
-                }
-
-                Write-Host "     ✅ Successfully initiated stop for: $($instance.Name)" -ForegroundColor Green
-            } catch {
-                $stopResults += @{
-                    InstanceName = $instance.Name
-                    MachineType = $instance.MachineType.Split('/')[-1]
-                    Zone = $currentZone
-                    Success = $false
-                    Status = "Failed"
-                    Error = $_.Exception.Message
-                }
-
-                Write-Host "     ❌ Failed to stop: $($instance.Name) - $($_.Exception.Message)" -ForegroundColor Red
+            if ($LabelFilter) {
+                $remaining = @($remaining | Where-Object {
+                    $inst = $_
+                    $inst.Labels -and $inst.Labels.ContainsKey($labelKey) -and
+                        ($inst.Labels[$labelKey] -like $labelValue)
+                })
             }
+            if ($NamePattern) {
+                $remaining = @($remaining | Where-Object { $_.Name -like $NamePattern })
+            }
+            if ($targetInstanceNames.Count -gt 0) {
+                $remaining = @($remaining | Where-Object { $_.Name -in $targetInstanceNames })
+            }
+
+            $stillRunning += $remaining
+        }
+        catch {
+            Write-Log "   ⚠️ Cannot verify zone $($z): $($_.Exception.Message)" -Color Yellow
         }
     }
 
-    # Display detailed results
-    Write-Host "`n📋 Detailed Stop Results:" -ForegroundColor White
-    $successfulStops = $stopResults | Where-Object { $_.Success }
-    $failedStops = $stopResults | Where-Object { -not $_.Success }
-
-    if ($successfulStops.Count -gt 0) {
-        Write-Host "`n✅ Successfully Initiated Stop for Instances ($($successfulStops.Count)):" -ForegroundColor Green
-        foreach ($result in $successfulStops) {
-            Write-Host "   • $($result.InstanceName)" -ForegroundColor White
-            Write-Host "     └─ Machine Type: $($result.MachineType)" -ForegroundColor Gray
-            Write-Host "     └─ Zone: $($result.Zone)" -ForegroundColor Gray
-            Write-Host "     └─ Status: Running → Stopping → Terminated" -ForegroundColor Gray
+    if ($stillRunning.Count -gt 0) {
+        Write-Log "   ⚠️  $($stillRunning.Count) instance(s) still RUNNING after stop operation:" -Color Yellow
+        foreach ($inst in $stillRunning) {
+            Write-Log "      • $($inst.Name) | $($inst.ZoneName)" -Color Yellow
         }
     }
-
-    if ($failedStops.Count -gt 0) {
-        Write-Host "`n❌ Failed to Stop Instances ($($failedStops.Count)):" -ForegroundColor Red
-        foreach ($result in $failedStops) {
-            Write-Host "   • $($result.InstanceName)" -ForegroundColor White
-            Write-Host "     └─ Zone: $($result.Zone)" -ForegroundColor Gray
-            Write-Host "     └─ Error: $($result.Error)" -ForegroundColor Red
-        }
+    else {
+        Write-Log '   ✅ Verified: no targeted instances remain in RUNNING state.' -Color Green
     }
 
-    # Summary
-    Write-Host "`n📊 Operation Summary:" -ForegroundColor White
-    Write-Host "   🎯 Target Instances: $($filteredRunningInstances.Count)" -ForegroundColor Cyan
-    Write-Host "   ✅ Successfully Stopped: $($successfulStops.Count)" -ForegroundColor Green
-    Write-Host "   ❌ Failed: $($failedStops.Count)" -ForegroundColor Red
-
-    if ($successfulStops.Count -gt 0) {
-        Write-Host "`n💰 Cost Savings: Instances are now stopping/terminated and will not incur compute charges" -ForegroundColor Green
-        Write-Host "   (Persistent disks may still incur storage charges)" -ForegroundColor Gray
-    }
-
-} catch {
-    Write-Host "`n❌ Script execution failed: $($_.Exception.Message)" -ForegroundColor Red
-    Write-Host "Stack trace: $($_.ScriptStackTrace)" -ForegroundColor Gray
+    Write-Log '' -Color White
+    Write-Log '===== Operation Complete =====' -Color White
+    Write-Log "Project:          $ProjectId" -Color White
+    Write-Log "Zones checked:    $($zonesToCheck.Count)" -Color White
+    Write-Log "Instances found:  $($filtered.Count)" -Color White
+    Write-Log "Successfully stopped: $succeeded" -Color White
+    Write-Log "Failed:           $failed" -Color White
+    Write-Log "Log file: $LogFile" -Color Gray
+    Write-Log '=============================' -Color White
+}
+catch {
+    Write-Log "❌ Script failed: $($_.Exception.Message)" -Color Red
     exit 1
+}
+finally {
+    Write-Log '' -Color White
+    Write-Log '🏁 Script execution completed' -Color Green
 }

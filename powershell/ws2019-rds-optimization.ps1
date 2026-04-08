@@ -67,32 +67,47 @@
   Configure user profile settings with roaming profiles and UPD
 
 .NOTES
-  Script Name   : ws2019-rds-optimization.ps1
-  Author        : Generated for RDS Optimization
-  Tested On     : Windows Server 2019 (Build 17763+)
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
 
-  IMPORTANT:
-  - Run as Administrator
-  - Take system backup/snapshot before running
-  - Review all optimizations for your environment
-  - Some optimizations may require reboot
+    Author: XOAP.IO
+    Requires: PowerShell 5.1 or later
+
+    Script Name   : ws2019-rds-optimization.ps1
+    Tested On     : Windows Server 2019 (Build 17763+)
+
+    IMPORTANT:
+    - Run as Administrator
+    - Take system backup/snapshot before running
+    - Review all optimizations for your environment
+    - Some optimizations may require reboot
+
+.LINK
+    https://learn.microsoft.com/en-us/windows-server/remote/remote-desktop-services/rds-roles
+
+.COMPONENT
+    Windows PowerShell Server Management
 #>
 
 [CmdletBinding()]
 param(
-    [string[]]$DisableServices = @(),
-    [string[]]$KeepServices = @(),
-    [switch]$HideLocalDrives,
-    [switch]$DisableServerManager,
-    [switch]$EnableVerboseLogging,
-    [ValidatePattern('^[A-Z]$')][string]$PersistentDriveLetter = '',
-    [string]$EventLogLocation = '',
-    [ValidatePattern('^[a-zA-Z0-9.-]+$')][string]$RDSLicenseServer = '',
-    [ValidateSet('PerUser','PerDevice','NotConfigured')][string]$RDSLicenseMode = 'NotConfigured',
-    [ValidatePattern('^\\\\[a-zA-Z0-9.-]+\\[a-zA-Z0-9\$._-]+$')][string]$UserProfilePath = '',
-    [ValidatePattern('^\\\\[a-zA-Z0-9.-]+\\[a-zA-Z0-9\$._-]+$')][string]$UserProfileDiskPath = '',
-    [ValidateRange(1,1000)][int]$ProfileDiskMaxSizeGB = 30,
-    [switch]$DryRun = $false
+    [Parameter(HelpMessage = "List of additional services to disable beyond the default set.")][string[]]$DisableServices = @(),
+    [Parameter(HelpMessage = "List of services to keep enabled (overrides default disable list).")][string[]]$KeepServices = @(),
+    [Parameter(HelpMessage = "Hide local drives from users in Explorer.")][switch]$HideLocalDrives,
+    [Parameter(HelpMessage = "Disable automatic startup of Server Manager.")][switch]$DisableServerManager,
+    [Parameter(HelpMessage = "Enable detailed logging of all operations.")][switch]$EnableVerboseLogging,
+    [Parameter(HelpMessage = "Drive letter for persistent storage (PVS/MCS scenarios).")][ValidatePattern('^[A-Z]$')][string]$PersistentDriveLetter = '',
+    [Parameter(HelpMessage = "Custom location for event logs (use with PersistentDriveLetter).")][string]$EventLogLocation = '',
+    [Parameter(HelpMessage = "FQDN of the RDS License Server to configure in registry.")][ValidatePattern('^[a-zA-Z0-9.-]+$')][string]$RDSLicenseServer = '',
+    [Parameter(HelpMessage = "RDS licensing mode: 'PerUser', 'PerDevice', or 'NotConfigured'.")][ValidateSet('PerUser','PerDevice','NotConfigured')][string]$RDSLicenseMode = 'NotConfigured',
+    [Parameter(HelpMessage = "UNC path for roaming user profiles (e.g., \\server\profiles\$).")][ValidatePattern('^\\\\[a-zA-Z0-9.-]+\\[a-zA-Z0-9\$._-]+$')][string]$UserProfilePath = '',
+    [Parameter(HelpMessage = "UNC path for User Profile Disks (e.g., \\server\upd\$).")][ValidatePattern('^\\\\[a-zA-Z0-9.-]+\\[a-zA-Z0-9\$._-]+$')][string]$UserProfileDiskPath = '',
+    [Parameter(HelpMessage = "Maximum size in GB for User Profile Disks (1-1000).")][ValidateRange(1,1000)][int]$ProfileDiskMaxSizeGB = 30,
+    [Parameter(HelpMessage = "Preview changes without applying them.")][switch]$DryRun = $false
 )
 
 $ErrorActionPreference = 'Stop'
@@ -1066,31 +1081,40 @@ function Start-Optimization {
 # EXECUTION
 # ===========================
 
-Write-Host "=============================================" -ForegroundColor Green
-Write-Host "Windows Server 2019 RDS Optimization Script" -ForegroundColor Green
-Write-Host "=============================================" -ForegroundColor Green
-Write-Host ""
-
-$validationResults = Start-Optimization
-
-Write-Host ""
-Write-Host "Optimization complete. Log saved to: $LogFile" -ForegroundColor Green
-
-if ($DryRun) {
+try {
+    Write-Host "=============================================" -ForegroundColor Green
+    Write-Host "Windows Server 2019 RDS Optimization Script" -ForegroundColor Green
+    Write-Host "=============================================" -ForegroundColor Green
     Write-Host ""
-    Write-Host "=== DRY-RUN SUMMARY ===" -ForegroundColor Cyan
-    Write-Host "This was a preview run showing current values and proposed changes." -ForegroundColor White
-    Write-Host "Services found: $($validationResults.ServicesFound), missing: $($validationResults.ServicesMissing)" -ForegroundColor White
-    Write-Host "Tasks found: $($validationResults.TasksFound), missing: $($validationResults.TasksMissing)" -ForegroundColor White
-    Write-Host "Features found: $($validationResults.FeaturesFound), missing: $($validationResults.FeaturesMissing)" -ForegroundColor White
+
+    $validationResults = Start-Optimization
+
     Write-Host ""
-    Write-Host "To apply these changes, re-run the script without -DryRun parameter." -ForegroundColor Yellow
-} else {
+    Write-Host "Optimization complete. Log saved to: $LogFile" -ForegroundColor Green
+
+    if ($DryRun) {
+        Write-Host ""
+        Write-Host "=== DRY-RUN SUMMARY ===" -ForegroundColor Cyan
+        Write-Host "This was a preview run showing current values and proposed changes." -ForegroundColor White
+        Write-Host "Services found: $($validationResults.ServicesFound), missing: $($validationResults.ServicesMissing)" -ForegroundColor White
+        Write-Host "Tasks found: $($validationResults.TasksFound), missing: $($validationResults.TasksMissing)" -ForegroundColor White
+        Write-Host "Features found: $($validationResults.FeaturesFound), missing: $($validationResults.FeaturesMissing)" -ForegroundColor White
+        Write-Host ""
+        Write-Host "To apply these changes, re-run the script without -DryRun parameter." -ForegroundColor Yellow
+    } else {
+        Write-Host ""
+        Write-Host "Recommended next steps:" -ForegroundColor Yellow
+        Write-Host "1. Review the log file for any errors or warnings" -ForegroundColor White
+        Write-Host "2. Test the RDS environment thoroughly" -ForegroundColor White
+        Write-Host "3. Consider a reboot to complete all optimizations" -ForegroundColor White
+        Write-Host "4. Monitor system performance and adjust as needed" -ForegroundColor White
+    }
     Write-Host ""
-    Write-Host "Recommended next steps:" -ForegroundColor Yellow
-    Write-Host "1. Review the log file for any errors or warnings" -ForegroundColor White
-    Write-Host "2. Test the RDS environment thoroughly" -ForegroundColor White
-    Write-Host "3. Consider a reboot to complete all optimizations" -ForegroundColor White
-    Write-Host "4. Monitor system performance and adjust as needed" -ForegroundColor White
 }
-Write-Host ""
+catch {
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
+    exit 1
+}
+finally {
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
+}

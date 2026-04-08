@@ -75,78 +75,90 @@
     .\nutanix-cli-host-operations.ps1 -PrismCentral "pc.domain.com" -Operation "Report" -IncludeVMs -IncludeHardware -IncludePerformance -OutputFormat "HTML" -OutputPath "host-report.html"
 
 .NOTES
-    Author: XOAP.io
-    Requires: Nutanix PowerShell SDK, AOS 6.0+
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
 
+    Author: XOAP.IO
+    Requires: PowerShell with REST API capabilities (Nutanix Prism REST API v3)
+
+.LINK
+    https://www.nutanix.dev/reference/prism_central/v3/
+
+.COMPONENT
+    Nutanix REST API PowerShell
 #>
 
 [CmdletBinding()]
 param (
-    [Parameter(Mandatory = $false, ParameterSetName = "PrismCentral")]
+    [Parameter(Mandatory = $false, ParameterSetName = "PrismCentral", HelpMessage = "The Prism Central FQDN or IP address to connect to.")]
     [ValidateNotNullOrEmpty()]
     [string]$PrismCentral,
 
-    [Parameter(Mandatory = $false, ParameterSetName = "PrismElement")]
+    [Parameter(Mandatory = $false, ParameterSetName = "PrismElement", HelpMessage = "The Prism Element FQDN or IP address to connect to.")]
     [ValidateNotNullOrEmpty()]
     [string]$PrismElement,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Name of the cluster to target for host operations.")]
     [string]$ClusterName,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "UUID of a specific cluster to target for host operations.")]
     [ValidatePattern('^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$')]
     [string]$ClusterUUID,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Name of a specific host to manage.")]
     [string]$HostName,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Array of host names for batch operations.")]
     [string[]]$HostNames,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "UUID of a specific host to manage.")]
     [ValidatePattern('^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$')]
     [string]$HostUUID,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "IP address of a specific host to manage.")]
     [ValidatePattern('^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$')]
     [string]$HostIP,
 
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The operation to perform on the host(s). Valid values: Health, Status, Report, Maintenance, Performance, Hardware, VMs, Monitor.")]
     [ValidateSet("Health", "Status", "Report", "Maintenance", "Performance", "Hardware", "VMs", "Monitor")]
     [string]$Operation,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Enable or disable maintenance mode for the host. Valid values: Enable, Disable.")]
     [ValidateSet("Enable", "Disable")]
     [string]$MaintenanceMode,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Force operations without confirmation prompts.")]
     [switch]$Force,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Include VM information in host reports.")]
     [switch]$IncludeVMs,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Include detailed hardware information in host reports.")]
     [switch]$IncludeHardware,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Include performance metrics in host reports.")]
     [switch]$IncludePerformance,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Enable alerting with custom thresholds.")]
     [switch]$AlertThresholds,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "CPU usage threshold percentage for alerts (50-95).")]
     [ValidateRange(50, 95)]
     [int]$CPUThreshold = 80,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Memory usage threshold percentage for alerts (50-95).")]
     [ValidateRange(50, 95)]
     [int]$MemoryThreshold = 85,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Output format for reports. Valid values: Console, CSV, JSON, HTML.")]
     [ValidateSet("Console", "CSV", "JSON", "HTML")]
     [string]$OutputFormat = "Console",
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Path to save the report file.")]
     [string]$OutputPath
 )
 
@@ -873,7 +885,7 @@ try {
     Write-Host "`n=== Host Operations Completed ===" -ForegroundColor Green
 }
 catch {
-    Write-Error "Script execution failed: $($_.Exception.Message)"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
 }
 finally {
@@ -882,4 +894,5 @@ finally {
         Write-Host "`nDisconnecting from Nutanix..." -ForegroundColor Yellow
         Disconnect-NTNXCluster
     }
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

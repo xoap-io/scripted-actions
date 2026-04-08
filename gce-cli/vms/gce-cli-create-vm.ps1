@@ -66,70 +66,74 @@
     -DiskSize 50 -Preemptible -Tags "web-server,https-server" -Labels "env=prod,team=backend"
 
 .NOTES
-    Prerequisites:
-    - Google Cloud CLI (gcloud) must be installed and authenticated
-    - User must have compute.instances.create permission in the target project
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
 
-    Author: XOAP
-    Date: 2025-08-06
-    Version: 2.0
+    Author: XOAP.IO
     Requires: Google Cloud SDK
+
+.COMPONENT
+    Google Cloud CLI Compute Engine
 #>
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The Google Cloud project ID in which the VM will be created.")]
     [ValidateNotNullOrEmpty()]
     [ValidatePattern('^[a-z][a-z0-9\-]{4,28}[a-z0-9]$')]
     [string]$Project,
 
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The zone where the virtual machine will be deployed. Examples: us-central1-a, europe-west1-b.")]
     [ValidateNotNullOrEmpty()]
     [ValidatePattern('^[a-z]+-[a-z0-9]+-[a-z]$')]
     [string]$Zone,
 
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The machine type for the virtual machine. Examples: e2-micro, n1-standard-1, c2-standard-4.")]
     [ValidateNotNullOrEmpty()]
     [string]$MachineType,
 
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The image family to use for the boot disk. Examples: debian-11, ubuntu-2004-lts, windows-2019.")]
     [ValidateNotNullOrEmpty()]
     [string]$ImageFamily,
 
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The project where the image is stored. Examples: debian-cloud, ubuntu-os-cloud, windows-cloud.")]
     [ValidateNotNullOrEmpty()]
     [string]$ImageProject,
 
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The name of the virtual machine instance. Must follow GCP naming conventions.")]
     [ValidateNotNullOrEmpty()]
     [ValidatePattern('^[a-z][a-z0-9\-]{0,61}[a-z0-9]$')]
     [string]$InstanceName,
 
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The size of the boot disk in GB. Must be between 10 and 65536 GB.")]
     [ValidateRange(10, 65536)]
     [int]$DiskSize,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The network to attach the VM to. Defaults to 'default'.")]
     [ValidateNotNullOrEmpty()]
     [string]$Network = "default",
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The subnet to use for the VM. If specified, must be a valid subnet name.")]
     [string]$Subnet,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Comma-separated network tags for the VM. Example: 'web-server,https-server'.")]
     [string]$Tags,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Create a preemptible instance that can be stopped by Google Cloud with 30 seconds notice.")]
     [switch]$Preemptible,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Key-value pairs for labeling the instance. Example: 'environment=dev,team=backend'.")]
     [string]$Labels,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Service account email to attach to the instance.")]
     [ValidatePattern('^[a-z0-9\-]+@[a-z0-9\-\.]+\.iam\.gserviceaccount\.com$')]
     [string]$ServiceAccount,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Comma-separated list of access scopes for the service account.")]
     [string]$Scopes
 )
 
@@ -249,9 +253,9 @@ try {
     }
 }
 catch {
-    Write-Error "❌ Failed to create Google Cloud VM instance: $($_.Exception.Message)"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
 }
 finally {
-    Write-Output "Script execution completed."
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

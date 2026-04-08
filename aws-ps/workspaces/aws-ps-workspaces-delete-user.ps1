@@ -1,12 +1,52 @@
+<#
+.SYNOPSIS
+    Delete a user from an AWS WorkSpaces directory.
+
+.DESCRIPTION
+    This script deletes a user from an AWS WorkSpaces directory using the Remove-WKSUser cmdlet from AWS.Tools.WorkSpaces.
+    Checks for active WorkSpaces before deletion unless -Force is specified.
+
+.PARAMETER DirectoryId
+    The ID of the WorkSpaces directory from which to delete the user.
+
+.PARAMETER UserName
+    The user name of the user to delete.
+
+.PARAMETER Force
+    Switch to skip confirmation prompts and active WorkSpace checks.
+
+.EXAMPLE
+    .\aws-ps-workspaces-delete-user.ps1 -DirectoryId d-1234567890 -UserName jdoe -Force
+
+.NOTES
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: AWS.Tools.WorkSpaces
+
+.LINK
+    https://docs.aws.amazon.com/powershell/latest/reference/
+
+.COMPONENT
+    AWS PowerShell WorkSpaces
+#>
+
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory)]
+    [Parameter(Mandatory = $true, HelpMessage = "The ID of the WorkSpaces directory.")]
     [ValidateNotNullOrEmpty()]
     [string]$DirectoryId,
-    [Parameter(Mandatory)]
+
+    [Parameter(Mandatory = $true, HelpMessage = "The user name of the user to delete (alphanumeric, dots, dashes, up to 64 characters).")]
     [ValidatePattern('^[a-zA-Z0-9._@\-]{1,64}$')]
     [string]$UserName,
-    [Parameter()]
+
+    [Parameter(HelpMessage = "Switch to skip confirmation prompts and active WorkSpace checks.")]
     [switch]$Force
 )
 
@@ -42,7 +82,11 @@ try {
     Remove-WKSUser -DirectoryId $DirectoryId -UserName $UserName
 
     Write-Host "User $UserName deleted successfully from directory $DirectoryId" -ForegroundColor Green
-} catch {
-    Write-Error "Failed to delete WorkSpaces user: $_"
+}
+catch {
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
+}
+finally {
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

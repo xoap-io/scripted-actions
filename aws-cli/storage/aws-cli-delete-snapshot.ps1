@@ -31,30 +31,40 @@
     .\aws-cli-delete-snapshot.ps1 -SnapshotId "snap-1234567890abcdef0" -CheckDependencies -Region "us-west-2"
 
 .NOTES
-    Requires AWS CLI v2.16+ and appropriate IAM permissions for EC2 operations.
-    Snapshot deletion is irreversible.
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: AWS CLI v2 (https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
 
 .LINK
-    https://github.com/xoap-io/scripted-actions
+    https://docs.aws.amazon.com/cli/latest/reference/ec2/delete-snapshot.html
+
+.COMPONENT
+    AWS CLI Storage
 #>
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory)]
+    [Parameter(Mandatory = $true, HelpMessage = "The ID of the EBS snapshot to delete")]
     [ValidatePattern('^snap-[a-f0-9]{8,17}$')]
     [string]$SnapshotId,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "The AWS region to use")]
     [ValidatePattern('^[a-z]{2}-[a-z]+-\d{1}$')]
     [string]$Region,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "The AWS CLI profile to use")]
     [string]$AwsProfile,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "Skip confirmation prompts")]
     [switch]$Force,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "Check if snapshot is being used to create volumes or AMIs")]
     [switch]$CheckDependencies
 )
 
@@ -199,6 +209,8 @@ try {
     Write-Host "`n✅ Snapshot deletion operation completed!" -ForegroundColor Green
 
 } catch {
-    Write-Error "Failed to delete snapshot: $($_.Exception.Message)"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
+} finally {
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

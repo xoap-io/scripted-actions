@@ -97,6 +97,8 @@ try {
 
     return $tokenData
 } catch {
-    Write-Error "Failed to retrieve Host Pool registration token: $_"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
+} finally {
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

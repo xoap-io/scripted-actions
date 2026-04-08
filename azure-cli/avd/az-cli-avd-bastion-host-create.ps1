@@ -298,6 +298,8 @@ try {
         return $bastionHost
     }
 } catch {
-    Write-Error "Failed to create Azure Bastion Host: $_"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
+} finally {
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

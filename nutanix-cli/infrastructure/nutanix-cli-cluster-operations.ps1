@@ -75,77 +75,89 @@
     .\nutanix-cli-cluster-operations.ps1 -PrismCentral "pc.domain.com" -Operation "Report" -IncludeVMs -IncludeHosts -IncludeStorage -OutputFormat "HTML" -OutputPath "cluster-report.html"
 
 .NOTES
-    Author: XOAP.io
-    Requires: Nutanix PowerShell SDK, AOS 6.0+
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
 
+    Author: XOAP.IO
+    Requires: PowerShell with REST API capabilities (Nutanix Prism REST API v3)
+
+.LINK
+    https://www.nutanix.dev/reference/prism_central/v3/
+
+.COMPONENT
+    Nutanix REST API PowerShell
 #>
 
 [CmdletBinding()]
 param (
-    [Parameter(Mandatory = $false, ParameterSetName = "PrismCentral")]
+    [Parameter(Mandatory = $false, ParameterSetName = "PrismCentral", HelpMessage = "The Prism Central FQDN or IP address to connect to.")]
     [ValidateNotNullOrEmpty()]
     [string]$PrismCentral,
 
-    [Parameter(Mandatory = $false, ParameterSetName = "PrismElement")]
+    [Parameter(Mandatory = $false, ParameterSetName = "PrismElement", HelpMessage = "The Prism Element FQDN or IP address to connect to.")]
     [ValidateNotNullOrEmpty()]
     [string]$PrismElement,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Name of the cluster to manage.")]
     [string]$ClusterName,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Array of cluster names for batch operations.")]
     [string[]]$ClusterNames,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "UUID of a specific cluster to manage.")]
     [ValidatePattern('^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$')]
     [string]$ClusterUUID,
 
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The operation to perform on the cluster(s). Valid values: Health, Status, Monitor, Report, Capacity, Performance, Alerts, Maintenance.")]
     [ValidateSet("Health", "Status", "Monitor", "Report", "Capacity", "Performance", "Alerts", "Maintenance")]
     [string]$Operation,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Include VM information in cluster reports.")]
     [switch]$IncludeVMs,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Include host information in cluster reports.")]
     [switch]$IncludeHosts,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Include storage information in cluster reports.")]
     [switch]$IncludeStorage,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Include networking information in cluster reports.")]
     [switch]$IncludeNetworking,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Enable alerting with custom thresholds.")]
     [switch]$AlertThresholds,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "CPU usage threshold percentage for alerts (50-95).")]
     [ValidateRange(50, 95)]
     [int]$CPUThreshold = 80,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Memory usage threshold percentage for alerts (50-95).")]
     [ValidateRange(50, 95)]
     [int]$MemoryThreshold = 85,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Storage usage threshold percentage for alerts (50-95).")]
     [ValidateRange(50, 95)]
     [int]$StorageThreshold = 90,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Refresh interval in seconds for continuous monitoring (30-3600).")]
     [ValidateRange(30, 3600)]
     [int]$RefreshInterval = 300,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Enable continuous monitoring mode.")]
     [switch]$ContinuousMonitoring,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Output format for reports. Valid values: Console, CSV, JSON, HTML.")]
     [ValidateSet("Console", "CSV", "JSON", "HTML")]
     [string]$OutputFormat = "Console",
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Path to save the report file.")]
     [string]$OutputPath,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Force operations without confirmation prompts.")]
     [switch]$Force
 )
 
@@ -807,7 +819,7 @@ try {
     Write-Host "`n=== Cluster Operations Completed ===" -ForegroundColor Green
 }
 catch {
-    Write-Error "Script execution failed: $($_.Exception.Message)"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
 }
 finally {
@@ -816,4 +828,5 @@ finally {
         Write-Host "`nDisconnecting from Nutanix..." -ForegroundColor Yellow
         Disconnect-NTNXCluster
     }
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

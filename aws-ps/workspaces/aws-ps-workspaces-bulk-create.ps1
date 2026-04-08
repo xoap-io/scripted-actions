@@ -1,11 +1,55 @@
+<#
+.SYNOPSIS
+    Bulk create AWS WorkSpaces from a CSV file or array.
+
+.DESCRIPTION
+    This script creates multiple AWS WorkSpaces in bulk using the New-WKSWorkspace cmdlet from AWS.Tools.WorkSpaces.
+    Input can be provided as a CSV file path or as an array of hashtables. Supports WhatIf mode for previewing operations.
+
+.PARAMETER CsvFilePath
+    Path to a CSV file containing WorkSpace definitions. Required columns: DirectoryId, UserName, BundleId.
+    Optional columns: ComputeTypeName, RootVolumeSizeGib, UserVolumeSizeGib, RunningMode.
+
+.PARAMETER WorkspaceData
+    Array of hashtables defining WorkSpaces to create. Each hashtable must contain: DirectoryId, UserName, BundleId.
+
+.PARAMETER WhatIf
+    Switch to preview which WorkSpaces would be created without actually creating them.
+
+.EXAMPLE
+    .\aws-ps-workspaces-bulk-create.ps1 -CsvFilePath ./workspaces.csv
+
+.EXAMPLE
+    .\aws-ps-workspaces-bulk-create.ps1 -WorkspaceData @(@{DirectoryId='d-1234567890';UserName='user1';BundleId='wsb-abc12345'})
+
+.NOTES
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: AWS.Tools.WorkSpaces
+
+.LINK
+    https://docs.aws.amazon.com/powershell/latest/reference/
+
+.COMPONENT
+    AWS PowerShell WorkSpaces
+#>
+
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory, ParameterSetName='CsvFile')]
+    [Parameter(Mandatory = $true, ParameterSetName = 'CsvFile', HelpMessage = "Path to the CSV file containing WorkSpace definitions.")]
     [ValidateScript({Test-Path $_ -PathType Leaf})]
     [string]$CsvFilePath,
-    [Parameter(Mandatory, ParameterSetName='Array')]
+
+    [Parameter(Mandatory = $true, ParameterSetName = 'Array', HelpMessage = "Array of hashtables defining WorkSpaces to create. Each must contain DirectoryId, UserName, BundleId.")]
     [hashtable[]]$WorkspaceData,
-    [Parameter()]
+
+    [Parameter(HelpMessage = "Switch to preview which WorkSpaces would be created without actually creating them.")]
     [switch]$WhatIf
 )
 
@@ -106,7 +150,11 @@ try {
     $results | ForEach-Object { [PSCustomObject]$_ } | Format-Table -AutoSize
 
     return $results
-} catch {
-    Write-Error "Bulk WorkSpace creation failed: $_"
+}
+catch {
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
+}
+finally {
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

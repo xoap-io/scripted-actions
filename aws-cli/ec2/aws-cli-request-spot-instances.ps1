@@ -88,54 +88,62 @@
     .\aws-cli-request-spot-instances.ps1 -Action "Cancel" -SpotRequestId "sir-12345678"
 
 .NOTES
-    Author: XOAP
-    Date: 2025-08-06
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
 
-    Requires: AWS CLI v2.16+
+    Author: XOAP.IO
+    Requires: AWS CLI v2 (https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
 
 .LINK
-    https://github.com/xoap-io/scripted-actions
+    https://docs.aws.amazon.com/cli/latest/reference/ec2/request-spot-instances.html
+
+.COMPONENT
+    AWS CLI EC2
 #>
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The action to perform: Request, Cancel, Describe, GetPrices, or CreateFleet.")]
     [ValidateSet('Request', 'Cancel', 'Describe', 'GetPrices', 'CreateFleet', 'CancelFleet')]
     [string]$Action,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The AMI ID to use for the spot instance.")]
     [ValidatePattern('^ami-[a-zA-Z0-9]{8,}$')]
     [string]$ImageId,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The EC2 instance type to launch.")]
     [string]$InstanceType,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Comma-separated list of instance types for diversified spot requests.")]
     [string]$InstanceTypes,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The name of the key pair to use for SSH access.")]
     [string]$KeyName,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Comma-separated list of security group IDs.")]
     [string]$SecurityGroupIds,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The subnet ID where the instance should be launched.")]
     [ValidatePattern('^subnet-[a-zA-Z0-9]{8,}$')]
     [string]$SubnetId,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The maximum price you are willing to pay for the spot instance (per hour).")]
     [ValidateRange(0.001, 10.0)]
     [decimal]$SpotPrice,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "JSON file path containing detailed launch specification.")]
     [ValidateScript({Test-Path $_ -PathType Leaf})]
     [string]$LaunchSpecification,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The ID of an existing spot request to operate on.")]
     [ValidatePattern('^sir-[a-zA-Z0-9]{8,}$')]
     [string]$SpotRequestId,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The ID of an existing spot fleet request to operate on.")]
     [ValidatePattern('^sfr-[a-zA-Z0-9]{8,}$')]
     [string]$SpotFleetRequestId,
 
@@ -143,40 +151,40 @@ param(
     [ValidateRange(1, 10000)]
     [int]$TargetCapacity,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Base64-encoded user data script.")]
     [string]$UserData,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Path to file containing user data script.")]
     [ValidateScript({Test-Path $_ -PathType Leaf})]
     [string]$UserDataFile,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The name or ARN of the IAM instance profile.")]
     [string]$IamInstanceProfile,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "JSON string of tags to apply to instances.")]
     [string]$Tags,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The start date and time for the spot request (ISO 8601 format).")]
     [string]$ValidFrom,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The end date and time for the spot request (ISO 8601 format).")]
     [string]$ValidUntil,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The type of spot request: one-time or persistent.")]
     [ValidateSet('one-time', 'persistent')]
     [string]$Type = 'one-time',
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Specific availability zone for price checking.")]
     [string]$AvailabilityZone,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Product description for spot price history (Linux/UNIX, Windows, etc.).")]
     [ValidateSet('Linux/UNIX', 'Windows', 'SUSE Linux', 'Red Hat Enterprise Linux')]
     [string]$ProductDescription = 'Linux/UNIX',
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The AWS region to use (optional, uses default if not specified).")]
     [string]$Region,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The AWS CLI profile to use (optional).")]
     [string]$Profile
 )
 
@@ -600,8 +608,8 @@ try {
     Write-Output "`n✅ Spot instance operation completed successfully."
 
 } catch {
-    Write-Error "Failed to manage spot instances: $($_.Exception.Message)"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
 } finally {
-    Write-Output "Script execution completed."
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

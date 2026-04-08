@@ -82,26 +82,38 @@
     .\nutanix-cli-windows-updates.ps1 -PrismCentral "pc.domain.com" -VMNames @("web01", "web02") -UpdateCategories @("Security") -CreateSnapshots -MaxConcurrentVMs 2 -DomainCredential (Get-Credential)
 
 .NOTES
-    Author: XOAP.io
-    Requires: Nutanix PowerShell SDK, PSWindowsUpdate module, PowerShell remoting enabled
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
 
+    Author: XOAP.IO
+    Requires: PowerShell with REST API capabilities (Nutanix Prism REST API v3)
+
+.LINK
+    https://www.nutanix.dev/reference/prism_central/v3/
+
+.COMPONENT
+    Nutanix REST API PowerShell
 #>
 
 [CmdletBinding()]
 param (
-    [Parameter(Mandatory = $false, ParameterSetName = "PrismCentral")]
+    [Parameter(Mandatory = $false, ParameterSetName = "PrismCentral", HelpMessage = "The Prism Central FQDN or IP address to connect to.")]
     [ValidateNotNullOrEmpty()]
     [string]$PrismCentral,
 
-    [Parameter(Mandatory = $false, ParameterSetName = "PrismElement")]
+    [Parameter(Mandatory = $false, ParameterSetName = "PrismElement", HelpMessage = "The Prism Element FQDN or IP address to connect to.")]
     [ValidateNotNullOrEmpty()]
     [string]$PrismElement,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Array of VM names to process for Windows updates.")]
     [ValidateNotNullOrEmpty()]
     [string[]]$VMNames,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Array of VM UUIDs to process for Windows updates.")]
     [ValidateScript({
         foreach ($uuid in $_) {
             if ($uuid -notmatch '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$') {
@@ -112,60 +124,60 @@ param (
     })]
     [string[]]$VMUUIDs,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Process all Windows VMs in the specified cluster.")]
     [string]$ClusterName,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Process all Windows VMs in the specified cluster by UUID.")]
     [ValidatePattern('^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$')]
     [string]$ClusterUUID,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Domain credentials for connecting to VMs.")]
     [System.Management.Automation.PSCredential]$DomainCredential,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Local administrator credentials for connecting to VMs.")]
     [System.Management.Automation.PSCredential]$LocalCredential,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Categories of updates to install. Valid values: Security, Critical, Important, Moderate, Low, Unspecified.")]
     [ValidateSet("Security", "Critical", "Important", "Moderate", "Low", "Unspecified")]
     [string[]]$UpdateCategories = @("Security", "Critical"),
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Only scan for updates without installing them.")]
     [switch]$ScanOnly,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Automatically reboot VMs if required after update installation.")]
     [switch]$AutoReboot,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Timeout in minutes to wait for VM reboot completion (5-60).")]
     [ValidateRange(5, 60)]
     [int]$RebootTimeout = 15,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Create snapshots before installing updates.")]
     [switch]$CreateSnapshots,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Prefix for snapshot names created before updates.")]
     [string]$SnapshotPrefix = "BeforeUpdates",
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Maximum number of VMs to process concurrently (1-10).")]
     [ValidateRange(1, 10)]
     [int]$MaxConcurrentVMs = 3,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Array of VM names to exclude from processing.")]
     [string[]]$ExcludeVMs,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Array of KB numbers to exclude from installation.")]
     [string[]]$ExcludeKBs,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Array of specific KB numbers to install (overrides categories).")]
     [string[]]$IncludeKBs,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Force operations without confirmation prompts.")]
     [switch]$Force,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Output format for reports. Valid values: Console, CSV, JSON, HTML.")]
     [ValidateSet("Console", "CSV", "JSON", "HTML")]
     [string]$OutputFormat = "Console",
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Path to save the report file.")]
     [string]$OutputPath
 )
 
@@ -941,7 +953,7 @@ try {
     Write-Host "`n=== Windows Update Processing Completed ===" -ForegroundColor Green
 }
 catch {
-    Write-Error "Script execution failed: $($_.Exception.Message)"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
 }
 finally {
@@ -950,4 +962,5 @@ finally {
         Write-Host "`nDisconnecting from Nutanix..." -ForegroundColor Yellow
         Disconnect-NTNXCluster
     }
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

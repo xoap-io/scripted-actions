@@ -4,6 +4,7 @@
 
 .DESCRIPTION
     This script creates a new virtual network in an Azure environment with the specified parameters.
+    Uses the New-AzVirtualNetwork cmdlet from the Az.Network module.
 
 .PARAMETER Name
     The name of the virtual network.
@@ -23,9 +24,6 @@
 .PARAMETER FlowTimeout
     The flow timeout for the virtual network.
 
-.PARAMETER Subnet
-    The subnets for the virtual network.
-
 .PARAMETER BgpCommunity
     The BGP community for the virtual network.
 
@@ -44,39 +42,41 @@
 .PARAMETER DdosProtectionPlanId
     The DDoS protection plan ID for the virtual network.
 
-.PARAMETER IpAllocation
-    The IP allocations for the virtual network.
-
 .PARAMETER EdgeZone
     The edge zone for the virtual network.
 
 .EXAMPLE
-    PS C:\> .\New-AzVirtualNetwork.ps1 -Name "MyVNet" -AzResourceGroup "MyResourceGroup" -AzLocation "eastus" -AzAddressPrefix "10.0.0.0/16"
+    PS C:\> .\New-AzVirtualNetwork.ps1 -Name "MyVNet" -ResourceGroup "MyResourceGroup" -Location "eastus" -AddressPrefix "10.0.0.0/16"
 
-.LINK
-    https://learn.microsoft.com/en-us/powershell/module/az.Network
+.NOTES
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: Az PowerShell module (Install-Module Az), Az.Network
 
 .LINK
     https://learn.microsoft.com/en-us/powershell/module/az.network/new-azvirtualnetwork?view=azps-12.3.0
 
-.LINK
-    https://github.com/xoap-io/scripted-actions
-
 .COMPONENT
-    Azure PowerShell
+    Azure PowerShell Network
 #>
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$true, HelpMessage = "The name of the virtual network.")]
     [ValidateNotNullOrEmpty()]
     [string]$Name,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$true, HelpMessage = "The name of the Azure Resource Group.")]
     [ValidateNotNullOrEmpty()]
     [string]$ResourceGroup,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$true, HelpMessage = "The Azure region where the virtual network will be created.")]
     [ValidateNotNullOrEmpty()]
     [ValidateSet(
         'eastus', 'eastus2', 'southcentralus', 'westus2',
@@ -99,15 +99,15 @@ param(
     )]
     [string]$Location,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$true, HelpMessage = "The address prefix (CIDR notation) for the virtual network.")]
     [ValidateNotNullOrEmpty()]
     [string]$AddressPrefix,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The DNS server addresses for the virtual network.")]
     [ValidateNotNullOrEmpty()]
     [string]$DnsServer,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The flow timeout value in minutes (3-30).")]
     [ValidateNotNullOrEmpty()]
     [ValidateRange(3, 30)]
     [int]$FlowTimeout,
@@ -117,11 +117,11 @@ param(
     #[ValidateNotNullOrEmpty()]
     #[PSSubnet[]]$Subnet,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The BGP community value for the virtual network.")]
     [ValidateNotNullOrEmpty()]
     [string]$BgpCommunity,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "Indicates if encryption is enabled for the virtual network.")]
     [ValidateNotNullOrEmpty()]
     [ValidateSet(
         'false',
@@ -129,7 +129,7 @@ param(
     )]
     [string]$EnableEncryption,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The encryption enforcement policy for the virtual network.")]
     [ValidateNotNullOrEmpty()]
     [ValidateSet(
         'allowUnencrypted',
@@ -137,15 +137,15 @@ param(
     )]
     [string]$EncryptionEnforcementPolicy,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "A hashtable of tags to apply to the virtual network.")]
     [ValidateNotNullOrEmpty()]
     [hashtable]$Tags,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "Indicates if DDoS protection is enabled for the virtual network.")]
     [ValidateNotNullOrEmpty()]
     [switch]$EnableDdosProtection,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The DDoS protection plan resource ID.")]
     [ValidateNotNullOrEmpty()]
     [string]$DdosProtectionPlanId,
 
@@ -154,75 +154,73 @@ param(
     #[ValidateNotNullOrEmpty()]
     #[PSIpAllocation[]]$IpAllocation,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The edge zone for the virtual network.")]
     [ValidateNotNullOrEmpty()]
     [string]$EdgeZone
 )
 
+# Set Error Action to Stop
+$ErrorActionPreference = "Stop"
+
 # Splatting parameters for better readability
 $parameters = @{
-    Name = $Name
-    ResourceGroup = $ResourceGroup
-    Location = $Location
-    AddressPrefix = $AddressPrefix
+    Name              = $Name
+    ResourceGroupName = $ResourceGroup
+    Location          = $Location
+    AddressPrefix     = $AddressPrefix
 }
 
 if ($DnsServer) {
-    $parameters['DnsServer'], $DnsServer
+    $parameters['DnsServer'] = $DnsServer
 }
 
 if ($FlowTimeout) {
-    $parameters['FlowTimeout'], $FlowTimeout
+    $parameters['FlowTimeout'] = $FlowTimeout
 }
 
 if ($BgpCommunity) {
-    $parameters['BgpCommunity'], $BgpCommunity
+    $parameters['BgpCommunity'] = $BgpCommunity
 }
 
 if ($EnableEncryption) {
-    $parameters['EnableEncryption'], $EnableEncryption
+    $parameters['EnableEncryption'] = $EnableEncryption
 }
 
 if ($EncryptionEnforcementPolicy) {
-    $parameters['EncryptionEnforcementPolicy'], $EncryptionEnforcementPolicy
+    $parameters['EncryptionEnforcementPolicy'] = $EncryptionEnforcementPolicy
 }
 
 if ($Tags) {
-    $parameters['Tag'], $Tags
+    $parameters['Tag'] = $Tags
 }
 
 if ($EnableDdosProtection) {
-    $parameters['EnableDdosProtection'], $EnableDdosProtection
+    $parameters['EnableDdosProtection'] = $EnableDdosProtection
 }
 
 if ($DdosProtectionPlanId) {
-    $parameters['DdosProtectionPlanId'], $DdosProtectionPlanId
+    $parameters['DdosProtectionPlanId'] = $DdosProtectionPlanId
 }
 
 #if ($IpAllocation) {
-#    $parameters['IpAllocation'], $IpAllocation
+#    $parameters['IpAllocation'] = $IpAllocation
 #}
 
 if ($EdgeZone) {
-    $parameters['EdgeZone'], $EdgeZone
+    $parameters['EdgeZone'] = $EdgeZone
 }
-
-# Set Error Action to Stop
-$ErrorActionPreference = "Stop"
 
 try {
     # Create the virtual network and capture the result
     $result = New-AzVirtualNetwork @parameters
 
     # Output the result
-    Write-Output "Virtual network created successfully:"
+    Write-Host "✅ Virtual network created successfully:" -ForegroundColor Green
     Write-Output $result
 
-} catch [System.Exception] {
-
-    Write-Error "Failed to create the virtual network: $($_.Exception.Message)"
-
+} catch {
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
+    exit 1
 } finally {
-    # Cleanup code if needed
-    Write-Output "Script execution completed."
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

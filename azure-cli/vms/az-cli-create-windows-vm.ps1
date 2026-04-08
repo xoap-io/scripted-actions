@@ -155,41 +155,46 @@
     Defines whether to enable secure boot.
 
 .EXAMPLE
-    .\Create-NewWindowsVm.ps1 -AzResourceGroup "myResourceGroup" -AzVmName "myVm" -AzLocation "eastus" -AzImageName "myImageName" -AzPublicIpAddressName "myPublicIpAddressName" -AzVmUserName "myVmUser" -AzVmUserPassword "myVmPassword" -AzOpenPorts 3389 -AzVmSize "Standard_D2s_v3"
+    .\az-cli-create-windows-vm.ps1 -Name "myVm" -UserName "azureuser" -Password (ConvertTo-SecureString "P@ssw0rd!" -AsPlainText -Force) -ResourceGroup "myResourceGroup" -Location "eastus" -Image "Win2022Datacenter"
+
+.NOTES
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: Azure CLI (https://docs.microsoft.com/en-us/cli/azure/install-azure-cli)
 
 .LINK
-    https://learn.microsoft.com/en-us/powershell/module/az.Compute
-
-.LINK
-    https://learn.microsoft.com/en-us/powershell/module/az.compute/new-azvm?view=azps-12.3.0
-
-.LINK
-    https://github.com/xoap-io/scripted-actions
+    https://learn.microsoft.com/en-us/cli/azure/vm
 
 .COMPONENT
-    Azure PowerShell
+    Azure CLI Virtual Machines
 
 #>
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The name of the Azure VM")]
     [ValidateNotNullOrEmpty()]
     [string]$Name,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The admin username for the Azure VM")]
     [ValidateNotNullOrEmpty()]
     [string]$UserName,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The admin password for the Azure VM")]
     [ValidateNotNullOrEmpty()]
     [securestring]$Password,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The name of the Azure Resource Group")]
     [ValidateNotNullOrEmpty()]
     [string]$ResourceGroup,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The Azure region for the VM")]
     [ValidateSet(
         'eastus', 'eastus2', 'southcentralus', 'westus2',
         'westus3', 'australiaeast', 'southeastasia', 'northeurope',
@@ -589,16 +594,11 @@ try {
     $publicIp | Select-Object -Property Name, IpAddress, @{label='FQDN';expression={$_.DnsSettings.Fqdn}}
 
     # Output the result
-    Write-Output "Azure VM '$($parameters.Name)' created successfully."
-    Write-Output "Public IP address: $($publicIp.IpAddress)"
+    Write-Host "✅ Azure VM '$($parameters.Name)' created successfully." -ForegroundColor Green
+    Write-Host "   Public IP address: $($publicIp.IpAddress)" -ForegroundColor White
 } catch {
-    # Log the error to a file
-    $errorMessage = "Error: $($_.Exception.Message)"
-    Write-Output "Error message $errorMessage"
-
-    # Write the error to the console
-    Write-Error "Failed to create Azure VM: $($_.Exception.Message)"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
+    exit 1
 } finally {
-    # Cleanup code if needed
-    Write-Output "Script execution completed."
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

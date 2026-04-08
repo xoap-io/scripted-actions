@@ -113,6 +113,8 @@ try {
 
     return $hostPool
 } catch {
-    Write-Error "Failed to retrieve Host Pool details: $_"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
+} finally {
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

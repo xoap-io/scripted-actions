@@ -55,51 +55,59 @@
     .\aws-cli-attach-instance-profile.ps1 -InstanceId "i-1234567890abcdef0" -Action "Describe"
 
 .NOTES
-    Author: XOAP
-    Date: 2025-08-06
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
 
-    Requires: AWS CLI v2.16+
+    Author: XOAP.IO
+    Requires: AWS CLI v2 (https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
 
 .LINK
-    https://github.com/xoap-io/scripted-actions
+    https://docs.aws.amazon.com/cli/latest/reference/ec2/associate-iam-instance-profile.html
+
+.COMPONENT
+    AWS CLI EC2
 #>
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The ID of the EC2 instance to modify.")]
     [ValidatePattern('^i-[a-zA-Z0-9]{8,}$')]
     [string]$InstanceId,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Comma-separated list of instance IDs for bulk operations.")]
     [string]$InstanceIds,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The name or ARN of the IAM instance profile to attach.")]
     [string]$IamInstanceProfile,
 
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The action to perform: Attach, Detach, Replace, or Describe.")]
     [ValidateSet('Attach', 'Detach', 'Replace', 'Describe')]
     [string]$Action,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Force the operation without confirmation prompts.")]
     [switch]$Force,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Validate that the instance profile has basic EC2 permissions.")]
     [switch]$ValidatePermissions,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Wait for the association to complete before returning.")]
     [switch]$WaitForAssociation,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Maximum time to wait for association in seconds (default: 120).")]
     [ValidateRange(30, 600)]
     [int]$MaxWaitTime = 120,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Perform a dry run to validate parameters without making changes.")]
     [switch]$DryRun,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The AWS region to use (optional, uses default if not specified).")]
     [string]$Region,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The AWS CLI profile to use (optional).")]
     [string]$Profile
 )
 
@@ -507,8 +515,8 @@ try {
     Write-Output "`n✅ IAM instance profile operation completed successfully."
 
 } catch {
-    Write-Error "Failed to manage IAM instance profile: $($_.Exception.Message)"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
 } finally {
-    Write-Output "Script execution completed."
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

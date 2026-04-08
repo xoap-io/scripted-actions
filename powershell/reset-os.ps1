@@ -2,6 +2,12 @@
 .SYNOPSIS
   Stage unattend.xml for Push-Button Reset and trigger a Windows Reset via the Intune CSP (RemoteWipe) using the MDM Bridge.
 
+.DESCRIPTION
+  Stages the provided unattend.xml into the C:\Recovery\OEM folder alongside a ResetConfig.xml and
+  CommonCustomizations.cmd so that the file survives a Push-Button Reset. Then schedules a SYSTEM-context
+  task that calls the MDM_RemoteWipe CIM method (MDM Bridge WMI provider) to initiate a device wipe.
+  Uses reagentc.exe to ensure Windows Recovery Environment (WinRE) is enabled before triggering the wipe.
+
 .PARAMETER UnattendXmlPath
   Full path to your unattend.xml to apply after Reset.
 
@@ -10,19 +16,46 @@
 
 .PARAMETER Force
   Skip safety countdown.
+
+.EXAMPLE
+  .\reset-os.ps1 -UnattendXmlPath "C:\Setup\unattend.xml"
+
+.EXAMPLE
+  .\reset-os.ps1 -UnattendXmlPath "C:\Setup\unattend.xml" -Mode KeepUserData -Force
+
+.NOTES
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: PowerShell 5.1 or later
+
+.LINK
+    https://learn.microsoft.com/en-us/windows/deployment/push-button-reset/push-button-reset-overview
+
+.COMPONENT
+    Windows PowerShell Server Management
 #>
 
 [CmdletBinding(SupportsShouldProcess)]
 param(
-  [Parameter(Mandatory)]
+  [Parameter(Mandatory, HelpMessage = "Full path to your unattend.xml to apply after Reset.")]
   [ValidateScript({Test-Path $_ -PathType Leaf})]
   [string]$UnattendXmlPath,
 
+  [Parameter(HelpMessage = "Wipe mode: Standard, Protected, KeepUserData, KeepProvisioningData.")]
   [ValidateSet('Standard','Protected','KeepUserData','KeepProvisioningData')]
   [string]$Mode = 'Standard',
 
+  [Parameter(HelpMessage = "Skip safety countdown.")]
   [switch]$Force
 )
+
+$ErrorActionPreference = 'Stop'
 
 #--- Helpers ---------------------------------------------------------------
 
@@ -129,17 +162,26 @@ function Invoke-RemoteWipe-AsSystem {
 
 #--- Flow ------------------------------------------------------------------
 
-Assert-Admin
-Ensure-WinRE
-Stage-ResetArtifacts -UnattendPath $UnattendXmlPath
+try {
+    Assert-Admin
+    Ensure-WinRE
+    Stage-ResetArtifacts -UnattendPath $UnattendXmlPath
 
-Write-Warning "About to RESET this device via Intune CSP (mode: $Mode). THIS IS DESTRUCTIVE."
-if (-not $Force) {
-  for ($i=10; $i -ge 1; $i--) {
-    Write-Host ("Starting in {0} seconds... Press Ctrl+C to abort" -f $i)
-    Start-Sleep -Seconds 1
-  }
+    Write-Warning "About to RESET this device via Intune CSP (mode: $Mode). THIS IS DESTRUCTIVE."
+    if (-not $Force) {
+        for ($i=10; $i -ge 1; $i--) {
+            Write-Host ("Starting in {0} seconds... Press Ctrl+C to abort" -f $i)
+            Start-Sleep -Seconds 1
+        }
+    }
+
+    $method = Get-WipeMethodName
+    Invoke-RemoteWipe-AsSystem -MethodName $method
 }
-
-$method = Get-WipeMethodName
-Invoke-RemoteWipe-AsSystem -MethodName $method
+catch {
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
+    exit 1
+}
+finally {
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
+}

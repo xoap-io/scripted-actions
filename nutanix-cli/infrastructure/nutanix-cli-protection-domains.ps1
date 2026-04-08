@@ -81,49 +81,61 @@
     .\nutanix-cli-protection-domains.ps1 -PrismCentral "pc.domain.com" -Operation "CreateSchedule" -ProtectionDomainName "PD-WebServers" -ScheduleName "Daily-Backup" -ScheduleType "Daily" -IntervalMinutes 1440 -RetentionCount 7
 
 .NOTES
-    Author: XOAP.io
-    Requires: Nutanix PowerShell SDK, AOS 6.0+
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
 
+    Author: XOAP.IO
+    Requires: PowerShell with REST API capabilities (Nutanix Prism REST API v3)
+
+.LINK
+    https://www.nutanix.dev/reference/prism_central/v3/
+
+.COMPONENT
+    Nutanix REST API PowerShell
 #>
 
 [CmdletBinding()]
 param (
-    [Parameter(Mandatory = $false, ParameterSetName = "PrismCentral")]
+    [Parameter(Mandatory = $false, ParameterSetName = "PrismCentral", HelpMessage = "The Prism Central FQDN or IP address to connect to.")]
     [ValidateNotNullOrEmpty()]
     [string]$PrismCentral,
 
-    [Parameter(Mandatory = $false, ParameterSetName = "PrismElement")]
+    [Parameter(Mandatory = $false, ParameterSetName = "PrismElement", HelpMessage = "The Prism Element FQDN or IP address to connect to.")]
     [ValidateNotNullOrEmpty()]
     [string]$PrismElement,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Name of the cluster to target for protection domain operations.")]
     [string]$ClusterName,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "UUID of a specific cluster to target for protection domain operations.")]
     [ValidatePattern('^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$')]
     [string]$ClusterUUID,
 
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The operation to perform on the protection domain(s). Valid values: List, Create, Delete, AddVMs, RemoveVMs, CreateSchedule, UpdateSchedule, DeleteSchedule, Status, Report, Replicate, Monitor.")]
     [ValidateSet("List", "Create", "Delete", "AddVMs", "RemoveVMs", "CreateSchedule", "UpdateSchedule", "DeleteSchedule", "Status", "Report", "Replicate", "Monitor")]
     [string]$Operation,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Name of the protection domain to manage.")]
     [string]$ProtectionDomainName,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Array of protection domain names for batch operations.")]
     [string[]]$ProtectionDomainNames,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "UUID of a specific protection domain to manage.")]
     [ValidatePattern('^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$')]
     [string]$ProtectionDomainUUID,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Name of VM to add/remove from protection domain.")]
     [string]$VMName,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Array of VM names to add/remove from protection domain.")]
     [string[]]$VMNames,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Array of VM UUIDs to add/remove from protection domain.")]
     [ValidateScript({
         foreach ($uuid in $_) {
             if ($uuid -notmatch '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$') {
@@ -134,39 +146,39 @@ param (
     })]
     [string[]]$VMUUIDs,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Name for the backup schedule.")]
     [string]$ScheduleName,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Type of backup schedule. Valid values: Hourly, Daily, Weekly.")]
     [ValidateSet("Hourly", "Daily", "Weekly")]
     [string]$ScheduleType,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Interval in minutes for backup schedule (60-43200).")]
     [ValidateRange(60, 43200)]  # 1 hour to 30 days in minutes
     [int]$IntervalMinutes,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Number of snapshots to retain (1-365).")]
     [ValidateRange(1, 365)]
     [int]$RetentionCount,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Name of remote cluster for replication.")]
     [string]$RemoteClusterName,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "IP address of remote cluster for replication.")]
     [ValidatePattern('^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$')]
     [string]$RemoteClusterIP,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Start replication for the protection domain.")]
     [switch]$StartReplication,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Output format for reports. Valid values: Console, CSV, JSON, HTML.")]
     [ValidateSet("Console", "CSV", "JSON", "HTML")]
     [string]$OutputFormat = "Console",
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Path to save the report file.")]
     [string]$OutputPath,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Force operations without confirmation prompts.")]
     [switch]$Force
 )
 
@@ -927,7 +939,7 @@ try {
     Write-Host "`n=== Protection Domain Operations Completed ===" -ForegroundColor Green
 }
 catch {
-    Write-Error "Script execution failed: $($_.Exception.Message)"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
 }
 finally {
@@ -936,4 +948,5 @@ finally {
         Write-Host "`nDisconnecting from Nutanix..." -ForegroundColor Yellow
         Disconnect-NTNXCluster
     }
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

@@ -40,43 +40,51 @@
     .\aws-cli-attach-detach-volume.ps1 -Action Detach -InstanceId "i-1234567890abcdef0" -VolumeIds "vol-123,vol-456" -Force
 
 .NOTES
-    Author: XOAP
-    Date: 2025-08-06
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
 
-    Requires: AWS CLI v2.16+
+    Author: XOAP.IO
+    Requires: AWS CLI v2 (https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
 
 .LINK
-    https://github.com/xoap-io/scripted-actions
+    https://docs.aws.amazon.com/cli/latest/reference/ec2/attach-volume.html
+
+.COMPONENT
+    AWS CLI EC2
 #>
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The action to perform: Attach or Detach.")]
     [ValidateSet('Attach', 'Detach')]
     [string]$Action,
 
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The ID of the EC2 instance.")]
     [ValidatePattern('^i-[a-zA-Z0-9]{8,}$')]
     [string]$InstanceId,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The ID of the EBS volume (required for single volume operations).")]
     [ValidatePattern('^vol-[a-zA-Z0-9]{8,}$')]
     [string]$VolumeId,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Comma-separated list of EBS volume IDs (for bulk operations).")]
     [string]$VolumeIds,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The device name for attaching the volume (e.g., /dev/sdf, /dev/xvdf).")]
     [ValidatePattern('^/dev/[a-z]+[0-9]*$')]
     [string]$Device,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Force detachment even if the volume is in use (use with caution).")]
     [switch]$Force,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The AWS region to use (optional, uses default if not specified).")]
     [string]$Region,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The AWS CLI profile to use (optional).")]
     [string]$Profile
 )
 
@@ -291,8 +299,8 @@ try {
     Write-Output "`n✅ Volume $Action operation completed."
 
 } catch {
-    Write-Error "Failed to $Action volume(s): $($_.Exception.Message)"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
 } finally {
-    Write-Output "Script execution completed."
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

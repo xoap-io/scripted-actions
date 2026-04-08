@@ -5,6 +5,8 @@
 .DESCRIPTION
     This script assigns a specified VM to a specified AVD Host Pool using Azure PowerShell cmdlets.
     It connects to Azure using a Service Principal Object (SPO) for authentication.
+    Uses New-AzWvdRegistrationInfo, Get-AzWvdHostPoolRegistrationToken, Invoke-AzVMRunCommand,
+    Set-AzVMExtension, Get-AzKeyVaultSecret, and Set-AzContext.
 
 .PARAMETER HostPoolName
     The name of the AVD Host Pool to which the VM will be assigned.
@@ -15,17 +17,43 @@
 .PARAMETER Location
     The Azure region where the VM and Host Pool are located. Default is 'West Europe'.
 
+.PARAMETER ResourceGroupName
+    The name of the Azure Resource Group containing the Host Pool and VM.
+
+.PARAMETER SubscriptionName
+    The name of the Azure subscription to use.
+
+.EXAMPLE
+    .\Assign-VmToHostPool.ps1 -HostPoolName "MyHostPool" -VmName "MyVM" -Location "westeurope" -ResourceGroupName "MyRG" -SubscriptionName "MySubscription"
+
+.NOTES
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: Az PowerShell module (Install-Module Az), Az.DesktopVirtualization, Az.Compute, Az.KeyVault
+
+.LINK
+    https://learn.microsoft.com/en-us/powershell/module/az.desktopvirtualization
+
+.COMPONENT
+    Azure PowerShell Virtual Desktop
+
 #>
 
 [CmdletBinding()]
 param (
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$true, HelpMessage = "The name of the AVD Host Pool.")]
     [string]$HostPoolName,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$true, HelpMessage = "The name of the Virtual Machine to assign.")]
     [string]$VmName,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$true, HelpMessage = "The Azure region where the VM and Host Pool are located.")]
     [ValidateSet(
         'eastus', 'eastus2', 'southcentralus', 'westus2',
         'westus3', 'australiaeast', 'southeastasia', 'northeurope',
@@ -46,19 +74,20 @@ param (
         'ukwest', 'uaecentral', 'brilsoutheast'
     )]
     [string]$Location = "westeurope",
-    
-    [Parameter(Mandatory=$true)]
+
+    [Parameter(Mandatory=$true, HelpMessage = "The name of the Azure Resource Group.")]
     [string]$ResourceGroupName,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$true, HelpMessage = "The name of the Azure subscription to use.")]
     [string]$SubscriptionName
 
     #[Parameter(Mandatory=$true)]
     #[securestring]$Password
 )
 
-#Select subscription
+$ErrorActionPreference = 'Stop'
 
+#Select subscription
 Set-AzContext -SubscriptionName $SubscriptionName
 
 # Retrieve the Host Pool
@@ -146,11 +175,11 @@ $ScriptBlock = {
     }
 
     try {
-        
+
         #Install-Module -Name PowerShellGet -Force -Confirm
         #Install-Module -Name Az -Repository PSGallery -Force -Confirm
         #Update-Module -Name Az -Force -Confirm
-        
+
         # Uninstall existing installations if needed
         Uninstall-Package -ProductName $agentProductName
         Uninstall-Package -ProductName $bootLoaderProductName
@@ -169,7 +198,7 @@ $ScriptBlock = {
 
         $domainJoinSettings = @{
             Name                   = "joindomain"
-            Type                   = "JsonADDomainExtension" 
+            Type                   = "JsonADDomainExtension"
             Publisher              = "Microsoft.Compute"
             typeHandlerVersion     = "1.3"
             SettingString          = '{
@@ -181,16 +210,16 @@ $ScriptBlock = {
             }'
             ProtectedSettingString = '{
             "password":"' + $(Get-AzKeyVaultSecret -VaultName "azure-avd-keyvault" -Name "domain-join" -AsPlainText) + '"}'
-            
+
             VMName                 = $VMName
             ResourceGroupName      = $resourceGroupName
             location               = $Location
         }
         Set-AzVMExtension @domainJoinSettings
-    
+
         $avdDscSettings = @{
             Name               = "Microsoft.PowerShell.DSC"
-            Type               = "DSC" 
+            Type               = "DSC"
             Publisher          = "Microsoft.Powershell"
             typeHandlerVersion = "2.73"
             SettingString      = "{
@@ -206,7 +235,7 @@ $ScriptBlock = {
             ResourceGroupName  = $resourceGroupName
             location           = $Location
         }
-        Set-AzVMExtension @avdDscSettings  
+        Set-AzVMExtension @avdDscSettings
 
         Write-Host "All installations complete."
     }
@@ -224,8 +253,11 @@ try {
     $cmdRes = Invoke-AzVMRunCommand -ResourceGroupName $resourceGroupName -VMName $VmName -CommandId 'RunPowerShellScript' -ScriptString $Script -Parameter @{'RegistrationKeyToken' = $registrationkeytoken;}
     $cmdRes.Value | ForEach-Object { Write-Host $_.Message }
     Write-Host "Script execution completed on $VmName."
-} 
+}
 catch {
-    Write-Host "An error occurred while running the script on $VmName $_" -ForegroundColor Red
-    throw
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
+    exit 1
+}
+finally {
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

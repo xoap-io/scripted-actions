@@ -59,60 +59,68 @@
     .\aws-cli-run-ssm-command.ps1 -InstanceIds "i-1234567890abcdef0" -DocumentName "AWS-UpdateSSMAgent" -WaitForCompletion
 
 .NOTES
-    Author: XOAP
-    Date: 2025-08-06
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
 
-    Requires: AWS CLI v2.16+, SSM Agent on target instances
+    Author: XOAP.IO
+    Requires: AWS CLI v2 (https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html), SSM Agent on target instances
 
 .LINK
-    https://github.com/xoap-io/scripted-actions
+    https://docs.aws.amazon.com/cli/latest/reference/ssm/send-command.html
+
+.COMPONENT
+    AWS CLI EC2
 #>
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "Comma-separated list of instance IDs to execute the command on.")]
     [string]$InstanceIds,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The SSM document name to execute (default: AWS-RunShellScript for Linux, AWS-RunPowerShellScript for Windows).")]
     [string]$DocumentName,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The command(s) to execute (can be multiple commands separated by semicolons).")]
     [string]$Command,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Path to a file containing the command(s) to execute.")]
     [ValidateScript({Test-Path $_ -PathType Leaf})]
     [string]$CommandFile,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "JSON string of parameters to pass to the SSM document.")]
     [string]$Parameters,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Working directory for command execution.")]
     [string]$WorkingDirectory,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Timeout for command execution in seconds (default: 3600).")]
     [ValidateRange(30, 172800)]
     [int]$ExecutionTimeout = 3600,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "S3 bucket name to store command output (optional).")]
     [string]$OutputS3Bucket,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "S3 key prefix for output files (optional).")]
     [string]$OutputS3KeyPrefix,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Wait for command completion and display results.")]
     [switch]$WaitForCompletion,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Maximum time to wait for completion in seconds (default: 300).")]
     [ValidateRange(30, 3600)]
     [int]$MaxWaitTime = 300,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "JSON string of tags to apply to the command execution.")]
     [string]$Tags,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The AWS region to use (optional, uses default if not specified).")]
     [string]$Region,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The AWS CLI profile to use (optional).")]
     [string]$Profile
 )
 
@@ -328,8 +336,8 @@ try {
     }
 
 } catch {
-    Write-Error "Failed to execute SSM command: $($_.Exception.Message)"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
 } finally {
-    Write-Output "Script execution completed."
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

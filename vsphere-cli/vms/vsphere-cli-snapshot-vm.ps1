@@ -56,49 +56,61 @@
     .\vsphere-cli-snapshot-vm.ps1 -VCenterServer "vcenter.domain.com" -VMName "TestVM01" -Operation "Cleanup" -MaxSnapshotsPerVM 3 -Force
 
 .NOTES
-    Author: XOAP.io
-    Requires: VMware PowerCLI 13.x or later, vSphere 7.0 or later
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
 
+    Author: XOAP.IO
+    Requires: VMware PowerCLI (Install-Module -Name VMware.PowerCLI)
+
+.LINK
+    https://developer.vmware.com/docs/powercli/
+
+.COMPONENT
+    VMware vSphere PowerCLI
 #>
 
 [CmdletBinding()]
 param (
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The vCenter Server FQDN or IP address to connect to.")]
     [ValidateNotNullOrEmpty()]
     [string]$VCenterServer,
 
-    [Parameter(Mandatory = $false, ParameterSetName = "SingleVM")]
+    [Parameter(Mandatory = $false, ParameterSetName = "SingleVM", HelpMessage = "The name of the virtual machine. Supports wildcards.")]
     [ValidateNotNullOrEmpty()]
     [string]$VMName,
 
-    [Parameter(Mandatory = $false, ParameterSetName = "MultipleVMs")]
+    [Parameter(Mandatory = $false, ParameterSetName = "MultipleVMs", HelpMessage = "An array of specific VM names for batch operations.")]
     [ValidateNotNullOrEmpty()]
     [string[]]$VMNames,
 
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The snapshot operation to perform (Create, List, Revert, Delete, DeleteAll, or Cleanup).")]
     [ValidateSet("Create", "List", "Revert", "Delete", "DeleteAll", "Cleanup")]
     [string]$Operation,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The name of the snapshot for create/revert/delete operations.")]
     [ValidateNotNullOrEmpty()]
     [string]$SnapshotName,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Description for the snapshot (for create operation).")]
     [string]$SnapshotDescription,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Include VM memory state in snapshot (default: true).")]
     [bool]$Memory = $true,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Quiesce the VM file system (requires VMware Tools, default: true).")]
     [bool]$Quiesce = $true,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Remove child snapshots when deleting.")]
     [switch]$RemoveChildren,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Force the operation without confirmation prompts.")]
     [switch]$Force,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Maximum number of snapshots to keep per VM for cleanup operations (default: 5).")]
     [ValidateRange(1, 50)]
     [int]$MaxSnapshotsPerVM = 5
 )
@@ -649,10 +661,11 @@ try {
     Write-Host "`n=== Operation Completed ===" -ForegroundColor Green
 }
 catch {
-    Write-Error "Script execution failed: $($_.Exception.Message)"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
 }
 finally {
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
     # Disconnect from vCenter if connected
     if ($global:DefaultVIServers) {
         Write-Host "`nDisconnecting from vCenter..." -ForegroundColor Yellow

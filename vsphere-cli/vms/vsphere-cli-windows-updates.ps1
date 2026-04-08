@@ -90,91 +90,102 @@
     .\vsphere-cli-windows-updates.ps1 -VCenterServer "vcenter.domain.com" -Operation "Report" -OutputFormat "CSV" -OutputPath "windows-updates-report.csv"
 
 .NOTES
-    Author: XOAP.io
-    Requires: VMware PowerCLI 13.x or later, PowerShell 5.1+, PSWindowsUpdate module on target VMs
-    Dependencies: Windows VMs must have PowerShell remoting enabled and PSWindowsUpdate module installed
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
 
+    Author: XOAP.IO
+    Requires: VMware PowerCLI (Install-Module -Name VMware.PowerCLI)
+
+.LINK
+    https://developer.vmware.com/docs/powercli/
+
+.COMPONENT
+    VMware vSphere PowerCLI
 #>
 
 [CmdletBinding()]
 param (
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The vCenter Server FQDN or IP address to connect to.")]
     [ValidateNotNullOrEmpty()]
     [string]$VCenterServer,
 
-    [Parameter(Mandatory = $false, ParameterSetName = "SingleVM")]
+    [Parameter(Mandatory = $false, ParameterSetName = "SingleVM", HelpMessage = "The name of the virtual machine. Supports wildcards.")]
     [ValidateNotNullOrEmpty()]
     [string]$VMName,
 
-    [Parameter(Mandatory = $false, ParameterSetName = "MultipleVMs")]
+    [Parameter(Mandatory = $false, ParameterSetName = "MultipleVMs", HelpMessage = "An array of specific VM names for batch operations.")]
     [ValidateNotNullOrEmpty()]
     [string[]]$VMNames,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Target all Windows VMs in a specific cluster.")]
     [string]$ClusterName,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Target all Windows VMs in a specific resource pool.")]
     [string]$ResourcePoolName,
 
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The Windows update operation to perform (Scan, Install, InstallAndReboot, Report, CheckRebootRequired, InstallModule, or GetHistory).")]
     [ValidateSet("Scan", "Install", "InstallAndReboot", "Report", "CheckRebootRequired", "InstallModule", "GetHistory")]
     [string]$Operation,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Categories of updates to install (Security, Critical, Important, etc.).")]
     [ValidateSet("Security", "Critical", "Important", "Moderate", "Low", "Unspecified", "Definition")]
     [string[]]$UpdateCategory = @("Security", "Critical", "Important"),
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Exclude driver updates from installation.")]
     [switch]$ExcludeDrivers,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Exclude preview updates from installation.")]
     [switch]$ExcludePreview,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Automatically reboot VMs after update installation if required.")]
     [switch]$AutoReboot,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Timeout in minutes to wait for reboot completion (default: 15).")]
     [ValidateRange(5, 60)]
     [int]$RebootTimeout = 15,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Create a snapshot before installing updates (recommended).")]
     [switch]$CreateSnapshot,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Name for the snapshot (if CreateSnapshot is used).")]
     [string]$SnapshotName,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "PowerShell credential object for VM authentication.")]
     [PSCredential]$Credential,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Username for VM authentication.")]
     [string]$Username,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Password for VM authentication.")]
     [SecureString]$Password,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Maximum number of VMs to process concurrently (default: 5).")]
     [ValidateRange(1, 10)]
     [int]$MaxConcurrency = 5,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Wait time in seconds between processing VMs (default: 30).")]
     [ValidateRange(0, 300)]
     [int]$WaitBetweenVMs = 30,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Windows Update source to use (WindowsUpdate, MicrosoftUpdate, WSUS, or Store).")]
     [ValidateSet("WindowsUpdate", "MicrosoftUpdate", "WSUS", "Store")]
     [string]$UpdateSource = "MicrosoftUpdate",
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Include optional updates in installation.")]
     [switch]$IncludeOptional,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Force operations without confirmation prompts.")]
     [switch]$Force,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Output format for reports (Console, CSV, or JSON).")]
     [ValidateSet("Console", "CSV", "JSON")]
     [string]$OutputFormat = "Console",
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Path to save the report file.")]
     [string]$OutputPath
 )
 
@@ -1442,10 +1453,11 @@ try {
     Write-Host "`n=== Operation Completed ===" -ForegroundColor Green
 }
 catch {
-    Write-Error "Script execution failed: $($_.Exception.Message)"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
 }
 finally {
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
     # Disconnect from vCenter if connected
     if ($global:DefaultVIServers) {
         Write-Host "`nDisconnecting from vCenter..." -ForegroundColor Yellow

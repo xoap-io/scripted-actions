@@ -36,18 +36,47 @@
 .EXAMPLE
     # Add a new student
     .\az-ps-devtest-lab-ops.ps1 -LabName "Training2025" -ResourceGroupName "training-rg" -Operation AddUser -UserEmail "student@domain.com"
+
+.NOTES
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: Az PowerShell module (Install-Module Az)
+
+.LINK
+    https://learn.microsoft.com/en-us/azure/devtest-labs/
+
+.COMPONENT
+    Azure PowerShell DevTest Labs
 #>
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory)][string]$LabName,
-    [Parameter(Mandatory)][string]$ResourceGroupName,
-    [Parameter(Mandatory)][ValidateSet('Status', 'StartAll', 'StopAll', 'AddUser', 'RemoveUser', 'CostReport')][string]$Operation,
+    [Parameter(Mandatory = $true, HelpMessage = "Name of the DevTest Lab.")]
+    [string]$LabName,
+
+    [Parameter(Mandatory = $true, HelpMessage = "Name of the Resource Group containing the lab.")]
+    [string]$ResourceGroupName,
+
+    [Parameter(Mandatory = $true, HelpMessage = "Operation to perform: Status, StartAll, StopAll, AddUser, RemoveUser, CostReport.")]
+    [ValidateSet('Status', 'StartAll', 'StopAll', 'AddUser', 'RemoveUser', 'CostReport')]
+    [string]$Operation,
+
+    [Parameter(Mandatory = $false, HelpMessage = "Email address for user operations.")]
     [string]$UserEmail,
+
+    [Parameter(Mandatory = $false, HelpMessage = "Number of days for cost reporting.")]
     [int]$Days = 7
 )
 
 $ErrorActionPreference = 'Stop'
+
+try {
 
 # Ensure Azure context
 $azContext = Get-AzContext
@@ -198,4 +227,13 @@ switch ($Operation) {
 }
 
 Write-Host ""
-Write-Host "Operation completed." -ForegroundColor Green
+Write-Host "✅ Operation completed." -ForegroundColor Green
+
+}
+catch {
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
+    exit 1
+}
+finally {
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
+}

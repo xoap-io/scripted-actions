@@ -57,55 +57,67 @@
     .\vsphere-cli-migrate-vm.ps1 -VCenterServer "vcenter.domain.com" -VMNames @("VM01","VM02","VM03") -MigrationType "Both" -DestinationCluster "NewCluster" -DestinationDatastore "NewDatastore" -Priority "High"
 
 .NOTES
-    Author: XOAP.io
-    Requires: VMware PowerCLI 13.x or later, vSphere 7.0 or later
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
 
+    Author: XOAP.IO
+    Requires: VMware PowerCLI (Install-Module -Name VMware.PowerCLI)
+
+.LINK
+    https://developer.vmware.com/docs/powercli/
+
+.COMPONENT
+    VMware vSphere PowerCLI
 #>
 
 [CmdletBinding()]
 param (
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The vCenter Server FQDN or IP address to connect to.")]
     [ValidateNotNullOrEmpty()]
     [string]$VCenterServer,
 
-    [Parameter(Mandatory = $false, ParameterSetName = "SingleVM")]
+    [Parameter(Mandatory = $false, ParameterSetName = "SingleVM", HelpMessage = "The name of the virtual machine to migrate. Supports wildcards.")]
     [ValidateNotNullOrEmpty()]
     [string]$VMName,
 
-    [Parameter(Mandatory = $false, ParameterSetName = "MultipleVMs")]
+    [Parameter(Mandatory = $false, ParameterSetName = "MultipleVMs", HelpMessage = "An array of specific VM names for batch migrations.")]
     [ValidateNotNullOrEmpty()]
     [string[]]$VMNames,
 
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The type of migration to perform (vMotion, Storage, or Both).")]
     [ValidateSet("vMotion", "Storage", "Both")]
     [string]$MigrationType,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The destination ESXi host for vMotion (required for vMotion/Both).")]
     [string]$DestinationHost,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The destination datastore for Storage vMotion (required for Storage/Both).")]
     [string]$DestinationDatastore,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The destination cluster (alternative to specific host).")]
     [string]$DestinationCluster,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Migration priority level (Low, Normal, or High).")]
     [ValidateSet("Low", "Normal", "High")]
     [string]$Priority = "Normal",
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Wait for migration tasks to complete.")]
     [switch]$WaitForCompletion,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Force migration without confirmation prompts.")]
     [switch]$Force,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Only validate migration compatibility without performing migration.")]
     [switch]$ValidateOnly,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Apply DRS recommendations before migration.")]
     [switch]$DRSRecommendations,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Put source host in maintenance mode after migration (for evacuations).")]
     [switch]$MaintenanceMode
 )
 
@@ -593,10 +605,11 @@ try {
     Write-Host "`n=== Operation Completed ===" -ForegroundColor Green
 }
 catch {
-    Write-Error "Script execution failed: $($_.Exception.Message)"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
 }
 finally {
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
     # Disconnect from vCenter if connected
     if ($global:DefaultVIServers) {
         Write-Host "`nDisconnecting from vCenter..." -ForegroundColor Yellow

@@ -1,42 +1,39 @@
 <#
 .SYNOPSIS
-    Delete an AWS Security Group.
+    Deletes an AWS EC2 security group.
 
 .DESCRIPTION
-    This script deletes an AWS Security Group.
-
-    The script uses the AWS CLI to delete the specified AWS Security Group.
-
-    The script uses the following AWS CLI command:
-    aws ec2 delete-security-group `
-        --group-id $AwsSecurityGroupId
-
-    The script sets the ErrorActionPreference to SilentlyContinue to suppress error messages.
-
-    It does not return any output.
-
-.NOTES
-    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
-    The use of the scripts does not require XOAP, but it will make your life easier.
-    You are allowed to pull the script from the repository and use it with XOAP or other solutions
-    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no liability for the function,
-    the use and the consequences of the use of this freely available script.
-    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
-
-.COMPONENT
-    AWS CLI
-
-.LINK
-    https://github.com/xoap-io/scripted-actions
+    This script deletes an AWS EC2 security group using the AWS CLI.
+    Uses the following AWS CLI command:
+    aws ec2 delete-security-group
 
 .PARAMETER AwsSecurityGroupId
     Defines the ID of the AWS Security Group.
 
+.EXAMPLE
+    .\aws-cli-delete-ec2-security-group.ps1 -AwsSecurityGroupId "sg-12345678"
+
+.NOTES
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: AWS CLI v2 (https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
+
+.LINK
+    https://docs.aws.amazon.com/cli/latest/reference/ec2/delete-security-group.html
+
+.COMPONENT
+    AWS CLI Security
 #>
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory)]
+    [Parameter(Mandatory = $true, HelpMessage = "The ID of the AWS Security Group to delete")]
     [ValidatePattern('^sg-[a-zA-Z0-9]{8,}$')]
     [string]$AwsSecurityGroupId
 )
@@ -59,6 +56,8 @@ try {
         exit $LASTEXITCODE
     }
 } catch {
-    Write-Error "Unexpected error: $_"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
+} finally {
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -E '\\\\.\\(sh|ps1|py\\)$')",
+      "Bash([ ! -f \"$dir/README.md\" ])",
+      "Bash(ls /Users/sinisasokolic/Documents/GitHub/scripted-actions/aws-cli/ec2/*.ps1)",
+      "Bash(ls /Users/sinisasokolic/Documents/GitHub/scripted-actions/aws-cli/storage/*.ps1)",
+      "Bash(ls /Users/sinisasokolic/Documents/GitHub/scripted-actions/gce-cli/*.ps1)",
+      "Bash(ls /Users/sinisasokolic/Documents/GitHub/scripted-actions/gce-ps/*.ps1)",
+      "Bash(ls /Users/sinisasokolic/Documents/GitHub/scripted-actions/msgraph/*.ps1)"
+    ]
+  }
+}

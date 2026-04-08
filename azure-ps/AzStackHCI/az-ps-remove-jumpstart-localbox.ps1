@@ -55,7 +55,15 @@
     .\az-ps-remove-jumpstart-localbox.ps1 -ResourceGroup "rg-localbox" -SubscriptionId "12345678-1234-1234-1234-123456789012" -Force
 
 .NOTES
-    Requires Azure PowerShell module (Az) to be installed and authenticated.
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: Az PowerShell module (Install-Module Az), Az.StackHCI
 
     WARNING: This script will permanently delete ALL Azure resources in the specified resource group.
     Ensure you have backups of any important data before running this script.
@@ -65,28 +73,30 @@
 
     Arc-enabled resources may need to be disconnected from Azure Arc before deletion.
 
-    Author: Azure Infrastructure Team
+.LINK
+    https://learn.microsoft.com/en-us/azure/azure-local/
 
-    Last Updated: September 2025
+.COMPONENT
+    Azure PowerShell Stack HCI
 #>
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "Name of the Azure resource group containing the LocalBox deployment to remove.")]
     [ValidatePattern('^[a-zA-Z0-9\-_\.]{1,90}$')]
     [string]$ResourceGroup,
 
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "Azure subscription ID containing the LocalBox deployment.")]
     [ValidatePattern('^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$')]
     [string]$SubscriptionId,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "If specified, skips confirmation prompts for resource deletion.")]
     [switch]$Force,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "If specified, only lists the resources that would be deleted without performing any deletion.")]
     [switch]$ListResourcesOnly,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "If specified, performs a dry run without deleting actual resources.")]
     [switch]$DryRun
 )
 

@@ -1,131 +1,97 @@
-# Azure PowerShell - Azure Stack HCI Scripts
+# Azure Stack HCI Scripts
 
-This directory contains PowerShell scripts for managing Azure Stack HCI using Azure PowerShell modules.
+PowerShell scripts for deploying and managing Azure Stack HCI (Azure Local)
+environments using the Az PowerShell module. Scripts cover both a lightweight
+Azure VM host for nested-virtualization testing and the full Azure Arc Jumpstart
+LocalBox evaluation environment.
 
 ## Prerequisites
 
-- Azure PowerShell modules installed:
-  - `Install-Module -Name Az.StackHCI`
-  - `Install-Module -Name Az.Compute`
-  - `Install-Module -Name Az.Network`
-- PowerShell 5.1 or later (PowerShell 7+ recommended)
-- Azure Stack HCI cluster deployed
-- Appropriate permissions for Stack HCI management
-
-## About Azure Stack HCI
-
-Azure Stack HCI is a hyperconverged infrastructure (HCI) cluster solution that hosts virtualized Windows and Linux workloads and their storage in a hybrid on-premises environment. It combines:
-
-- Windows Server Hyper-V virtualization
-- Software-defined storage (Storage Spaces Direct)
-- Software-defined networking
-- Azure Arc integration
+- Az PowerShell module (`Install-Module Az`)
+- Az.StackHCI module (`Install-Module Az.StackHCI`)
+- Az.StackHCI.VM module (required by the image script)
+- Active Azure subscription
+- Appropriate permissions to create and manage Azure resources
 
 ## Available Scripts
 
-Scripts in this directory help manage:
-
-- Azure Stack HCI cluster registration
-- VM management on HCI clusters
-- Storage configuration
-- Network configuration
-- Azure Arc integration
-- Update and patch management
+| Script | Description |
+| --- | --- |
+| `az-ps-deploy-azure-local-host.ps1` | Deploy a Windows Server 2022 Azure VM with nested virtualization and Hyper-V for Azure Stack HCI testing |
+| `az-ps-remove-azure-local-host.ps1` | Remove the Azure VM and all related networking resources created by the deploy-azure-local-host script |
+| `az-ps-deploy-azure-local-image.ps1` | Create a generalized Azure Local VM image: provisions a VM on the HCI cluster, installs the XOAP agent, runs Sysprep, and registers the result as an Azure Local VM image |
+| `az-ps-deploy-jumpstart-localbox.ps1` | Deploy the Azure Arc Jumpstart LocalBox (formerly HCIBox) full evaluation environment via Bicep template; supports a `-DryRun` mode |
+| `az-ps-remove-jumpstart-localbox.ps1` | Remove the entire LocalBox resource group and all contained resources |
 
 ## Usage Examples
 
-### Register Azure Stack HCI
+### Deploy Azure Local Host (nested-virtualization test VM)
 
 ```powershell
-# Connect to Azure
-Connect-AzAccount
-
-# Register cluster
-Register-AzStackHCI `
-    -SubscriptionId "your-subscription-id" `
-    -ResourceGroupName "HCI-RG" `
-    -ResourceName "MyHCICluster" `
-    -Region "EastUS"
+.\az-ps-deploy-azure-local-host.ps1 `
+    -ResourceGroup "rg-azstackhci-test" `
+    -VmName "vm-hci-host" `
+    -Location "West Europe" `
+    -AdminUser "azureadmin"
 ```
 
-### Manage VMs on Stack HCI
+Run in dry-run mode to preview what would be created:
 
 ```powershell
-# Create VM using Azure PowerShell
-New-AzVM `
-    -ResourceGroupName "HCI-RG" `
-    -Name "MyVM" `
-    -Location "EastUS" `
-    -VirtualMachineSize "Standard_D2s_v3"
+.\az-ps-deploy-azure-local-host.ps1 `
+    -ResourceGroup "rg-azstackhci-test" `
+    -VmName "vm-hci-host" `
+    -Location "West Europe" `
+    -AdminUser "azureadmin" `
+    -DryRun
 ```
 
-## Azure Stack HCI Best Practices
+### Remove Azure Local Host
 
-- **Deployment**:
+```powershell
+.\az-ps-remove-azure-local-host.ps1 `
+    -ResourceGroup "rg-azstackhci-test" `
+    -VmName "vm-hci-host"
+```
 
-  - Use validated hardware from Microsoft partners
-  - Implement proper network segregation
-  - Plan storage capacity appropriately
-  - Use redundant network paths
+### Deploy Azure Local VM Image
 
-- **Management**:
+```powershell
+$customLocationId = (
+    "/subscriptions/<subscription-id>" +
+    "/resourceGroups/rg-azlocal-prod" +
+    "/providers/Microsoft.ExtendedLocation" +
+    "/customLocations/cl-hci-cluster"
+)
+.\az-ps-deploy-azure-local-image.ps1 `
+    -ResourceGroupName "rg-azlocal-prod" `
+    -CustomLocationId $customLocationId `
+    -Location "westeurope"
+```
 
-  - Enable Azure Arc integration
-  - Implement cluster-aware updating
-  - Monitor with Azure Monitor
-  - Regular backup of cluster configuration
+### Deploy Jumpstart LocalBox
 
-- **Security**:
+```powershell
+.\az-ps-deploy-jumpstart-localbox.ps1 `
+    -Location "West Europe" `
+    -ResourceGroup "rg-localbox" `
+    -NamingPrefix "localbox" `
+    -VmSize "Standard_D16s_v5" `
+    -DeployBastion $true
+```
 
-  - Enable BitLocker encryption
-  - Use secured-core servers
-  - Implement network microsegmentation
-  - Regular security updates
+> **Note:** LocalBox deployments take 60-90 minutes and can cost
+> $800-1500 USD/month. Clean up resources when testing is complete.
 
-- **Performance**:
-  - Use NVMe or SSD for cache tier
-  - Proper RDMA configuration
-  - Monitor Storage Spaces Direct health
-  - Balance VM workloads across nodes
+### Remove Jumpstart LocalBox
 
-## Key Components
-
-### Storage Spaces Direct (S2D)
-
-- Software-defined storage
-- Local storage pooling
-- Automatic data replication
-- Cache and capacity tiers
-
-### Software-Defined Networking (SDN)
-
-- Network virtualization
-- Software load balancing
-- Distributed firewall
-- Gateway services
-
-### Windows Admin Center
-
-- Web-based management interface
-- Cluster management
-- VM management
-- Performance monitoring
-
-## Error Handling
-
-Scripts include:
-
-- Cluster connectivity checks
-- Azure registration validation
-- Resource availability verification
-- Comprehensive error messages
+```powershell
+.\az-ps-remove-jumpstart-localbox.ps1 `
+    -ResourceGroup "rg-localbox"
+```
 
 ## Related Documentation
 
-- [Azure Stack HCI Documentation](https://docs.microsoft.com/azure-stack/hci/)
-- [Azure Stack HCI PowerShell](https://docs.microsoft.com/powershell/module/az.stackhci/)
-- [Windows Admin Center](https://docs.microsoft.com/windows-server/manage/windows-admin-center/overview)
-
-## Support
-
-For issues or questions, please refer to the main repository documentation.
+- [Azure Local (Stack HCI) documentation](https://learn.microsoft.com/en-us/azure/azure-local/)
+- [Az.StackHCI module reference](https://learn.microsoft.com/en-us/powershell/module/az.stackhci/)
+- [Azure Arc Jumpstart LocalBox](https://github.com/microsoft/azure_arc/tree/main/azure_jumpstart_hcibox)

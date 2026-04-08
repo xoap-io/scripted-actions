@@ -60,7 +60,15 @@
     .\az-ps-remove-azure-local-host.ps1 -ResourceGroup "rg-test" -VmName "vm-test" -DryRun
 
 .NOTES
-    Requires Azure PowerShell module (Az) to be installed and authenticated.
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: Az PowerShell module (Install-Module Az), Az.StackHCI
 
     WARNING: This script will permanently delete Azure resources. Ensure you have backups
     of any important data before running this script.
@@ -68,48 +76,50 @@
     The script will attempt to remove resources in the correct order to avoid dependency
     conflicts. Some resources may take time to delete completely.
 
-    Author: XOAP.io
+.LINK
+    https://learn.microsoft.com/en-us/azure/azure-local/
 
-    Last Updated: September 2025
+.COMPONENT
+    Azure PowerShell Stack HCI
 #>
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "Name of the Azure resource group containing the resources to remove.")]
     [ValidatePattern('^[a-zA-Z0-9\-_\.]{1,90}$')]
     [string]$ResourceGroup,
 
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "Name of the virtual machine to remove. Used to derive other resource names.")]
     [ValidatePattern('^[a-zA-Z0-9\-_]{1,15}$')]
     [string]$VmName,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "If specified, removes the entire resource group after removing individual resources.")]
     [switch]$RemoveResourceGroup,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "If specified, skips confirmation prompts for resource deletion.")]
     [switch]$Force,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Name of the virtual network to remove. Defaults to 'vnet-{VmName}'.")]
     [ValidatePattern('^[a-zA-Z0-9\-_]{2,64}$')]
     [string]$VNetName = "vnet-$VmName",
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Name of the subnet within the VNet. Defaults to 'subnet-default'.")]
     [ValidatePattern('^[a-zA-Z0-9\-_]{2,80}$')]
     [string]$SubnetName = "subnet-default",
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Name of the network security group to remove. Defaults to 'nsg-{VmName}-rdp'.")]
     [ValidatePattern('^[a-zA-Z0-9\-_\.]{1,80}$')]
     [string]$NSGName = "nsg-$VmName-rdp",
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Name of the public IP address to remove. Defaults to 'pip-{VmName}'.")]
     [ValidatePattern('^[a-zA-Z0-9\-_\.]{1,80}$')]
     [string]$PublicIPName = "pip-$VmName",
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Name of the network interface to remove. Defaults to 'nic-{VmName}'.")]
     [ValidatePattern('^[a-zA-Z0-9\-_]{1,80}$')]
     [string]$NICName = "nic-$VmName",
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "If specified, performs a dry run without deleting actual resources.")]
     [switch]$DryRun
 )
 

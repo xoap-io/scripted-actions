@@ -1,11 +1,83 @@
+<#
+.SYNOPSIS
+    Describes AWS VPC endpoints.
+
+.DESCRIPTION
+    This script retrieves detailed information about VPC endpoints in your AWS account.
+    It supports filtering by various criteria and provides comprehensive endpoint details.
+    Uses aws ec2 describe-vpc-endpoints to perform the operation.
+
+.PARAMETER VpcEndpointIds
+    Comma-separated list of specific VPC endpoint IDs to describe. Must be in the format 'vpce-xxxxxxxxx'.
+
+.PARAMETER VpcId
+    Filter endpoints by VPC ID.
+
+.PARAMETER ServiceName
+    Filter endpoints by AWS service name (e.g., com.amazonaws.us-east-1.s3).
+
+.PARAMETER VpcEndpointType
+    Filter by endpoint type: Interface, Gateway, or GatewayLoadBalancer.
+
+.PARAMETER State
+    Filter by endpoint state.
+
+.PARAMETER Profile
+    The AWS CLI profile to use for the operation.
+
+.PARAMETER Region
+    The AWS region to query for VPC endpoints.
+
+.PARAMETER OutputFormat
+    The output format for the results (json, table, text, yaml).
+
+.PARAMETER Detailed
+    Show detailed information including DNS entries and policy documents.
+
+.EXAMPLE
+    .\aws-cli-describe-vpc-endpoints.ps1
+
+.EXAMPLE
+    .\aws-cli-describe-vpc-endpoints.ps1 -VpcId vpc-12345678
+
+.EXAMPLE
+    .\aws-cli-describe-vpc-endpoints.ps1 -ServiceName "com.amazonaws.us-east-1.s3"
+
+.EXAMPLE
+    .\aws-cli-describe-vpc-endpoints.ps1 -VpcEndpointType Interface -State Available
+
+.EXAMPLE
+    .\aws-cli-describe-vpc-endpoints.ps1 -VpcEndpointIds vpce-12345678,vpce-87654321 -Detailed
+
+.EXAMPLE
+    .\aws-cli-describe-vpc-endpoints.ps1 -Profile myprofile -Region us-west-2 -OutputFormat json
+
+.NOTES
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: AWS CLI v2 (https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
+
+.LINK
+    https://docs.aws.amazon.com/cli/latest/reference/ec2/describe-vpc-endpoints.html
+
+.COMPONENT
+    AWS CLI Network
+#>
+
 [CmdletBinding()]
 param (
     [Parameter(Mandatory = $false, HelpMessage = "Specific VPC endpoint IDs to describe")]
-    [ValidatePattern('^vpce-[a-zA-Z0-9]+(,vpce-[a-zA-Z0-9]+)*$', ErrorMessage = "VpcEndpointIds must be comma-separated valid VPC endpoint IDs (format: vpce-xxxxxxxxx)")]
+    [ValidatePattern('^vpce-[a-zA-Z0-9]+(,vpce-[a-zA-Z0-9]+)*$')]
     [string]$VpcEndpointIds,
 
     [Parameter(Mandatory = $false, HelpMessage = "Filter by VPC ID")]
-    [ValidatePattern('^vpc-[a-zA-Z0-9]+$', ErrorMessage = "VpcId must be a valid VPC ID (format: vpc-xxxxxxxxx)")]
+    [ValidatePattern('^vpc-[a-zA-Z0-9]+$')]
     [string]$VpcId,
 
     [Parameter(Mandatory = $false, HelpMessage = "Filter by service name")]
@@ -32,76 +104,6 @@ param (
     [Parameter(Mandatory = $false, HelpMessage = "Show detailed information including DNS entries and policy documents")]
     [switch]$Detailed
 )
-
-<#
-.SYNOPSIS
-Describes AWS VPC endpoints.
-
-.DESCRIPTION
-This script retrieves detailed information about VPC endpoints in your AWS account. It supports filtering by various criteria and provides comprehensive endpoint details.
-
-.PARAMETER VpcEndpointIds
-Comma-separated list of specific VPC endpoint IDs to describe. Must be in the format 'vpce-xxxxxxxxx'.
-
-.PARAMETER VpcId
-Filter endpoints by VPC ID.
-
-.PARAMETER ServiceName
-Filter endpoints by AWS service name (e.g., com.amazonaws.us-east-1.s3).
-
-.PARAMETER VpcEndpointType
-Filter by endpoint type: Interface, Gateway, or GatewayLoadBalancer.
-
-.PARAMETER State
-Filter by endpoint state.
-
-.PARAMETER Profile
-The AWS CLI profile to use for the operation.
-
-.PARAMETER Region
-The AWS region to query for VPC endpoints.
-
-.PARAMETER OutputFormat
-The output format for the results (json, table, text, yaml).
-
-.PARAMETER Detailed
-Show detailed information including DNS entries and policy documents.
-
-.EXAMPLE
-.\aws-cli-describe-vpc-endpoints.ps1
-
-Lists all VPC endpoints in the default region.
-
-.EXAMPLE
-.\aws-cli-describe-vpc-endpoints.ps1 -VpcId vpc-12345678
-
-Lists all VPC endpoints in the specified VPC.
-
-.EXAMPLE
-.\aws-cli-describe-vpc-endpoints.ps1 -ServiceName "com.amazonaws.us-east-1.s3"
-
-Lists all S3 gateway endpoints.
-
-.EXAMPLE
-.\aws-cli-describe-vpc-endpoints.ps1 -VpcEndpointType Interface -State Available
-
-Lists all available interface endpoints.
-
-.EXAMPLE
-.\aws-cli-describe-vpc-endpoints.ps1 -VpcEndpointIds vpce-12345678,vpce-87654321 -Detailed
-
-Shows detailed information for specific endpoints.
-
-.EXAMPLE
-.\aws-cli-describe-vpc-endpoints.ps1 -Profile myprofile -Region us-west-2 -OutputFormat json
-
-Lists endpoints using a specific profile and region with JSON output.
-
-.NOTES
-Author: Your Name
-Date: 2024
-Requires: AWS CLI v2.16+ and appropriate IAM permissions
-#>
 
 $ErrorActionPreference = 'Stop'
 
@@ -244,6 +246,8 @@ try {
     Write-Host "`nTip: Use -Detailed switch for more comprehensive information including DNS entries and policies." -ForegroundColor Cyan
 
 } catch {
-    Write-Error "An error occurred: $($_.Exception.Message)"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
+} finally {
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

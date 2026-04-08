@@ -29,33 +29,47 @@
 .EXAMPLE
     .\az-cli-create-vm-scale-set.ps1 -AzResourceGroup "MyResourceGroup" -AzScaleSetName "MyScaleSet" -AzOrchestrationMode "Flexible" -AzSkuImage "UbuntuLTS" -AzScaleSetInstanceCount 2 -AzAdminUserName "azureuser"
 
+.NOTES
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: Azure CLI (https://docs.microsoft.com/en-us/cli/azure/install-azure-cli)
+
 .LINK
     https://learn.microsoft.com/en-us/cli/azure/vmss
+
+.COMPONENT
+    Azure CLI Virtual Machines
 #>
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The name of the Azure Resource Group")]
     [ValidateNotNullOrEmpty()]
     [string]$AzResourceGroup = 'myResourceGroup',
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The name of the Azure VM Scale Set")]
     [ValidateNotNullOrEmpty()]
     [string]$AzScaleSetName = 'myScaleSet',
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The orchestration mode of the Scale Set")]
     [ValidateSet("Flexible", "Uniform")]
     [string]$AzOrchestrationMode = 'Flexible',
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The SKU image for the Scale Set")]
     [ValidateNotNullOrEmpty()]
     [string]$AzSkuImage = 'UbuntuLTS',
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The instance count for the Scale Set")]
     [ValidateNotNullOrEmpty()]
     [int]$AzScaleSetInstanceCount = 2,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The admin username for the Scale Set VMs")]
     [ValidateNotNullOrEmpty()]
     [string]$AzAdminUserName = 'azureuser'
 )
@@ -84,15 +98,10 @@ try {
     az vmss create @parameters
 
     # Output the result
-    Write-Output "Azure Virtual Machine Scale Set created successfully."
+    Write-Host "✅ Azure Virtual Machine Scale Set created successfully." -ForegroundColor Green
 } catch {
-    # Log the error to the console
-
-Write-Output "Error message $errorMessage"
-
-
-    Write-Error "Failed to create the Azure Virtual Machine Scale Set: $($_.Exception.Message)"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
+    exit 1
 } finally {
-    # Cleanup code if needed
-    Write-Output "Script execution completed."
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

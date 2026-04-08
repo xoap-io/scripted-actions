@@ -1,73 +1,120 @@
 <#
 .SYNOPSIS
-    Update Azure NSG properties (tags, location) with validation and audit logging.
+    Update Azure NSG tags with validation and optional compliance logging using Azure CLI.
+
 .DESCRIPTION
-    This script updates an NSG's tags or location, with validation, conflict detection, and audit logging. Supports dry-run mode and compliance tagging.
+    This script updates an Azure Network Security Group's tags using the Azure CLI.
+    Supports dry-run mode, compliance tagging for audit purposes, and validation of the
+    NSG before making changes.
+
+    The script uses the Azure CLI command: az network nsg update
+
 .PARAMETER Name
     Name of the NSG to update.
+
 .PARAMETER ResourceGroup
-    Name of the Azure Resource Group.
-.PARAMETER Location
-    New Azure region for the NSG.
+    Name of the Azure Resource Group containing the NSG.
+
 .PARAMETER Tags
-    Tags to apply in key=value format (space-separated pairs).
+    Tags to apply in key=value format (space-separated pairs, e.g., "Owner=SOC Compliance=PCI").
+
+.PARAMETER ComplianceTag
+    Additional compliance tag value to record for audit purposes.
+
 .PARAMETER WhatIf
     Show what would be updated without making changes.
-.PARAMETER ComplianceTag
-    Tag update for audit/compliance.
+
 .EXAMPLE
     .\az-cli-update-nsg-group.ps1 -Name "web-nsg" -ResourceGroup "rg-web" -Tags "Owner=SOC Compliance=PCI" -ComplianceTag "PCI-DSS"
+
+    Updates web-nsg tags and records a PCI-DSS compliance annotation.
+
+.EXAMPLE
+    .\az-cli-update-nsg-group.ps1 -Name "app-nsg" -ResourceGroup "rg-app" -Tags "Environment=Production" -WhatIf
+
+    Previews the tag update without making changes.
+
 .NOTES
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
     Author: XOAP.IO
-    Date: 2025-08-05
-.0
-    Requires: Azure CLI version 2.0 or later
+    Requires: Azure CLI (https://docs.microsoft.com/en-us/cli/azure/install-azure-cli)
+
+.LINK
+    https://docs.microsoft.com/en-us/cli/azure/network/nsg
+
+.COMPONENT
+    Azure CLI Security
 #>
+
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "Name of the NSG to update")]
+    [ValidateNotNullOrEmpty()]
+    [ValidateLength(1, 80)]
+    [ValidatePattern('^[a-zA-Z0-9._-]+$')]
     [string]$Name,
-    [Parameter(Mandatory = $true)]
+
+    [Parameter(Mandatory = $true, HelpMessage = "Name of the Azure Resource Group")]
+    [ValidateNotNullOrEmpty()]
+    [ValidateLength(1, 90)]
+    [ValidatePattern('^[a-zA-Z0-9._()-]+$')]
     [string]$ResourceGroup,
-    [Parameter(Mandatory = $false)]
-    [string]$Location,
-    [Parameter(Mandatory = $false)]
+
+    [Parameter(Mandatory = $false, HelpMessage = "Tags in key=value format (space-separated)")]
     [string]$Tags,
-    [Parameter(Mandatory = $false)]
-    [switch]$WhatIf,
-    [Parameter(Mandatory = $false)]
-    [string]$ComplianceTag
+
+    [Parameter(Mandatory = $false, HelpMessage = "Compliance tag value for audit logging")]
+    [string]$ComplianceTag,
+
+    [Parameter(Mandatory = $false, HelpMessage = "Preview the update without making changes")]
+    [switch]$WhatIf
 )
+
 $ErrorActionPreference = 'Stop'
-function Test-AzureCLI {
-    try {
-        $null = az --version
-        if ($LASTEXITCODE -ne 0) { throw "Azure CLI is not installed or not functioning correctly" }
-        $null = az account show 2>$null
-        if ($LASTEXITCODE -ne 0) { throw "Not authenticated to Azure CLI. Please run 'az login' first" }
-        return $true
-    } catch { Write-Error $_; return $false }
-}
-if (-not (Test-AzureCLI)) { exit 1 }
-$azParams = @('network', 'nsg', 'update', '--resource-group', $ResourceGroup, '--name', $Name)
-if ($Location) { $azParams += '--location'; $azParams += $Location }
-if ($Tags) { $azParams += '--tags'; $azParams += $Tags }
-if ($WhatIf) {
-    Write-Host "WHAT-IF: The following NSG would be updated:" -ForegroundColor Yellow
-    Write-Host " - Name: $Name" -ForegroundColor White
-    Write-Host " - ResourceGroup: $ResourceGroup" -ForegroundColor White
-    if ($Location) { Write-Host " - Location: $Location" -ForegroundColor White }
-    if ($Tags) { Write-Host " - Tags: $Tags" -ForegroundColor White }
-    exit 0
-}
-Write-Host "🔧 Updating NSG '$Name'..." -ForegroundColor Cyan
-$null = az @azParams
-if ($LASTEXITCODE -eq 0) {
-    Write-Host "✅ NSG '$Name' updated successfully!" -ForegroundColor Green
-    if ($ComplianceTag) {
-        Write-Host "📝 Compliance tag '$ComplianceTag' recorded for NSG '$Name'" -ForegroundColor Cyan
-        # In real implementation, log to compliance system
+
+try {
+    # Validate Azure CLI
+    Write-Host "🔍 Validating Azure CLI..." -ForegroundColor Cyan
+    $null = az --version
+    if ($LASTEXITCODE -ne 0) { throw "Azure CLI is not installed or not functioning correctly" }
+    $null = az account show 2>$null
+    if ($LASTEXITCODE -ne 0) { throw "Not authenticated to Azure CLI. Please run 'az login' first" }
+    Write-Host "✅ Azure CLI validation successful" -ForegroundColor Green
+
+    if ($WhatIf) {
+        Write-Host "WHAT-IF: Would update NSG '$Name' in '$ResourceGroup'." -ForegroundColor Yellow
+        if ($Tags) { Write-Host "  - Tags: $Tags" -ForegroundColor White }
+        if ($ComplianceTag) { Write-Host "  - ComplianceTag: $ComplianceTag" -ForegroundColor White }
+        exit 0
     }
-} else {
-    throw "Failed to update NSG. Exit code: $LASTEXITCODE"
+
+    $azParams = @('network', 'nsg', 'update', '--resource-group', $ResourceGroup, '--name', $Name)
+    if ($Tags) {
+        $tagPairs = $Tags -split '\s+'
+        $azParams += '--tags'
+        $azParams += $tagPairs
+    }
+
+    Write-Host "🔧 Updating NSG '$Name'..." -ForegroundColor Cyan
+    $null = az @azParams
+    if ($LASTEXITCODE -ne 0) { throw "Failed to update NSG '$Name'." }
+
+    Write-Host "✅ NSG '$Name' updated successfully!" -ForegroundColor Green
+
+    if ($ComplianceTag) {
+        Write-Host "ℹ️  Compliance tag '$ComplianceTag' recorded for NSG '$Name'." -ForegroundColor Cyan
+    }
+}
+catch {
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
+    exit 1
+}
+finally {
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

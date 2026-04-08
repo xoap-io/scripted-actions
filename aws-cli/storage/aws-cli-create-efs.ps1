@@ -58,59 +58,70 @@
     .\aws-cli-create-efs.ps1 -VpcId "vpc-12345678" -SubnetIds "subnet-12345678" -ThroughputMode "provisioned" -ProvisionedThroughputInMibps 500
 
 .NOTES
-    Requires AWS CLI v2.16+ and appropriate IAM permissions for EFS operations.
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: AWS CLI v2 (https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
 
 .LINK
-    https://github.com/xoap-io/scripted-actions
+    https://docs.aws.amazon.com/cli/latest/reference/efs/create-file-system.html
+
+.COMPONENT
+    AWS CLI Storage
 #>
 
 [CmdletBinding()]
 param(
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "Unique string to identify the request (auto-generated if not provided)")]
     [string]$CreationToken,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "Performance mode: generalPurpose or maxIO (default: generalPurpose)")]
     [ValidateSet("generalPurpose", "maxIO")]
     [string]$PerformanceMode = "generalPurpose",
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "Throughput mode: bursting or provisioned (default: bursting)")]
     [ValidateSet("bursting", "provisioned")]
     [string]$ThroughputMode = "bursting",
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "Provisioned throughput in MiB/s (required when ThroughputMode is provisioned)")]
     [ValidateRange(1, 1024)]
     [double]$ProvisionedThroughputInMibps,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "Enable encryption at rest")]
     [switch]$Encrypted,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "KMS key ID for encryption (uses default if not specified)")]
     [string]$KmsKeyId,
 
-    [Parameter(Mandatory)]
+    [Parameter(Mandatory = $true, HelpMessage = "VPC ID where mount targets will be created")]
     [ValidatePattern('^vpc-[a-f0-9]{8,17}$')]
     [string]$VpcId,
 
-    [Parameter(Mandatory)]
+    [Parameter(Mandatory = $true, HelpMessage = "Comma-separated list of subnet IDs for mount targets")]
     [string]$SubnetIds,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "Comma-separated list of security group IDs for mount targets")]
     [string]$SecurityGroupIds,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "JSON string of tags to apply to the file system")]
     [string]$Tags,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "The AWS region to use")]
     [ValidatePattern('^[a-z]{2}-[a-z]+-\d{1}$')]
     [string]$Region,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "The AWS CLI profile to use")]
     [string]$AwsProfile,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "Wait for the file system to become available")]
     [switch]$WaitForAvailable,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "Maximum time to wait for availability in minutes (default: 10)")]
     [ValidateRange(1, 60)]
     [int]$TimeoutMinutes = 10
 )
@@ -353,6 +364,8 @@ try {
     Write-Host "File System ID: $fileSystemId" -ForegroundColor Cyan
 
 } catch {
-    Write-Error "Failed to create EFS file system: $($_.Exception.Message)"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
+} finally {
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

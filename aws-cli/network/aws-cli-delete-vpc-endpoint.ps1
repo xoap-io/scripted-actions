@@ -1,7 +1,54 @@
+<#
+.SYNOPSIS
+    Deletes an AWS VPC endpoint.
+
+.DESCRIPTION
+    This script deletes a VPC endpoint in AWS. It provides options to view endpoint details before deletion
+    and includes safety confirmation prompts. Uses aws ec2 delete-vpc-endpoints to perform the operation.
+
+.PARAMETER VpcEndpointId
+    The ID of the VPC endpoint to delete. Must be in the format 'vpce-xxxxxxxxx'.
+
+.PARAMETER Profile
+    The AWS CLI profile to use for the operation.
+
+.PARAMETER Region
+    The AWS region where the VPC endpoint is located.
+
+.PARAMETER Force
+    Skip the confirmation prompt and delete the VPC endpoint immediately.
+
+.EXAMPLE
+    .\aws-cli-delete-vpc-endpoint.ps1 -VpcEndpointId vpce-12345678
+
+.EXAMPLE
+    .\aws-cli-delete-vpc-endpoint.ps1 -VpcEndpointId vpce-12345678 -Force
+
+.EXAMPLE
+    .\aws-cli-delete-vpc-endpoint.ps1 -VpcEndpointId vpce-12345678 -Profile myprofile -Region us-west-2
+
+.NOTES
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: AWS CLI v2 (https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
+
+.LINK
+    https://docs.aws.amazon.com/cli/latest/reference/ec2/delete-vpc-endpoints.html
+
+.COMPONENT
+    AWS CLI Network
+#>
+
 [CmdletBinding()]
 param (
     [Parameter(Mandatory = $true, HelpMessage = "The VPC endpoint ID to delete")]
-    [ValidatePattern('^vpce-[a-zA-Z0-9]+$', ErrorMessage = "VpcEndpointId must be a valid VPC endpoint ID (format: vpce-xxxxxxxxx)")]
+    [ValidatePattern('^vpce-[a-zA-Z0-9]+$')]
     [string]$VpcEndpointId,
 
     [Parameter(Mandatory = $false, HelpMessage = "AWS CLI profile to use")]
@@ -13,46 +60,6 @@ param (
     [Parameter(Mandatory = $false, HelpMessage = "Skip confirmation prompt")]
     [switch]$Force
 )
-
-<#
-.SYNOPSIS
-Deletes an AWS VPC endpoint.
-
-.DESCRIPTION
-This script deletes a VPC endpoint in AWS. It provides options to view endpoint details before deletion and includes safety confirmation prompts.
-
-.PARAMETER VpcEndpointId
-The ID of the VPC endpoint to delete. Must be in the format 'vpce-xxxxxxxxx'.
-
-.PARAMETER Profile
-The AWS CLI profile to use for the operation.
-
-.PARAMETER Region
-The AWS region where the VPC endpoint is located.
-
-.PARAMETER Force
-Skip the confirmation prompt and delete the VPC endpoint immediately.
-
-.EXAMPLE
-.\aws-cli-delete-vpc-endpoint.ps1 -VpcEndpointId vpce-12345678
-
-Deletes the specified VPC endpoint with confirmation prompt.
-
-.EXAMPLE
-.\aws-cli-delete-vpc-endpoint.ps1 -VpcEndpointId vpce-12345678 -Force
-
-Deletes the specified VPC endpoint without confirmation prompt.
-
-.EXAMPLE
-.\aws-cli-delete-vpc-endpoint.ps1 -VpcEndpointId vpce-12345678 -Profile myprofile -Region us-west-2
-
-Deletes the VPC endpoint using a specific AWS profile and region.
-
-.NOTES
-Author: Your Name
-Date: 2024
-Requires: AWS CLI v2.16+ and appropriate IAM permissions
-#>
 
 $ErrorActionPreference = 'Stop'
 
@@ -139,7 +146,7 @@ try {
 
     $deleteInfo = $deleteResult | ConvertFrom-Json
 
-    Write-Host "`nVPC endpoint deletion initiated successfully!" -ForegroundColor Green
+    Write-Host "`n✅ VPC endpoint deletion initiated successfully!" -ForegroundColor Green
 
     if ($deleteInfo.Unsuccessful -and $deleteInfo.Unsuccessful.Count -gt 0) {
         Write-Host "`nFailed deletions:" -ForegroundColor Red
@@ -160,6 +167,8 @@ try {
     Write-Host "Use 'aws ec2 describe-vpc-endpoints --vpc-endpoint-ids $VpcEndpointId' to check the deletion status." -ForegroundColor Cyan
 
 } catch {
-    Write-Error "An error occurred: $($_.Exception.Message)"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
+} finally {
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

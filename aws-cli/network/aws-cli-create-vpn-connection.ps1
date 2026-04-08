@@ -1,22 +1,94 @@
+<#
+.SYNOPSIS
+    Creates an AWS VPN connection.
+
+.DESCRIPTION
+    This script creates a VPN connection between a customer gateway and either a Virtual Private Gateway
+    or Transit Gateway. It supports static routing configuration and optional wait for availability.
+    Uses aws ec2 create-vpn-connection to perform the operation.
+
+.PARAMETER CustomerGatewayId
+    The ID of the customer gateway for the VPN connection.
+
+.PARAMETER VpnGatewayId
+    The ID of the Virtual Private Gateway. Cannot be used with TransitGatewayId.
+
+.PARAMETER TransitGatewayId
+    The ID of the Transit Gateway. Cannot be used with VpnGatewayId.
+
+.PARAMETER Type
+    The type of VPN connection. Currently only 'ipsec.1' is supported.
+
+.PARAMETER StaticRoutes
+    Comma-separated list of CIDR blocks for static routing (only applicable with VGW).
+
+.PARAMETER Name
+    A name for the VPN connection (added as a Name tag).
+
+.PARAMETER Profile
+    The AWS CLI profile to use for the operation.
+
+.PARAMETER Region
+    The AWS region where the VPN connection will be created.
+
+.PARAMETER Tags
+    Additional tags to apply in the format Key1=Value1,Key2=Value2.
+
+.PARAMETER Wait
+    Wait for the VPN connection to become available.
+
+.EXAMPLE
+    .\aws-cli-create-vpn-connection.ps1 -CustomerGatewayId cgw-12345678 -VpnGatewayId vgw-87654321 -Name "Office-VPN"
+
+.EXAMPLE
+    .\aws-cli-create-vpn-connection.ps1 -CustomerGatewayId cgw-12345678 -TransitGatewayId tgw-87654321 -Name "DataCenter-VPN"
+
+.EXAMPLE
+    .\aws-cli-create-vpn-connection.ps1 -CustomerGatewayId cgw-12345678 -VpnGatewayId vgw-87654321 -StaticRoutes "10.0.0.0/16,192.168.0.0/16"
+
+.NOTES
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: AWS CLI v2 (https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
+
+    IMPORTANT NOTES:
+    - You must specify either VpnGatewayId or TransitGatewayId, but not both
+    - Static routes are only supported with Virtual Private Gateways
+    - VPN connections take several minutes to become available
+    - Each VPN connection provides redundant tunnels for high availability
+
+.LINK
+    https://docs.aws.amazon.com/cli/latest/reference/ec2/create-vpn-connection.html
+
+.COMPONENT
+    AWS CLI Network
+#>
+
 [CmdletBinding()]
 param (
-    [Parameter(Mandatory = $true, HelpMessage = "Customer Gateway ID")]
-    [ValidatePattern('^cgw-[a-zA-Z0-9]+$', ErrorMessage = "CustomerGatewayId must be a valid Customer Gateway ID (format: cgw-xxxxxxxxx)")]
+    [Parameter(Mandatory = $true, HelpMessage = "The ID of the customer gateway for the VPN connection")]
+    [ValidatePattern('^cgw-[a-zA-Z0-9]+$')]
     [string]$CustomerGatewayId,
 
-    [Parameter(Mandatory = $false, HelpMessage = "Virtual Private Gateway ID")]
-    [ValidatePattern('^vgw-[a-zA-Z0-9]+$', ErrorMessage = "VpnGatewayId must be a valid VPN Gateway ID (format: vgw-xxxxxxxxx)")]
+    [Parameter(Mandatory = $false, HelpMessage = "The ID of the Virtual Private Gateway")]
+    [ValidatePattern('^vgw-[a-zA-Z0-9]+$')]
     [string]$VpnGatewayId,
 
-    [Parameter(Mandatory = $false, HelpMessage = "Transit Gateway ID")]
-    [ValidatePattern('^tgw-[a-zA-Z0-9]+$', ErrorMessage = "TransitGatewayId must be a valid Transit Gateway ID (format: tgw-xxxxxxxxx)")]
+    [Parameter(Mandatory = $false, HelpMessage = "The ID of the Transit Gateway")]
+    [ValidatePattern('^tgw-[a-zA-Z0-9]+$')]
     [string]$TransitGatewayId,
 
-    [Parameter(Mandatory = $false, HelpMessage = "VPN connection type")]
+    [Parameter(Mandatory = $false, HelpMessage = "The type of VPN connection")]
     [ValidateSet('ipsec.1')]
     [string]$Type = 'ipsec.1',
 
-    [Parameter(Mandatory = $false, HelpMessage = "Static routes for the VPN connection (comma-separated CIDR blocks)")]
+    [Parameter(Mandatory = $false, HelpMessage = "Comma-separated CIDR blocks for static routing")]
     [string]$StaticRoutes,
 
     [Parameter(Mandatory = $false, HelpMessage = "Name tag for the VPN connection")]
@@ -31,73 +103,9 @@ param (
     [Parameter(Mandatory = $false, HelpMessage = "Additional tags (Format: Key1=Value1,Key2=Value2)")]
     [string]$Tags,
 
-    [Parameter(Mandatory = $false, HelpMessage = "Wait for the VPN connection to be available")]
+    [Parameter(Mandatory = $false, HelpMessage = "Wait for the VPN connection to become available")]
     [switch]$Wait
 )
-
-<#
-.SYNOPSIS
-Creates an AWS VPN connection.
-
-.DESCRIPTION
-This script creates a VPN connection between a customer gateway and either a Virtual Private Gateway or Transit Gateway.
-
-.PARAMETER CustomerGatewayId
-The ID of the customer gateway for the VPN connection.
-
-.PARAMETER VpnGatewayId
-The ID of the Virtual Private Gateway. Cannot be used with TransitGatewayId.
-
-.PARAMETER TransitGatewayId
-The ID of the Transit Gateway. Cannot be used with VpnGatewayId.
-
-.PARAMETER Type
-The type of VPN connection. Currently only 'ipsec.1' is supported.
-
-.PARAMETER StaticRoutes
-Comma-separated list of CIDR blocks for static routing (only applicable with VGW).
-
-.PARAMETER Name
-A name for the VPN connection (added as a Name tag).
-
-.PARAMETER Profile
-The AWS CLI profile to use for the operation.
-
-.PARAMETER Region
-The AWS region where the VPN connection will be created.
-
-.PARAMETER Tags
-Additional tags to apply in the format Key1=Value1,Key2=Value2.
-
-.PARAMETER Wait
-Wait for the VPN connection to become available.
-
-.EXAMPLE
-.\aws-cli-create-vpn-connection.ps1 -CustomerGatewayId cgw-12345678 -VpnGatewayId vgw-87654321 -Name "Office-VPN"
-
-Creates a VPN connection between a customer gateway and VPN gateway.
-
-.EXAMPLE
-.\aws-cli-create-vpn-connection.ps1 -CustomerGatewayId cgw-12345678 -TransitGatewayId tgw-87654321 -Name "DataCenter-VPN"
-
-Creates a VPN connection to a Transit Gateway.
-
-.EXAMPLE
-.\aws-cli-create-vpn-connection.ps1 -CustomerGatewayId cgw-12345678 -VpnGatewayId vgw-87654321 -StaticRoutes "10.0.0.0/16,192.168.0.0/16"
-
-Creates a VPN connection with static routes.
-
-.NOTES
-Author: Your Name
-Date: 2024
-Requires: AWS CLI v2.16+ and appropriate IAM permissions
-
-IMPORTANT NOTES:
-- You must specify either VpnGatewayId or TransitGatewayId, but not both
-- Static routes are only supported with Virtual Private Gateways
-- VPN connections take several minutes to become available
-- Each VPN connection provides redundant tunnels for high availability
-#>
 
 $ErrorActionPreference = 'Stop'
 
@@ -215,7 +223,7 @@ try {
     $vpnInfo = $result | ConvertFrom-Json
     $vpnConnection = $vpnInfo.VpnConnection
 
-    Write-Host "`nVPN connection created successfully!" -ForegroundColor Green
+    Write-Host "`n✅ VPN connection created successfully!" -ForegroundColor Green
     Write-Host "  VPN Connection ID: $($vpnConnection.VpnConnectionId)" -ForegroundColor White
     Write-Host "  State: $($vpnConnection.State)" -ForegroundColor White
     Write-Host "  Type: $($vpnConnection.Type)" -ForegroundColor White
@@ -324,6 +332,8 @@ try {
     Write-Output $vpnConnection.VpnConnectionId
 
 } catch {
-    Write-Error "An error occurred: $($_.Exception.Message)"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
+} finally {
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

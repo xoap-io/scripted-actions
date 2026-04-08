@@ -37,37 +37,48 @@
     .\aws-cli-attach-volume.ps1 -InstanceId "i-1234567890abcdef0" -VolumeId "vol-1234567890abcdef0" -Device "/dev/sdf" -Region "us-west-2" -Profile "myprofile"
 
 .NOTES
-    Requires AWS CLI v2.16+ and appropriate IAM permissions for EC2 operations.
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: AWS CLI v2 (https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
 
 .LINK
-    https://github.com/xoap-io/scripted-actions
+    https://docs.aws.amazon.com/cli/latest/reference/ec2/attach-volume.html
+
+.COMPONENT
+    AWS CLI Storage
 #>
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory)]
+    [Parameter(Mandatory = $true, HelpMessage = "The ID of the EC2 instance to attach the volume to")]
     [ValidatePattern('^i-[a-f0-9]{8,17}$')]
     [string]$InstanceId,
 
-    [Parameter(Mandatory)]
+    [Parameter(Mandatory = $true, HelpMessage = "The ID of the EBS volume to attach")]
     [ValidatePattern('^vol-[a-f0-9]{8,17}$')]
     [string]$VolumeId,
 
-    [Parameter(Mandatory)]
+    [Parameter(Mandatory = $true, HelpMessage = "The device name for the volume attachment (e.g., /dev/sdf, /dev/xvdf)")]
     [ValidatePattern('^/dev/[a-zA-Z0-9]+$')]
     [string]$Device,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "The AWS region to use")]
     [ValidatePattern('^[a-z]{2}-[a-z]+-\d{1}$')]
     [string]$Region,
 
-    [Parameter()]
-    [string]$Profile,
+    [Parameter(Mandatory = $false, HelpMessage = "The AWS CLI profile to use")]
+    [string]$AwsProfile,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "Wait for the volume attachment to complete")]
     [switch]$WaitForAttachment,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "Skip confirmation prompts")]
     [switch]$Force
 )
 
@@ -87,8 +98,8 @@ try {
     if ($Region) {
         $awsArgs += '--region', $Region
     }
-    if ($Profile) {
-        $awsArgs += '--profile', $Profile
+    if ($AwsProfile) {
+        $awsArgs += '--profile', $AwsProfile
     }
 
     # Validate instance exists and get its state
@@ -209,6 +220,8 @@ try {
     Write-Host "`n✅ Volume attachment operation completed successfully!" -ForegroundColor Green
 
 } catch {
-    Write-Error "Failed to attach volume: $($_.Exception.Message)"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
+} finally {
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

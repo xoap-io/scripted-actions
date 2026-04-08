@@ -1,3 +1,71 @@
+<#
+.SYNOPSIS
+    Creates an AWS Customer Gateway.
+
+.DESCRIPTION
+    This script creates a Customer Gateway for establishing VPN connections between your on-premises network and AWS VPC.
+    Uses aws ec2 create-customer-gateway to perform the operation.
+
+.PARAMETER BgpAsn
+    The Border Gateway Protocol (BGP) Autonomous System Number (ASN) for the customer gateway. Use 65000 for static routing.
+
+.PARAMETER IpAddress
+    The public IPv4 address of your customer gateway device.
+
+.PARAMETER Name
+    A name for the customer gateway (added as a Name tag).
+
+.PARAMETER Type
+    The type of VPN connection that this customer gateway supports. Currently only 'ipsec.1' is supported.
+
+.PARAMETER DeviceName
+    A name for the customer gateway device.
+
+.PARAMETER Profile
+    The AWS CLI profile to use for the operation.
+
+.PARAMETER Region
+    The AWS region where the customer gateway will be created.
+
+.PARAMETER Tags
+    Additional tags to apply in the format Key1=Value1,Key2=Value2.
+
+.PARAMETER OutputFormat
+    The output format for the results (json, table, text).
+
+.EXAMPLE
+    .\aws-cli-create-customer-gateway.ps1 -BgpAsn 65000 -IpAddress 203.0.113.12 -Name "Office-Gateway"
+
+.EXAMPLE
+    .\aws-cli-create-customer-gateway.ps1 -BgpAsn 65001 -IpAddress 203.0.113.12 -Name "DataCenter-Gateway" -DeviceName "Cisco-ASA-5500"
+
+.EXAMPLE
+    .\aws-cli-create-customer-gateway.ps1 -BgpAsn 65000 -IpAddress 203.0.113.12 -Tags "Environment=Production,Department=IT"
+
+.NOTES
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: AWS CLI v2 (https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
+
+    IMPORTANT NOTES:
+    - The IP address must be static and publicly accessible
+    - BGP ASN 65000 is typically used for static routing
+    - Customer gateways are region-specific resources
+    - There are no charges for customer gateways themselves
+
+.LINK
+    https://docs.aws.amazon.com/cli/latest/reference/ec2/create-customer-gateway.html
+
+.COMPONENT
+    AWS CLI Network
+#>
+
 [CmdletBinding()]
 param (
     [Parameter(Mandatory = $true, HelpMessage = "BGP ASN for the customer gateway")]
@@ -5,7 +73,7 @@ param (
     [int]$BgpAsn,
 
     [Parameter(Mandatory = $true, HelpMessage = "Public IP address of the customer gateway")]
-    [ValidatePattern('^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$', ErrorMessage = "IpAddress must be a valid IPv4 address")]
+    [ValidatePattern('^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$')]
     [string]$IpAddress,
 
     [Parameter(Mandatory = $false, HelpMessage = "Name tag for the customer gateway")]
@@ -31,67 +99,6 @@ param (
     [ValidateSet('json', 'table', 'text')]
     [string]$OutputFormat = 'table'
 )
-
-<#
-.SYNOPSIS
-Creates an AWS Customer Gateway.
-
-.DESCRIPTION
-This script creates a Customer Gateway for establishing VPN connections between your on-premises network and AWS VPC.
-
-.PARAMETER BgpAsn
-The Border Gateway Protocol (BGP) Autonomous System Number (ASN) for the customer gateway. Use 65000 for static routing.
-
-.PARAMETER IpAddress
-The public IPv4 address of your customer gateway device.
-
-.PARAMETER Name
-A name for the customer gateway (added as a Name tag).
-
-.PARAMETER Type
-The type of VPN connection that this customer gateway supports. Currently only 'ipsec.1' is supported.
-
-.PARAMETER DeviceName
-A name for the customer gateway device.
-
-.PARAMETER Profile
-The AWS CLI profile to use for the operation.
-
-.PARAMETER Region
-The AWS region where the customer gateway will be created.
-
-.PARAMETER Tags
-Additional tags to apply in the format Key1=Value1,Key2=Value2.
-
-.PARAMETER OutputFormat
-The output format for the results (json, table, text).
-
-.EXAMPLE
-.\aws-cli-create-customer-gateway.ps1 -BgpAsn 65000 -IpAddress 203.0.113.12 -Name "Office-Gateway"
-
-Creates a customer gateway with static routing for an office connection.
-
-.EXAMPLE
-.\aws-cli-create-customer-gateway.ps1 -BgpAsn 65001 -IpAddress 203.0.113.12 -Name "DataCenter-Gateway" -DeviceName "Cisco-ASA-5500"
-
-Creates a customer gateway with BGP routing and device information.
-
-.EXAMPLE
-.\aws-cli-create-customer-gateway.ps1 -BgpAsn 65000 -IpAddress 203.0.113.12 -Tags "Environment=Production,Department=IT"
-
-Creates a customer gateway with additional tags.
-
-.NOTES
-Author: Your Name
-Date: 2024
-Requires: AWS CLI v2.16+ and appropriate IAM permissions
-
-IMPORTANT NOTES:
-- The IP address must be static and publicly accessible
-- BGP ASN 65000 is typically used for static routing
-- Customer gateways are region-specific resources
-- There are no charges for customer gateways themselves
-#>
 
 $ErrorActionPreference = 'Stop'
 
@@ -181,7 +188,7 @@ try {
         return
     }
 
-    Write-Host "`nCustomer Gateway created successfully!" -ForegroundColor Green
+    Write-Host "`n✅ Customer Gateway created successfully!" -ForegroundColor Green
     Write-Host "  Customer Gateway ID: $($customerGateway.CustomerGatewayId)" -ForegroundColor White
     Write-Host "  State: $($customerGateway.State)" -ForegroundColor White
     Write-Host "  BGP ASN: $($customerGateway.BgpAsn)" -ForegroundColor White
@@ -223,6 +230,8 @@ try {
     Write-Output $customerGateway.CustomerGatewayId
 
 } catch {
-    Write-Error "An error occurred: $($_.Exception.Message)"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
+} finally {
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

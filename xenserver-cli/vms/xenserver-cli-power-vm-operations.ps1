@@ -47,47 +47,59 @@
     .\xenserver-cli-power-vm-operations.ps1 -Server "xenserver.domain.com" -VMNames @("VM01","VM02","VM03") -Operation "Start" -Async
 
 .NOTES
-    Author: XOAP.io
-    Requires: XenServerPSModule (PowerShell SDK)
-    Version: 2.0
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: XenServerPSModule (Citrix XenServer SDK)
+
+.LINK
+    https://docs.xenserver.com/en-us/xenserver/current-release/vms/manage.html
+
+.COMPONENT
+    Citrix XenServer PowerShell
 #>
 
 [CmdletBinding()]
 param (
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The XenServer pool coordinator hostname or IP address.")]
     [ValidateNotNullOrEmpty()]
     [string]$Server,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Username for authentication (default: root).")]
     [string]$Username = "root",
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Password for authentication.")]
     [string]$Password,
 
-    [Parameter(Mandatory = $false, ParameterSetName = "SingleVM")]
+    [Parameter(Mandatory = $false, ParameterSetName = "SingleVM", HelpMessage = "The name of the virtual machine. Supports exact match.")]
     [ValidateNotNullOrEmpty()]
     [string]$VMName,
 
-    [Parameter(Mandatory = $false, ParameterSetName = "SingleVMUUID")]
+    [Parameter(Mandatory = $false, ParameterSetName = "SingleVMUUID", HelpMessage = "The UUID of the virtual machine to operate on.")]
     [ValidateNotNullOrEmpty()]
     [ValidatePattern('^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$')]
     [string]$VMUUID,
 
-    [Parameter(Mandatory = $false, ParameterSetName = "MultipleVMs")]
+    [Parameter(Mandatory = $false, ParameterSetName = "MultipleVMs", HelpMessage = "An array of specific VM names for batch operations.")]
     [ValidateNotNullOrEmpty()]
     [string[]]$VMNames,
 
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The power operation to perform: Start, Stop, Shutdown, Reboot, Suspend, Resume, Pause, Unpause.")]
     [ValidateSet("Start", "Stop", "Shutdown", "Reboot", "Suspend", "Resume", "Pause", "Unpause")]
     [string]$Operation,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Force the operation without confirmation prompts (hard power operations).")]
     [switch]$Force,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Run operations asynchronously and return task objects.")]
     [switch]$Async,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Timeout in seconds for operation completion (default: 300).")]
     [ValidateRange(30, 3600)]
     [int]$TimeoutSeconds = 300
 )
@@ -282,7 +294,7 @@ try {
     }
 }
 catch {
-    Write-Error "Script execution failed: $_"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
 }
 finally {
@@ -296,4 +308,5 @@ finally {
             Write-Warning "Failed to disconnect from XenServer: $_"
         }
     }
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

@@ -1,9 +1,14 @@
 <#
 .SYNOPSIS
-    This script creates an Azure Image Builder Windows VM.
+    Create an Azure Image Builder Windows VM image for AVD using Azure CLI commands.
 
 .DESCRIPTION
-    This script creates an Azure Image Builder Windows VM using Azure CLI commands. It registers necessary providers, creates a resource group, user-assigned identity, role definition, and image template, and finally creates a VM from the image.
+    This script creates an Azure Image Builder Windows VM using Azure CLI commands. It registers necessary
+    providers, creates a resource group, user-assigned identity, role definition, and image template,
+    and finally creates a VM from the image.
+
+    Uses az provider register, az group create, az identity create, az role definition create,
+    az role assignment create, az resource create, az resource invoke-action, az vm create.
 
 .PARAMETER AzResourceGroup
     Defines the name of the Azure Resource Group.
@@ -29,57 +34,63 @@
 .PARAMETER AzVerbose
     Increase logging verbosity.
 
-.PARAMETER WhatIf
-    Shows what would happen if the cmdlet runs. The cmdlet is not run.
-
-.PARAMETER Confirm
-    Prompts you for confirmation before running the cmdlet.
-
 .EXAMPLE
     .\wip_az-ps-create-image-avd.ps1 -AzResourceGroup "myResourceGroup" -AzOpenPorts "3389" -AzVmSize "Standard_D2s_v3"
 
 .NOTES
-    Ensure that Azure PowerShell is installed and authenticated before running the script.
-    Author: Your Name
-    Date:   2024-09-03
-    Version: 1.1
-    Requires: Azure PowerShell
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: Az PowerShell module (Install-Module Az), Azure CLI (az)
 
 .LINK
-    https://github.com/xoap-io/scripted-actions
+    https://learn.microsoft.com/en-us/azure/virtual-machines/image-builder-overview
+
+.COMPONENT
+    Azure PowerShell Compute
 #>
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true, HelpMessage = "Defines the name of the Azure Resource Group.")]
     [ValidateNotNullOrEmpty()]
     [string]$AzResourceGroup = "myResourceGroup",
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true, HelpMessage = "Defines the ports to be opened on the VM.")]
     [ValidateNotNullOrEmpty()]
     [string]$AzOpenPorts = '3389',
 
-    [Parameter(Mandatory=$true)]
-    [ValidateSet('Standard_A0', 'Standard_A1', 'Standard_A2', 'Standard_A3', 'Standard_A4', 'Standard_A5', 'Standard_A6', 'Standard_A7', 'Standard_A8', 'Standard_A9', 'Standard_A10', 'Standard_A11', 'Standard_A1_v2', 'Standard_A2_v2', 'Standard_A4_v2', 'Standard_A8_v2', 'Standard_A2m_v2', 'Standard_A4m_v2', 'Standard_A8m_v2', 'Standard_B1s', 'Standard_B1ms', 'Standard_B2s', 'Standard_B2ms', 'Standard_B4ms', 'Standard_B8ms', 'Standard_B12ms', 'Standard_B16ms', 'Standard_B20ms', 'Standard_B24ms', 'Standard_B1ls', 'Standard_B1s', 'Standard_B2s', 'Standard_B4s', 'Standard_B8s', 'Standard_B12s', 'Standard_B16s', 'Standard_B20s', 'Standard_B24s', 'Standard_D1', 'Standard_D2', 'Standard_D3', 'Standard_D4', 'Standard_D11', 'Standard_D12', 'Standard_D13', 'Standard_D14', 'Standard_D1_v2', 'Standard_D2_v2', 'Standard_D3_v2', 'Standard_D4_v2', 'Standard_D5_v2', 'Standard_D11_v2', 'Standard_D12_v2', 'Standard_D13_v2', 'Standard_D14_v2', 'Standard_D15_v2', 'Standard_D2_v3', 'Standard_D4_v3', 'Standard_D8_v3', 'Standard_D16_v3', 'Standard_D32_v3', 'Standard_D48_v3', 'Standard_D64_v3', 'Standard_D2s_v3', 'Standard_D4s_v3', 'Standard_D8s_v3', 'Standard_D16s_v3', 'Standard_D32s_v3', 'Standard_D48s_v3', 'Standard_D64s_v3', 'Standard_D2_v4', 'Standard_D4_v4', 'Standard_D8_v4', 'Standard_D16_v4', 'Standard_D32_v4', 'Standard_D48_v4', 'Standard_D64_v4', 'Standard_D2s_v4')]
+    [Parameter(Mandatory = $true, HelpMessage = "Defines the size of the Azure VM.")]
+    [ValidateSet(
+        'Standard_D2s_v3', 'Standard_D4s_v3', 'Standard_D8s_v3',
+        'Standard_D2s_v5', 'Standard_D4s_v5', 'Standard_D8s_v5',
+        'Standard_E2s_v3', 'Standard_E4s_v3', 'Standard_E8s_v3'
+    )]
     [string]$AzVmSize,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Increase logging verbosity to show all debug logs.")]
     [switch]$AzDebug,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Only show errors, suppressing warnings.")]
     [switch]$AzOnlyShowErrors,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Output format.")]
     [string]$AzOutput,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory = $false, HelpMessage = "JMESPath query string.")]
     [string]$AzQuery,
 
-    [Parameter(Mandatory=$false)]
-    [switch]$AzVerbose,
-
-
+    [Parameter(Mandatory = $false, HelpMessage = "Increase logging verbosity.")]
+    [switch]$AzVerbose
 )
+
+# Set Error Action to Stop
+$ErrorActionPreference = "Stop"
 
 # Splatting parameters for better readability
 $parameters = @{
@@ -92,9 +103,6 @@ $parameters = @{
     query            = $AzQuery
     verbose          = $AzVerbose
 }
-
-# Set Error Action to Stop
-$ErrorActionPreference = "Stop"
 
 try {
     # Register necessary providers
@@ -139,15 +147,12 @@ try {
     az vm create --resource-group $parameters.resource_group --name myAibGalleryVM --admin-username aibuser --location westus2 --image "/subscriptions/$subscriptionID/resourceGroups/$parameters.resource_group/providers/Microsoft.Compute/galleries/myIbGallery/images/myIbImageDef/versions/latest" --security-type TrustedLaunch --generate-ssh-keys
 
     # Output the result
-    Write-Output "Azure Image Builder Windows VM created successfully."
-} catch {
-    # Log the error to the console
-
-Write-Output "Error message $errorMessage"
-
-
-    Write-Error "Failed to create Azure Image Builder Windows VM: $($_.Exception.Message)"
-} finally {
-    # Cleanup code if needed
-    Write-Output "Script execution completed."
+    Write-Host "✅ Azure Image Builder Windows VM created successfully." -ForegroundColor Green
+}
+catch {
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
+    exit 1
+}
+finally {
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

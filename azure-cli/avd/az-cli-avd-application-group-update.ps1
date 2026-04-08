@@ -57,62 +57,73 @@
 .EXAMPLE
     .\az-cli-avd-application-group-update.ps1 -IDs "/subscriptions/sub-id/resourceGroups/rg/providers/Microsoft.DesktopVirtualization/applicationGroups/myapp" -ApplicationGroupType "RemoteApp"
 
+.NOTES
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: Azure CLI (https://docs.microsoft.com/en-us/cli/azure/install-azure-cli)
+
 .LINK
     https://learn.microsoft.com/en-us/cli/azure/desktopvirtualization/applicationgroup
 
 .COMPONENT
-    Azure CLI
+    Azure CLI Virtual Desktop
 #>
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory)]
+    [Parameter(Mandatory, HelpMessage = "The name of the Azure Virtual Desktop Application Group to update")]
     [ValidateNotNullOrEmpty()]
     [string]$Name,
 
-    [Parameter(Mandatory)]
+    [Parameter(Mandatory, HelpMessage = "The name of the Azure Resource Group")]
     [ValidateNotNullOrEmpty()]
     [string]$ResourceGroup,
 
-    [Parameter()]
+    [Parameter(HelpMessage = "Add an object to a list of objects by specifying a path and key value pairs")]
     [ValidateNotNullOrEmpty()]
     [string]$Add,
 
-    [Parameter()]
+    [Parameter(HelpMessage = "The type of the Application Group. Valid values: 'Desktop', 'RemoteApp'")]
     [ValidateNotNullOrEmpty()]
     [ValidateSet('Desktop', 'RemoteApp')]
     [string]$ApplicationGroupType,
 
-    [Parameter()]
+    [Parameter(HelpMessage = "Optional new description for the Application Group")]
     [ValidateNotNullOrEmpty()]
     [string]$Description,
 
-    [Parameter()]
+    [Parameter(HelpMessage = "Replace a string value with another string value")]
     [ValidateNotNullOrEmpty()]
     [ValidateSet('0', '1', 'f', 'false', 'n', 'no', 't', 'true', 'y', 'yes')]
     [string]$ForceString,
 
-    [Parameter()]
+    [Parameter(HelpMessage = "Optional new friendly name for the Application Group")]
     [ValidateNotNullOrEmpty()]
     [string]$FriendlyName,
 
-    [Parameter()]
+    [Parameter(HelpMessage = "Optional new host pool ARM path to associate with the Application Group")]
     [ValidateNotNullOrEmpty()]
     [string]$HostPoolArmPath,
 
-    [Parameter()]
+    [Parameter(HelpMessage = "One or more resource IDs (space-delimited). When provided, Name and ResourceGroup are ignored")]
     [ValidateNotNullOrEmpty()]
     [string]$IDs,
 
-    [Parameter()]
+    [Parameter(HelpMessage = "Remove a property or an element from a list")]
     [ValidateNotNullOrEmpty()]
     [string]$Remove,
 
-    [Parameter()]
+    [Parameter(HelpMessage = "Update an object by specifying a property path and value to set")]
     [ValidateNotNullOrEmpty()]
     [string]$Set,
 
-    [Parameter()]
+    [Parameter(HelpMessage = "Optional tags to update in the format 'key1=value1 key2=value2'")]
     [ValidateNotNullOrEmpty()]
     [string]$Tags
 )
@@ -237,6 +248,8 @@ try {
 
     return $updatedAppGroup
 } catch {
-    Write-Error "Failed to update Azure Virtual Desktop Application Group: $_"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
+} finally {
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

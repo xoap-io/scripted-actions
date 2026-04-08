@@ -51,44 +51,56 @@
     .\vsphere-cli-describe-inventory.ps1 -VCenterServer "vcenter.domain.com" -ReportType "Hosts" -DatacenterName "MainDC" -OutputFormat "HTML" -OutputPath "hosts-report.html"
 
 .NOTES
-    Author: XOAP.io
-    Requires: VMware PowerCLI 13.x or later, vSphere 7.0 or later
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
 
+    Author: XOAP.IO
+    Requires: VMware PowerCLI (Install-Module -Name VMware.PowerCLI)
+
+.LINK
+    https://developer.vmware.com/docs/powercli/
+
+.COMPONENT
+    VMware vSphere PowerCLI
 #>
 
 [CmdletBinding()]
 param (
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The vCenter Server FQDN or IP address to connect to.")]
     [ValidateNotNullOrEmpty()]
     [string]$VCenterServer,
 
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The type of report to generate (e.g. Overview, VMs, Datastores, All).")]
     [ValidateSet("Overview", "Datacenters", "Clusters", "Hosts", "VMs", "Datastores", "Networks", "ResourcePools", "All")]
     [string]$ReportType,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Filter results by specific datacenter name.")]
     [string]$DatacenterName,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Filter results by specific cluster name.")]
     [string]$ClusterName,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Output format for the report (Console, CSV, HTML, or JSON).")]
     [ValidateSet("Console", "CSV", "HTML", "JSON")]
     [string]$OutputFormat = "Console",
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Path to save the report file (required for CSV/HTML/JSON formats).")]
     [string]$OutputPath,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Include performance metrics in the report.")]
     [switch]$IncludeMetrics,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Include powered-off VMs in VM reports.")]
     [switch]$ShowPoweredOffVMs,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Include VM templates in VM reports.")]
     [switch]$ShowTemplates,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Sort results by the specified property name.")]
     [string]$SortBy
 )
 
@@ -610,10 +622,11 @@ try {
     Write-Host "`n=== Report Generation Completed ===" -ForegroundColor Green
 }
 catch {
-    Write-Error "Script execution failed: $($_.Exception.Message)"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
 }
 finally {
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
     # Disconnect from vCenter if connected
     if ($global:DefaultVIServers) {
         Write-Host "`nDisconnecting from vCenter..." -ForegroundColor Yellow

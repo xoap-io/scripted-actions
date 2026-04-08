@@ -1,10 +1,11 @@
 <#
 .SYNOPSIS
-    Assigns a Virtual Machine (VM) to an Azure Virtual Desktop (AVD) Host Pool using a Service Principal Object (SPO).
+    Assigns a Virtual Machine (VM) to an Azure Virtual Desktop (AVD) Host Pool.
 
 .DESCRIPTION
     This script assigns a specified VM to a specified AVD Host Pool using Azure PowerShell cmdlets.
-    It connects to Azure using a Service Principal Object (SPO) for authentication.
+    It connects to Azure, retrieves the host pool registration token, and runs the AVD agent installation
+    on the VM via Invoke-AzVMRunCommand.
 
 .PARAMETER HostPoolName
     The name of the AVD Host Pool to which the VM will be assigned.
@@ -13,16 +14,41 @@
     The name of the Virtual Machine to assign.
 
 .PARAMETER Location
-    The Azure region where the VM and Host Pool are located. Default is 'West Europe'.
+    The Azure region where the VM and Host Pool are located. Default is 'westeurope'.
+
+.PARAMETER ResourceGroup
+    The name of the resource group containing the VM and Host Pool.
+
+.EXAMPLE
+    PS C:\> .\Assign-VmToHostPool.ps1 -HostPoolName "MyHostPool" -VmName "MyVM" -Location "westeurope" -ResourceGroup "MyResourceGroup"
+
+.NOTES
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: Az PowerShell module (Install-Module Az), Az.DesktopVirtualization, Az.Compute
+
+.LINK
+    https://learn.microsoft.com/en-us/powershell/module/az.desktopvirtualization
+
+.COMPONENT
+    Azure PowerShell Virtual Desktop
 
 #>
 
 [CmdletBinding()]
 param (
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$true, HelpMessage = "The name of the AVD Host Pool.")]
+    [ValidateNotNullOrEmpty()]
     [string]$HostPoolName,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$true, HelpMessage = "The name of the Virtual Machine to assign.")]
+    [ValidateNotNullOrEmpty()]
     [string]$VmName,
 
     [Parameter(Mandatory=$true)]
@@ -47,12 +73,15 @@ param (
     )]
     [string]$Location = "westeurope",
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$true, HelpMessage = "The name of the resource group containing the VM and Host Pool.")]
+    [ValidateNotNullOrEmpty()]
     [string]$ResourceGroup
 
     #[Parameter(Mandatory=$true)]
     #[securestring]$Password
 )
+
+$ErrorActionPreference = "Stop"
 # Retrieve the Host Pool
 $HostPool = Get-AzWvdHostPool -ResourceGroup $ResourceGroup -Name $HostPoolName
 if (-not $HostPool) {

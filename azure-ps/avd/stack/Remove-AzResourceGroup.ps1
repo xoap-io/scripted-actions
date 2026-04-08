@@ -1,63 +1,60 @@
 <#
 .SYNOPSIS
-    This script deletes an Azure Resource Group with the Azure PowerShell.
+    Deletes an Azure Resource Group.
 
 .DESCRIPTION
-    This script deletes an Azure Resource Group with the Azure PowerShell. The script requires the following parameter:
-    - AzResourceGroup: Defines the name of the Azure Resource Group.
-
-    The script will delete the Azure Resource Group with all its resources.
+    This script deletes an Azure Resource Group with all its resources using the Azure PowerShell.
+    Uses the Remove-AzResourceGroup cmdlet from the Az.Resources module.
 
 .PARAMETER AzResourceGroup
-    Defines the name of the Azure Resource Group.
+    Defines the name of the Azure Resource Group to delete.
 
 .EXAMPLE
     .\Remove-AzResourceGroup.ps1 -AzResourceGroup "myResourceGroup"
 
-.LINK
-    https://learn.microsoft.com/en-us/powershell/module/az.Resources
+.NOTES
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: Az PowerShell module (Install-Module Az), Az.Resources
 
 .LINK
     https://learn.microsoft.com/en-us/powershell/module/az.resources/remove-azresourcegroup?view=azps-12.3.0
 
-.LINK
-    https://github.com/xoap-io/scripted-actions
-
 .COMPONENT
-    Azure PowerShell
+    Azure PowerShell Resources
 #>
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$true, HelpMessage = "The name of the Azure Resource Group to delete.")]
     [ValidateNotNullOrEmpty()]
     [string]$AzResourceGroup
 )
+
+# Set Error Action to Stop
+$ErrorActionPreference = "Stop"
 
 # Splatting parameters for better readability
 $parameters = @{
     Name = $AzResourceGroup
 }
 
-# Set Error Action to Stop
-$ErrorActionPreference = "Stop"
-
 try {
     # Remove the Resource Group
     Remove-AzResourceGroup @parameters -Force
 
     # Output the result
-    Write-Output "Azure Resource Group '$($ResourceGroup)' deleted successfully."
+    Write-Host "✅ Azure Resource Group '$AzResourceGroup' deleted successfully." -ForegroundColor Green
 
 } catch {
-    # Log the error to the console
-
-    Write-Output "Error message $errorMessage"
-
-
-    Write-Error "Failed to delete Azure Resource Group: $($_.Exception.Message)"
-
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
+    exit 1
 } finally {
-    # Cleanup code if needed
-    Write-Output "Script execution completed."
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

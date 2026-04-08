@@ -75,81 +75,93 @@
     .\nutanix-cli-storage-containers.ps1 -PrismCentral "pc.domain.com" -Operation "Monitor" -ContainerName "Production-Storage" -OutputFormat "JSON"
 
 .NOTES
-    Author: XOAP.io
-    Requires: Nutanix PowerShell SDK, AOS 6.0+
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
 
+    Author: XOAP.IO
+    Requires: PowerShell with REST API capabilities (Nutanix Prism REST API v3)
+
+.LINK
+    https://www.nutanix.dev/reference/prism_central/v3/
+
+.COMPONENT
+    Nutanix REST API PowerShell
 #>
 
 [CmdletBinding()]
 param (
-    [Parameter(Mandatory = $false, ParameterSetName = "PrismCentral")]
+    [Parameter(Mandatory = $false, ParameterSetName = "PrismCentral", HelpMessage = "The Prism Central FQDN or IP address to connect to.")]
     [ValidateNotNullOrEmpty()]
     [string]$PrismCentral,
 
-    [Parameter(Mandatory = $false, ParameterSetName = "PrismElement")]
+    [Parameter(Mandatory = $false, ParameterSetName = "PrismElement", HelpMessage = "The Prism Element FQDN or IP address to connect to.")]
     [ValidateNotNullOrEmpty()]
     [string]$PrismElement,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Name of the storage container to create or manage.")]
     [ValidateNotNullOrEmpty()]
     [string]$ContainerName,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Array of container names for batch operations.")]
     [ValidateNotNullOrEmpty()]
     [string[]]$ContainerNames,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "UUID of a specific container to manage.")]
     [ValidatePattern('^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$')]
     [string]$ContainerUUID,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Target cluster name for container operations.")]
     [string]$ClusterName,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Target cluster UUID for container operations.")]
     [ValidatePattern('^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$')]
     [string]$ClusterUUID,
 
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The operation to perform on the container(s). Valid values: Create, List, Delete, Update, Monitor, Optimize, Status.")]
     [ValidateSet("Create", "List", "Delete", "Update", "Monitor", "Optimize", "Status")]
     [string]$Operation,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Replication factor for the container. Valid values: 1, 2.")]
     [ValidateSet(1, 2)]
     [int]$ReplicationFactor = 2,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Enable compression on the container.")]
     [switch]$EnableCompression,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Enable deduplication on the container.")]
     [switch]$EnableDeduplication,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Enable erasure coding on the container.")]
     [switch]$EnableErasureCoding,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Compression delay in seconds (0 for immediate, max 86400).")]
     [ValidateRange(0, 86400)]
     [int]$CompressionDelay = 0,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Storage pool UUID for container placement.")]
     [ValidatePattern('^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$')]
     [string]$StoragePoolUUID,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Maximum capacity in GB for the container (1-1048576).")]
     [ValidateRange(1, 1048576)]
     [int64]$MaxCapacityGB,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Advertised capacity in GB for the container (1-1048576).")]
     [ValidateRange(1, 1048576)]
     [int64]$AdvertisedCapacityGB,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Force operations without confirmation prompts.")]
     [switch]$Force,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Output format for reports. Valid values: Console, CSV, JSON.")]
     [ValidateSet("Console", "CSV", "JSON")]
     [string]$OutputFormat = "Console",
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Path to save the report file.")]
     [string]$OutputPath
 )
 
@@ -869,7 +881,7 @@ try {
     Write-Host "`n=== Storage Container Management Completed ===" -ForegroundColor Green
 }
 catch {
-    Write-Error "Script execution failed: $($_.Exception.Message)"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
 }
 finally {
@@ -878,4 +890,5 @@ finally {
         Write-Host "`nDisconnecting from Nutanix..." -ForegroundColor Yellow
         Disconnect-NTNXCluster
     }
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

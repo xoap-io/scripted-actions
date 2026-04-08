@@ -131,3 +131,65 @@ Each directory contains a comprehensive README.md with usage examples, best prac
 
 You can use the provided templates to create your scripts.
 The templates are located in the `templates` folder.
+
+## Contributing
+
+### Pre-commit Hooks
+
+This repository uses [pre-commit](https://pre-commit.com) to enforce code quality
+and consistency. All contributors must have pre-commit configured before making
+changes.
+
+#### Installation
+
+```bash
+# Install pre-commit
+pip install pre-commit
+
+# Install the hooks into your local clone
+pre-commit install
+pre-commit install --hook-type commit-msg
+```
+
+The `--hook-type commit-msg` flag is required to enable the conventional commit
+message validation hook.
+
+#### PowerShell-specific Prerequisites
+
+The following must be installed for the PowerShell hooks to run:
+
+- **PowerShell 7+** (`pwsh`) — required for syntax checking and PSScriptAnalyzer
+- **PSScriptAnalyzer** — install once in PowerShell:
+
+```powershell
+Install-Module PSScriptAnalyzer -Scope CurrentUser
+```
+
+#### What the Hooks Check
+
+| Hook | What it does |
+| --- | --- |
+| `conventional-pre-commit` | Enforces conventional commit message format (`feat:`, `fix:`, `docs:`, etc.) |
+| `trailing-whitespace` | Removes trailing whitespace |
+| `end-of-file-fixer` | Ensures files end with a newline |
+| `check-yaml` / `check-json` | Validates YAML and JSON syntax |
+| `detect-private-key` | Blocks accidental credential commits |
+| `no-commit-to-branch` | Prevents direct commits to `main` or `master` |
+| `prettier` | Formats Markdown and YAML files |
+| `shellcheck` | Lints shell scripts |
+| `codespell` | Catches common typos in code and comments |
+| `powershell-syntax-check` | Validates `.ps1` syntax using PowerShell's own parser |
+| `psscriptanalyzer` | Lints `.ps1` files for warnings and errors |
+| `check-powershell-bom` | Ensures `.ps1` files have no UTF-8 BOM |
+| `check-readme-exists` | Ensures every script directory has a `README.md` |
+
+#### Running Hooks Manually
+
+```bash
+# Run all hooks against all files
+pre-commit run --all-files
+
+# Run a specific hook
+pre-commit run psscriptanalyzer --all-files
+pre-commit run powershell-syntax-check --all-files
+```

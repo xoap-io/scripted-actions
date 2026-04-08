@@ -61,24 +61,21 @@
     .\az-cli-delete-nsg-group.ps1 -Name "nsg-old,nsg-unused" -ResourceGroup "rg-cleanup" -CheckDependencies -AnalyzeImpact -OutputReport
 
 .NOTES
-    Author: XOAP.IO
-    Date: 2025-08-05
-.0
-    Requires: Azure CLI version 2.0 or later
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
 
-    Safety Features:
-    - Dependency checking before deletion
-    - Backup capabilities for NSG configurations
-    - Impact analysis for network traffic
-    - Confirmation prompts with detailed information
-    - Dry run mode for testing
-    - Comprehensive logging and reporting
+    Author: XOAP.IO
+    Requires: Azure CLI (https://docs.microsoft.com/en-us/cli/azure/install-azure-cli)
 
 .LINK
     https://docs.microsoft.com/en-us/cli/azure/network/nsg
 
 .COMPONENT
-    Azure CLI Network Security Groups
+    Azure CLI Security
 #>
 
 [CmdletBinding()]
@@ -581,7 +578,7 @@ function Remove-NSGResource {
         }
     }
     catch {
-        Write-Error "❌ Failed to delete NSG '$($NSG.name)': $($_.Exception.Message)"
+        Write-Host "❌ Failed to delete NSG '$($NSG.name)': $($_.Exception.Message)" -ForegroundColor Red
 
         $global:DeletionReport.Operations += @{
             NSGName = $NSG.name
@@ -848,9 +845,9 @@ try {
     }
 }
 catch {
-    Write-Error "❌ NSG deletion process failed: $($_.Exception.Message)"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
 }
 finally {
-    Write-Host "`n🏁 NSG deletion process completed" -ForegroundColor Green
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

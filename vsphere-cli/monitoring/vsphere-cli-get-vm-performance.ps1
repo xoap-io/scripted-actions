@@ -65,66 +65,78 @@
     .\vsphere-cli-get-vm-performance.ps1 -VCenterServer "vcenter.domain.com" -VMName "CriticalVM*" -ContinuousMonitoring -RefreshInterval 15 -AlertThresholds
 
 .NOTES
-    Author: XOAP.io
-    Requires: VMware PowerCLI 13.x or later, vSphere 7.0 or later
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
 
+    Author: XOAP.IO
+    Requires: VMware PowerCLI (Install-Module -Name VMware.PowerCLI)
+
+.LINK
+    https://developer.vmware.com/docs/powercli/
+
+.COMPONENT
+    VMware vSphere PowerCLI
 #>
 
 [CmdletBinding()]
 param (
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The vCenter Server FQDN or IP address to connect to.")]
     [ValidateNotNullOrEmpty()]
     [string]$VCenterServer,
 
-    [Parameter(Mandatory = $false, ParameterSetName = "SingleVM")]
+    [Parameter(Mandatory = $false, ParameterSetName = "SingleVM", HelpMessage = "The name of the virtual machine(s) to monitor. Supports wildcards.")]
     [ValidateNotNullOrEmpty()]
     [string]$VMName,
 
-    [Parameter(Mandatory = $false, ParameterSetName = "MultipleVMs")]
+    [Parameter(Mandatory = $false, ParameterSetName = "MultipleVMs", HelpMessage = "An array of specific VM names for batch monitoring.")]
     [ValidateNotNullOrEmpty()]
     [string[]]$VMNames,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Monitor all VMs in a specific cluster.")]
     [string]$ClusterName,
 
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The type of metrics to collect (CPU, Memory, Disk, Network, or All).")]
     [ValidateSet("CPU", "Memory", "Disk", "Network", "All")]
     [string]$MetricType,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Duration for performance monitoring in minutes (default: 60).")]
     [ValidateRange(1, 1440)]
     [int]$Duration = 60,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Sample interval in seconds (default: 300).")]
     [ValidateRange(20, 3600)]
     [int]$SampleInterval = 300,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Output format for the results (Console, CSV, or JSON).")]
     [ValidateSet("Console", "CSV", "JSON")]
     [string]$OutputFormat = "Console",
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Path to save the performance report file.")]
     [string]$OutputPath,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Enable alerting with default thresholds.")]
     [switch]$AlertThresholds,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "CPU usage threshold percentage for alerts (default: 80).")]
     [ValidateRange(1, 100)]
     [int]$CPUThreshold = 80,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Memory usage threshold percentage for alerts (default: 85).")]
     [ValidateRange(1, 100)]
     [int]$MemoryThreshold = 85,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Disk latency threshold in milliseconds for alerts (default: 20).")]
     [ValidateRange(1, 1000)]
     [int]$DiskLatencyThreshold = 20,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Enable continuous monitoring mode.")]
     [switch]$ContinuousMonitoring,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Refresh interval for continuous monitoring in seconds (default: 30).")]
     [ValidateRange(5, 300)]
     [int]$RefreshInterval = 30
 )
@@ -702,10 +714,11 @@ try {
     Write-Host "`n=== Performance Monitoring Completed ===" -ForegroundColor Green
 }
 catch {
-    Write-Error "Script execution failed: $($_.Exception.Message)"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
 }
 finally {
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
     # Cleanup
     $global:MonitoringActive = $false
 
