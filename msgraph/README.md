@@ -1,36 +1,40 @@
 # Microsoft Graph Automation Scripts
 
-This directory contains PowerShell scripts that automate Microsoft 365, Entra ID (Azure AD),
-and Microsoft Intune operations using the Microsoft Graph API.
+This directory contains PowerShell scripts that automate Microsoft 365,
+Entra ID (Azure AD), and Microsoft Intune operations using the Microsoft
+Graph API.
 
-All scripts are designed to be used with the **XOAP Scripted Actions** module. Authentication
-is handled by XOAP via an App Registration using Application ID, Client Secret, and Tenant ID.
-The scripts assume an active Microsoft Graph connection is already established.
+All scripts are designed to be used with the **XOAP Scripted Actions**
+module. Authentication is handled by XOAP via an App Registration using
+Application ID, Client Secret, and Tenant ID. The scripts assume an
+active Microsoft Graph connection is already established.
 
 ## Prerequisites
 
 - **Microsoft Graph PowerShell SDK**: Install with `Install-Module Microsoft.Graph`
 - **PowerShell 7.0+**: Recommended for full compatibility
-- **App Registration**: Configured in Entra ID with appropriate Graph API permissions (handled by XOAP)
+- **App Registration**: Configured in Entra ID with appropriate Graph API
+  permissions (handled by XOAP)
 
 ## Authentication
 
-Authentication is handled by XOAP using an App Registration. The following are required in XOAP:
+Authentication is handled by XOAP using an App Registration. The following
+are required in XOAP:
 
 - **Application (Client) ID**
 - **Client Secret**
 - **Tenant ID**
 
-XOAP calls `Connect-MgGraph` before executing these scripts. No authentication code is included
-in the scripts themselves.
+XOAP calls `Connect-MgGraph` before executing these scripts. No
+authentication code is included in the scripts themselves.
 
 ## Required API Permissions
 
-Different scripts require different Microsoft Graph API permissions. Refer to each script's
-`.NOTES` section for the specific permissions needed.
+Different scripts require different Microsoft Graph API permissions. Refer
+to each script's `.NOTES` section for the specific permissions needed.
 
 | Permission | Type | Description |
-|---|---|---|
+| --- | --- | --- |
 | `User.Read.All` | Application | Read all users |
 | `Group.ReadWrite.All` | Application | Read and write all groups |
 | `GroupMember.ReadWrite.All` | Application | Read and write group memberships |
@@ -41,10 +45,11 @@ Different scripts require different Microsoft Graph API permissions. Refer to ea
 
 ## Directory Structure
 
-| Folder | Description | Service Focus |
-|---|---|---|
+| Folder / Script | Description | Service Focus |
+| --- | --- | --- |
 | [`entra/`](./entra/) | Entra ID management | Users, groups, conditional access |
 | [`intune/`](./intune/) | Microsoft Intune management | Devices, apps, compliance, policies |
+| [`msgraph-check-cis-benchmark.ps1`](./msgraph-check-cis-benchmark.ps1) | CIS Benchmark check and remediation | Entra ID + Intune |
 
 ## Common Usage Patterns
 

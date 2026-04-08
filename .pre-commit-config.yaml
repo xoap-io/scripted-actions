@@ -70,24 +70,24 @@ repos:
       - id: remove-crlf
         exclude: \.ps1$
 
-  #- repo: https://github.com/codespell-project/codespell
-  #  rev: v2.3.0
-  #  hooks:
-  #    - id: codespell
-  #      args:
-  #        - --ignore-words-list=te,sur,nd,ue,ect,unexpect,fo,workd
-  #        - --skip="*.json,*.csv,*.lock,TestResults/*"
-  #        - --quiet-level=2
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.3.0
+    hooks:
+      - id: codespell
+        args:
+          - --ignore-words-list=te,sur,nd,ue,ect,unexpect,fo,workd
+          - --skip="*.json,*.csv,*.lock,TestResults/*"
+          - --quiet-level=2
 
   # PowerShell specific checks
   - repo: local
     hooks:
-      #- id: powershell-syntax-check
-      #  name: PowerShell Syntax Check
-      #  entry: pwsh -NoProfile -Command "try { $null = [System.Management.Automation.PSParser]::Tokenize((Get-Content -Raw -Path $args[0]), [ref]$null); exit 0 } catch { Write-Error $_.Exception.Message; exit 1 }"
-      #  language: system
-      #  files: \.ps1$
-      #  pass_filenames: true
+      - id: powershell-syntax-check
+        name: PowerShell Syntax Check
+        entry: pwsh -NoProfile -Command "try { $null = [System.Management.Automation.PSParser]::Tokenize((Get-Content -Raw -Path $args[0]), [ref]$null); exit 0 } catch { Write-Error $_.Exception.Message; exit 1 }"
+        language: system
+        files: \.ps1$
+        pass_filenames: true
 
       #- id: check-powershell-encoding
       #  name: Check PowerShell UTF-8 Encoding
@@ -95,6 +95,13 @@ repos:
       #  language: system
       #  files: \.ps1$
       #  pass_filenames: true
+
+      - id: psscriptanalyzer
+        name: PSScriptAnalyzer
+        entry: pwsh -NoProfile -Command "$results = Invoke-ScriptAnalyzer -Path $args[0] -Severity Warning,Error; if ($results) { $results | Format-Table -AutoSize; exit 1 }"
+        language: system
+        files: \.ps1$
+        pass_filenames: true
 
       - id: check-powershell-bom
         name: Check PowerShell Files Don't Have BOM
