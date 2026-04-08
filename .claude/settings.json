@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -E '\\\\.\\(sh|ps1|py\\)$')"
+    ]
+  }
+}
