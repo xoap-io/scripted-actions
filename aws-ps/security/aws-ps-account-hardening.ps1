@@ -68,13 +68,30 @@
 
 .EXAMPLE
   .\aws-ps-account-hardening-enhanced.ps1 -DryRun -EnableCloudWatchAlarms
+
+.NOTES
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: AWS.Tools.EC2, AWS.Tools.CloudTrail, AWS.Tools.GuardDuty, AWS.Tools.SecurityHub, AWS.Tools.ConfigService, AWS.Tools.IdentityManagement
+
+.LINK
+    https://docs.aws.amazon.com/powershell/latest/reference/
+
+.COMPONENT
+    AWS PowerShell Security
 #>
 
 [CmdletBinding()]
 param(
-  [Parameter()][ValidatePattern('^[a-zA-Z0-9-]+$')][string]$AccountAlias = "cis-hardened-account",
-  [Parameter(Mandatory)][ValidatePattern('^[a-z]{2}-[a-z]+-[0-9]$')][string]$HomeRegion = "eu-central-1",
-  [Parameter()][ValidateScript({
+  [Parameter(HelpMessage = "AWS account alias to set (alphanumeric and dashes).")][ValidatePattern('^[a-zA-Z0-9-]+$')][string]$AccountAlias = "cis-hardened-account",
+  [Parameter(Mandatory = $true, HelpMessage = "The primary AWS region for multi-region services like CloudTrail (e.g. eu-central-1).")][ValidatePattern('^[a-z]{2}-[a-z]+-[0-9]$')][string]$HomeRegion = "eu-central-1",
+  [Parameter(HelpMessage = "List of AWS regions to apply hardening steps to.")][ValidateScript({
     foreach ($region in $_) {
       if ($region -notmatch '^[a-z]{2}-[a-z]+-[0-9]$') {
         throw "Invalid region format: $region"
@@ -84,31 +101,31 @@ param(
   })][string[]]$TargetRegions = @("eu-central-1","eu-west-1","us-east-1"),
 
   # Security contact
-  [Parameter(Mandatory)][ValidatePattern('^[^@]+@[^@]+\.[^@]+$')][string]$SecurityEmail,
-  [Parameter()][ValidatePattern('^\+?[0-9\-\s\(\)]+$')][string]$SecurityPhone = "+49-000-0000000",
-  [Parameter()][ValidateLength(1,50)][string]$SecurityFirstName = "Security",
-  [Parameter()][ValidateLength(1,50)][string]$SecurityLastName = "Team",
-  [Parameter()][ValidateLength(1,50)][string]$SecurityTitle = "Security Lead",
+  [Parameter(Mandatory = $true, HelpMessage = "Security contact email address for SNS notifications.")][ValidatePattern('^[^@]+@[^@]+\.[^@]+$')][string]$SecurityEmail,
+  [Parameter(HelpMessage = "Security contact phone number.")][ValidatePattern('^\+?[0-9\-\s\(\)]+$')][string]$SecurityPhone = "+49-000-0000000",
+  [Parameter(HelpMessage = "Security contact first name.")][ValidateLength(1,50)][string]$SecurityFirstName = "Security",
+  [Parameter(HelpMessage = "Security contact last name.")][ValidateLength(1,50)][string]$SecurityLastName = "Team",
+  [Parameter(HelpMessage = "Security contact title.")][ValidateLength(1,50)][string]$SecurityTitle = "Security Lead",
 
   # CloudTrail
-  [Parameter()][ValidatePattern('^[a-zA-Z0-9\-_]+$')][string]$TrailName = "cis-multi-region-trail",
-  [Parameter()][ValidatePattern('^[a-z0-9\-\.]*$')][string]$TrailBucketName = "",
-  [Parameter()][ValidatePattern('^alias/[a-zA-Z0-9\-_/]+$')][string]$TrailKmsAlias = "alias/cis-cloudtrail",
-  [Parameter()][switch]$TrailEnableLogFileValidation,
+  [Parameter(HelpMessage = "CloudTrail trail name to create or manage.")][ValidatePattern('^[a-zA-Z0-9\-_]+$')][string]$TrailName = "cis-multi-region-trail",
+  [Parameter(HelpMessage = "S3 bucket name for CloudTrail logs (auto-generated if empty).")][ValidatePattern('^[a-z0-9\-\.]*$')][string]$TrailBucketName = "",
+  [Parameter(HelpMessage = "KMS key alias for CloudTrail encryption (e.g. alias/cis-cloudtrail).")][ValidatePattern('^alias/[a-zA-Z0-9\-_/]+$')][string]$TrailKmsAlias = "alias/cis-cloudtrail",
+  [Parameter(HelpMessage = "Switch to enable CloudTrail log file validation.")][switch]$TrailEnableLogFileValidation,
 
   # Config
-  [Parameter()][ValidatePattern('^[a-z0-9\-\.]*$')][string]$ConfigBucketName = "",
-  [Parameter()][ValidateSet('One_Hour','Three_Hours','Six_Hours','Twelve_Hours','TwentyFour_Hours')][string]$ConfigDeliveryFrequency = 'One_Hour',
+  [Parameter(HelpMessage = "S3 bucket name for AWS Config logs (auto-generated if empty).")][ValidatePattern('^[a-z0-9\-\.]*$')][string]$ConfigBucketName = "",
+  [Parameter(HelpMessage = "Delivery frequency for AWS Config snapshots.")][ValidateSet('One_Hour','Three_Hours','Six_Hours','Twelve_Hours','TwentyFour_Hours')][string]$ConfigDeliveryFrequency = 'One_Hour',
 
   # EBS
-  [Parameter()][ValidatePattern('^alias/[a-zA-Z0-9\-_/]+$')][string]$EbsDefaultKmsAlias = "alias/cis-ebs-default",
+  [Parameter(HelpMessage = "KMS key alias for EBS default encryption (e.g. alias/cis-ebs-default).")][ValidatePattern('^alias/[a-zA-Z0-9\-_/]+$')][string]$EbsDefaultKmsAlias = "alias/cis-ebs-default",
 
   # VPC Flow Logs
-  [Parameter()][ValidatePattern('^/[a-zA-Z0-9\-_/]+$')][string]$FlowLogGroupPrefix = "/aws/vpc/flowlogs/cis",
-  [Parameter()][ValidateRange(1,3653)][int]$FlowLogRetentionDays = 365,
+  [Parameter(HelpMessage = "CloudWatch Log Group prefix for VPC Flow Logs.")][ValidatePattern('^/[a-zA-Z0-9\-_/]+$')][string]$FlowLogGroupPrefix = "/aws/vpc/flowlogs/cis",
+  [Parameter(HelpMessage = "Retention period in days for VPC Flow Log groups (1-3653).")][ValidateRange(1,3653)][int]$FlowLogRetentionDays = 365,
 
   # Network
-  [Parameter()][ValidateScript({
+  [Parameter(HelpMessage = "Admin ports to secure (default: 22, 3389). Values must be between 1 and 65535.")][ValidateScript({
     foreach ($port in $_) {
       if ($port -lt 1 -or $port -gt 65535) {
         throw "Invalid port: $port"
@@ -118,24 +135,24 @@ param(
   })][int[]]$AdminPorts = @(22,3389),
 
   # CloudWatch Monitoring
-  [Parameter()][ValidatePattern('^[a-zA-Z0-9\-_]+$')][string]$SnsTopicName = "cis-security-alerts",
-  [Parameter()][switch]$EnableCloudWatchAlarms,
+  [Parameter(HelpMessage = "SNS topic name for security alerts.")][ValidatePattern('^[a-zA-Z0-9\-_]+$')][string]$SnsTopicName = "cis-security-alerts",
+  [Parameter(HelpMessage = "Switch to enable CloudWatch log metric filters and alarms.")][switch]$EnableCloudWatchAlarms,
 
   # New parameters for additional services
-  [Parameter()][switch]$EnableInspector,
-  [Parameter()][switch]$EnableMacie,
-  [Parameter()][switch]$EnableGuardDutyRuntimeMonitoring,
-  [Parameter()][switch]$EnableVpcEndpoints,
-  [Parameter()][switch]$EnableS3Lifecycle,
-  [Parameter()][ValidateRange(30,3653)][int]$S3LifecycleTransitionDays = 90,
-  [Parameter()][ValidateRange(90,7300)][int]$S3LifecycleExpirationDays = 2555,
+  [Parameter(HelpMessage = "Switch to enable AWS Inspector.")][switch]$EnableInspector,
+  [Parameter(HelpMessage = "Switch to enable AWS Macie.")][switch]$EnableMacie,
+  [Parameter(HelpMessage = "Switch to enable GuardDuty runtime monitoring.")][switch]$EnableGuardDutyRuntimeMonitoring,
+  [Parameter(HelpMessage = "Switch to enable VPC endpoints.")][switch]$EnableVpcEndpoints,
+  [Parameter(HelpMessage = "Switch to enable S3 lifecycle policies.")][switch]$EnableS3Lifecycle,
+  [Parameter(HelpMessage = "Days before transitioning S3 objects to lower-cost storage (30-3653).")][ValidateRange(30,3653)][int]$S3LifecycleTransitionDays = 90,
+  [Parameter(HelpMessage = "Days before expiring S3 objects (90-7300).")][ValidateRange(90,7300)][int]$S3LifecycleExpirationDays = 2555,
   # Additional remediation toggles
-  [Parameter()][switch]$EnforceS3RequireSSL = $false,
-  [Parameter()][switch]$EnsureCloudTrailManagementSelectors = $false,
-  [Parameter()][switch]$RemediateIamUserDirectPolicies = $false,
+  [Parameter(HelpMessage = "Switch to enforce S3 bucket policies requiring SSL.")][switch]$EnforceS3RequireSSL = $false,
+  [Parameter(HelpMessage = "Switch to ensure CloudTrail management event selectors are configured.")][switch]$EnsureCloudTrailManagementSelectors = $false,
+  [Parameter(HelpMessage = "Switch to remediate IAM users with directly attached policies.")][switch]$RemediateIamUserDirectPolicies = $false,
 
   # Safety
-  [Parameter()][switch]$DryRun = $false
+  [Parameter(HelpMessage = "Switch to preview changes without making them (dry run mode).")][switch]$DryRun = $false
 )
 
 $ErrorActionPreference = 'Stop'
@@ -3245,7 +3262,11 @@ try {
       throw "Manual remediation required for some controls. See warnings above."
     }
 
-} catch {
-  Write-Err "Enhanced account hardening failed: $_"
-  exit 1
+}
+catch {
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
+    exit 1
+}
+finally {
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

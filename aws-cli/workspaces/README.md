@@ -1,51 +1,45 @@
-# AWS CLI - WorkSpaces Scripts
+# WorkSpaces Scripts
 
-This directory contains PowerShell scripts for managing Amazon WorkSpaces using the AWS CLI.
+PowerShell scripts for managing Amazon WorkSpaces using the AWS CLI.
+Covers workspace provisioning, lifecycle management, bundle and image
+management, directory registration, tagging, and user operations.
 
 ## Prerequisites
 
-- AWS CLI v2.16+ installed and configured
-- PowerShell 5.1 or later (PowerShell 7+ recommended)
-- AWS credentials configured (`aws configure`)
-- Appropriate IAM permissions for WorkSpaces operations
-- WorkSpaces directory already configured in target region
+- AWS CLI v2
+- Appropriate AWS credentials configured
 
 ## Available Scripts
 
-### WorkSpace Management
-
-- **aws-cli-create-workspace.ps1** - Provisions new WorkSpaces for users
-- **aws-cli-describe-workspaces.ps1** - Lists and describes WorkSpaces
-- **aws-cli-terminate-workspace.ps1** - Terminates WorkSpaces
-- **aws-cli-reboot-workspace.ps1** - Reboots running WorkSpaces
-- **aws-cli-rebuild-workspace.ps1** - Rebuilds WorkSpaces to original state
-- **aws-cli-modify-workspace-properties.ps1** - Modifies WorkSpace properties
-- **aws-cli-modify-workspace-state.ps1** - Changes WorkSpace running state
-
-### Bundle and Image Management
-
-- **aws-cli-describe-workspace-bundles.ps1** - Lists available WorkSpace bundles
-- **aws-cli-create-workspace-bundle.ps1** - Creates custom WorkSpace bundles
-- **aws-cli-create-workspace-image.ps1** - Creates custom WorkSpace images
-- **aws-cli-delete-workspace-image.ps1** - Deletes custom images
-- **aws-cli-list-available-workspace-images.ps1** - Lists available images
-
-### Directory Management
-
-- **aws-cli-describe-workspace-directories.ps1** - Lists WorkSpace directories
-- **aws-cli-list-workspace-directories.ps1** - Lists directory information
-- **aws-cli-register-workspace-directory.ps1** - Registers directories for WorkSpaces
-
-### Snapshot Management
-
-- **aws-cli-describe-workspace-snapshots.ps1** - Lists WorkSpace snapshots
-- **aws-cli-create-workspace-snapshot.ps1** - Creates WorkSpace snapshots
-
-### Tagging and Migration
-
-- **aws-cli-create-tag.ps1** - Adds tags to WorkSpaces
-- **aws-cli-delete-tag.ps1** - Removes tags from WorkSpaces
-- **aws-cli-migrate-workspace.ps1** - Migrates WorkSpaces between bundles
+| Script | Description |
+| --- | --- |
+| `aws-cli-create-tag.ps1` | Adds a single tag to a WorkSpace using a key-value specification string |
+| `aws-cli-create-tags.ps1` | Adds multiple tags to a WorkSpace using an array of key-value pairs |
+| `aws-cli-create-workspace-bundle.ps1` | Creates a custom WorkSpace bundle |
+| `aws-cli-create-workspace-image.ps1` | Creates a custom WorkSpace image from an existing WorkSpace |
+| `aws-cli-create-workspace.ps1` | Provisions a new WorkSpace for a user in a registered directory |
+| `aws-cli-delete-tag.ps1` | Removes a tag from a WorkSpace |
+| `aws-cli-delete-workspace-image.ps1` | Deletes a custom WorkSpace image |
+| `aws-cli-deregister-workspace-directory.ps1` | Deregisters a directory from WorkSpaces |
+| `aws-cli-describe-workspace-bundles.ps1` | Lists available WorkSpace bundles |
+| `aws-cli-describe-workspace-directories.ps1` | Lists registered WorkSpace directories |
+| `aws-cli-describe-workspace-snapshots.ps1` | Lists snapshots for a WorkSpace |
+| `aws-cli-describe-workspaces.ps1` | Lists and describes WorkSpaces |
+| `aws-cli-list-available-workspace-images.ps1` | Lists available WorkSpace images |
+| `aws-cli-list-workspace-directories.ps1` | Lists WorkSpace directory identifiers |
+| `aws-cli-list-workspace-users.ps1` | Lists users in a WorkSpaces directory |
+| `aws-cli-migrate-workspace.ps1` | Migrates a WorkSpace to a different bundle |
+| `aws-cli-modify-workspace-creation-properties.ps1` | Modifies default creation properties for a WorkSpaces directory |
+| `aws-cli-modify-workspace-properties.ps1` | Modifies compute type, volume size, or running mode of a WorkSpace |
+| `aws-cli-modify-workspace-state.ps1` | Changes the state of a WorkSpace (e.g., AVAILABLE or ADMIN_MAINTENANCE) |
+| `aws-cli-reboot-workspace.ps1` | Reboots a running WorkSpace |
+| `aws-cli-rebuild-workspace.ps1` | Rebuilds a WorkSpace to its original state |
+| `aws-cli-recover-workspace.ps1` | Recovers a WorkSpace that is in an unhealthy state |
+| `aws-cli-register-workspace-directory.ps1` | Registers a directory with Amazon WorkSpaces |
+| `aws-cli-restore-workspace.ps1` | Restores a WorkSpace from a snapshot |
+| `aws-cli-start-workspace.ps1` | Starts a stopped WorkSpace |
+| `aws-cli-stop-worksapce.ps1` | Stops a running WorkSpace |
+| `aws-cli-terminate-workspace.ps1` | Permanently terminates a WorkSpace and deletes its data |
 
 ## Usage Examples
 
@@ -53,92 +47,56 @@ This directory contains PowerShell scripts for managing Amazon WorkSpaces using 
 
 ```powershell
 .\aws-cli-create-workspace.ps1 `
-    -DirectoryId d-1234567890 `
-    -Username "john.doe" `
-    -BundleId wsb-12345678 `
-    -VolumeEncryption Enabled
+    -AwsDirectoryId "d-1234567890" `
+    -AwsWorkspaceBundleId "wsb-12345678" `
+    -AwsUserName "johndoe" `
+    -AwsRunningMode "AUTO_STOP"
 ```
 
-### List All WorkSpaces
+### Stop a WorkSpace
 
 ```powershell
-.\aws-cli-describe-workspaces.ps1
-```
-
-### Reboot a WorkSpace
-
-```powershell
-.\aws-cli-reboot-workspace.ps1 -WorkSpaceId ws-1234567890
-```
-
-### Create Custom Image
-
-```powershell
-.\aws-cli-create-workspace-image.ps1 `
-    -WorkSpaceId ws-1234567890 `
-    -ImageName "CustomWindows10Image" `
-    -ImageDescription "Windows 10 with corporate applications"
+.\aws-cli-stop-worksapce.ps1 -AwsWorkspaceId "ws-12345678"
 ```
 
 ### Modify WorkSpace Properties
 
 ```powershell
 .\aws-cli-modify-workspace-properties.ps1 `
-    -WorkSpaceId ws-1234567890 `
-    -RunningMode AUTO_STOP `
-    -RunningModeAutoStopTimeoutInMinutes 60
+    -AwsWorkspaceId "ws-12345678" `
+    -AwsRunningMode "ALWAYS_ON" `
+    -AwsRootVolumeSizeGib 80
 ```
 
-## WorkSpaces Best Practices
+### Migrate a WorkSpace to a Different Bundle
 
-- **User Management**:
+```powershell
+.\aws-cli-migrate-workspace.ps1 `
+    -AwsSourceWorkspaceId "ws-12345678" `
+    -AwsWorkspaceBundleId "wsb-87654321"
+```
 
-  - Use Active Directory integration
-  - Implement least-privilege access
-  - Regular user account audits
+### Tag a WorkSpace (Multiple Tags)
 
-- **Cost Optimization**:
+```powershell
+.\aws-cli-create-tags.ps1 `
+    -AwsWorkspaceId "ws-12345678" `
+    -AwsTags @{Key="Environment";Value="Production"},@{Key="Owner";Value="Alice"}
+```
 
-  - Use AUTO_STOP mode for non-24/7 users
-  - Right-size bundles based on workload
-  - Monitor and remove unused WorkSpaces
-  - Use monthly billing for always-on users
+### Register a Directory
 
-- **Security**:
+```powershell
+.\aws-cli-register-workspace-directory.ps1 -AwsDirectoryId "d-1234567890"
+```
 
-  - Enable volume encryption
-  - Use security groups to control network access
-  - Implement MFA for sensitive environments
-  - Regular image updates and patching
+## Notes
 
-- **Performance**:
-  - Deploy WorkSpaces in regions close to users
-  - Monitor connection health metrics
-  - Use appropriate bundle sizes for workload
-
-## Common Parameters
-
-- **DirectoryId**: The directory identifier for WorkSpaces registration
-- **BundleId**: The bundle identifier determining WorkSpace configuration
-- **RunningMode**: ALWAYS_ON, AUTO_STOP, or MANUAL
-- **VolumeEncryption**: Enabled or Disabled for root and user volumes
-
-## Error Handling
-
-All scripts include:
-
-- Directory and bundle ID validation
-- Username format validation
-- WorkSpace state checks
-- Quota limit checks
-- Comprehensive error messages
-
-## Related Documentation
-
-- [Amazon WorkSpaces Documentation](https://docs.aws.amazon.com/workspaces/)
-- [AWS CLI Command Reference - WorkSpaces](https://awscli.amazonaws.com/v2/documentation/api/latest/reference/workspaces/index.html)
-- [WorkSpaces Pricing](https://aws.amazon.com/workspaces/pricing/)
-
-## Support
-
-For issues or questions, please refer to the main repository documentation.
+- `aws-cli-stop-worksapce.ps1` contains a typo in the filename
+  ("worksapce"); use the exact filename when calling the script.
+- `AUTO_STOP` running mode stops the WorkSpace after a configurable
+  idle period and is recommended for users who do not work full-time.
+- `ALWAYS_ON` keeps the WorkSpace running continuously and is billed
+  at a fixed monthly rate.
+- Terminating a WorkSpace permanently deletes all user data stored on
+  the WorkSpace volumes.

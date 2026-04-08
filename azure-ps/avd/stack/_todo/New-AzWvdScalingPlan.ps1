@@ -1,116 +1,139 @@
 <#
 .SYNOPSIS
-Creates a new scaling plan in an Azure Virtual Desktop environment.
+    Creates a new scaling plan in an Azure Virtual Desktop environment.
 
 .DESCRIPTION
-This script creates a new scaling plan in an Azure Virtual Desktop environment with the specified parameters.
+    This script creates a new scaling plan in an Azure Virtual Desktop environment with the specified parameters.
+    Uses the New-AzWvdScalingPlan cmdlet from the Az.DesktopVirtualization module.
 
 .PARAMETER Name
-The name of the scaling plan.
+    The name of the scaling plan.
 
 .PARAMETER ResourceGroup
-The name of the resource group.
-
+    The name of the resource group.
 
 .PARAMETER TimeZone
-The time zone for the scaling plan.
+    The time zone for the scaling plan.
 
 .PARAMETER Description
-The description of the scaling plan.
+    The description of the scaling plan.
 
 .PARAMETER ExclusionTag
-The exclusion tag for the scaling plan.
+    The exclusion tag for the scaling plan.
 
 .PARAMETER FriendlyName
-The friendly name of the scaling plan.
-
-.PARAMETER HostPoolReference
-References to host pools.
+    The friendly name of the scaling plan.
 
 .PARAMETER HostPoolType
-The type of the host pool.
-
-.PARAMETER IdentityType
-The identity type of the scaling plan.
+    The type of the host pool.
 
 .PARAMETER Kind
-The kind of the scaling plan.
+    The kind of the scaling plan.
 
 .PARAMETER Location
-The location of the scaling plan.
+    The location of the scaling plan.
 
 .PARAMETER ManagedBy
-The managed by property of the scaling plan.
+    The managed by property of the scaling plan.
 
 .PARAMETER PlanName
-The plan name of the scaling plan.
+    The plan name of the scaling plan.
 
 .PARAMETER PlanProduct
-The plan product of the scaling plan.
+    The plan product of the scaling plan.
 
 .PARAMETER PlanPromotionCode
-The plan promotion code of the scaling plan.
+    The plan promotion code of the scaling plan.
 
 .PARAMETER PlanPublisher
-The plan publisher of the scaling plan.
+    The plan publisher of the scaling plan.
 
 .PARAMETER PlanVersion
-The plan version of the scaling plan.
-
-.PARAMETER Schedule
-The schedule for the scaling plan.
+    The plan version of the scaling plan.
 
 .PARAMETER SkuCapacity
-The SKU capacity of the scaling plan.
+    The SKU capacity of the scaling plan.
 
 .PARAMETER SkuFamily
-The SKU family of the scaling plan.
+    The SKU family of the scaling plan.
 
 .PARAMETER SkuName
-The SKU name of the scaling plan.
+    The SKU name of the scaling plan.
 
 .PARAMETER SkuSize
-The SKU size of the scaling plan.
+    The SKU size of the scaling plan.
 
-.PARAMETER SkuTier
-The SKU tier of the scaling plan.
-
-.PARAMETER Tag
-The tags for the scaling plan.
-
+.PARAMETER Tags
+    The tags for the scaling plan.
 
 .EXAMPLE
-PS C:\> .\New-AzWvdScalingPlan.ps1 -Name "MyScalingPlan" -ResourceGroup "MyResourceGroup" -TimeZone "Pacific Standard Time"
+    PS C:\> .\New-AzWvdScalingPlan.ps1 -Name "MyScalingPlan" -ResourceGroup "MyResourceGroup" -TimeZone "Pacific Standard Time" -Location "westeurope"
+
+.NOTES
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: Az PowerShell module (Install-Module Az), Az.DesktopVirtualization
+
+.LINK
+    https://learn.microsoft.com/en-us/powershell/module/az.desktopvirtualization/new-azwvdscalingplan?view=azps-12.3.0
+
+.COMPONENT
+    Azure PowerShell Virtual Desktop
+
 #>
 
+[CmdletBinding()]
 param (
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$true, HelpMessage = "The name of the scaling plan.")]
     [ValidateNotNullOrEmpty()]
-    [string]$Name = 'MyScalingPlan',
+    [string]$Name,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$true, HelpMessage = "The name of the resource group.")]
     [ValidateNotNullOrEmpty()]
-    [string]$ResourceGroup = 'MyResourceGroup',
+    [string]$ResourceGroup,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$true, HelpMessage = "The time zone for the scaling plan (e.g., 'Pacific Standard Time').")]
     [ValidateNotNullOrEmpty()]
-    [string]$TimeZone = 'Pacific Standard Time',
+    [string]$TimeZone,
 
+    [Parameter(Mandatory=$false, HelpMessage = "The description of the scaling plan.")]
+    [ValidateNotNullOrEmpty()]
     [string]$Description,
 
+    [Parameter(Mandatory=$false, HelpMessage = "The exclusion tag for the scaling plan.")]
+    [ValidateNotNullOrEmpty()]
     [string]$ExclusionTag,
 
+    [Parameter(Mandatory=$false, HelpMessage = "The friendly display name of the scaling plan.")]
+    [ValidateNotNullOrEmpty()]
     [string]$FriendlyName,
 
-    [IScalingHostPoolReference[]]$HostPoolReference,
+    # type currently not supported in scripted actions
+    #[Parameter(Mandatory=$false)]
+    #[ValidateNotNullOrEmpty()]
+    #[IScalingHostPoolReference[]]$HostPoolReference,
 
-    [ScalingHostPoolType]$HostPoolType,
+    [Parameter(Mandatory=$false, HelpMessage = "The host pool type for the scaling plan.")]
+    [ValidateNotNullOrEmpty()]
+    [string]$HostPoolType,
 
-    [ResourceIdentityType]$IdentityType,
+    # type currently not supported in scripted actions
+    #[Parameter(Mandatory=$false)]
+    #[ValidateNotNullOrEmpty()]
+    #[ResourceIdentityType]$IdentityType,
 
+    [Parameter(Mandatory=$false, HelpMessage = "The kind of the scaling plan.")]
+    [ValidateNotNullOrEmpty()]
     [string]$Kind,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$true, HelpMessage = "The Azure region where the scaling plan will be created.")]
+    [ValidateNotNullOrEmpty()]
     [ValidateSet(
         'eastus', 'eastus2', 'southcentralus', 'westus2',
         'westus3', 'australiaeast', 'southeastasia', 'northeurope',
@@ -130,140 +153,165 @@ param (
         'francesouth', 'germanynorth', 'norwaywest', 'switzerlandwest',
         'ukwest', 'uaecentral', 'brazilsoutheast'
     )]
-    [string]$Location = 'westeurope',
+    [string]$Location,
 
+    [Parameter(Mandatory=$false, HelpMessage = "The managed by property of the scaling plan.")]
+    [ValidateNotNullOrEmpty()]
     [string]$ManagedBy,
 
+    [Parameter(Mandatory=$false, HelpMessage = "The plan name of the scaling plan.")]
+    [ValidateNotNullOrEmpty()]
     [string]$PlanName,
 
+    [Parameter(Mandatory=$false, HelpMessage = "The plan product of the scaling plan.")]
+    [ValidateNotNullOrEmpty()]
     [string]$PlanProduct,
 
+    [Parameter(Mandatory=$false, HelpMessage = "The plan promotion code of the scaling plan.")]
+    [ValidateNotNullOrEmpty()]
     [string]$PlanPromotionCode,
 
+    [Parameter(Mandatory=$false, HelpMessage = "The plan publisher of the scaling plan.")]
+    [ValidateNotNullOrEmpty()]
     [string]$PlanPublisher,
 
+    [Parameter(Mandatory=$false, HelpMessage = "The plan version of the scaling plan.")]
+    [ValidateNotNullOrEmpty()]
     [string]$PlanVersion,
 
-    [IScalingSchedule[]]$Schedule,
+    # type currently not supported in scripted actions
+    #[Parameter(Mandatory=$false)]
+    #[ValidateNotNullOrEmpty()]
+    #[IScalingSchedule[]]$Schedule,
 
+    [Parameter(Mandatory=$false, HelpMessage = "The SKU capacity of the scaling plan.")]
+    [ValidateNotNullOrEmpty()]
     [int]$SkuCapacity,
 
+    [Parameter(Mandatory=$false, HelpMessage = "The SKU family of the scaling plan.")]
+    [ValidateNotNullOrEmpty()]
     [string]$SkuFamily,
 
+    [Parameter(Mandatory=$false, HelpMessage = "The SKU name of the scaling plan.")]
+    [ValidateNotNullOrEmpty()]
     [string]$SkuName,
 
+    [Parameter(Mandatory=$false, HelpMessage = "The SKU size of the scaling plan.")]
+    [ValidateNotNullOrEmpty()]
     [string]$SkuSize,
 
-    [SkuTier]$SkuTier,
+    # type currently not supported in scripted actions
+    #[Parameter(Mandatory=$false)]
+    #[ValidateNotNullOrEmpty()]
+    #[SkuTier]$SkuTier,
 
-    [hashtable]$Tag
+    [Parameter(Mandatory=$false, HelpMessage = "A hashtable of tags to apply to the scaling plan.")]
+    [ValidateNotNullOrEmpty()]
+    [hashtable]$Tags
 )
+
+# Set Error Action to Stop
+$ErrorActionPreference = "Stop"
 
 try {
     # Splatting parameters for better readability
     $parameters = @{
-        Name                = $Name
-        ResourceGroup   = $ResourceGroup
-        SubscriptionId      = $SubscriptionId
-        TimeZone            = $TimeZone
-        }
+        Name              = $Name
+        ResourceGroupName = $ResourceGroup
+        TimeZone          = $TimeZone
+        Location          = $Location
+    }
 
     if ($Description) {
-        $parameters['Description', $Description
+        $parameters['Description'] = $Description
     }
 
     if ($ExclusionTag) {
-        $parameters['ExclusionTag', $ExclusionTag
+        $parameters['ExclusionTag'] = $ExclusionTag
     }
 
     if ($FriendlyName) {
-        $parameters['FriendlyName', $FriendlyName
+        $parameters['FriendlyName'] = $FriendlyName
     }
 
-    if ($HostPoolReference) {
-        $parameters['HostPoolReference', $HostPoolReference
-    }
+    #if ($HostPoolReference) {
+    #    $parameters['HostPoolReference'] = $HostPoolReference
+    #}
 
     if ($HostPoolType) {
-        $parameters['HostPoolType', $HostPoolType
+        $parameters['HostPoolType'] = $HostPoolType
     }
 
-    if ($IdentityType) {
-        $parameters['IdentityType', $IdentityType
-    }
+    #if ($IdentityType) {
+    #    $parameters['IdentityType'] = $IdentityType
+    #}
 
     if ($Kind) {
-        $parameters['Kind', $Kind
-    }
-
-    if ($Location) {
-        $parameters['Location', $Location
+        $parameters['Kind'] = $Kind
     }
 
     if ($ManagedBy) {
-        $parameters['ManagedBy', $ManagedBy
+        $parameters['ManagedBy'] = $ManagedBy
     }
 
     if ($PlanName) {
-        $parameters['PlanName', $PlanName
+        $parameters['PlanName'] = $PlanName
     }
 
     if ($PlanProduct) {
-        $parameters['PlanProduct', $PlanProduct
+        $parameters['PlanProduct'] = $PlanProduct
     }
 
     if ($PlanPromotionCode) {
-        $parameters['PlanPromotionCode', $PlanPromotionCode
+        $parameters['PlanPromotionCode'] = $PlanPromotionCode
     }
 
     if ($PlanPublisher) {
-        $parameters['PlanPublisher', $PlanPublisher
+        $parameters['PlanPublisher'] = $PlanPublisher
     }
 
     if ($PlanVersion) {
-        $parameters['PlanVersion', $PlanVersion
+        $parameters['PlanVersion'] = $PlanVersion
     }
 
-    if ($Schedule) {
-        $parameters['Schedule', $Schedule
-    }
+    #if ($Schedule) {
+    #    $parameters['Schedule'] = $Schedule
+    #}
 
     if ($SkuCapacity) {
-        $parameters['SkuCapacity', $SkuCapacity
+        $parameters['SkuCapacity'] = $SkuCapacity
     }
 
     if ($SkuFamily) {
-        $parameters['SkuFamily', $SkuFamily
+        $parameters['SkuFamily'] = $SkuFamily
     }
 
     if ($SkuName) {
-        $parameters['SkuName', $SkuName
+        $parameters['SkuName'] = $SkuName
     }
 
     if ($SkuSize) {
-        $parameters['SkuSize', $SkuSize
+        $parameters['SkuSize'] = $SkuSize
     }
 
-    if ($SkuTier) {
-        $parameters['SkuTier', $SkuTier
-    }
+    #if ($SkuTier) {
+    #    $parameters['SkuTier'] = $SkuTier
+    #}
 
     if ($Tags) {
-        $parameters['Tag', $Tags
+        $parameters['Tag'] = $Tags
     }
 
     # Create the scaling plan and capture the result
     $result = New-AzWvdScalingPlan @parameters
 
     # Output the result
-    Write-Output "Scaling plan created successfully:"
+    Write-Host "✅ Scaling plan created successfully:" -ForegroundColor Green
     Write-Output $result
 
-} catch [System.Exception] {
-
-    Write-Error "Failed to create the scaling plan: $($_.Exception.Message)"
-
+} catch {
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
+    exit 1
 } finally {
-    # Cleanup code if needed
-    Write-Output "Script execution completed."
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

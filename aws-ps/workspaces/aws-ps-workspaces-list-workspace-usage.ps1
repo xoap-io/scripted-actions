@@ -1,15 +1,63 @@
+<#
+.SYNOPSIS
+    Retrieve usage information for AWS WorkSpaces.
+
+.DESCRIPTION
+    This script retrieves WorkSpaces usage information using Get-WKSWorkspaceUsage from AWS.Tools.WorkSpaces.
+    Falls back to Get-WKSWorkspace and Get-WKSWorkspaceConnectionStatus if usage reporting is not available in the current module version.
+    Supports optional filtering by directory, user, and date range.
+
+.PARAMETER DirectoryId
+    (Optional) Filter usage data by directory ID.
+
+.PARAMETER UserName
+    (Optional) Filter usage data by user name.
+
+.PARAMETER StartDate
+    (Optional) Start date for the usage query in YYYY-MM-DD format.
+
+.PARAMETER EndDate
+    (Optional) End date for the usage query in YYYY-MM-DD format.
+
+.EXAMPLE
+    .\aws-ps-workspaces-list-workspace-usage.ps1 -DirectoryId d-1234567890
+
+.EXAMPLE
+    .\aws-ps-workspaces-list-workspace-usage.ps1 -StartDate 2025-01-01 -EndDate 2025-01-31
+
+.NOTES
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: AWS.Tools.WorkSpaces
+
+.LINK
+    https://docs.aws.amazon.com/powershell/latest/reference/
+
+.COMPONENT
+    AWS PowerShell WorkSpaces
+#>
+
 [CmdletBinding()]
 param(
-    [Parameter()]
+    [Parameter(HelpMessage = "Optional directory ID to filter usage data.")]
     [ValidateNotNullOrEmpty()]
     [string]$DirectoryId,
-    [Parameter()]
+
+    [Parameter(HelpMessage = "Optional user name to filter usage data.")]
     [ValidateNotNullOrEmpty()]
     [string]$UserName,
-    [Parameter()]
+
+    [Parameter(HelpMessage = "Optional start date for the usage query in YYYY-MM-DD format.")]
     [ValidatePattern('^\d{4}-\d{2}-\d{2}$')]
     [string]$StartDate,
-    [Parameter()]
+
+    [Parameter(HelpMessage = "Optional end date for the usage query in YYYY-MM-DD format.")]
     [ValidatePattern('^\d{4}-\d{2}-\d{2}$')]
     [string]$EndDate
 )
@@ -57,7 +105,11 @@ try {
             }
         }
     }
-} catch {
-    Write-Error "Failed to retrieve WorkSpaces usage: $_"
+}
+catch {
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
+}
+finally {
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

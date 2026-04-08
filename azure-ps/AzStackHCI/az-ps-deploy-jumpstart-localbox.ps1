@@ -57,7 +57,15 @@
     .\az-ps-deploy-jumpstart-localbox.ps1 -Location "East US" -ResourceGroup "rg-test" -NamingPrefix "hcitest" -VmSize "Standard_D16s_v5" -DeployBastion $false -DryRun
 
 .NOTES
-    Requires Azure PowerShell module (Az) to be installed and authenticated.
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: Az PowerShell module (Install-Module Az), Az.StackHCI
 
     VM sizes that support nested virtualization: Standard_D8s_v5, Standard_D16s_v5, Standard_D32s_v5,
     Standard_E8s_v5, Standard_E16s_v5, Standard_E32s_v5, etc.
@@ -69,47 +77,52 @@
 
     Template source: https://github.com/microsoft/azure_arc/tree/main/azure_jumpstart_hcibox
 
-    Author: XOAP.io
+.LINK
+    https://learn.microsoft.com/en-us/azure/azure-local/
 
-    Last Updated: September 2025
+.LINK
+    https://github.com/microsoft/azure_arc/tree/main/azure_jumpstart_hcibox
+
+.COMPONENT
+    Azure PowerShell Stack HCI
 #>
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "Azure region where LocalBox resources will be deployed.")]
     [ValidateSet('East US', 'East US 2', 'West US', 'West US 2', 'West US 3', 'Central US', 'North Central US', 'South Central US', 'West Central US', 'Canada Central', 'Canada East', 'Brazil South', 'North Europe', 'West Europe', 'UK South', 'UK West', 'France Central', 'Germany West Central', 'Switzerland North', 'Norway East', 'Sweden Central', 'Australia East', 'Australia Southeast', 'East Asia', 'Southeast Asia', 'Japan East', 'Japan West', 'Korea Central', 'Korea South', 'Central India', 'South India', 'West India', 'UAE North', 'South Africa North')]
     [string]$Location = "West Europe",
 
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "Name of the Azure resource group to create or use for the LocalBox deployment.")]
     [ValidatePattern('^[a-zA-Z0-9\-_\.]{1,90}$')]
     [string]$ResourceGroup = "rg-localbox",
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Prefix used by the Bicep template to name all created resources.")]
     [ValidatePattern('^[a-zA-Z0-9\-_]{1,20}$')]
     [string]$NamingPrefix = "localbox",
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Azure VM size for the LocalBox client VM. Must support nested virtualization.")]
     [ValidateSet('Standard_D8s_v5', 'Standard_D16s_v5', 'Standard_D32s_v5', 'Standard_E8s_v5', 'Standard_E16s_v5', 'Standard_E32s_v5', 'Standard_D8s_v6', 'Standard_D16s_v6', 'Standard_D32s_v6')]
     [string]$VmSize = "Standard_D8s_v6",
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Administrator username for the LocalBox client VM.")]
     [ValidatePattern('^[a-zA-Z0-9\-_]{1,20}$')]
     [string]$WinAdminUser = "arcdemo",
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Administrator password for the LocalBox client VM as SecureString.")]
     [SecureString]$WinAdminPassword,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Whether to deploy Azure Bastion for browser-based RDP access.")]
     [bool]$DeployBastion = $true,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "RDP port for direct access to the client VM when not using Bastion.")]
     [ValidateRange(1024, 65535)]
     [int]$RdpPort = 3389,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Whether to enable automatic sign-in on the client VM.")]
     [bool]$VmAutologon = $false,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "If specified, performs a dry run without creating actual resources.")]
     [switch]$DryRun
 )
 

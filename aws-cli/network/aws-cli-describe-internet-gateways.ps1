@@ -1,11 +1,74 @@
+<#
+.SYNOPSIS
+    Describes AWS Internet Gateways.
+
+.DESCRIPTION
+    This script retrieves detailed information about Internet Gateways in your AWS account.
+    It supports filtering by various criteria and provides route table analysis.
+    Uses aws ec2 describe-internet-gateways to perform the operation.
+
+.PARAMETER InternetGatewayIds
+    Comma-separated list of specific Internet Gateway IDs to describe. Must be in the format 'igw-xxxxxxxxx'.
+
+.PARAMETER VpcId
+    Filter Internet Gateways by VPC ID to show only gateways attached to a specific VPC.
+
+.PARAMETER AttachmentState
+    Filter by attachment state: available, attaching, attached, detaching, or detached.
+
+.PARAMETER Profile
+    The AWS CLI profile to use for the operation.
+
+.PARAMETER Region
+    The AWS region to query for Internet Gateways.
+
+.PARAMETER OutputFormat
+    The output format for the results (json, table, text, yaml).
+
+.PARAMETER ShowRoutes
+    Show detailed route table analysis including routes that use each Internet Gateway.
+
+.EXAMPLE
+    .\aws-cli-describe-internet-gateways.ps1
+
+.EXAMPLE
+    .\aws-cli-describe-internet-gateways.ps1 -VpcId vpc-12345678
+
+.EXAMPLE
+    .\aws-cli-describe-internet-gateways.ps1 -AttachmentState attached
+
+.EXAMPLE
+    .\aws-cli-describe-internet-gateways.ps1 -InternetGatewayIds igw-12345678,igw-87654321 -ShowRoutes
+
+.EXAMPLE
+    .\aws-cli-describe-internet-gateways.ps1 -AttachmentState detached
+
+.NOTES
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: AWS CLI v2 (https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
+
+.LINK
+    https://docs.aws.amazon.com/cli/latest/reference/ec2/describe-internet-gateways.html
+
+.COMPONENT
+    AWS CLI Network
+#>
+
 [CmdletBinding()]
 param (
     [Parameter(Mandatory = $false, HelpMessage = "Specific Internet Gateway IDs to describe")]
-    [ValidatePattern('^igw-[a-zA-Z0-9]+(,igw-[a-zA-Z0-9]+)*$', ErrorMessage = "InternetGatewayIds must be comma-separated valid Internet Gateway IDs (format: igw-xxxxxxxxx)")]
+    [ValidatePattern('^igw-[a-zA-Z0-9]+(,igw-[a-zA-Z0-9]+)*$')]
     [string]$InternetGatewayIds,
 
     [Parameter(Mandatory = $false, HelpMessage = "Filter by VPC ID")]
-    [ValidatePattern('^vpc-[a-zA-Z0-9]+$', ErrorMessage = "VpcId must be a valid VPC ID (format: vpc-xxxxxxxxx)")]
+    [ValidatePattern('^vpc-[a-zA-Z0-9]+$')]
     [string]$VpcId,
 
     [Parameter(Mandatory = $false, HelpMessage = "Filter by attachment state")]
@@ -25,65 +88,6 @@ param (
     [Parameter(Mandatory = $false, HelpMessage = "Show detailed route table analysis")]
     [switch]$ShowRoutes
 )
-
-<#
-.SYNOPSIS
-Describes AWS Internet Gateways.
-
-.DESCRIPTION
-This script retrieves detailed information about Internet Gateways in your AWS account. It supports filtering by various criteria and provides route table analysis.
-
-.PARAMETER InternetGatewayIds
-Comma-separated list of specific Internet Gateway IDs to describe. Must be in the format 'igw-xxxxxxxxx'.
-
-.PARAMETER VpcId
-Filter Internet Gateways by VPC ID to show only gateways attached to a specific VPC.
-
-.PARAMETER AttachmentState
-Filter by attachment state: available, attaching, attached, detaching, or detached.
-
-.PARAMETER Profile
-The AWS CLI profile to use for the operation.
-
-.PARAMETER Region
-The AWS region to query for Internet Gateways.
-
-.PARAMETER OutputFormat
-The output format for the results (json, table, text, yaml).
-
-.PARAMETER ShowRoutes
-Show detailed route table analysis including routes that use each Internet Gateway.
-
-.EXAMPLE
-.\aws-cli-describe-internet-gateways.ps1
-
-Lists all Internet Gateways in the default region.
-
-.EXAMPLE
-.\aws-cli-describe-internet-gateways.ps1 -VpcId vpc-12345678
-
-Lists Internet Gateways attached to a specific VPC.
-
-.EXAMPLE
-.\aws-cli-describe-internet-gateways.ps1 -AttachmentState attached
-
-Lists all attached Internet Gateways.
-
-.EXAMPLE
-.\aws-cli-describe-internet-gateways.ps1 -InternetGatewayIds igw-12345678,igw-87654321 -ShowRoutes
-
-Shows detailed information for specific Internet Gateways including route analysis.
-
-.EXAMPLE
-.\aws-cli-describe-internet-gateways.ps1 -AttachmentState detached
-
-Lists unattached Internet Gateways that may be incurring unnecessary charges.
-
-.NOTES
-Author: Your Name
-Date: 2024
-Requires: AWS CLI v2.16+ and appropriate IAM permissions
-#>
 
 $ErrorActionPreference = 'Stop'
 
@@ -275,6 +279,8 @@ try {
     }
 
 } catch {
-    Write-Error "An error occurred: $($_.Exception.Message)"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
+} finally {
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

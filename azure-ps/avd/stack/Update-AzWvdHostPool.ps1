@@ -4,18 +4,13 @@
 
 .DESCRIPTION
     This script updates the properties of an Azure Virtual Desktop Host Pool.
+    Uses the Update-AzWvdHostPool cmdlet from the Az.DesktopVirtualization module.
 
 .PARAMETER Name
     The name of the host pool.
 
 .PARAMETER ResourceGroup
     The name of the resource group.
-
-.PARAMETER AgentUpdateMaintenanceWindow
-    The maintenance window for agent updates.
-
-.PARAMETER AgentUpdateMaintenanceWindowTimeZone
-    The time zone for the maintenance window.
 
 .PARAMETER AgentUpdateType
     The type of agent update.
@@ -71,7 +66,7 @@
 .PARAMETER StartVMOnConnect
     Specifies whether to start the VM on connect.
 
-.PARAMETER Tag
+.PARAMETER Tags
     A hashtable of tags to assign to the host pool.
 
 .PARAMETER VMTemplate
@@ -83,27 +78,32 @@
 .EXAMPLE
     PS C:\> .\Update-AzWvdHostPool.ps1 -Name "MyHostPool" -ResourceGroup "MyResourceGroup" -Description "Updated Description"
 
-.LINK
-    https://learn.microsoft.com/en-us/powershell/module/az.DesktopVirtualization
+.NOTES
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: Az PowerShell module (Install-Module Az), Az.DesktopVirtualization
 
 .LINK
     https://learn.microsoft.com/en-us/powershell/module/az.desktopvirtualization/update-azwvdhostpool?view=azps-12.3.0
 
-.LINK
-    https://github.com/xoap-io/scripted-actions
-
 .COMPONENT
-    Azure PowerShell
+    Azure PowerShell Virtual Desktop
 
 #>
 
 [CmdletBinding()]
 param (
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$true, HelpMessage = "The name of the host pool to update.")]
     [ValidateNotNullOrEmpty()]
     [string]$Name,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$true, HelpMessage = "The name of the resource group.")]
     [ValidateNotNullOrEmpty()]
     [string]$ResourceGroup,
 
@@ -115,7 +115,7 @@ param (
     #[ValidateNotNullOrEmpty()]
     #[string]$AgentUpdateMaintenanceWindowTimeZone,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The type of agent update (Default or Scheduled).")]
     [ValidateNotNullOrEmpty()]
     [ValidateSet(
         "Default",
@@ -123,23 +123,23 @@ param (
     )]
     [string]$AgentUpdateType,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "Specifies whether to use the session host local time for updates.")]
     [ValidateNotNullOrEmpty()]
     [switch]$AgentUpdateUseSessionHostLocalTime,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "Custom RDP properties for the host pool.")]
     [ValidateNotNullOrEmpty()]
     [string]$CustomRdpProperty,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The description of the host pool.")]
     [ValidateNotNullOrEmpty()]
     [string]$Description,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The friendly display name of the host pool.")]
     [ValidateNotNullOrEmpty()]
     [string]$FriendlyName,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The load balancer type for the host pool.")]
     [ValidateNotNullOrEmpty()]
     [ValidateSet(
         "BreadthFirst",
@@ -148,11 +148,11 @@ param (
     )]
     [string]$LoadBalancerType,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The maximum number of sessions per session host.")]
     [ValidateNotNullOrEmpty()]
     [int]$MaxSessionLimit,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The personal desktop assignment type.")]
     [ValidateNotNullOrEmpty()]
     [ValidateSet(
         "Automatic",
@@ -160,7 +160,7 @@ param (
     )]
     [string]$PersonalDesktopAssignmentType,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The preferred application group type.")]
     [ValidateNotNullOrEmpty()]
     [ValidateSet(
         "Desktop",
@@ -169,7 +169,7 @@ param (
     )]
     [string]$PreferredAppGroupType,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The public network access setting for the host pool.")]
     [ValidateNotNullOrEmpty()]
     [ValidateSet(
         "Disabled",
@@ -179,11 +179,11 @@ param (
     )]
     [string]$PublicNetworkAccess,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The expiration time for registration info.")]
     [ValidateNotNullOrEmpty()]
     [DateTime]$RegistrationInfoExpirationTime,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The registration token operation (Delete, None, or Update).")]
     [ValidateNotNullOrEmpty()]
     [ValidateSet(
         "Delete",
@@ -192,19 +192,19 @@ param (
     )]
     [String]$RegistrationInfoRegistrationTokenOperation,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The ring number for the host pool.")]
     [ValidateNotNullOrEmpty()]
     [int]$Ring,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The client ID for SSO.")]
     [ValidateNotNullOrEmpty()]
     [string]$SsoClientId,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The key vault path for the SSO client secret.")]
     [ValidateNotNullOrEmpty()]
     [string]$SsoClientSecretKeyVaultPath,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The type of SSO secret.")]
     [ValidateNotNullOrEmpty()]
     [ValidateSet(
         "Certificate",
@@ -214,141 +214,139 @@ param (
     )]
     [string]$SsoSecretType,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The ADFS authority for SSO.")]
     [ValidateNotNullOrEmpty()]
     [string]$SsoadfsAuthority,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "Specifies whether to start the VM on connect.")]
     [ValidateNotNullOrEmpty()]
     [switch]$StartVMOnConnect,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "A hashtable of tags to assign to the host pool.")]
     [ValidateNotNullOrEmpty()]
     [hashtable]$Tags,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The VM template for the host pool.")]
     [ValidateNotNullOrEmpty()]
     [string]$VMTemplate,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "Specifies whether this is a validation environment.")]
     [ValidateNotNullOrEmpty()]
     [switch]$ValidationEnvironment
 )
 
+# Set Error Action to Stop
+$ErrorActionPreference = "Stop"
+
 # Splatting parameters for better readability
 $parameters = @{
-    Name                = $Name
-    ResourceGroup   = $ResourceGroup
+    Name              = $Name
+    ResourceGroupName = $ResourceGroup
 }
 
 if ($AgentUpdateMaintenanceWindow) {
-    $parameters['AgentUpdateMaintenanceWindow'], $AgentUpdateMaintenanceWindow
+    $parameters['AgentUpdateMaintenanceWindow'] = $AgentUpdateMaintenanceWindow
 }
 
 if ($AgentUpdateMaintenanceWindowTimeZone) {
-    $parameters['AgentUpdateMaintenanceWindowTimeZone'], $AgentUpdateMaintenanceWindowTimeZone
+    $parameters['AgentUpdateMaintenanceWindowTimeZone'] = $AgentUpdateMaintenanceWindowTimeZone
 }
 
 if ($AgentUpdateType) {
-    $parameters['AgentUpdateType'], $AgentUpdateType
+    $parameters['AgentUpdateType'] = $AgentUpdateType
 }
 
 if ($AgentUpdateUseSessionHostLocalTime) {
-    $parameters['AgentUpdateUseSessionHostLocalTime'], $AgentUpdateUseSessionHostLocalTime
+    $parameters['AgentUpdateUseSessionHostLocalTime'] = $AgentUpdateUseSessionHostLocalTime
 }
 
 if ($CustomRdpProperty) {
-    $parameters['CustomRdpProperty'], $CustomRdpProperty
+    $parameters['CustomRdpProperty'] = $CustomRdpProperty
 }
 
 if ($Description) {
-    $parameters['Description'], $Description
+    $parameters['Description'] = $Description
 }
 
 if ($FriendlyName) {
-    $parameters['FriendlyName'], $FriendlyName
+    $parameters['FriendlyName'] = $FriendlyName
 }
 
 if ($LoadBalancerType) {
-    $parameters['LoadBalancerType'], $LoadBalancerType
+    $parameters['LoadBalancerType'] = $LoadBalancerType
 }
 
 if ($MaxSessionLimit) {
-    $parameters['MaxSessionLimit'], $MaxSessionLimit
+    $parameters['MaxSessionLimit'] = $MaxSessionLimit
 }
 
 if ($PersonalDesktopAssignmentType) {
-    $parameters['PersonalDesktopAssignmentType'], $PersonalDesktopAssignmentType
+    $parameters['PersonalDesktopAssignmentType'] = $PersonalDesktopAssignmentType
 }
 
 if ($PreferredAppGroupType) {
-    $parameters['PreferredAppGroupType'], $PreferredAppGroupType
+    $parameters['PreferredAppGroupType'] = $PreferredAppGroupType
 }
 
 if ($PublicNetworkAccess) {
-    $parameters['PublicNetworkAccess'], $PublicNetworkAccess
+    $parameters['PublicNetworkAccess'] = $PublicNetworkAccess
 }
 
 if ($RegistrationInfoExpirationTime) {
-    $parameters['RegistrationInfoExpirationTime'], $RegistrationInfoExpirationTime
+    $parameters['RegistrationInfoExpirationTime'] = $RegistrationInfoExpirationTime
 }
 
 if ($RegistrationInfoRegistrationTokenOperation) {
-    $parameters['RegistrationInfoRegistrationTokenOperation'], $RegistrationInfoRegistrationTokenOperation
+    $parameters['RegistrationInfoRegistrationTokenOperation'] = $RegistrationInfoRegistrationTokenOperation
 }
 
 if ($Ring) {
-    $parameters['Ring'], $Ring
+    $parameters['Ring'] = $Ring
 }
 
 if ($SsoClientId) {
-    $parameters['SsoClientId'], $SsoClientId
+    $parameters['SsoClientId'] = $SsoClientId
 }
 
 if ($SsoClientSecretKeyVaultPath) {
-    $parameters['SsoClientSecretKeyVaultPath'], $SsoClientSecretKeyVaultPath
+    $parameters['SsoClientSecretKeyVaultPath'] = $SsoClientSecretKeyVaultPath
 }
 
 if ($SsoSecretType) {
-    $parameters['SsoSecretType'], $SsoSecretType
+    $parameters['SsoSecretType'] = $SsoSecretType
 }
 
 if ($SsoadfsAuthority) {
-    $parameters['SsoadfsAuthority'], $SsoadfsAuthority
+    $parameters['SsoadfsAuthority'] = $SsoadfsAuthority
 }
 
 if ($StartVMOnConnect) {
-    $parameters['StartVMOnConnect'], $StartVMOnConnect
+    $parameters['StartVMOnConnect'] = $StartVMOnConnect
 }
 
 if ($Tags) {
-    $parameters['Tag'], $Tags
+    $parameters['Tag'] = $Tags
 }
 
 if ($VMTemplate) {
-    $parameters['VMTemplate'], $VMTemplate
+    $parameters['VMTemplate'] = $VMTemplate
 }
 
 if ($ValidationEnvironment) {
-    $parameters['ValidationEnvironment'], $ValidationEnvironment
+    $parameters['ValidationEnvironment'] = $ValidationEnvironment
 }
-
-# Set Error Action to Stop
-$ErrorActionPreference = "Stop"
 
 try {
     # Update the Azure Virtual Desktop Host Pool and capture the result
     $result = Update-AzWvdHostPool @parameters
 
     # Output the result
-    Write-Output "Azure Virtual Desktop Host Pool updated successfully:"
+    Write-Host "✅ Azure Virtual Desktop Host Pool updated successfully:" -ForegroundColor Green
     Write-Output $result
 
-} catch [System.Exception] {
-
-    Write-Error "Failed to update the Azure Virtual Desktop Host Pool: $($_.Exception.Message)"
-
+} catch {
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
+    exit 1
 } finally {
-    # Cleanup code if needed
-    Write-Output "Script execution completed."
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

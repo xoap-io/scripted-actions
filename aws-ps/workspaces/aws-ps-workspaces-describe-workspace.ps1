@@ -1,6 +1,37 @@
+<#
+.SYNOPSIS
+    Describe an AWS WorkSpace.
+
+.DESCRIPTION
+    This script retrieves and displays detailed information about an AWS WorkSpace using the Get-WKSWorkspace cmdlet from AWS.Tools.WorkSpaces.
+
+.PARAMETER WorkspaceId
+    The ID of the WorkSpace to describe.
+
+.EXAMPLE
+    .\aws-ps-workspaces-describe-workspace.ps1 -WorkspaceId ws-abc12345
+
+.NOTES
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: AWS.Tools.WorkSpaces
+
+.LINK
+    https://docs.aws.amazon.com/powershell/latest/reference/
+
+.COMPONENT
+    AWS PowerShell WorkSpaces
+#>
+
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory)]
+    [Parameter(Mandatory = $true, HelpMessage = "The ID of the WorkSpace to describe.")]
     [ValidateNotNullOrEmpty()]
     [string]$WorkspaceId
 )
@@ -45,10 +76,14 @@ try {
 
         return $workspace
     } else {
-        Write-Error "WorkSpace $WorkspaceId not found"
+        Write-Host "❌ WorkSpace $WorkspaceId not found" -ForegroundColor Red
         exit 1
     }
-} catch {
-    Write-Error "Failed to describe WorkSpace: $_"
+}
+catch {
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
+}
+finally {
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

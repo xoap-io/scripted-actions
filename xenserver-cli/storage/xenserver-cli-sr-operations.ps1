@@ -55,53 +55,65 @@
     .\xenserver-cli-sr-operations.ps1 -Server "xenserver.local" -Operation "Scan" -SRUUID "12345678-abcd-1234-abcd-123456789012"
 
 .NOTES
-    Author: XOAP.io
-    Requires: XenServerPSModule (PowerShell SDK)
-    Version: 2.0
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: XenServerPSModule (Citrix XenServer SDK)
+
+.LINK
+    https://docs.xenserver.com/en-us/xenserver/current-release/storage.html
+
+.COMPONENT
+    Citrix XenServer PowerShell
 #>
 
 [CmdletBinding()]
 param (
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The XenServer pool coordinator hostname or IP address.")]
     [string]$Server,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Username for authentication (default: root).")]
     [string]$Username = "root",
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Password for authentication.")]
     [string]$Password,
 
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The SR operation: Create, Destroy, Scan, List, Probe, Forget.")]
     [ValidateSet("Create", "Destroy", "Scan", "List", "Probe", "Forget")]
     [string]$Operation,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The name of the storage repository.")]
     [string]$SRName,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The UUID of the storage repository.")]
     [ValidatePattern('^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$')]
     [string]$SRUUID,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The type of SR: nfs, lvmoiscsi, lvmohba, lvm, ext, iso.")]
     [ValidateSet("nfs", "lvmoiscsi", "lvmohba", "lvm", "ext", "iso")]
     [string]$SRType,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "For NFS: server:/path format (e.g., nfs-server.local:/exports/xen).")]
     [string]$ServerPath,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "For iSCSI: target IQN.")]
     [string]$TargetIQN,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "For iSCSI: target IP address.")]
     [string]$TargetIP,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "For iSCSI/HBA: SCSI device identifier.")]
     [string]$SCSIid,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "For local storage: device path (e.g., /dev/sdb1).")]
     [string]$DevicePath,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Whether the SR is shared across multiple hosts.")]
     [switch]$Shared
 )
 
@@ -202,7 +214,7 @@ try {
     Write-Host "`n✓ Operation completed successfully" -ForegroundColor Green
 }
 catch {
-    Write-Error "Script failed: $_"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
 }
 finally {
@@ -210,4 +222,5 @@ finally {
     if ($session) {
         Get-XenSession | Disconnect-XenServer
     }
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

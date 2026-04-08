@@ -34,40 +34,51 @@
 .EXAMPLE
     .\az-cli-avd-application-group-create.ps1 -ResourceGroup "MyResourceGroup" -Name "MyAppGroup" -Location "eastus" -HostPoolArmPath "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.DesktopVirtualization/hostPools/myHostPool" -AppGroupType "RemoteApp"
 
+.NOTES
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: Azure CLI (https://docs.microsoft.com/en-us/cli/azure/install-azure-cli)
+
 .LINK
     https://learn.microsoft.com/en-us/cli/azure/desktopvirtualization/applicationgroup
 
 .COMPONENT
-    Azure CLI
+    Azure CLI Virtual Desktop
 #>
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory)]
+    [Parameter(Mandatory, HelpMessage = "The type of the Application Group. Valid values: 'Desktop', 'RemoteApp'")]
     [ValidateSet('Desktop', 'RemoteApp')]
     [string]$AppGroupType,
 
-    [Parameter(Mandatory)]
+    [Parameter(Mandatory, HelpMessage = "The ARM path of the Azure Virtual Desktop Host Pool")]
     [ValidateNotNullOrEmpty()]
     [string]$HostPoolArmPath,
 
-    [Parameter(Mandatory)]
+    [Parameter(Mandatory, HelpMessage = "The name of the Azure Virtual Desktop Application Group")]
     [ValidateNotNullOrEmpty()]
     [string]$Name,
 
-    [Parameter(Mandatory)]
+    [Parameter(Mandatory, HelpMessage = "The name of the Azure Resource Group")]
     [ValidateNotNullOrEmpty()]
     [string]$ResourceGroup,
 
-    [Parameter()]
+    [Parameter(HelpMessage = "Optional description of the Azure Virtual Desktop Application Group")]
     [ValidateNotNullOrEmpty()]
     [string]$Description,
 
-    [Parameter()]
+    [Parameter(HelpMessage = "Optional friendly name of the Azure Virtual Desktop Application Group")]
     [ValidateNotNullOrEmpty()]
     [string]$FriendlyName,
 
-    [Parameter()]
+    [Parameter(HelpMessage = "Optional location of the Azure Virtual Desktop Application Group")]
     [ValidateSet(
         'eastus', 'eastus2', 'southcentralus', 'westus2',
         'westus3', 'australiaeast', 'southeastasia', 'northeurope',
@@ -79,7 +90,7 @@ param(
     )]
     [string]$Location,
 
-    [Parameter()]
+    [Parameter(HelpMessage = "Optional tags for the Application Group in the format 'key1=value1 key2=value2'")]
     [ValidateNotNullOrEmpty()]
     [string]$Tags
 )
@@ -145,6 +156,8 @@ try {
 
     return $appGroup
 } catch {
-    Write-Error "Failed to create Azure Virtual Desktop Application Group: $_"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
+} finally {
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

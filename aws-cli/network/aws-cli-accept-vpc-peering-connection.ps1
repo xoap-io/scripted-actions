@@ -1,7 +1,61 @@
+<#
+.SYNOPSIS
+    Accepts an AWS VPC peering connection.
+
+.DESCRIPTION
+    This script accepts a VPC peering connection request. This action is required for the peering connection
+    to become active and allow traffic to flow between the VPCs.
+    Uses aws ec2 accept-vpc-peering-connection to perform the operation.
+
+.PARAMETER VpcPeeringConnectionId
+    The ID of the VPC peering connection to accept. Must be in the format 'pcx-xxxxxxxxx'.
+
+.PARAMETER Profile
+    The AWS CLI profile to use for the operation.
+
+.PARAMETER Region
+    The AWS region where the VPC peering connection is located.
+
+.PARAMETER Wait
+    Wait for the peering connection to reach the active state after acceptance.
+
+.EXAMPLE
+    .\aws-cli-accept-vpc-peering-connection.ps1 -VpcPeeringConnectionId pcx-12345678
+
+.EXAMPLE
+    .\aws-cli-accept-vpc-peering-connection.ps1 -VpcPeeringConnectionId pcx-12345678 -Wait
+
+.EXAMPLE
+    .\aws-cli-accept-vpc-peering-connection.ps1 -VpcPeeringConnectionId pcx-12345678 -Profile myprofile -Region us-west-2
+
+.NOTES
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: AWS CLI v2 (https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
+
+    IMPORTANT NOTES:
+    - You can only accept peering connections in the "pending-acceptance" state
+    - You must have appropriate permissions in the accepter VPC's account
+    - After acceptance, update route tables to enable traffic flow
+    - Security groups and NACLs may also need updates
+
+.LINK
+    https://docs.aws.amazon.com/cli/latest/reference/ec2/accept-vpc-peering-connection.html
+
+.COMPONENT
+    AWS CLI Network
+#>
+
 [CmdletBinding()]
 param (
     [Parameter(Mandatory = $true, HelpMessage = "The ID of the VPC peering connection to accept")]
-    [ValidatePattern('^pcx-[a-zA-Z0-9]+$', ErrorMessage = "VpcPeeringConnectionId must be a valid VPC peering connection ID (format: pcx-xxxxxxxxx)")]
+    [ValidatePattern('^pcx-[a-zA-Z0-9]+$')]
     [string]$VpcPeeringConnectionId,
 
     [Parameter(Mandatory = $false, HelpMessage = "AWS CLI profile to use")]
@@ -13,52 +67,6 @@ param (
     [Parameter(Mandatory = $false, HelpMessage = "Wait for the peering connection to be active")]
     [switch]$Wait
 )
-
-<#
-.SYNOPSIS
-Accepts an AWS VPC peering connection.
-
-.DESCRIPTION
-This script accepts a VPC peering connection request. This action is required for the peering connection to become active and allow traffic to flow between the VPCs.
-
-.PARAMETER VpcPeeringConnectionId
-The ID of the VPC peering connection to accept. Must be in the format 'pcx-xxxxxxxxx'.
-
-.PARAMETER Profile
-The AWS CLI profile to use for the operation.
-
-.PARAMETER Region
-The AWS region where the VPC peering connection is located.
-
-.PARAMETER Wait
-Wait for the peering connection to reach the active state after acceptance.
-
-.EXAMPLE
-.\aws-cli-accept-vpc-peering-connection.ps1 -VpcPeeringConnectionId pcx-12345678
-
-Accepts the specified VPC peering connection.
-
-.EXAMPLE
-.\aws-cli-accept-vpc-peering-connection.ps1 -VpcPeeringConnectionId pcx-12345678 -Wait
-
-Accepts the peering connection and waits for it to become active.
-
-.EXAMPLE
-.\aws-cli-accept-vpc-peering-connection.ps1 -VpcPeeringConnectionId pcx-12345678 -Profile myprofile -Region us-west-2
-
-Accepts the peering connection using a specific AWS profile and region.
-
-.NOTES
-Author: Your Name
-Date: 2024
-Requires: AWS CLI v2.16+ and appropriate IAM permissions
-
-IMPORTANT NOTES:
-- You can only accept peering connections in the "pending-acceptance" state
-- You must have appropriate permissions in the accepter VPC's account
-- After acceptance, update route tables to enable traffic flow
-- Security groups and NACLs may also need updates
-#>
 
 $ErrorActionPreference = 'Stop'
 
@@ -220,6 +228,8 @@ try {
     Write-Output $VpcPeeringConnectionId
 
 } catch {
-    Write-Error "An error occurred: $($_.Exception.Message)"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
+} finally {
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

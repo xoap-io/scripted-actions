@@ -43,43 +43,55 @@
     .\xenserver-cli-vm-clone.ps1 -Server "xenserver.local" -VMName "Template-Win" -NamePrefix "TestVM" -Count 5
 
 .NOTES
-    Author: XOAP.io
-    Requires: XenServerPSModule (PowerShell SDK)
-    Version: 2.0
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: XenServerPSModule (Citrix XenServer SDK)
+
+.LINK
+    https://docs.xenserver.com/en-us/xenserver/current-release/vms/manage.html
+
+.COMPONENT
+    Citrix XenServer PowerShell
 #>
 
 [CmdletBinding()]
 param (
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The XenServer pool coordinator hostname or IP address.")]
     [string]$Server,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Username for authentication (default: root).")]
     [string]$Username = "root",
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Password for authentication.")]
     [string]$Password,
 
-    [Parameter(Mandatory = $false, ParameterSetName = "SingleVM")]
+    [Parameter(Mandatory = $false, ParameterSetName = "SingleVM", HelpMessage = "The source VM name to clone from.")]
     [string]$VMName,
 
-    [Parameter(Mandatory = $false, ParameterSetName = "SingleVMUUID")]
+    [Parameter(Mandatory = $false, ParameterSetName = "SingleVMUUID", HelpMessage = "The source VM UUID to clone from.")]
     [ValidatePattern('^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$')]
     [string]$VMUUID,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The name for the cloned VM.")]
     [string]$NewVMName,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Optional description for the cloned VM.")]
     [string]$NewVMDescription = "",
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Number of clones to create (for batch operations).")]
     [ValidateRange(1, 100)]
     [int]$Count = 1,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Prefix for automatically named clones (used with Count > 1).")]
     [string]$NamePrefix = "Clone",
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Starting number for clone naming (default: 1).")]
     [int]$StartNumbering = 1
 )
 
@@ -159,7 +171,7 @@ try {
     Write-Host "  Failed: $($Count - $successCount)" -ForegroundColor $(if (($Count - $successCount) -gt 0) { "Red" } else { "Gray" })
 }
 catch {
-    Write-Error "Script failed: $_"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
 }
 finally {
@@ -167,4 +179,5 @@ finally {
     if ($session) {
         Get-XenSession | Disconnect-XenServer
     }
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

@@ -1,130 +1,128 @@
-# AWS PowerShell - WorkSpaces Scripts
+# WorkSpaces Scripts
 
-This directory contains PowerShell scripts for managing Amazon WorkSpaces using AWS Tools for PowerShell.
+PowerShell scripts for creating, managing, and monitoring Amazon
+WorkSpaces using AWS Tools for PowerShell.
 
 ## Prerequisites
 
-- AWS Tools for PowerShell installed (`Install-Module -Name AWS.Tools.WorkSpaces`)
-- PowerShell 5.1 or later (PowerShell 7+ recommended)
-- AWS credentials configured (`Set-AWSCredential` or AWS credential file)
-- Appropriate IAM permissions for WorkSpaces operations
-- WorkSpaces directory already configured
+- AWS Tools for PowerShell:
+  - `Install-Module -Name AWS.Tools.WorkSpaces`
+  - `Install-Module -Name AWS.Tools.EC2` (required by
+    `workspace-quickstart1.ps1`)
+  - `Install-Module -Name AWS.Tools.SimpleAD` (required by
+    `workspace-quickstart1.ps1`)
+- Appropriate AWS credentials configured
+- An existing WorkSpaces directory (except when using
+  `workspace-quickstart1.ps1`, which creates one)
 
 ## Available Scripts
 
-PowerShell cmdlets for WorkSpaces management:
-
-- `New-WKSWorkspace` - Create WorkSpaces
-- `Get-WKSWorkspace` - List and describe WorkSpaces
-- `Remove-WKSWorkspace` - Terminate WorkSpaces
-- `Restart-WKSWorkspace` - Reboot WorkSpaces
-- `Reset-WKSWorkspace` - Rebuild WorkSpaces
-- `Edit-WKSWorkspaceProperties` - Modify properties
-- `Edit-WKSWorkspaceState` - Change running state
+| Script | Description |
+| --- | --- |
+| `aws-ps-create-workspace.ps1` | Creates a WorkSpace for a user given a bundle ID and directory ID |
+| `aws-ps-reboot-workspace.ps1` | Reboots a single WorkSpace by ID |
+| `aws-ps-workspaces-bulk-create.ps1` | Creates multiple WorkSpaces from a CSV file or array of hashtables |
+| `aws-ps-workspaces-bulk-delete.ps1` | Terminates multiple WorkSpaces from a CSV file, ID list, or filter criteria |
+| `aws-ps-workspaces-create-user.ps1` | Creates a user in a WorkSpaces directory |
+| `aws-ps-workspaces-create-workspace.ps1` | Creates a WorkSpace with detailed configuration (compute type, storage, running mode, tags) |
+| `aws-ps-workspaces-delete-user.ps1` | Deletes a user from a WorkSpaces directory, checking for active WorkSpaces first |
+| `aws-ps-workspaces-delete-workspace.ps1` | Terminates one or more WorkSpaces, skipping already-terminated instances |
+| `aws-ps-workspaces-describe-bundle.ps1` | Retrieves and displays details of a specific WorkSpaces bundle |
+| `aws-ps-workspaces-describe-workspace.ps1` | Retrieves and displays detailed information about a specific WorkSpace |
+| `aws-ps-workspaces-get-workspace-connection-status.ps1` | Retrieves connection status for one or more WorkSpaces |
+| `aws-ps-workspaces-list-bundles.ps1` | Lists available WorkSpaces bundles, with optional filtering by owner or bundle ID |
+| `aws-ps-workspaces-list-directories.ps1` | Lists registered WorkSpaces directories, with optional filtering by directory ID |
+| `aws-ps-workspaces-list-tags.ps1` | Lists all tags associated with a WorkSpace |
+| `aws-ps-workspaces-list-users.ps1` | Lists users in a WorkSpaces directory |
+| `aws-ps-workspaces-list-workspace-usage.ps1` | Retrieves usage information for WorkSpaces with optional date and user filters |
+| `aws-ps-workspaces-list-workspaces.ps1` | Lists WorkSpaces with optional filtering by directory, user, state, or bundle |
+| `aws-ps-workspaces-migrate-workspace.ps1` | Migrates a WorkSpace to a different bundle |
+| `aws-ps-workspaces-modify-workspace-properties.ps1` | Modifies compute type, volume sizes, or running mode for a WorkSpace |
+| `aws-ps-workspaces-reboot-workspace.ps1` | Reboots one or more WorkSpaces, skipping those not in a rebootable state |
+| `aws-ps-workspaces-reset-user-password.ps1` | Resets the password for a user in a WorkSpaces directory |
+| `aws-ps-workspaces-start-workspace.ps1` | Starts one or more stopped WorkSpaces |
+| `aws-ps-workspaces-stop-workspace.ps1` | Stops one or more running WorkSpaces |
+| `aws-ps-workspaces-tag-workspace.ps1` | Adds key-value tags to one or more WorkSpaces |
+| `aws-ps-workspaces-untag-workspace.ps1` | Removes tags from one or more WorkSpaces by tag key |
+| `workspace-quickstart1.ps1` | Deploys a complete WorkSpaces environment including VPC, Simple AD directory, user, and WorkSpace |
 
 ## Usage Examples
 
-### Create a WorkSpace
+### WorkSpaces Quickstart (full environment)
 
 ```powershell
-# Set credentials
-Set-AWSCredential -ProfileName default -Region us-east-1
-
-# Create WorkSpace
-$workspace = New-WKSWorkspace `
-    -DirectoryId d-1234567890 `
-    -UserName "john.doe" `
-    -BundleId wsb-12345678 `
-    -VolumeEncryptionKey "alias/aws/workspaces" `
-    -UserVolumeEncryptionEnabled $true `
-    -RootVolumeEncryptionEnabled $true
+.\workspace-quickstart1.ps1 `
+    -Region eu-central-1 `
+    -VpcCidr 10.0.0.0/16 `
+    -Subnet1Cidr 10.0.1.0/24 `
+    -Subnet2Cidr 10.0.2.0/24 `
+    -DirectoryName corp.example.com `
+    -AdminPassword (Read-Host -AsSecureString) `
+    -DirectoryShortName CORP `
+    -WorkspaceUser jdoe `
+    -WorkspacePassword (Read-Host -AsSecureString) `
+    -BundleId wsb-bh8rsxt14
 ```
 
-### List WorkSpaces with Filtering
+### Create a Single WorkSpace
 
 ```powershell
-# Get all WorkSpaces in AVAILABLE state
-Get-WKSWorkspace |
-    Where-Object {$_.State -eq 'AVAILABLE'} |
-    Select-Object WorkspaceId, UserName, ComputerName, State
+.\aws-ps-workspaces-create-workspace.ps1 `
+    -DirectoryId d-1234567890ab `
+    -UserName jdoe `
+    -BundleId wsb-abc12345 `
+    -RunningMode AUTO_STOP `
+    -ComputeTypeName VALUE
 ```
 
-### Modify WorkSpace Properties
+### Bulk Create WorkSpaces from CSV
 
 ```powershell
-# Change to AUTO_STOP mode
-$properties = New-Object Amazon.WorkSpaces.Model.WorkspaceProperties
-$properties.RunningMode = [Amazon.WorkSpaces.RunningMode]::AUTO_STOP
-$properties.RunningModeAutoStopTimeoutInMinutes = 60
-
-Edit-WKSWorkspaceProperties `
-    -WorkspaceId ws-1234567890 `
-    -WorkspaceProperties $properties
+.\aws-ps-workspaces-bulk-create.ps1 -CsvFilePath .\workspaces.csv
 ```
 
-### Bulk Operations
+CSV format: `DirectoryId,UserName,BundleId,ComputeTypeName,RunningMode`
+
+### List WorkSpaces by State
 
 ```powershell
-# Reboot all WorkSpaces for a specific user
-Get-WKSWorkspace |
-    Where-Object {$_.UserName -eq 'john.doe'} |
-    ForEach-Object {
-        Restart-WKSWorkspace -WorkspaceId $_.WorkspaceId
-    }
+.\aws-ps-workspaces-list-workspaces.ps1 `
+    -State AVAILABLE `
+    -DirectoryId d-1234567890ab
 ```
 
-## Object-Oriented Advantages
-
-PowerShell returns rich .NET objects:
+### Migrate a WorkSpace to a New Bundle
 
 ```powershell
-# Get WorkSpace and access properties directly
-$ws = Get-WKSWorkspace -WorkspaceId ws-1234567890
-
-# Access nested properties
-Write-Host "User: $($ws.UserName)"
-Write-Host "Bundle: $($ws.BundleId)"
-Write-Host "State: $($ws.State)"
-Write-Host "IP: $($ws.IpAddress)"
-Write-Host "Directory: $($ws.DirectoryId)"
+.\aws-ps-workspaces-migrate-workspace.ps1 `
+    -WorkspaceId ws-abc12345 `
+    -TargetBundleId wsb-xyz98765
 ```
 
-## WorkSpaces Best Practices
+### Add Tags to a WorkSpace
 
-- **Cost Optimization**:
+```powershell
+.\aws-ps-workspaces-tag-workspace.ps1 `
+    -WorkspaceId ws-abc12345 `
+    -Tags @{Environment='Production'; Owner='TeamA'}
+```
 
-  - Use AUTO_STOP for intermittent users
-  - ALWAYS_ON for 24/7 users (more cost-effective if >80 hours/month)
-  - Monitor and terminate unused WorkSpaces
+### Reset a User Password
 
-- **Security**:
+```powershell
+.\aws-ps-workspaces-reset-user-password.ps1 `
+    -DirectoryId d-1234567890ab `
+    -UserName jdoe `
+    -NewPassword (Read-Host -AsSecureString)
+```
 
-  - Enable volume encryption for all WorkSpaces
-  - Use MFA for sensitive environments
-  - Implement security groups for network control
-  - Regular patching through image updates
+## Notes
 
-- **Management**:
-  - Use tags for organization and cost tracking
-  - Create custom bundles for standardization
-  - Implement automated backup strategies
-  - Monitor connection health metrics
-
-## Error Handling
-
-Scripts include:
-
-- Parameter validation with proper types
-- Try-catch blocks for AWS operations
-- State verification before operations
-- Comprehensive error messages
-
-## Related Documentation
-
-- [AWS Tools for PowerShell - WorkSpaces Cmdlets](https://docs.aws.amazon.com/powershell/latest/reference/items/WorkSpaces_cmdlets.html)
-- [Amazon WorkSpaces Documentation](https://docs.aws.amazon.com/workspaces/)
-- [AWS Tools for PowerShell Documentation](https://docs.aws.amazon.com/powershell/)
-
-## Support
-
-For issues or questions, please refer to the main repository documentation.
+- Use `AUTO_STOP` running mode for users who connect intermittently
+  to reduce costs. Use `ALWAYS_ON` for users who connect more than
+  roughly 80 hours per month.
+- Scripts that accept an array of WorkSpace IDs (start, stop, reboot,
+  delete, tag) skip entries that are already in the target state or
+  in a state that does not permit the operation.
+- The `-WhatIf` switch on bulk create and bulk delete previews which
+  WorkSpaces would be affected without making changes.

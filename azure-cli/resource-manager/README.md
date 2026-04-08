@@ -1,165 +1,95 @@
-# Azure CLI - Resource Manager Scripts
+# Resource Manager Scripts
 
-This directory contains PowerShell scripts for managing Azure resources using Azure Resource Manager (ARM) and Azure CLI.
+PowerShell scripts for managing Azure resources, resource groups, deployments,
+and governance using Azure CLI and Azure Resource Manager (ARM).
 
 ## Prerequisites
 
-- Azure CLI 2.50+ installed
-- PowerShell 5.1 or later (PowerShell 7+ recommended)
-- Azure subscription with appropriate permissions
-- Azure CLI logged in (`az login`)
-- Contributor or Owner role on subscriptions/resource groups
+- Azure CLI (https://docs.microsoft.com/en-us/cli/azure/install-azure-cli)
+- Active Azure subscription and logged-in CLI session (`az login`)
 
 ## Available Scripts
 
-### Resource Group Management
-
-- Create, update, and delete resource groups
-- List and filter resource groups
-- Tag management
-- Lock management
-
-### Resource Operations
-
-- List resources across subscriptions
-- Resource tagging and organization
-- Resource moving between groups
-- Resource deletion and cleanup
-
-### Deployment Management
-
-- ARM template deployments
-- Deployment validation
-- Deployment history
-- What-if operations
-
-### Tag Management
-
-- Apply tags to resources
-- Update existing tags
-- Tag-based queries
-- Tag policies
-
-### Policy and Governance
-
-- Azure Policy assignment
-- Policy compliance checking
-- Management group operations
-- Subscription management
+| Script | Description |
+| --- | --- |
+| `az-cli-cost-analysis.ps1` | Analyze Azure resource costs and generate cost reports with optional CSV export |
+| `az-cli-create-resource-group.ps1` | Create a new Azure Resource Group with optional tags and managed-by settings |
+| `az-cli-delete-resource-group.ps1` | Delete an Azure Resource Group and all its resources |
+| `az-cli-deploy-template.ps1` | Deploy an ARM template to a resource group |
+| `az-cli-export-template.ps1` | Export an ARM template from an existing resource group or deployment |
+| `az-cli-list-resource-groups.ps1` | List resource groups in a subscription with optional filtering |
+| `az-cli-list-resources.ps1` | List resources in a subscription or resource group with filtering |
+| `az-cli-manage-locks.ps1` | Create, list, and delete Azure resource locks at group or resource scope |
+| `az-cli-manage-rbac.ps1` | Manage RBAC role assignments with support for bulk operations and reporting |
+| `az-cli-monitor-health.ps1` | Monitor resource health, metrics, and availability |
+| `az-cli-move-resources.ps1` | Move resources between resource groups or subscriptions |
+| `az-cli-tag-resources.ps1` | Apply or update tags on resources and resource groups |
 
 ## Usage Examples
 
-### Create Resource Group
+### Create a Resource Group
 
 ```powershell
-# Create resource group with tags
-az group create `
-    --name myResourceGroup `
-    --location eastus `
-    --tags Environment=Production Team=DevOps
+.\az-cli-create-resource-group.ps1 `
+    -ResourceGroup "rg-production" `
+    -Location "East US" `
+    -Tags '{"Environment":"Production","Owner":"TeamA"}'
 ```
 
-### Deploy ARM Template
+### Deploy an ARM Template
 
 ```powershell
-# Validate template
-az deployment group validate `
-    --resource-group myResourceGroup `
-    --template-file template.json `
-    --parameters parameters.json
-
-# Deploy template
-az deployment group create `
-    --resource-group myResourceGroup `
-    --template-file template.json `
-    --parameters parameters.json `
-    --name myDeployment
+.\az-cli-deploy-template.ps1 `
+    -ResourceGroup "rg-production" `
+    -TemplateFile "./templates/main.json" `
+    -ParametersFile "./templates/parameters.json" `
+    -DeploymentName "deploy-2026-01"
 ```
 
-### List Resources with Tags
+### Manage Resource Locks
 
 ```powershell
-# Find all resources with specific tag
-az resource list --tag Environment=Production --output table
+.\az-cli-manage-locks.ps1 `
+    -Operation "create" `
+    -ResourceGroup "rg-production" `
+    -LockName "prod-protection" `
+    -LockType "CannotDelete" `
+    -Notes "Protect production resources"
 ```
 
-### Apply Tags to Resources
+### Assign an RBAC Role
 
 ```powershell
-# Tag a resource group
-az group update `
-    --name myResourceGroup `
-    --tags CostCenter=12345 Project=WebApp
+.\az-cli-manage-rbac.ps1 `
+    -Operation "assign" `
+    -PrincipalId "12345678-1234-1234-1234-123456789abc" `
+    -RoleName "Reader" `
+    -ResourceGroup "rg-production"
 ```
 
-## Azure Resource Manager Best Practices
+### Run a Cost Analysis
 
-- **Organization**:
-
-  - Use meaningful resource group names
-  - Group related resources together
-  - Implement consistent naming conventions
-  - Use tags for cost allocation and organization
-
-- **Deployment**:
-
-  - Use ARM templates or Bicep for IaC
-  - Validate templates before deployment
-  - Use parameter files for different environments
-  - Implement CI/CD for deployments
-
-- **Security**:
-
-  - Apply resource locks to prevent deletion
-  - Use Azure Policy for compliance
-  - Implement RBAC at appropriate scopes
-  - Regular access reviews
-
-- **Cost Management**:
-  - Tag all resources for cost tracking
-  - Use cost analysis tools
-  - Implement budget alerts
-  - Clean up unused resources
-
-## Common Tagging Strategy
-
-```yaml
-Environment: Production | Development | Staging | Test
-CostCenter: Department or team cost code
-Owner: Email or team name
-Project: Project name or code
-ManagedBy: Terraform | ARM | Manual
-Expiration: Date for temporary resources
+```powershell
+.\az-cli-cost-analysis.ps1 `
+    -ResourceGroup "rg-production" `
+    -TimeFrame "LastMonth" `
+    -ExportToCsv "prod-costs.csv"
 ```
 
-## Resource Naming Convention Example
+### Monitor Resource Health
 
-```
-{resourceType}-{workload}-{environment}-{region}-{instance}
-
-Examples:
-rg-webapp-prod-eastus-001    (Resource Group)
-vm-webserver-prod-eastus-001 (Virtual Machine)
-st-data-prod-eastus-001      (Storage Account)
+```powershell
+.\az-cli-monitor-health.ps1 `
+    -ResourceGroup "rg-production" `
+    -MonitoringMode "FullCheck" `
+    -ExportReport "health-report.json"
 ```
 
-## Error Handling
+## Notes
 
-Scripts include:
-
-- Resource group existence checks
-- Template validation
-- Deployment status verification
-- Quota limit checks
-- Comprehensive error messages
-
-## Related Documentation
-
-- [Azure Resource Manager Documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
-- [ARM Template Reference](https://docs.microsoft.com/azure/templates/)
-- [Azure CLI Reference - Resource](https://docs.microsoft.com/cli/azure/resource)
-- [Azure Naming Conventions](https://docs.microsoft.com/azure/cloud-adoption-framework/ready/azure-best-practices/naming-and-tagging)
-
-## Support
-
-For issues or questions, please refer to the main repository documentation.
+- Use `az-cli-manage-locks.ps1` with `-LockType CannotDelete` on production
+  resource groups before making bulk changes.
+- `az-cli-manage-rbac.ps1` supports a `-BulkOperation` flag with a CSV input
+  file for managing multiple assignments at once.
+- Cost analysis requires the `Microsoft.Consumption` resource provider to be
+  registered on the subscription.

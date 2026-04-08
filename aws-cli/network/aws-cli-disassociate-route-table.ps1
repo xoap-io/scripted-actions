@@ -37,39 +37,47 @@
     .\aws-cli-disassociate-route-table.ps1 -SubnetId "subnet-12345678" -Force
 
 .NOTES
-    Author: XOAP
-    Date: 2025-08-06
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
 
-    Requires: AWS CLI v2.16+
+    Author: XOAP.IO
+    Requires: AWS CLI v2 (https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
 
 .LINK
-    https://github.com/xoap-io/scripted-actions
+    https://docs.aws.amazon.com/cli/latest/reference/ec2/disassociate-route-table.html
+
+.COMPONENT
+    AWS CLI Network
 #>
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The ID of the route table association to remove")]
     [ValidatePattern('^rtbassoc-[a-zA-Z0-9]{8,}$')]
     [string]$AssociationId,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The ID of the route table (used to find association if AssociationId not provided)")]
     [ValidatePattern('^rtb-[a-zA-Z0-9]{8,}$')]
     [string]$RouteTableId,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The ID of the subnet (used to find association if AssociationId not provided)")]
     [ValidatePattern('^subnet-[a-zA-Z0-9]{8,}$')]
     [string]$SubnetId,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Perform a dry run to validate parameters without making changes")]
     [switch]$DryRun,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Skip confirmation prompts")]
     [switch]$Force,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "AWS region")]
     [string]$Region,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "AWS CLI profile to use")]
     [string]$Profile
 )
 
@@ -324,8 +332,8 @@ try {
     }
 
 } catch {
-    Write-Error "Failed to disassociate route table: $($_.Exception.Message)"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
 } finally {
-    Write-Output "Script execution completed."
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

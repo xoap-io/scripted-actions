@@ -1,196 +1,117 @@
-# Azure CLI - Security Scripts
+# Security Scripts
 
-This directory contains PowerShell scripts for managing Azure security services using Azure CLI.
+PowerShell scripts for managing Azure security services including Key Vault,
+Network Security Groups, Application Security Groups, managed identities, RBAC,
+and Microsoft Defender for Cloud using Azure CLI.
 
 ## Prerequisites
 
-- Azure CLI 2.50+ installed
-- PowerShell 5.1 or later (PowerShell 7+ recommended)
-- Azure subscription with appropriate permissions
-- Azure CLI logged in (`az login`)
-- Security Administrator or equivalent role
+- Azure CLI (https://docs.microsoft.com/en-us/cli/azure/install-azure-cli)
+- Active Azure subscription and logged-in CLI session (`az login`)
 
 ## Available Scripts
 
-### Azure Key Vault
-
-- Create and manage Key Vaults
-- Secret management (create, retrieve, update, delete)
-- Key management (encryption keys)
-- Certificate management
-- Access policies configuration
-
-### Azure Active Directory (Azure AD)
-
-- User and group management
-- Application registrations
-- Service principal creation
-- Role assignments
-
-### Security Center / Microsoft Defender
-
-- Security posture assessment
-- Security recommendations
-- Threat protection configuration
-- Compliance monitoring
-
-### Azure Firewall
-
-- Firewall deployment and configuration
-- Application rules
-- Network rules
-- NAT rules
-
-### Network Security
-
-- Network Security Group (NSG) management
-- Application Security Group (ASG) creation
-- DDoS Protection configuration
+| Script | Description |
+| --- | --- |
+| `az-cli-assign-role.ps1` | Assign an Azure RBAC role to a user, group, service principal, or managed identity |
+| `az-cli-audit-key-vault.ps1` | Audit Key Vault access policies, network rules, and security configuration |
+| `az-cli-audit-nsg-group.ps1` | Audit an NSG and export a JSON compliance report with rule analysis |
+| `az-cli-backup-nsg-group.ps1` | Export the full configuration of an NSG to a timestamped JSON backup file |
+| `az-cli-bulk-delete-nsg-rules.ps1` | Bulk delete NSG rules by name pattern, explicit list, or priority range |
+| `az-cli-clone-nsg-group.ps1` | Clone all rules from a source NSG to a new destination NSG |
+| `az-cli-create-asg.ps1` | Create an Application Security Group for network micro-segmentation |
+| `az-cli-create-key-vault.ps1` | Create a Key Vault with soft delete, purge protection, and network restrictions |
+| `az-cli-create-managed-identity.ps1` | Create a user-assigned managed identity with optional role assignments |
+| `az-cli-create-nsg.ps1` | Create an NSG rule in an existing Network Security Group |
+| `az-cli-create-nsg-group.ps1` | Create a Network Security Group with optional default rule profiles |
+| `az-cli-delete-asg.ps1` | Delete an Application Security Group with dependency checking |
+| `az-cli-delete-nsg-group.ps1` | Delete a Network Security Group with backup and safety checks |
+| `az-cli-delete-nsg-rule.ps1` | Delete an NSG rule with optional backup and confirmation |
+| `az-cli-disable-nsg-rule.ps1` | Disable an NSG rule by setting its access to Deny |
+| `az-cli-export-nsg-rules.ps1` | Export all rules from an NSG to JSON or CSV |
+| `az-cli-list-nsg-groups.ps1` | List NSGs in a subscription or resource group with optional export |
+| `az-cli-list-nsg-rules.ps1` | List and analyze NSG rules with filtering and security gap detection |
+| `az-cli-manage-firewall-rules.ps1` | Manage Azure Firewall application, network, and NAT rules |
+| `az-cli-monitor-security-alerts.ps1` | Monitor Azure Security Center alerts and incidents with optional auto-response |
+| `az-cli-restore-nsg-rule.ps1` | Restore an NSG rule from a JSON backup file |
+| `az-cli-security-assessment.ps1` | Run a comprehensive security assessment using Microsoft Defender for Cloud |
+| `az-cli-tag-nsg-rule.ps1` | Add or update tags on an NSG resource for compliance tracking |
+| `az-cli-update-nsg-group.ps1` | Update tags on an NSG with optional compliance annotation |
 
 ## Usage Examples
 
-### Key Vault Operations
+### Create a Key Vault
 
 ```powershell
-# Create Key Vault
-az keyvault create `
-    --name myKeyVault `
-    --resource-group myResourceGroup `
-    --location eastus `
-    --enabled-for-deployment `
-    --enabled-for-disk-encryption
-
-# Create secret
-az keyvault secret set `
-    --vault-name myKeyVault `
-    --name DatabasePassword `
-    --value "P@ssw0rd123!"
-
-# Retrieve secret
-az keyvault secret show `
-    --vault-name myKeyVault `
-    --name DatabasePassword `
-    --query value -o tsv
-
-# Grant access to service principal
-az keyvault set-policy `
-    --name myKeyVault `
-    --spn <app-id> `
-    --secret-permissions get list
+.\az-cli-create-key-vault.ps1 `
+    -Name "kv-prod-secrets" `
+    -ResourceGroup "rg-security" `
+    -Location "eastus" `
+    -EnablePurgeProtection `
+    -EnableRbacAuthorization `
+    -Tags "environment=production owner=security-team"
 ```
 
-### Create Service Principal
+### Create an Application Security Group
 
 ```powershell
-# Create service principal with certificate authentication
-az ad sp create-for-rbac `
-    --name myApp `
-    --role Contributor `
-    --scopes /subscriptions/{subscription-id}/resourceGroups/myResourceGroup `
-    --create-cert
+.\az-cli-create-asg.ps1 `
+    -Name "web-servers" `
+    -ResourceGroup "rg-web" `
+    -Location "eastus" `
+    -Description "Web server application security group"
 ```
 
-### Configure Azure Firewall
+### Create an NSG Rule
 
 ```powershell
-# Create Azure Firewall
-az network firewall create `
-    --name myFirewall `
-    --resource-group myResourceGroup `
-    --location eastus
-
-# Create application rule
-az network firewall application-rule create `
-    --collection-name AppRules `
-    --firewall-name myFirewall `
-    --name AllowGitHub `
-    --protocols Https=443 `
-    --source-addresses * `
-    --target-fqdns github.com *.github.com `
-    --resource-group myResourceGroup `
-    --priority 100 `
-    --action Allow
+.\az-cli-create-nsg.ps1 `
+    -Name "AllowHTTPS" `
+    -NsgName "web-nsg" `
+    -Priority 100 `
+    -ResourceGroup "rg-web" `
+    -Access "Allow" `
+    -Protocol "Tcp" `
+    -Direction "Inbound" `
+    -SourceAddressPrefixes "*" `
+    -DestinationAddressPrefixes "10.0.1.0/24" `
+    -DestinationPortRanges "443"
 ```
 
-## Azure Security Best Practices
-
-- **Key Vault**:
-
-  - Enable soft delete and purge protection
-  - Use RBAC for access control (recommended over access policies)
-  - Enable Azure Private Link
-  - Implement key rotation
-  - Monitor access with diagnostic logs
-
-- **Identity and Access**:
-
-  - Enable MFA for all users
-  - Use Conditional Access policies
-  - Implement Privileged Identity Management (PIM)
-  - Regular access reviews
-  - Use managed identities instead of service principals
-
-- **Network Security**:
-
-  - Implement defense in depth
-  - Use Azure Firewall or NVAs for centralized control
-  - Enable network flow logs
-  - Use Just-In-Time VM access
-  - Segment networks with NSGs
-
-- **Monitoring and Compliance**:
-  - Enable Microsoft Defender for Cloud
-  - Configure Security Center alerts
-  - Implement Azure Policy
-  - Enable diagnostic logging
-  - Regular security assessments
-
-## Common Security Scenarios
-
-### Managed Identity Authentication
+### Assign an RBAC Role
 
 ```powershell
-# Assign managed identity to VM
-az vm identity assign `
-    --name myVM `
-    --resource-group myResourceGroup
-
-# Grant Key Vault access to managed identity
-az keyvault set-policy `
-    --name myKeyVault `
-    --object-id <managed-identity-object-id> `
-    --secret-permissions get list
+.\az-cli-assign-role.ps1 `
+    -Role "Contributor" `
+    -Assignee "devteam@company.com" `
+    -ResourceGroup "rg-production" `
+    -Description "Production access for dev team"
 ```
 
-### Implement Zero Trust
+### Audit an NSG
 
-1. Verify explicitly (MFA, Conditional Access)
-2. Use least privilege access (RBAC, PIM)
-3. Assume breach (network segmentation, monitoring)
+```powershell
+.\az-cli-audit-nsg-group.ps1 `
+    -NsgName "web-nsg" `
+    -ResourceGroup "rg-web"
+```
 
-## Encryption at Rest and in Transit
+### Run a Security Assessment
 
-- **At Rest**: Enable Azure Disk Encryption, Key Vault, SQL TDE
-- **In Transit**: Use TLS 1.2+, HTTPS, VPN/ExpressRoute
+```powershell
+.\az-cli-security-assessment.ps1 `
+    -Scope "Subscription" `
+    -AssessmentType "Full" `
+    -IncludeRecommendations `
+    -GenerateReport
+```
 
-## Error Handling
+## Notes
 
-Scripts include:
-
-- Key Vault name validation (globally unique)
-- Permission checks
-- Secret format validation
-- Comprehensive error messages
-- Audit logging recommendations
-
-## Related Documentation
-
-- [Azure Key Vault Documentation](https://docs.microsoft.com/azure/key-vault/)
-- [Azure Active Directory Documentation](https://docs.microsoft.com/azure/active-directory/)
-- [Microsoft Defender for Cloud](https://docs.microsoft.com/azure/defender-for-cloud/)
-- [Azure Security Best Practices](https://docs.microsoft.com/azure/security/fundamentals/best-practices-and-patterns)
-- [Azure CLI Security Commands](https://docs.microsoft.com/cli/azure/keyvault)
-
-## Support
-
-For issues or questions, please refer to the main repository documentation.
+- `az-cli-disable-nsg-rule.ps1` sets the rule access to Deny rather than
+  removing the rule, preserving the rule configuration for easy re-enabling.
+- `az-cli-backup-nsg-group.ps1` and `az-cli-restore-nsg-rule.ps1` work
+  together to support safe NSG change management workflows.
+- `az-cli-bulk-delete-nsg-rules.ps1` supports a `-Force` flag and a `-WhatIf`
+  dry-run mode; always test with dry-run before bulk deletion.
+- Key Vault names must be globally unique and between 3 and 24 characters.

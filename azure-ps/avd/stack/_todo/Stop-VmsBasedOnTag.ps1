@@ -1,34 +1,57 @@
 <#
-    .SYNOPSIS
-        This script manages the power state of Azure virtual machines based on a specified tag and its value which defines the schedule.
+.SYNOPSIS
+    Manages the power state of Azure virtual machines based on a tag-defined schedule.
 
-    .DESCRIPTION
-        This script checks all Azure virtual machines for a tag named "AutoShutdownSchedule" with a value defining the schedule,
-        e.g. "10PM -> 6AM". It then compares the current time with the schedule and starts or stops the VMs accordingly.
+.DESCRIPTION
+    This script checks all Azure virtual machines for a tag named "AutoShutdownSchedule" with a value defining the schedule,
+    e.g. "10PM -> 6AM". It then compares the current time with the schedule and starts or stops the VMs accordingly.
 
-    .PARAMETER TagName
-        The name of the tag to look for on virtual machines.
+.PARAMETER TagName
+    The name of the tag to look for on virtual machines.
 
-    .PARAMETER ManagementGroupId
-        The ID of the Azure management group to operate on.
+.PARAMETER ManagementGroupId
+    The ID of the Azure management group to operate on.
 
-    .PARAMETER Simulate
-        If $true, the script will only simulate the actions without making any changes.
+.PARAMETER Simulate
+    If $true, the script will only simulate the actions without making any changes.
 
-    .EXAMPLE
-        .\StartStopVMsBasedOnTag.ps1 -TagName "AutoShutdownSchedule" -ManagementGroupId "MngEnv" -Simulate $true
+.EXAMPLE
+    .\Stop-VmsBasedOnTag.ps1 -TagName "AutoShutdownSchedule" -ManagementGroupId "MngEnv" -Simulate $true
+
+.NOTES
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: Az PowerShell module (Install-Module Az), Az.Compute, Az.Resources
+
+.LINK
+    https://learn.microsoft.com/en-us/powershell/module/az.compute
+
+.COMPONENT
+    Azure PowerShell Compute
 
 #>
+
+[CmdletBinding()]
 param (
-    [parameter(Mandatory = $true)]
+    [parameter(Mandatory = $true, HelpMessage = "The name of the tag to look for on virtual machines.")]
+    [ValidateNotNullOrEmpty()]
     [string]$TagName,
 
-    [parameter(Mandatory = $true)]
+    [parameter(Mandatory = $true, HelpMessage = "The ID of the Azure management group to operate on.")]
+    [ValidateNotNullOrEmpty()]
     [string]$ManagementGroupId,
 
-    [parameter(Mandatory = $false)]
+    [parameter(Mandatory = $false, HelpMessage = "If true, simulates actions without making changes.")]
     [bool]$Simulate = $true
 )
+
+$ErrorActionPreference = "Stop"
 
 ## Getting all virtual machines
 Write-Output ""

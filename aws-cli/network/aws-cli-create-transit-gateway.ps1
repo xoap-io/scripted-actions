@@ -1,3 +1,80 @@
+<#
+.SYNOPSIS
+    Creates an AWS Transit Gateway.
+
+.DESCRIPTION
+    This script creates a Transit Gateway that acts as a cloud router to interconnect VPCs and on-premises networks
+    through a central hub. Uses aws ec2 create-transit-gateway to perform the operation.
+
+.PARAMETER Description
+    A description for the Transit Gateway.
+
+.PARAMETER AmazonSideAsn
+    The Amazon-side ASN for the Transit Gateway. Must be between 64512 and 65534.
+
+.PARAMETER AutoAcceptSharedAttachments
+    Enable automatic acceptance of shared attachments (cross-account).
+
+.PARAMETER DefaultRouteTableAssociation
+    Enable automatic association with the default route table.
+
+.PARAMETER DefaultRouteTablePropagation
+    Enable automatic propagation to the default route table.
+
+.PARAMETER DnsSupport
+    Enable DNS support for the Transit Gateway.
+
+.PARAMETER MulticastSupport
+    Enable multicast support for the Transit Gateway.
+
+.PARAMETER Name
+    A name for the Transit Gateway (added as a Name tag).
+
+.PARAMETER Profile
+    The AWS CLI profile to use for the operation.
+
+.PARAMETER Region
+    The AWS region where the Transit Gateway will be created.
+
+.PARAMETER Tags
+    Additional tags to apply in the format Key1=Value1,Key2=Value2.
+
+.PARAMETER Wait
+    Wait for the Transit Gateway to become available.
+
+.EXAMPLE
+    .\aws-cli-create-transit-gateway.ps1 -Name "Main-TGW" -Description "Primary Transit Gateway for hub-and-spoke architecture"
+
+.EXAMPLE
+    .\aws-cli-create-transit-gateway.ps1 -Name "Prod-TGW" -AmazonSideAsn 64513 -MulticastSupport enable
+
+.EXAMPLE
+    .\aws-cli-create-transit-gateway.ps1 -Name "Shared-TGW" -AutoAcceptSharedAttachments enable -DefaultRouteTableAssociation disable
+
+.NOTES
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: AWS CLI v2 (https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
+
+    IMPORTANT NOTES:
+    - Transit Gateways incur hourly charges plus data processing charges
+    - Each Transit Gateway can connect up to 5,000 VPCs and VPN connections
+    - Transit Gateway creation takes several minutes
+    - Route tables can be customized for advanced routing scenarios
+
+.LINK
+    https://docs.aws.amazon.com/cli/latest/reference/ec2/create-transit-gateway.html
+
+.COMPONENT
+    AWS CLI Network
+#>
+
 [CmdletBinding()]
 param (
     [Parameter(Mandatory = $false, HelpMessage = "Description for the Transit Gateway")]
@@ -42,76 +119,6 @@ param (
     [Parameter(Mandatory = $false, HelpMessage = "Wait for the Transit Gateway to become available")]
     [switch]$Wait
 )
-
-<#
-.SYNOPSIS
-Creates an AWS Transit Gateway.
-
-.DESCRIPTION
-This script creates a Transit Gateway that acts as a cloud router to interconnect VPCs and on-premises networks through a central hub.
-
-.PARAMETER Description
-A description for the Transit Gateway.
-
-.PARAMETER AmazonSideAsn
-The Amazon-side ASN for the Transit Gateway. Must be between 64512 and 65534.
-
-.PARAMETER AutoAcceptSharedAttachments
-Enable automatic acceptance of shared attachments (cross-account).
-
-.PARAMETER DefaultRouteTableAssociation
-Enable automatic association with the default route table.
-
-.PARAMETER DefaultRouteTablePropagation
-Enable automatic propagation to the default route table.
-
-.PARAMETER DnsSupport
-Enable DNS support for the Transit Gateway.
-
-.PARAMETER MulticastSupport
-Enable multicast support for the Transit Gateway.
-
-.PARAMETER Name
-A name for the Transit Gateway (added as a Name tag).
-
-.PARAMETER Profile
-The AWS CLI profile to use for the operation.
-
-.PARAMETER Region
-The AWS region where the Transit Gateway will be created.
-
-.PARAMETER Tags
-Additional tags to apply in the format Key1=Value1,Key2=Value2.
-
-.PARAMETER Wait
-Wait for the Transit Gateway to become available.
-
-.EXAMPLE
-.\aws-cli-create-transit-gateway.ps1 -Name "Main-TGW" -Description "Primary Transit Gateway for hub-and-spoke architecture"
-
-Creates a basic Transit Gateway with default settings.
-
-.EXAMPLE
-.\aws-cli-create-transit-gateway.ps1 -Name "Prod-TGW" -AmazonSideAsn 64513 -MulticastSupport enable
-
-Creates a Transit Gateway with custom ASN and multicast support.
-
-.EXAMPLE
-.\aws-cli-create-transit-gateway.ps1 -Name "Shared-TGW" -AutoAcceptSharedAttachments enable -DefaultRouteTableAssociation disable
-
-Creates a Transit Gateway for cross-account sharing with manual route table management.
-
-.NOTES
-Author: Your Name
-Date: 2024
-Requires: AWS CLI v2.16+ and appropriate IAM permissions
-
-IMPORTANT NOTES:
-- Transit Gateways incur hourly charges plus data processing charges
-- Each Transit Gateway can connect up to 5,000 VPCs and VPN connections
-- Transit Gateway creation takes several minutes
-- Route tables can be customized for advanced routing scenarios
-#>
 
 $ErrorActionPreference = 'Stop'
 
@@ -198,7 +205,7 @@ try {
     $tgwInfo = $result | ConvertFrom-Json
     $transitGateway = $tgwInfo.TransitGateway
 
-    Write-Host "`nTransit Gateway created successfully!" -ForegroundColor Green
+    Write-Host "`n✅ Transit Gateway created successfully!" -ForegroundColor Green
     Write-Host "  Transit Gateway ID: $($transitGateway.TransitGatewayId)" -ForegroundColor White
     Write-Host "  State: $($transitGateway.State)" -ForegroundColor White
     Write-Host "  Owner ID: $($transitGateway.OwnerId)" -ForegroundColor White
@@ -307,6 +314,8 @@ try {
     Write-Output $transitGateway.TransitGatewayId
 
 } catch {
-    Write-Error "An error occurred: $($_.Exception.Message)"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
+} finally {
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

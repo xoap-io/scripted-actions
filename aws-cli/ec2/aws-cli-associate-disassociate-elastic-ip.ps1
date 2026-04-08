@@ -52,56 +52,64 @@
     .\aws-cli-associate-disassociate-elastic-ip.ps1 -Action Release -AllocationId "eipalloc-12345678"
 
 .NOTES
-    Author: XOAP
-    Date: 2025-08-06
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
 
-    Requires: AWS CLI v2.16+
+    Author: XOAP.IO
+    Requires: AWS CLI v2 (https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
 
 .LINK
-    https://github.com/xoap-io/scripted-actions
+    https://docs.aws.amazon.com/cli/latest/reference/ec2/associate-address.html
+
+.COMPONENT
+    AWS CLI EC2
 #>
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The action to perform: Associate, Disassociate, Allocate, or Release.")]
     [ValidateSet('Associate', 'Disassociate', 'Allocate', 'Release')]
     [string]$Action,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The ID of the EC2 instance (required for Associate/Disassociate).")]
     [ValidatePattern('^i-[a-zA-Z0-9]{8,}$')]
     [string]$InstanceId,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The allocation ID of the Elastic IP (for VPC instances).")]
     [ValidatePattern('^eipalloc-[a-zA-Z0-9]{8,}$')]
     [string]$AllocationId,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The public IP address (for EC2-Classic instances).")]
     [ValidatePattern('^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$')]
     [string]$PublicIp,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The association ID (required for disassociation in VPC).")]
     [ValidatePattern('^eipassoc-[a-zA-Z0-9]{8,}$')]
     [string]$AssociationId,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The network interface ID to associate with (optional).")]
     [ValidatePattern('^eni-[a-zA-Z0-9]{8,}$')]
     [string]$NetworkInterfaceId,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The private IP address to associate with (optional).")]
     [ValidatePattern('^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$')]
     [string]$PrivateIpAddress,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Allow reassociation if the Elastic IP is already associated.")]
     [switch]$AllowReassociation,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The domain for allocation (vpc or standard).")]
     [ValidateSet('vpc', 'standard')]
     [string]$Domain = 'vpc',
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The AWS region to use (optional, uses default if not specified).")]
     [string]$Region,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The AWS CLI profile to use (optional).")]
     [string]$Profile
 )
 
@@ -330,8 +338,8 @@ try {
     Write-Output "`n✅ Elastic IP $Action operation completed successfully."
 
 } catch {
-    Write-Error "Failed to $Action Elastic IP: $($_.Exception.Message)"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
 } finally {
-    Write-Output "Script execution completed."
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

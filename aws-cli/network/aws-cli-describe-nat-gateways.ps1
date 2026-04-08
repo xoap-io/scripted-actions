@@ -49,51 +49,59 @@
     .\aws-cli-describe-nat-gateways.ps1 -State "available" -ShowCosts
 
 .NOTES
-    Author: XOAP
-    Date: 2025-08-06
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
 
-    Requires: AWS CLI v2.16+
+    Author: XOAP.IO
+    Requires: AWS CLI v2 (https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
 
 .LINK
-    https://github.com/xoap-io/scripted-actions
+    https://docs.aws.amazon.com/cli/latest/reference/ec2/describe-nat-gateways.html
+
+.COMPONENT
+    AWS CLI Network
 #>
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The ID(s) of specific NAT Gateway(s) to describe")]
     [ValidatePattern('^nat-[a-zA-Z0-9]{8,}$')]
     [string[]]$NatGatewayId,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Filter NAT Gateways by VPC ID")]
     [ValidatePattern('^vpc-[a-zA-Z0-9]{8,}$')]
     [string]$VpcId,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Filter NAT Gateways by Subnet ID")]
     [ValidatePattern('^subnet-[a-zA-Z0-9]{8,}$')]
     [string]$SubnetId,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Filter NAT Gateways by state")]
     [ValidateSet("pending", "failed", "available", "deleting", "deleted")]
     [string]$State,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Filter NAT Gateways by connectivity type")]
     [ValidateSet("public", "private")]
     [string]$ConnectivityType,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Include information about route tables referencing these NAT Gateways")]
     [switch]$ShowRoutes,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Include estimated cost information for running NAT Gateways")]
     [switch]$ShowCosts,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Output format: table, json, or detailed")]
     [ValidateSet("table", "json", "detailed")]
     [string]$OutputFormat = "table",
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "AWS region")]
     [string]$Region,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "AWS CLI profile to use")]
     [string]$Profile
 )
 
@@ -341,8 +349,8 @@ try {
     Write-Output "• Use VPC endpoints to reduce NAT Gateway data processing for AWS services"
 
 } catch {
-    Write-Error "Failed to describe NAT Gateways: $($_.Exception.Message)"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
 } finally {
-    Write-Output "Script execution completed."
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

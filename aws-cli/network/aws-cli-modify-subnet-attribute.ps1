@@ -52,54 +52,62 @@
     .\aws-cli-modify-subnet-attribute.ps1 -SubnetId "subnet-12345678" -EnableDns64 $true -DryRun
 
 .NOTES
-    Author: XOAP
-    Date: 2025-08-06
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
 
-    Requires: AWS CLI v2.16+
+    Author: XOAP.IO
+    Requires: AWS CLI v2 (https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
 
 .LINK
-    https://github.com/xoap-io/scripted-actions
+    https://docs.aws.amazon.com/cli/latest/reference/ec2/modify-subnet-attribute.html
+
+.COMPONENT
+    AWS CLI Network
 #>
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The ID of the subnet to modify")]
     [ValidatePattern('^subnet-[a-zA-Z0-9]{8,}$')]
     [string]$SubnetId,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Enable or disable automatic public IP assignment for instances launched in this subnet")]
     [bool]$MapPublicIpOnLaunch,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Enable or disable automatic customer-owned IP assignment for instances launched in this subnet")]
     [bool]$MapCustomerOwnedIpOnLaunch,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The customer-owned IPv4 address pool for the subnet")]
     [ValidatePattern('^ipv4pool-coip-[a-zA-Z0-9]{8,}$')]
     [string]$CustomerOwnedIpv4Pool,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Enable or disable DNS64 for the subnet")]
     [bool]$EnableDns64,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Enable or disable resource-based naming for instances in the subnet")]
     [bool]$EnableResourceNameDnsARecord,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Enable or disable resource-based IPv6 naming for instances in the subnet")]
     [bool]$EnableResourceNameDnsAAAARecord,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The type of hostname to assign to instances (ip-name, resource-name)")]
     [ValidateSet("ip-name", "resource-name")]
     [string]$PrivateDnsHostnameType,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Display current subnet attributes before making changes")]
     [switch]$ShowCurrent,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Perform a dry run to validate parameters without making changes")]
     [switch]$DryRun,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "AWS region")]
     [string]$Region,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "AWS CLI profile to use")]
     [string]$Profile
 )
 
@@ -435,8 +443,8 @@ try {
     }
 
 } catch {
-    Write-Error "Failed to modify subnet attributes: $($_.Exception.Message)"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
 } finally {
-    Write-Output "Script execution completed."
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

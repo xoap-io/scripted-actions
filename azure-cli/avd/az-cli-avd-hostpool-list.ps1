@@ -116,6 +116,8 @@ try {
 
     return $hostPools
 } catch {
-    Write-Error "Failed to list Azure Virtual Desktop Host Pools: $_"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
+} finally {
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

@@ -52,56 +52,64 @@
     .\aws-cli-create-nat-gateway.ps1 -SubnetId "subnet-12345678" -AllocationId "eipalloc-12345678" -WaitForAvailable -Tags '[{"Key":"Name","Value":"MyNATGateway"},{"Key":"Environment","Value":"Production"}]'
 
 .NOTES
-    Author: XOAP
-    Date: 2025-08-06
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
 
-    Requires: AWS CLI v2.16+
+    Author: XOAP.IO
+    Requires: AWS CLI v2 (https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
 
 .LINK
-    https://github.com/xoap-io/scripted-actions
+    https://docs.aws.amazon.com/cli/latest/reference/ec2/create-nat-gateway.html
+
+.COMPONENT
+    AWS CLI Network
 #>
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The ID of the subnet where the NAT Gateway will be created")]
     [ValidatePattern('^subnet-[a-zA-Z0-9]{8,}$')]
     [string]$SubnetId,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The allocation ID of the Elastic IP for the NAT Gateway")]
     [ValidatePattern('^eipalloc-[a-zA-Z0-9]{8,}$')]
     [string]$AllocationId,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The connectivity type for the NAT Gateway: public or private")]
     [ValidateSet('public', 'private')]
     [string]$ConnectivityType = 'public',
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The private IP address to assign to the NAT Gateway")]
     [ValidatePattern('^(?:\d{1,3}\.){3}\d{1,3}$')]
     [string]$PrivateIpAddress,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Comma-separated list of secondary Elastic IP allocation IDs")]
     [string]$SecondaryAllocationIds,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Comma-separated list of secondary private IP addresses")]
     [string]$SecondaryPrivateIpAddresses,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "JSON string of tags to apply to the NAT Gateway")]
     [string]$Tags,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Perform a dry run to validate parameters without creating the NAT Gateway")]
     [switch]$DryRun,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Wait for the NAT Gateway to become available before returning")]
     [switch]$WaitForAvailable,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Maximum time to wait for NAT Gateway to become available in seconds")]
     [ValidateRange(60, 1800)]
     [int]$MaxWaitTime = 300,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "AWS region")]
     [string]$Region,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "AWS CLI profile to use")]
     [string]$Profile
 )
 
@@ -368,8 +376,8 @@ try {
     }
 
 } catch {
-    Write-Error "Failed to create NAT Gateway: $($_.Exception.Message)"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
 } finally {
-    Write-Output "Script execution completed."
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

@@ -1,15 +1,87 @@
+<#
+.SYNOPSIS
+    Describes AWS VPC peering connections.
+
+.DESCRIPTION
+    This script retrieves detailed information about VPC peering connections in your AWS account.
+    It supports filtering by various criteria and provides comprehensive connection details.
+    Uses aws ec2 describe-vpc-peering-connections to perform the operation.
+
+.PARAMETER VpcPeeringConnectionIds
+    Comma-separated list of specific VPC peering connection IDs to describe. Must be in the format 'pcx-xxxxxxxxx'.
+
+.PARAMETER RequesterVpcId
+    Filter peering connections by the requester VPC ID.
+
+.PARAMETER AccepterVpcId
+    Filter peering connections by the accepter VPC ID.
+
+.PARAMETER Status
+    Filter by peering connection status.
+
+.PARAMETER RequesterOwnerId
+    Filter by the AWS account ID that owns the requester VPC.
+
+.PARAMETER AccepterOwnerId
+    Filter by the AWS account ID that owns the accepter VPC.
+
+.PARAMETER Profile
+    The AWS CLI profile to use for the operation.
+
+.PARAMETER Region
+    The AWS region to query for VPC peering connections.
+
+.PARAMETER OutputFormat
+    The output format for the results (json, table, text, yaml).
+
+.PARAMETER Detailed
+    Show detailed information including related route tables and security considerations.
+
+.EXAMPLE
+    .\aws-cli-describe-vpc-peering-connections.ps1
+
+.EXAMPLE
+    .\aws-cli-describe-vpc-peering-connections.ps1 -RequesterVpcId vpc-12345678
+
+.EXAMPLE
+    .\aws-cli-describe-vpc-peering-connections.ps1 -Status active
+
+.EXAMPLE
+    .\aws-cli-describe-vpc-peering-connections.ps1 -VpcPeeringConnectionIds pcx-12345678,pcx-87654321 -Detailed
+
+.EXAMPLE
+    .\aws-cli-describe-vpc-peering-connections.ps1 -RequesterOwnerId 123456789012 -AccepterOwnerId 210987654321
+
+.NOTES
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: AWS CLI v2 (https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
+
+.LINK
+    https://docs.aws.amazon.com/cli/latest/reference/ec2/describe-vpc-peering-connections.html
+
+.COMPONENT
+    AWS CLI Network
+#>
+
 [CmdletBinding()]
 param (
     [Parameter(Mandatory = $false, HelpMessage = "Specific VPC peering connection IDs to describe")]
-    [ValidatePattern('^pcx-[a-zA-Z0-9]+(,pcx-[a-zA-Z0-9]+)*$', ErrorMessage = "VpcPeeringConnectionIds must be comma-separated valid VPC peering connection IDs (format: pcx-xxxxxxxxx)")]
+    [ValidatePattern('^pcx-[a-zA-Z0-9]+(,pcx-[a-zA-Z0-9]+)*$')]
     [string]$VpcPeeringConnectionIds,
 
     [Parameter(Mandatory = $false, HelpMessage = "Filter by requester VPC ID")]
-    [ValidatePattern('^vpc-[a-zA-Z0-9]+$', ErrorMessage = "RequesterVpcId must be a valid VPC ID (format: vpc-xxxxxxxxx)")]
+    [ValidatePattern('^vpc-[a-zA-Z0-9]+$')]
     [string]$RequesterVpcId,
 
     [Parameter(Mandatory = $false, HelpMessage = "Filter by accepter VPC ID")]
-    [ValidatePattern('^vpc-[a-zA-Z0-9]+$', ErrorMessage = "AccepterVpcId must be a valid VPC ID (format: vpc-xxxxxxxxx)")]
+    [ValidatePattern('^vpc-[a-zA-Z0-9]+$')]
     [string]$AccepterVpcId,
 
     [Parameter(Mandatory = $false, HelpMessage = "Filter by peering connection status")]
@@ -17,11 +89,11 @@ param (
     [string]$Status,
 
     [Parameter(Mandatory = $false, HelpMessage = "Filter by requester owner ID")]
-    [ValidatePattern('^\d{12}$', ErrorMessage = "RequesterOwnerId must be a 12-digit AWS account ID")]
+    [ValidatePattern('^\d{12}$')]
     [string]$RequesterOwnerId,
 
     [Parameter(Mandatory = $false, HelpMessage = "Filter by accepter owner ID")]
-    [ValidatePattern('^\d{12}$', ErrorMessage = "AccepterOwnerId must be a 12-digit AWS account ID")]
+    [ValidatePattern('^\d{12}$')]
     [string]$AccepterOwnerId,
 
     [Parameter(Mandatory = $false, HelpMessage = "AWS CLI profile to use")]
@@ -37,74 +109,6 @@ param (
     [Parameter(Mandatory = $false, HelpMessage = "Show detailed information including related routes")]
     [switch]$Detailed
 )
-
-<#
-.SYNOPSIS
-Describes AWS VPC peering connections.
-
-.DESCRIPTION
-This script retrieves detailed information about VPC peering connections in your AWS account. It supports filtering by various criteria and provides comprehensive connection details.
-
-.PARAMETER VpcPeeringConnectionIds
-Comma-separated list of specific VPC peering connection IDs to describe. Must be in the format 'pcx-xxxxxxxxx'.
-
-.PARAMETER RequesterVpcId
-Filter peering connections by the requester VPC ID.
-
-.PARAMETER AccepterVpcId
-Filter peering connections by the accepter VPC ID.
-
-.PARAMETER Status
-Filter by peering connection status.
-
-.PARAMETER RequesterOwnerId
-Filter by the AWS account ID that owns the requester VPC.
-
-.PARAMETER AccepterOwnerId
-Filter by the AWS account ID that owns the accepter VPC.
-
-.PARAMETER Profile
-The AWS CLI profile to use for the operation.
-
-.PARAMETER Region
-The AWS region to query for VPC peering connections.
-
-.PARAMETER OutputFormat
-The output format for the results (json, table, text, yaml).
-
-.PARAMETER Detailed
-Show detailed information including related route tables and security considerations.
-
-.EXAMPLE
-.\aws-cli-describe-vpc-peering-connections.ps1
-
-Lists all VPC peering connections in the default region.
-
-.EXAMPLE
-.\aws-cli-describe-vpc-peering-connections.ps1 -RequesterVpcId vpc-12345678
-
-Lists all peering connections where the specified VPC is the requester.
-
-.EXAMPLE
-.\aws-cli-describe-vpc-peering-connections.ps1 -Status active
-
-Lists all active peering connections.
-
-.EXAMPLE
-.\aws-cli-describe-vpc-peering-connections.ps1 -VpcPeeringConnectionIds pcx-12345678,pcx-87654321 -Detailed
-
-Shows detailed information for specific peering connections.
-
-.EXAMPLE
-.\aws-cli-describe-vpc-peering-connections.ps1 -RequesterOwnerId 123456789012 -AccepterOwnerId 210987654321
-
-Lists cross-account peering connections between specific accounts.
-
-.NOTES
-Author: Your Name
-Date: 2024
-Requires: AWS CLI v2.16+ and appropriate IAM permissions
-#>
 
 $ErrorActionPreference = 'Stop'
 
@@ -321,6 +325,8 @@ try {
     }
 
 } catch {
-    Write-Error "An error occurred: $($_.Exception.Message)"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
+} finally {
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

@@ -24,24 +24,35 @@
 .EXAMPLE
     .\az-cli-avd-application-group-list.ps1 -ResourceGroup "MyResourceGroup" -MaxItems 10
 
+.NOTES
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: Azure CLI (https://docs.microsoft.com/en-us/cli/azure/install-azure-cli)
+
 .LINK
     https://learn.microsoft.com/en-us/cli/azure/desktopvirtualization/applicationgroup
 
 .COMPONENT
-    Azure CLI
+    Azure CLI Virtual Desktop
 #>
 
 [CmdletBinding()]
 param(
-    [Parameter()]
+    [Parameter(HelpMessage = "Optional name of the Azure Resource Group to filter results")]
     [ValidateNotNullOrEmpty()]
     [string]$ResourceGroup,
 
-    [Parameter()]
+    [Parameter(HelpMessage = "Optional OData filter expression")]
     [ValidateNotNullOrEmpty()]
     [string]$Filter,
 
-    [Parameter()]
+    [Parameter(HelpMessage = "Optional maximum number of items to return (1-1000)")]
     [ValidateRange(1, 1000)]
     [int]$MaxItems
 )
@@ -108,6 +119,8 @@ try {
         return @()
     }
 } catch {
-    Write-Error "Failed to list Azure Virtual Desktop Application Groups: $_"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
+} finally {
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

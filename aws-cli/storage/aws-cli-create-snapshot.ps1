@@ -40,38 +40,49 @@
     .\aws-cli-create-snapshot.ps1 -VolumeId "vol-1234567890abcdef0" -Tags '{"Environment":"Production","Backup":"Daily"}'
 
 .NOTES
-    Requires AWS CLI v2.16+ and appropriate IAM permissions for EC2 operations.
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: AWS CLI v2 (https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
 
 .LINK
-    https://github.com/xoap-io/scripted-actions
+    https://docs.aws.amazon.com/cli/latest/reference/ec2/create-snapshot.html
+
+.COMPONENT
+    AWS CLI Storage
 #>
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory)]
+    [Parameter(Mandatory = $true, HelpMessage = "The ID of the EBS volume to snapshot")]
     [ValidatePattern('^vol-[a-f0-9]{8,17}$')]
     [string]$VolumeId,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "Description for the snapshot (auto-generated if not provided)")]
     [string]$Description,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "JSON string of tags to apply to the snapshot")]
     [string]$Tags,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "The ARN of the Outpost on which to create the snapshot")]
     [string]$OutpostArn,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "The AWS region to use")]
     [ValidatePattern('^[a-z]{2}-[a-z]+-\d{1}$')]
     [string]$Region,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "The AWS CLI profile to use")]
     [string]$AwsProfile,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "Wait for the snapshot creation to complete")]
     [switch]$WaitForCompletion,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "Maximum time to wait for completion in minutes (default: 60)")]
     [ValidateRange(1, 1440)]
     [int]$TimeoutMinutes = 60
 )
@@ -243,6 +254,8 @@ try {
     Write-Host "Snapshot ID: $snapshotId" -ForegroundColor Cyan
 
 } catch {
-    Write-Error "Failed to create snapshot: $($_.Exception.Message)"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
+} finally {
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

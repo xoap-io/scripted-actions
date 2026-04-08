@@ -1,6 +1,41 @@
+<#
+.SYNOPSIS
+    List AWS WorkSpaces directories.
+
+.DESCRIPTION
+    This script retrieves and lists AWS WorkSpaces directories using the Get-WKSDirectory cmdlet from AWS.Tools.WorkSpaces.
+    Optionally filters by directory ID.
+
+.PARAMETER DirectoryId
+    (Optional) Filter by a specific directory ID.
+
+.EXAMPLE
+    .\aws-ps-workspaces-list-directories.ps1
+
+.EXAMPLE
+    .\aws-ps-workspaces-list-directories.ps1 -DirectoryId d-1234567890
+
+.NOTES
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: AWS.Tools.WorkSpaces
+
+.LINK
+    https://docs.aws.amazon.com/powershell/latest/reference/
+
+.COMPONENT
+    AWS PowerShell WorkSpaces
+#>
+
 [CmdletBinding()]
 param(
-    [Parameter()]
+    [Parameter(HelpMessage = "Optional directory ID to filter results.")]
     [ValidateNotNullOrEmpty()]
     [string]$DirectoryId
 )
@@ -52,7 +87,11 @@ try {
         Write-Host "No directories found" -ForegroundColor Yellow
         return @()
     }
-} catch {
-    Write-Error "Failed to list directories: $_"
+}
+catch {
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
+}
+finally {
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

@@ -1,50 +1,84 @@
 <#
 .SYNOPSIS
-    Creates an entry in an AWS EC2 Network ACL using the latest AWS CLI (v2.16+).
+    Creates an entry in an AWS EC2 Network ACL using the AWS CLI.
+
 .DESCRIPTION
-    This script adds an entry to a network ACL.
+    This script adds an entry to a network ACL using the AWS CLI.
+    Uses the following AWS CLI command:
+    aws ec2 create-network-acl-entry
+
 .PARAMETER NetworkAclId
     The ID of the network ACL.
+
 .PARAMETER RuleNumber
     The rule number for the entry.
+
 .PARAMETER Protocol
     The protocol (tcp, udp, icmp, all).
+
 .PARAMETER RuleAction
     The action (allow or deny).
+
 .PARAMETER Egress
     Whether the rule is egress (true/false).
+
 .PARAMETER CidrBlock
     The CIDR block.
+
 .EXAMPLE
-    .\aws-cli-create-network-acl-entry.ps1 -NetworkAclId acl-12345678 -RuleNumber 100 -Protocol tcp -RuleAction allow -Egress true -CidrBlock 0.0.0.0/0
+    .\aws-cli-create-network-acl-entry.ps1 -NetworkAclId "acl-12345678" -RuleNumber 100 -Protocol "tcp" -RuleAction "allow" -Egress $true -CidrBlock "0.0.0.0/0"
+
+.NOTES
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: AWS CLI v2 (https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
+
 .LINK
-    https://github.com/xoap-io/scripted-actions
+    https://docs.aws.amazon.com/cli/latest/reference/ec2/create-network-acl-entry.html
+
+.COMPONENT
+    AWS CLI Security
 #>
+
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory)]
+    [Parameter(Mandatory = $true, HelpMessage = "The ID of the network ACL")]
     [ValidatePattern('^acl-[a-zA-Z0-9]{8,}$')]
     [string]$NetworkAclId,
-    [Parameter(Mandatory)]
+
+    [Parameter(Mandatory = $true, HelpMessage = "The rule number for the entry")]
     [ValidatePattern('^\d{1,4}$')]
     [int]$RuleNumber,
-    [Parameter(Mandatory)]
-    [ValidateSet('tcp','udp','icmp','all')]
+
+    [Parameter(Mandatory = $true, HelpMessage = "The protocol (tcp, udp, icmp, all)")]
+    [ValidateSet('tcp', 'udp', 'icmp', 'all')]
     [string]$Protocol,
-    [Parameter(Mandatory)]
-    [ValidateSet('allow','deny')]
+
+    [Parameter(Mandatory = $true, HelpMessage = "The action (allow or deny)")]
+    [ValidateSet('allow', 'deny')]
     [string]$RuleAction,
-    [Parameter(Mandatory)]
+
+    [Parameter(Mandatory = $true, HelpMessage = "Whether the rule is egress (true/false)")]
     [bool]$Egress,
-    [Parameter(Mandatory)]
+
+    [Parameter(Mandatory = $true, HelpMessage = "The CIDR block")]
     [ValidatePattern('^(?:\d{1,3}\.){3}\d{1,3}/\d{1,2}$')]
     [string]$CidrBlock
 )
+
 $ErrorActionPreference = 'Stop'
+
 if (-not (Get-Command aws -ErrorAction SilentlyContinue)) {
     Write-Error 'AWS CLI is not installed or not in PATH.'
     exit 127
 }
+
 try {
     $result = aws ec2 create-network-acl-entry --network-acl-id $NetworkAclId --rule-number $RuleNumber --protocol $Protocol --rule-action $RuleAction --egress $Egress --cidr-block $CidrBlock --output json 2>&1
     if ($LASTEXITCODE -eq 0) {
@@ -55,6 +89,8 @@ try {
         exit $LASTEXITCODE
     }
 } catch {
-    Write-Error "Unexpected error: $_"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
+} finally {
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

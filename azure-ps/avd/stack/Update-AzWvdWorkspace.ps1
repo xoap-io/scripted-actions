@@ -4,6 +4,7 @@
 
 .DESCRIPTION
     This script updates the properties of an Azure Virtual Desktop Workspace.
+    Uses the Update-AzWvdWorkspace cmdlet from the Az.DesktopVirtualization module.
 
 .PARAMETER Name
     The name of the workspace.
@@ -29,43 +30,48 @@
 .EXAMPLE
     PS C:\> .\Update-AzWvdWorkspace.ps1 -Name "MyWorkspace" -ResourceGroup "MyResourceGroup" -Description "Updated Description"
 
-.LINK
-    https://learn.microsoft.com/en-us/powershell/module/az.DesktopVirtualization
+.NOTES
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: Az PowerShell module (Install-Module Az), Az.DesktopVirtualization
 
 .LINK
     https://learn.microsoft.com/en-us/powershell/module/az.desktopvirtualization/update-azwvdworkspace?view=azps-12.3.0
 
-.LINK
-    https://github.com/xoap-io/scripted-actions
-
 .COMPONENT
-    Azure PowerShell
+    Azure PowerShell Virtual Desktop
 
 #>
 
 [CmdletBinding()]
 param (
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$true, HelpMessage = "The name of the workspace to update.")]
     [ValidateNotNullOrEmpty()]
     [string]$Name,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$true, HelpMessage = "The name of the resource group.")]
     [ValidateNotNullOrEmpty()]
     [string]$ResourceGroup,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "References to application groups to include in the workspace.")]
     [ValidateNotNullOrEmpty()]
     [string]$ApplicationGroupReference,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The description of the workspace.")]
     [ValidateNotNullOrEmpty()]
     [string]$Description,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The friendly display name of the workspace.")]
     [ValidateNotNullOrEmpty()]
     [string]$FriendlyName,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The public network access setting for the workspace.")]
     [ValidateNotNullOrEmpty()]
     [ValidateSet(
         "Enabled",
@@ -73,53 +79,51 @@ param (
     )]
     [string]$PublicNetworkAccess,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "A hashtable of tags to assign to the workspace.")]
     [ValidateNotNullOrEmpty()]
     [hashtable]$Tags
 )
 
+# Set Error Action to Stop
+$ErrorActionPreference = "Stop"
+
 # Splatting parameters for better readability
 $parameters = @{
-    Name                    = $Name
-    ResourceGroup       = $ResourceGroup
+    Name              = $Name
+    ResourceGroupName = $ResourceGroup
 }
 
 if ($ApplicationGroupReference) {
-    $parameters['ApplicationGroupReference'], $ApplicationGroupReference
+    $parameters['ApplicationGroupReference'] = $ApplicationGroupReference
 }
 
 if ($Description) {
-    $parameters['Description'], $Description
+    $parameters['Description'] = $Description
 }
 
 if ($FriendlyName) {
-    $parameters['FriendlyName'], $FriendlyName
+    $parameters['FriendlyName'] = $FriendlyName
 }
 
 if ($PublicNetworkAccess) {
-    $parameters['PublicNetworkAccess'], $PublicNetworkAccess
+    $parameters['PublicNetworkAccess'] = $PublicNetworkAccess
 }
 
 if ($Tags) {
-    $parameters['Tag'], $Tags
+    $parameters['Tag'] = $Tags
 }
-
-# Set Error Action to Stop
-$ErrorActionPreference = "Stop"
 
 try {
     # Update the Azure Virtual Desktop Workspace and capture the result
     $result = Update-AzWvdWorkspace @parameters
 
     # Output the result
-    Write-Output "Azure Virtual Desktop Workspace updated successfully:"
+    Write-Host "✅ Azure Virtual Desktop Workspace updated successfully:" -ForegroundColor Green
     Write-Output $result
 
-} catch [System.Exception] {
-
-    Write-Error "Failed to update the Azure Virtual Desktop Workspace: $($_.Exception.Message)"
-
+} catch {
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
+    exit 1
 } finally {
-    # Cleanup code if needed
-    Write-Output "Script execution completed."
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

@@ -37,38 +37,48 @@
     .\aws-cli-detach-volume.ps1 -VolumeId "vol-1234567890abcdef0" -WaitForDetachment -Region "us-west-2"
 
 .NOTES
-    Requires AWS CLI v2.16+ and appropriate IAM permissions for EC2 operations.
-    Use Force parameter with caution as it may cause data loss.
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: AWS CLI v2 (https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
 
 .LINK
-    https://github.com/xoap-io/scripted-actions
+    https://docs.aws.amazon.com/cli/latest/reference/ec2/detach-volume.html
+
+.COMPONENT
+    AWS CLI Storage
 #>
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory)]
+    [Parameter(Mandatory = $true, HelpMessage = "The ID of the EBS volume to detach")]
     [ValidatePattern('^vol-[a-f0-9]{8,17}$')]
     [string]$VolumeId,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "The ID of the EC2 instance (optional, for validation)")]
     [ValidatePattern('^i-[a-f0-9]{8,17}$')]
     [string]$InstanceId,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "The device name (optional, for validation)")]
     [ValidatePattern('^/dev/[a-zA-Z0-9]+$')]
     [string]$Device,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "The AWS region to use")]
     [ValidatePattern('^[a-z]{2}-[a-z]+-\d{1}$')]
     [string]$Region,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "The AWS CLI profile to use")]
     [string]$AwsProfile,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "Force detachment even if the volume is in use")]
     [switch]$Force,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "Wait for the volume detachment to complete")]
     [switch]$WaitForDetachment
 )
 
@@ -237,6 +247,8 @@ try {
     Write-Host "`n✅ Volume detachment operation completed successfully!" -ForegroundColor Green
 
 } catch {
-    Write-Error "Failed to detach volume: $($_.Exception.Message)"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
+} finally {
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

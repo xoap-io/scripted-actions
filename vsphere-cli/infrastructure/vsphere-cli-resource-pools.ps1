@@ -72,73 +72,85 @@
     .\vsphere-cli-resource-pools.ps1 -VCenterServer "vcenter.domain.com" -Operation "CreateChildResourcePool" -ClusterName "Production" -ParentResourcePoolName "WebServers" -ResourcePoolName "Frontend"
 
 .NOTES
-    Author: XOAP.io
-    Requires: VMware PowerCLI 13.x or later, vSphere 7.0 or later
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
 
+    Author: XOAP.IO
+    Requires: VMware PowerCLI (Install-Module -Name VMware.PowerCLI)
+
+.LINK
+    https://developer.vmware.com/docs/powercli/
+
+.COMPONENT
+    VMware vSphere PowerCLI
 #>
 
 [CmdletBinding()]
 param (
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The vCenter Server FQDN or IP address to connect to.")]
     [ValidateNotNullOrEmpty()]
     [string]$VCenterServer,
 
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The resource pool operation to perform (e.g. CreateResourcePool, DeleteResourcePool, Report, ResourceUsage).")]
     [ValidateSet("CreateResourcePool", "DeleteResourcePool", "CreateChildResourcePool",
                  "ConfigureResourcePool", "ConfigureVMResources", "MoveVMToResourcePool",
                  "Report", "ResourcePoolHealth", "ResourceUsage", "RebalanceResources")]
     [string]$Operation,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The cluster name where the resource pool operations will be performed.")]
     [string]$ClusterName,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Name of the resource pool to manage.")]
     [string]$ResourcePoolName,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Name of the parent resource pool for hierarchical operations.")]
     [string]$ParentResourcePoolName,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Name of the VM for resource allocation operations.")]
     [string]$VMName,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "CPU shares allocation (High, Normal, Low, or custom numeric value).")]
     [ValidatePattern('^(High|Normal|Low|\d+)$')]
     [string]$CPUShares = "Normal",
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Memory shares allocation (High, Normal, Low, or custom numeric value).")]
     [ValidatePattern('^(High|Normal|Low|\d+)$')]
     [string]$MemoryShares = "Normal",
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "CPU reservation in MHz.")]
     [ValidateRange(0, 999999)]
     [int]$CPUReservationMHz = 0,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Memory reservation in GB.")]
     [ValidateRange(0, 999999)]
     [int]$MemoryReservationGB = 0,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "CPU limit in MHz (-1 for unlimited).")]
     [ValidateRange(-1, 999999)]
     [int]$CPULimitMHz = -1,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Memory limit in GB (-1 for unlimited).")]
     [ValidateRange(-1, 999999)]
     [int]$MemoryLimitGB = -1,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Whether CPU reservation is expandable.")]
     [switch]$CPUExpandableReservation,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Whether memory reservation is expandable.")]
     [switch]$MemoryExpandableReservation,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Output format for reports (Console, CSV, or JSON).")]
     [ValidateSet("Console", "CSV", "JSON")]
     [string]$OutputFormat = "Console",
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Path to save the report file.")]
     [string]$OutputPath,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Force operations without confirmation prompts.")]
     [switch]$Force
 )
 
@@ -861,10 +873,11 @@ try {
     Write-Host "`n=== Operation Completed ===" -ForegroundColor Green
 }
 catch {
-    Write-Error "Script execution failed: $($_.Exception.Message)"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
 }
 finally {
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
     # Disconnect from vCenter if connected
     if ($global:DefaultVIServers) {
         Write-Host "`nDisconnecting from vCenter..." -ForegroundColor Yellow

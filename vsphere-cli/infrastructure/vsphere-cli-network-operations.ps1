@@ -69,70 +69,82 @@
     .\vsphere-cli-network-operations.ps1 -VCenterServer "vcenter.domain.com" -Operation "ConfigureUplinkTeaming" -HostName "esx01.domain.com" -SwitchName "vSwitch0" -PhysicalAdapters @("vmnic0", "vmnic1")
 
 .NOTES
-    Author: XOAP.io
-    Requires: VMware PowerCLI 13.x or later, vSphere 7.0 or later
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
 
+    Author: XOAP.IO
+    Requires: VMware PowerCLI (Install-Module -Name VMware.PowerCLI)
+
+.LINK
+    https://developer.vmware.com/docs/powercli/
+
+.COMPONENT
+    VMware vSphere PowerCLI
 #>
 
 [CmdletBinding()]
 param (
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The vCenter Server FQDN or IP address to connect to.")]
     [ValidateNotNullOrEmpty()]
     [string]$VCenterServer,
 
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The network operation to perform (e.g. CreatePortGroup, CreateStandardSwitch, Report, NetworkHealth).")]
     [ValidateSet("CreatePortGroup", "DeletePortGroup", "CreateStandardSwitch", "DeleteStandardSwitch",
                  "CreateDistributedSwitch", "DeleteDistributedSwitch", "ConfigureUplinkTeaming",
                  "ConfigureSecurity", "ConfigureTrafficShaping", "Report", "NetworkHealth", "VMNetworkInfo")]
     [string]$Operation,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The ESXi host for standard switch operations.")]
     [string]$HostName,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The cluster name for distributed switch operations.")]
     [string]$ClusterName,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Name of the virtual switch to manage.")]
     [string]$SwitchName,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Type of virtual switch (Standard or Distributed).")]
     [ValidateSet("Standard", "Distributed")]
     [string]$SwitchType = "Standard",
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Name of the port group to manage.")]
     [string]$PortGroupName,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "VLAN ID for the port group (0-4094, 0 for no VLAN).")]
     [ValidateRange(0, 4094)]
     [int]$VLANID = 0,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Number of ports for the port group (8-4096).")]
     [ValidateRange(8, 4096)]
     [int]$NumPorts = 128,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Array of physical network adapter names to add to the switch.")]
     [string[]]$PhysicalAdapters,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Maximum Transmission Unit size in bytes (1500-9000).")]
     [ValidateRange(1500, 9000)]
     [int]$MTU = 1500,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Security policy settings for the port group (e.g. AllowPromiscuous, DenyMacChanges).")]
     [ValidateSet("AllowPromiscuous", "DenyPromiscuous", "AllowMacChanges", "DenyMacChanges", "AllowForgedTransmits", "DenyForgedTransmits")]
     [string[]]$SecurityPolicy,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Network policy type for load balancing (e.g. LoadBalanceSourceVirtualPort, ExplicitFailover).")]
     [ValidateSet("LoadBalanceSourceVirtualPort", "LoadBalanceSourceMAC", "LoadBalanceIP", "ExplicitFailover")]
     [string]$NetworkPolicy = "LoadBalanceSourceVirtualPort",
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Output format for reports (Console, CSV, or JSON).")]
     [ValidateSet("Console", "CSV", "JSON")]
     [string]$OutputFormat = "Console",
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Path to save the report file.")]
     [string]$OutputPath,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Force operations without confirmation prompts.")]
     [switch]$Force
 )
 
@@ -968,10 +980,11 @@ try {
     Write-Host "`n=== Operation Completed ===" -ForegroundColor Green
 }
 catch {
-    Write-Error "Script execution failed: $($_.Exception.Message)"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
 }
 finally {
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
     # Disconnect from vCenter if connected
     if ($global:DefaultVIServers) {
         Write-Host "`nDisconnecting from vCenter..." -ForegroundColor Yellow

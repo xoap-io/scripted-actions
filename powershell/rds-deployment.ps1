@@ -69,35 +69,53 @@
     .\pass-rds-deployment.ps1 -SkipGateway -SkipLicensing
 
 .NOTES
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: PowerShell 5.1 or later
+
     Use -SkipGateway and/or -SkipLicensing for environments that don't need all RDS components.
     When skipping components, their corresponding server parameters will be ignored.
+
+.LINK
+    https://learn.microsoft.com/en-us/windows-server/remote/remote-desktop-services/rds-deploy-infrastructure
+
+.COMPONENT
+    Windows PowerShell Server Management
 #>
 
 [CmdletBinding()]
 param(
-    [Parameter()][ValidatePattern('^[a-zA-Z0-9.-]+$')][string]$DomainFqdn          = 'domainname.local',
-    [Parameter()][ValidatePattern('^[a-zA-Z0-9.-]+$')][string]$FileServer          = 'fileserver.domainname.local',
-    [Parameter()][ValidatePattern('^[a-zA-Z0-9.-]+$')][string]$LicensingServer     = 'licensingserver.domainname.local',
-    [Parameter()][ValidatePattern('^[a-zA-Z0-9.-]+$')][string]$BrokerAndWeb        = 'brokerandweb.domainname.local',
-    [Parameter()][ValidatePattern('^[a-zA-Z0-9.-]+$')][string]$GatewayServer       = 'gatewayserver.domainname.local',
-    [Parameter()][ValidatePattern('^[a-zA-Z0-9.-]+$')][string]$SessionHost         = 'sessionhost.domainname.local',
-    [Parameter()][ValidatePattern('^[\w-]+$')][string]$CollectionName              = 'MainCollection',
-    [Parameter()][string]$CollectionDesc                                           = 'Primary RDSH collection',
-    [Parameter()][ValidatePattern('^[\w\$-]+$')][string]$UPDShareName              = 'RDS-ProfileDisks$',
-    [Parameter()][ValidatePattern('^[\w\$-]+$')][string]$ProfilesShareName         = 'RDS-Profiles$',
-    [Parameter()][ValidatePattern('^[A-Z]:\\[\\\w\s-]+$')][string]$UPDLocalPath    = "\\terminaltest1.passnet.local\ProfileDisks",
-    [Parameter()][ValidatePattern('^[A-Z]:\\[\\\w\s-]+$')][string]$ProfilesLocalPath = "C:\UserProfiles",
-    [Parameter()][ValidateRange(1,100)][int]$UPDMaxSizeGB                         = 30,
-    [Parameter()][ValidateSet('PerUser','PerDevice')][string]$RdsLicenseMode      = 'PerUser',
-    [Parameter()][string]$CollectionUserGroup                                     = "$($DomainFqdn.Split('.')[0].ToUpper())\Domain Users",
-    [Parameter()][string]$GatewayExternalFqdn                                     = '',
-    [Parameter()][string]$BrokerCertThumbprint                                    = "<BROKER_CERT_THUMBPRINT>",
-    [Parameter()][string]$GatewayCertThumbprint                                   = "<GATEWAY_CERT_THUMBPRINT>",
-    [Parameter()][switch]$SkipGateway,
-    [Parameter()][switch]$SkipLicensing
+    [Parameter(HelpMessage = "FQDN of the Active Directory domain.")][ValidatePattern('^[a-zA-Z0-9.-]+$')][string]$DomainFqdn          = 'domainname.local',
+    [Parameter(HelpMessage = "Hostname of the File Server.")][ValidatePattern('^[a-zA-Z0-9.-]+$')][string]$FileServer          = 'fileserver.domainname.local',
+    [Parameter(HelpMessage = "Hostname of the RD Licensing Server.")][ValidatePattern('^[a-zA-Z0-9.-]+$')][string]$LicensingServer     = 'licensingserver.domainname.local',
+    [Parameter(HelpMessage = "Hostname of the RD Connection Broker + Web Access (run script here).")][ValidatePattern('^[a-zA-Z0-9.-]+$')][string]$BrokerAndWeb        = 'brokerandweb.domainname.local',
+    [Parameter(HelpMessage = "Hostname of the RD Gateway Server.")][ValidatePattern('^[a-zA-Z0-9.-]+$')][string]$GatewayServer       = 'gatewayserver.domainname.local',
+    [Parameter(HelpMessage = "Hostname of the RD Session Host.")][ValidatePattern('^[a-zA-Z0-9.-]+$')][string]$SessionHost         = 'sessionhost.domainname.local',
+    [Parameter(HelpMessage = "Name of the RDS session collection.")][ValidatePattern('^[\w-]+$')][string]$CollectionName              = 'MainCollection',
+    [Parameter(HelpMessage = "Description of the session collection.")][string]$CollectionDesc                                           = 'Primary RDSH collection',
+    [Parameter(HelpMessage = "Name of the UPD SMB share.")][ValidatePattern('^[\w\$-]+$')][string]$UPDShareName              = 'RDS-ProfileDisks$',
+    [Parameter(HelpMessage = "Name of the roaming profiles SMB share.")][ValidatePattern('^[\w\$-]+$')][string]$ProfilesShareName         = 'RDS-Profiles$',
+    [Parameter(HelpMessage = "Local path for UPD share on File Server.")][ValidatePattern('^[A-Z]:\\[\\\w\s-]+$')][string]$UPDLocalPath    = "\\terminaltest1.passnet.local\ProfileDisks",
+    [Parameter(HelpMessage = "Local path for profiles share on File Server.")][ValidatePattern('^[A-Z]:\\[\\\w\s-]+$')][string]$ProfilesLocalPath = "C:\UserProfiles",
+    [Parameter(HelpMessage = "Max size (GB) for User Profile Disks.")][ValidateRange(1,100)][int]$UPDMaxSizeGB                         = 30,
+    [Parameter(HelpMessage = "Licensing mode: 'PerUser' or 'PerDevice'.")][ValidateSet('PerUser','PerDevice')][string]$RdsLicenseMode      = 'PerUser',
+    [Parameter(HelpMessage = "Domain group allowed to log on to the collection.")][string]$CollectionUserGroup                                     = "$($DomainFqdn.Split('.')[0].ToUpper())\Domain Users",
+    [Parameter(HelpMessage = "Optional external FQDN for RD Gateway.")][string]$GatewayExternalFqdn                                     = '',
+    [Parameter(HelpMessage = "Certificate thumbprint for the RD Connection Broker.")][string]$BrokerCertThumbprint                                    = "<BROKER_CERT_THUMBPRINT>",
+    [Parameter(HelpMessage = "Certificate thumbprint for the RD Gateway.")][string]$GatewayCertThumbprint                                   = "<GATEWAY_CERT_THUMBPRINT>",
+    [Parameter(HelpMessage = "Skip RD Gateway server deployment and configuration.")][switch]$SkipGateway,
+    [Parameter(HelpMessage = "Skip RD Licensing server deployment and configuration.")][switch]$SkipLicensing
 )
 
 $ErrorActionPreference = 'Stop'
+
+try {
 
 # -------------------------
 # PRECHECKS
@@ -432,3 +450,12 @@ Write-Host "`nNEXT STEPS:" -ForegroundColor Cyan
 Write-Host "1) Activate the RD Licensing server on $LicensingServer and install your CALs."
 Write-Host "2) (Optional) Configure RD Gateway CAP/RAP policies and SSL certificate on $GatewayServer."
 Write-Host "3) (Optional) Redirect user profiles to $ProfilesSharePath or move to FSLogix if preferred."
+
+}
+catch {
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
+    exit 1
+}
+finally {
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
+}

@@ -1,14 +1,80 @@
+<#
+.SYNOPSIS
+    Describes AWS Elastic IP addresses.
+
+.DESCRIPTION
+    This script retrieves detailed information about Elastic IP addresses in your AWS account.
+    It supports filtering by allocation IDs, public IPs, instance ID, association status, and domain.
+    Uses aws ec2 describe-addresses to perform the operation.
+
+.PARAMETER AllocationIds
+    Comma-separated list of specific Elastic IP allocation IDs to describe. Must be in the format 'eipalloc-xxxxxxxxx'.
+
+.PARAMETER PublicIps
+    Comma-separated list of specific public IP addresses to describe.
+
+.PARAMETER InstanceId
+    Filter Elastic IPs by the instance they are associated with.
+
+.PARAMETER AssociationStatus
+    Filter by association status: associated or unassociated.
+
+.PARAMETER Domain
+    Filter by domain: vpc or standard.
+
+.PARAMETER Profile
+    The AWS CLI profile to use for the operation.
+
+.PARAMETER Region
+    The AWS region to query for Elastic IP addresses.
+
+.PARAMETER OutputFormat
+    The output format for the results (json, table, text, yaml).
+
+.PARAMETER ShowCostAnalysis
+    Show cost analysis for unassociated Elastic IPs.
+
+.EXAMPLE
+    .\aws-cli-describe-elastic-ips.ps1
+
+.EXAMPLE
+    .\aws-cli-describe-elastic-ips.ps1 -AssociationStatus unassociated -ShowCostAnalysis
+
+.EXAMPLE
+    .\aws-cli-describe-elastic-ips.ps1 -InstanceId i-12345678
+
+.EXAMPLE
+    .\aws-cli-describe-elastic-ips.ps1 -Domain vpc -Profile myprofile -Region us-west-2
+
+.NOTES
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: AWS CLI v2 (https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
+
+.LINK
+    https://docs.aws.amazon.com/cli/latest/reference/ec2/describe-addresses.html
+
+.COMPONENT
+    AWS CLI Network
+#>
+
 [CmdletBinding()]
 param (
     [Parameter(Mandatory = $false, HelpMessage = "Specific allocation IDs to describe")]
-    [ValidatePattern('^eipalloc-[a-zA-Z0-9]+(,eipalloc-[a-zA-Z0-9]+)*$', ErrorMessage = "AllocationIds must be comma-separated valid Elastic IP allocation IDs (format: eipalloc-xxxxxxxxx)")]
+    [ValidatePattern('^eipalloc-[a-zA-Z0-9]+(,eipalloc-[a-zA-Z0-9]+)*$')]
     [string]$AllocationIds,
 
     [Parameter(Mandatory = $false, HelpMessage = "Specific public IP addresses to describe")]
     [string]$PublicIps,
 
     [Parameter(Mandatory = $false, HelpMessage = "Filter by instance ID")]
-    [ValidatePattern('^i-[a-zA-Z0-9]+$', ErrorMessage = "InstanceId must be a valid EC2 instance ID (format: i-xxxxxxxxx)")]
+    [ValidatePattern('^i-[a-zA-Z0-9]+$')]
     [string]$InstanceId,
 
     [Parameter(Mandatory = $false, HelpMessage = "Filter by association status")]
@@ -32,71 +98,6 @@ param (
     [Parameter(Mandatory = $false, HelpMessage = "Show cost analysis for unassociated Elastic IPs")]
     [switch]$ShowCostAnalysis
 )
-
-<#
-.SYNOPSIS
-Describes AWS Elastic IP addresses.
-
-.DESCRIPTION
-This script retrieves detailed information about Elastic IP addresses in your AWS account. It supports filtering by various criteria and provides cost analysis for optimization.
-
-.PARAMETER AllocationIds
-Comma-separated list of specific Elastic IP allocation IDs to describe. Must be in the format 'eipalloc-xxxxxxxxx'.
-
-.PARAMETER PublicIps
-Comma-separated list of specific public IP addresses to describe.
-
-.PARAMETER InstanceId
-Filter Elastic IPs by the associated instance ID.
-
-.PARAMETER AssociationStatus
-Filter by association status: associated or unassociated.
-
-.PARAMETER Domain
-Filter by domain: vpc or standard (EC2-Classic).
-
-.PARAMETER Profile
-The AWS CLI profile to use for the operation.
-
-.PARAMETER Region
-The AWS region to query for Elastic IPs.
-
-.PARAMETER OutputFormat
-The output format for the results (json, table, text, yaml).
-
-.PARAMETER ShowCostAnalysis
-Show cost analysis for unassociated Elastic IPs that are incurring charges.
-
-.EXAMPLE
-.\aws-cli-describe-elastic-ips.ps1
-
-Lists all Elastic IP addresses in the default region.
-
-.EXAMPLE
-.\aws-cli-describe-elastic-ips.ps1 -AssociationStatus unassociated
-
-Lists all unassociated Elastic IPs that are incurring charges.
-
-.EXAMPLE
-.\aws-cli-describe-elastic-ips.ps1 -InstanceId i-12345678
-
-Lists Elastic IPs associated with a specific instance.
-
-.EXAMPLE
-.\aws-cli-describe-elastic-ips.ps1 -AllocationIds eipalloc-12345678,eipalloc-87654321
-
-Shows details for specific Elastic IPs.
-
-.EXAMPLE
-.\aws-cli-describe-elastic-ips.ps1 -ShowCostAnalysis
-
-Lists all Elastic IPs with cost optimization recommendations.
-
-.NOTES
-Author: Your Name
-Date: 2024
-Requires: AWS CLI v2.16+ and appropriate IAM permissions
-#>
 
 $ErrorActionPreference = 'Stop'
 
@@ -287,6 +288,8 @@ try {
     }
 
 } catch {
-    Write-Error "An error occurred: $($_.Exception.Message)"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
+} finally {
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

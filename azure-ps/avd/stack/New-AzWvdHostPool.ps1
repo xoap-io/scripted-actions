@@ -131,52 +131,57 @@ The SSO client secret key vault path.
 .EXAMPLE
     PS C:\> .\New-AzWvdHostPool.ps1 -Name "MyHostPool" -ResourceGroup "MyResourceGroup" -HostPoolType "Pooled" -LoadBalancerType "BreadthFirst" -PreferredAppGroupType "Desktop"
 
-.LINK
-    https://learn.microsoft.com/en-us/powershell/module/az.DesktopVirtualization
+.NOTES
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: Az PowerShell module (Install-Module Az), Az.DesktopVirtualization
 
 .LINK
     https://learn.microsoft.com/en-us/powershell/module/az.desktopvirtualization/new-azwvdhostpool?view=azps-12.3.0
 
-.LINK
-    https://github.com/xoap-io/scripted-actions
-
 .COMPONENT
-    Azure PowerShell
+    Azure PowerShell Virtual Desktop
 
 #>
 
 [CmdletBinding()]
 param (
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$true, HelpMessage = "The name of the host pool.")]
     [ValidateNotNullOrEmpty()]
     [string]$Name,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$true, HelpMessage = "The name of the resource group.")]
     [ValidateNotNullOrEmpty()]
     [string]$ResourceGroup,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$true, HelpMessage = "The type of the host pool (Pooled or Personal).")]
     [ValidateNotNullOrEmpty()]
     [ValidateSet(
         'Pooled', 'Personal'
     )]
     [string]$HostPoolType,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$true, HelpMessage = "The load balancing type (DepthFirst, BreadthFirst, or Persistent).")]
     [ValidateNotNullOrEmpty()]
     [ValidateSet(
         'DepthFirst', 'BreadthFirst', 'Persistent'
     )]
     [string]$LoadBalancerType,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$true, HelpMessage = "The preferred app group type (Desktop, None, or RailApplications).")]
     [ValidateNotNullOrEmpty()]
     [ValidateSet(
         'Desktop', 'None','RailApplications'
     )]
     [string]$PreferredAppGroupType,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$true, HelpMessage = "The Azure region where the host pool will be created.")]
     [ValidateNotNullOrEmpty()]
     [ValidateSet(
         'eastus', 'eastus2', 'southcentralus', 'westus2',
@@ -199,23 +204,23 @@ param (
     )]
     [string]$Location,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The name of the desktop app group.")]
     [ValidateNotNullOrEmpty()]
     [string]$DesktopAppGroupName,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The name of the workspace.")]
     [ValidateNotNullOrEmpty()]
     [string]$WorkspaceName,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The maintenance window properties for agent updates.")]
     [ValidateNotNullOrEmpty()]
     [string]$AgentUpdateMaintenanceWindow,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The time zone for the agent update maintenance window.")]
     [ValidateNotNullOrEmpty()]
     [string]$AgentUpdateMaintenanceWindowTimeZone,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The type of agent update (Default or Scheduled).")]
     [ValidateNotNullOrEmpty()]
     [ValidateSet(
         'Default',
@@ -223,45 +228,43 @@ param (
     )]
     [string]$AgentUpdateType,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "Use session host local time for agent updates.")]
     [ValidateNotNullOrEmpty()]
     [switch]$AgentUpdateUseSessionHostLocalTime,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "Custom RDP property string.")]
     [ValidateNotNullOrEmpty()]
     [string]$CustomRdpProperty,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "Description of the host pool.")]
     [ValidateNotNullOrEmpty()]
     [string]$Description,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "Expiration time for the host pool registration token.")]
     [ValidateNotNullOrEmpty()]
     [datetime]$ExpirationTime,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "Friendly display name of the host pool.")]
     [ValidateNotNullOrEmpty()]
     [string]$FriendlyName,
 
-
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The identity type of the host pool.")]
     [ValidateNotNullOrEmpty()]
     [string]$IdentityType,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The kind of the host pool.")]
     [ValidateNotNullOrEmpty()]
     [string]$Kind = "DesktopVirtualizationHostPools",
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The managed by property of the host pool.")]
     [ValidateNotNullOrEmpty()]
     [string]$ManagedBy,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "Maximum number of sessions per session host.")]
     [ValidateNotNullOrEmpty()]
     [int]$MaxSessionLimit = 10,
 
-
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$true, HelpMessage = "Personal desktop assignment type (Direct or Automatic).")]
     [ValidateNotNullOrEmpty()]
     [ValidateSet(
         'Direct',
@@ -269,27 +272,27 @@ param (
     )]
     [string]$PersonalDesktopAssignmentType,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The plan name of the host pool.")]
     [ValidateNotNullOrEmpty()]
     [string]$PlanName,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The plan product of the host pool.")]
     [ValidateNotNullOrEmpty()]
     [string]$PlanProduct,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The plan promotion code of the host pool.")]
     [ValidateNotNullOrEmpty()]
     [string]$PlanPromotionCode,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The plan publisher of the host pool.")]
     [ValidateNotNullOrEmpty()]
     [string]$PlanPublisher,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The plan version of the host pool.")]
     [ValidateNotNullOrEmpty()]
     [string]$PlanVersion,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "Public network access setting for the host pool.")]
     [ValidateNotNullOrEmpty()]
     [ValidateSet(
         'Disabled',
@@ -299,11 +302,11 @@ param (
     )]
     [string]$PublicNetworkAccess,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The registration info token for session host enrollment.")]
     [ValidateNotNullOrEmpty()]
     [string]$RegistrationInfoToken,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The registration token operation (Delete, None, or Update).")]
     [ValidateNotNullOrEmpty()]
     [ValidateSet(
         'Delete',
@@ -312,59 +315,59 @@ param (
     )]
     [string]$RegistrationTokenOperation,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The deployment ring number.")]
     [ValidateNotNullOrEmpty()]
     [int]$Ring,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The SKU capacity.")]
     [ValidateNotNullOrEmpty()]
     [int]$SkuCapacity,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The SKU family.")]
     [ValidateNotNullOrEmpty()]
     [string]$SkuFamily,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The SKU name.")]
     [ValidateNotNullOrEmpty()]
     [string]$SkuName,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The SKU size.")]
     [ValidateNotNullOrEmpty()]
     [string]$SkuSize,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The SKU tier.")]
     [ValidateNotNullOrEmpty()]
     [string]$SkuTier,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The SSO client ID.")]
     [ValidateNotNullOrEmpty()]
     [string]$SsoClientId,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The SSO client secret key vault path.")]
     [ValidateNotNullOrEmpty()]
     [string]$SsoClientSecretKeyVaultPath,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The SSO secret type.")]
     [ValidateNotNullOrEmpty()]
     [string]$SsoSecretType,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The SSO ADFS authority.")]
     [ValidateNotNullOrEmpty()]
     [string]$SsoadfsAuthority,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "Start the VM when a user connects.")]
     [ValidateNotNullOrEmpty()]
     [switch]$StartVMOnConnect,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "A hashtable of tags to apply to the host pool.")]
     [ValidateNotNullOrEmpty()]
     [hashtable]$Tags,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The VM template for session hosts.")]
     [ValidateNotNullOrEmpty()]
     [string]$VMTemplate,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "Mark this host pool as a validation environment.")]
     [ValidateNotNullOrEmpty()]
     [switch]$ValidationEnvironment
 )
@@ -541,11 +544,9 @@ try {
     Write-Output "Host pool created successfully:"
     Write-Output $result
 
-} catch [System.Exception] {
-
-    Write-Error "Failed to create the host pool: $($_.Exception.Message)"
-
+} catch {
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
+    exit 1
 } finally {
-    # Cleanup code if needed
-    Write-Output "Script execution completed."
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

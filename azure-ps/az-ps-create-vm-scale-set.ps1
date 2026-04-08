@@ -5,7 +5,7 @@
 .DESCRIPTION
     This script creates a new Azure VM Scale Set with the Azure PowerShell.
     The script uses the following Azure PowerShell command:
-    New-AzVmss -ResourceGroup $AzResourceGroup -Name $AzScaleSetName -OrchestrationMode $AzOrchestrationMode -Location $AzLocation -InstanceCount $AzInstanceCount -ImageName $AzImageName
+    New-AzVmss -ResourceGroupName $AzResourceGroup -Name $AzScaleSetName -OrchestrationMode $AzOrchestrationMode -Location $AzLocation -InstanceCount $AzInstanceCount -ImageName $AzImageName
 
 .PARAMETER AzResourceGroup
     Defines the name of the Azure Resource Group.
@@ -40,49 +40,50 @@
 .PARAMETER AzVerbose
     Increase logging verbosity.
 
-.PARAMETER WhatIf
-    Shows what would happen if the cmdlet runs. The cmdlet is not run.
-
-.PARAMETER Confirm
-    Prompts you for confirmation before running the cmdlet.
-
 .EXAMPLE
     .\az-ps-create-vm-scale-set.ps1 -AzResourceGroup "myResourceGroup" -AzScaleSetName "myScaleSet" -AzOrchestrationMode "Uniform" -AzLocation "westus" -AzInstanceCount 2 -AzImageName "UbuntuLTS"
 
 .NOTES
-    Ensure that Azure PowerShell is installed and authenticated before running the script.
-    Author: Your Name
-    Date:   2024-09-03
-    Version: 1.1
-    Requires: Azure PowerShell
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: Az PowerShell module (Install-Module Az)
 
 .LINK
-    https://learn.microsoft.com/en-us/powershell/azure/new-azureps
+    https://learn.microsoft.com/en-us/powershell/module/az.compute/new-azvmss
+
+.COMPONENT
+    Azure PowerShell Compute
 #>
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true, HelpMessage = "Defines the name of the Azure Resource Group.")]
     [ValidateNotNullOrEmpty()]
     [string]$AzResourceGroup,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true, HelpMessage = "Defines the name of the Azure Scale Set.")]
     [ValidateNotNullOrEmpty()]
     [string]$AzScaleSetName,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true, HelpMessage = "Defines the orchestration mode of the Azure Scale Set.")]
     [ValidateSet('Uniform', 'Flexible')]
     [string]$AzOrchestrationMode,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true, HelpMessage = "Defines the location of the Azure Scale Set.")]
     [ValidateNotNullOrEmpty()]
     [string]$AzLocation,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true, HelpMessage = "Defines the instance count of the Azure Scale Set.")]
     [ValidateNotNullOrEmpty()]
     [int]$AzInstanceCount,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true, HelpMessage = "Defines the name of the Azure Scale Set image.")]
     [ValidateSet(
         'Win2022AzureEdition', 'Win2022AzureEditionCore', 'Win2019Datacenter', 'Win2016Datacenter',
         'Win2012R2Datacenter', 'Win2012Datacenter', 'UbuntuLTS', 'Ubuntu2204',
@@ -91,56 +92,51 @@ param(
     )]
     [string]$AzImageName,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Increase logging verbosity to show all debug logs.")]
     [switch]$AzDebug,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Only show errors, suppressing warnings.")]
     [switch]$AzOnlyShowErrors,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Output format.")]
     [string]$AzOutput,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory = $false, HelpMessage = "JMESPath query string.")]
     [string]$AzQuery,
 
-    [Parameter(Mandatory=$false)]
-    [switch]$AzVerbose,
-
-
+    [Parameter(Mandatory = $false, HelpMessage = "Increase logging verbosity.")]
+    [switch]$AzVerbose
 )
-
-# Splatting parameters for better readability
-$parameters = @{
-    ResourceGroup    = $AzResourceGroup
-    Name                 = $AzScaleSetName
-    OrchestrationMode    = $AzOrchestrationMode
-    Location             = $AzLocation
-    InstanceCount        = $AzInstanceCount
-    ImageName            = $AzImageName
-    Debug                = $AzDebug
-    OnlyShowErrors       = $AzOnlyShowErrors
-    Output               = $AzOutput
-    Query                = $AzQuery
-    Verbose              = $AzVerbose
-}
 
 # Set Error Action to Stop
 $ErrorActionPreference = "Stop"
+
+# Splatting parameters for better readability
+$parameters = @{
+    ResourceGroupName = $AzResourceGroup
+    Name              = $AzScaleSetName
+    OrchestrationMode = $AzOrchestrationMode
+    Location          = $AzLocation
+    InstanceCount     = $AzInstanceCount
+    ImageName         = $AzImageName
+    Debug             = $AzDebug
+    OnlyShowErrors    = $AzOnlyShowErrors
+    Output            = $AzOutput
+    Query             = $AzQuery
+    Verbose           = $AzVerbose
+}
 
 try {
     # Create the VM Scale Set
     New-AzVmss @parameters
 
     # Output the result
-    Write-Output "Azure VM Scale Set '$($AzScaleSetName)' created successfully in resource group '$($AzResourceGroup)'."
-} catch {
-    # Log the error to the console
-
-Write-Output "Error message $errorMessage"
-
-
-    Write-Error "Failed to create Azure VM Scale Set: $($_.Exception.Message)"
-} finally {
-    # Cleanup code if needed
-    Write-Output "Script execution completed."
+    Write-Host "✅ Azure VM Scale Set '$($AzScaleSetName)' created successfully in resource group '$($AzResourceGroup)'." -ForegroundColor Green
+}
+catch {
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
+    exit 1
+}
+finally {
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

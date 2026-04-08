@@ -49,57 +49,71 @@
 .EXAMPLE
     .\az-cli-create-image-version.ps1 -AzResourceGroup "MyResourceGroup" -AzGallery "MyGallery" -AzImageDefinition "MyImageDefinition" -AzGalleryImageVersion "1.0.0" -AzTargetRegions "westus" -AzReplicaCount 1 -AzSubscriptionId "00000000-0000-0000-0000-000000000000" -AzVmName "MyVm"
 
+.NOTES
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: Azure CLI (https://docs.microsoft.com/en-us/cli/azure/install-azure-cli)
+
 .LINK
     https://learn.microsoft.com/en-us/cli/azure/sig/image-version
+
+.COMPONENT
+    Azure CLI Virtual Machines
 #>
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The name of the Azure Resource Group")]
     [ValidateNotNullOrEmpty()]
     [string]$AzResourceGroup = "MyResourceGroup",
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The name of the Azure Gallery")]
     [ValidateNotNullOrEmpty()]
     [string]$AzGallery = "MyGallery",
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The name of the Azure Image Definition")]
     [ValidateNotNullOrEmpty()]
     [string]$AzImageDefinition = "MyImageDefinition",
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The version of the Azure Gallery Image")]
     [ValidateNotNullOrEmpty()]
     [string]$AzGalleryImageVersion = "1.0.0",
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The target regions for the Azure Gallery Image")]
     [ValidateNotNullOrEmpty()]
     [string]$AzTargetRegions = "westus",
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The replica count of the Azure Gallery Image")]
     [ValidateNotNullOrEmpty()]
     [int]$AzReplicaCount = 1,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The ID of the Azure Subscription")]
     [ValidateNotNullOrEmpty()]
     [string]$AzSubscriptionId = "00000000-0000-0000-0000-000000000000",
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The name of the Azure VM to use as the source image")]
     [ValidateNotNullOrEmpty()]
     [string]$AzVmName = "MyVm",
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The location of the Azure Gallery Image Version")]
     [string]$AzLocation = "westus",
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Excludes the image version from the latest version")]
     [switch]$AzExcludeFromLatest,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The end of life date for the image version")]
     [datetime]$AzEndOfLifeDate,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The storage account type for the image version")]
     [string]$AzStorageAccountType = "Standard_LRS",
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Tags for the image version")]
     [hashtable]$AzTags
 )
 
@@ -133,15 +147,10 @@ try {
     az sig image-version create @parameters
 
     # Output the result
-    Write-Output "Azure Gallery Image version created successfully."
+    Write-Host "✅ Azure Gallery Image version created successfully." -ForegroundColor Green
 } catch {
-    # Log the error to the console
-
-Write-Output "Error message $errorMessage"
-
-
-    Write-Error "Failed to create the Azure Gallery Image version: $($_.Exception.Message)"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
+    exit 1
 } finally {
-    # Cleanup code if needed
-    Write-Output "Script execution completed."
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

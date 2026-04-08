@@ -4,6 +4,7 @@
 
 .DESCRIPTION
     This script removes a specified MSIX package from an Azure Virtual Desktop environment.
+    Uses the Remove-AzWvdMsixPackage cmdlet from the Az.DesktopVirtualization module.
 
 .PARAMETER FullName
     The full name of the MSIX package.
@@ -17,58 +18,61 @@
 .EXAMPLE
     PS C:\> .\Remove-AzWvdMsixPackage.ps1 -FullName "MyMsixPackage" -HostPoolName "MyHostPool" -ResourceGroup "MyResourceGroup"
 
-.LINK
-    https://learn.microsoft.com/en-us/powershell/module/az.DesktopVirtualization
+.NOTES
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: Az PowerShell module (Install-Module Az), Az.DesktopVirtualization
 
 .LINK
     https://learn.microsoft.com/en-us/powershell/module/az.desktopvirtualization/remove-azwvdmsixpackage?view=azps-12.3.0
 
-.LINK
-    https://github.com/xoap-io/scripted-actions
-
 .COMPONENT
-    Azure PowerShell
+    Azure PowerShell Virtual Desktop
 
 #>
 
 [CmdletBinding()]
 param (
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$true, HelpMessage = "The full name of the MSIX package to remove.")]
     [ValidateNotNullOrEmpty()]
     [string]$FullName,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$true, HelpMessage = "The name of the host pool.")]
     [ValidateNotNullOrEmpty()]
     [string]$HostPoolName,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$true, HelpMessage = "The name of the resource group.")]
     [ValidateNotNullOrEmpty()]
     [string]$ResourceGroup
 )
 
-# Splatting parameters for better readability
-$parameters = @{
-    FullName           = $FullName
-    HostPoolName       = $HostPoolName
-    ResourceGroup  = $ResourceGroup
-}
-
 # Set Error Action to Stop
 $ErrorActionPreference = "Stop"
+
+# Splatting parameters for better readability
+$parameters = @{
+    FullName          = $FullName
+    HostPoolName      = $HostPoolName
+    ResourceGroupName = $ResourceGroup
+}
 
 try {
     # Remove the MSIX package and capture the result
     $result = Remove-AzWvdMsixPackage @parameters
 
     # Output the result
-    Write-Output "MSIX package removed successfully:"
+    Write-Host "✅ MSIX package removed successfully:" -ForegroundColor Green
     Write-Output $result
 
-} catch [System.Exception] {
-
-    Write-Error "Failed to remove the MSIX package: $($_.Exception.Message)"
-
+} catch {
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
+    exit 1
 } finally {
-    # Cleanup code if needed
-    Write-Output "Script execution completed."
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

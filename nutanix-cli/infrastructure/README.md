@@ -1,161 +1,116 @@
 # Nutanix CLI - Infrastructure Management Scripts
 
-This directory contains PowerShell scripts for managing Nutanix infrastructure using Nutanix REST API and CLI tools.
+This directory contains PowerShell scripts for managing Nutanix cluster
+infrastructure including clusters, hosts, networks, and protection domains
+via the Nutanix PowerShell SDK and REST API.
 
 ## Prerequisites
 
-- Nutanix Prism Central or Prism Element access
+- Nutanix PowerShell SDK (`Nutanix.PowerShell.SDK`)
 - PowerShell 5.1 or later (PowerShell 7+ recommended)
-- Nutanix REST API credentials
-- Network access to Nutanix cluster
+- Nutanix Prism Central or Prism Element access
+- Network access to the Nutanix cluster
 - Appropriate Nutanix permissions
 
 ## Available Scripts
 
-Scripts for managing Nutanix infrastructure components:
-
-### Cluster Management
-
-- Cluster configuration
-- Node operations
-- Resource pool management
-
-### Storage Configuration
-
-- Storage container management
-- Volume group operations
-- Protection domain setup
-
-### Network Management
-
-- Virtual network configuration
-- VLAN management
-- IP address management (IPAM)
-
-### Monitoring
-
-- Cluster health checks
-- Performance metrics
-- Alert management
+| Script | Description |
+| --- | --- |
+| `nutanix-cli-cluster-operations.ps1` | Cluster health monitoring, capacity planning, and maintenance operations via Prism Central or Element |
+| `nutanix-cli-host-operations.ps1` | Host health monitoring, maintenance mode toggling, and hardware/performance reporting |
+| `nutanix-cli-network-operations.ps1` | Network creation, VLAN management, IP pool configuration, and usage monitoring |
+| `nutanix-cli-protection-domains.ps1` | Protection domain creation, VM assignment, backup schedules, and replication management |
 
 ## Usage Examples
 
-### Basic API Authentication
+### Cluster Operations
 
 ```powershell
-# Set credentials
-$prismCentral = "prism-central.example.com"
-$username = "admin"
-$password = ConvertTo-SecureString "password" -AsPlainText -Force
-$credential = New-Object System.Management.Automation.PSCredential($username, $password)
+# Health check for a specific cluster
+.\nutanix-cli-cluster-operations.ps1 `
+    -PrismCentral "pc.domain.com" `
+    -Operation "Health" `
+    -ClusterName "Prod-Cluster"
 
-# Create auth header
-$base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("${username}:${password}"))
-$headers = @{
-    "Authorization" = "Basic $base64AuthInfo"
-    "Content-Type" = "application/json"
-}
+# Generate HTML report with full details
+.\nutanix-cli-cluster-operations.ps1 `
+    -PrismCentral "pc.domain.com" `
+    -Operation "Report" `
+    -IncludeVMs -IncludeHosts -IncludeStorage `
+    -OutputFormat "HTML" `
+    -OutputPath "cluster-report.html"
 
-# Make API call
-$response = Invoke-RestMethod `
-    -Uri "https://${prismCentral}:9440/api/nutanix/v3/clusters/list" `
-    -Method POST `
-    -Headers $headers `
-    -Body '{"kind":"cluster"}' `
-    -SkipCertificateCheck
+# Continuous monitoring with alerts
+.\nutanix-cli-cluster-operations.ps1 `
+    -PrismCentral "pc.domain.com" `
+    -Operation "Monitor" `
+    -ContinuousMonitoring `
+    -RefreshInterval 60 `
+    -AlertThresholds `
+    -CPUThreshold 80 `
+    -MemoryThreshold 85
 ```
 
-### Cluster Information
+### Host Operations
 
 ```powershell
-# Get cluster list
-$clusters = Invoke-RestMethod `
-    -Uri "https://${prismCentral}:9440/api/nutanix/v3/clusters/list" `
-    -Method POST `
-    -Headers $headers `
-    -Body '{"kind":"cluster"}' `
-    -SkipCertificateCheck
+# Health check for all hosts in a cluster
+.\nutanix-cli-host-operations.ps1 `
+    -PrismCentral "pc.domain.com" `
+    -Operation "Health" `
+    -ClusterName "Prod-Cluster"
 
-$clusters.entities | Select-Object name, status
+# Enable maintenance mode on a host
+.\nutanix-cli-host-operations.ps1 `
+    -PrismCentral "pc.domain.com" `
+    -Operation "Maintenance" `
+    -HostName "Host01" `
+    -MaintenanceMode Enable `
+    -Force
 ```
 
-## Nutanix Best Practices
+### Network Operations
 
-- **Infrastructure**:
+```powershell
+# List all networks on a cluster
+.\nutanix-cli-network-operations.ps1 `
+    -PrismCentral "pc.domain.com" `
+    -Operation "List" `
+    -ClusterName "Prod-Cluster"
 
-  - Regular cluster health checks
-  - Monitor storage capacity
-  - Implement protection domains
-  - Regular firmware updates
-  - Network redundancy
+# Create a VLAN network
+.\nutanix-cli-network-operations.ps1 `
+    -PrismCentral "pc.domain.com" `
+    -Operation "Create" `
+    -NetworkName "VLAN100" `
+    -VlanId 100 `
+    -NetworkDescription "Production Network"
 
-- **Security**:
+# Create a network with DHCP IP pool
+.\nutanix-cli-network-operations.ps1 `
+    -PrismCentral "pc.domain.com" `
+    -Operation "CreateWithPool" `
+    -NetworkName "VLAN200" `
+    -VlanId 200 `
+    -IPPoolStart "192.168.200.10" `
+    -IPPoolEnd "192.168.200.100" `
+    -Gateway "192.168.200.1" `
+    -SubnetMask "255.255.255.0"
+```
 
-  - Use RBAC for access control
-  - Enable audit logging
-  - Implement network segmentation
-  - Regular security patching
-  - SSL/TLS for communications
+### Protection Domains
 
-- **Performance**:
+```powershell
+# List protection domains
+.\nutanix-cli-protection-domains.ps1 `
+    -PrismCentral "pc.domain.com" `
+    -Operation "List" `
+    -ClusterName "Prod-Cluster"
 
-  - Monitor cluster resources
-  - Balance VM distribution
-  - Optimize storage configuration
-  - Use compression and deduplication
-  - Regular performance reviews
-
-- **Availability**:
-  - Configure replication
-  - Implement DR strategies
-  - Use protection domains
-  - Regular backup verification
-  - Test failover procedures
-
-## Nutanix AHV Features
-
-- **Acropolis Hypervisor (AHV)**:
-
-  - Native hypervisor
-  - No licensing costs
-  - Integrated management
-  - VM-centric operations
-
-- **Data Protection**:
-
-  - Snapshots
-  - Replication
-  - Protection domains
-  - Disaster recovery
-
-- **Storage Optimization**:
-  - Deduplication
-  - Compression
-  - Erasure coding
-  - Tiering
-
-## API Versions
-
-- **v2 API**: Legacy API, being deprecated
-- **v3 API**: Current recommended API
-- **v4 API**: Future API version
-
-## Error Handling
-
-Scripts include:
-
-- Connection validation
-- Credential verification
-- SSL certificate handling
-- API response validation
-- Comprehensive error messages
-
-## Related Documentation
-
-- [Nutanix Documentation](https://portal.nutanix.com/page/documents)
-- [Nutanix REST API](https://www.nutanix.dev/)
-- [Prism Central API](https://www.nutanix.dev/api_references/prism-central-v3/)
-
-## Support
-
-For issues or questions, please refer to the main repository documentation or Nutanix support.
+# Create a protection domain and assign VMs
+.\nutanix-cli-protection-domains.ps1 `
+    -PrismCentral "pc.domain.com" `
+    -Operation "Create" `
+    -ProtectionDomainName "PD-WebServers" `
+    -VMNames @("Web01", "Web02", "Web03")
+```

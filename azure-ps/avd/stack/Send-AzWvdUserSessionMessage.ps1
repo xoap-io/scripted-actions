@@ -4,6 +4,7 @@
 
 .DESCRIPTION
     This script sends a message to a specified user session in an Azure Virtual Desktop environment.
+    Uses the Send-AzWvdUserSessionMessage cmdlet from the Az.DesktopVirtualization module.
 
 .PARAMETER HostPoolName
     The name of the host pool.
@@ -26,73 +27,76 @@
 .EXAMPLE
     PS C:\> .\Send-AzWvdUserSessionMessage.ps1 -HostPoolName "MyHostPool" -ResourceGroup "MyResourceGroup" -SessionHostName "MySessionHost" -UserSessionId "12345" -MessageBody "Hello, User!" -MessageTitle "Greeting"
 
-.LINK
-    https://learn.microsoft.com/en-us/powershell/module/az.DesktopVirtualization
+.NOTES
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: Az PowerShell module (Install-Module Az), Az.DesktopVirtualization
 
 .LINK
     https://learn.microsoft.com/en-us/powershell/module/az.desktopvirtualization/send-azwvdusersessionmessage?view=azps-12.3.0
 
-.LINK
-    https://github.com/xoap-io/scripted-actions
-
 .COMPONENT
-    Azure PowerShell
+    Azure PowerShell Virtual Desktop
 
 #>
 
 [CmdletBinding()]
 param (
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$true, HelpMessage = "The name of the host pool.")]
     [ValidateNotNullOrEmpty()]
     [string]$HostPoolName,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$true, HelpMessage = "The name of the resource group.")]
     [ValidateNotNullOrEmpty()]
     [string]$ResourceGroup,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$true, HelpMessage = "The name of the session host.")]
     [ValidateNotNullOrEmpty()]
     [string]$SessionHostName,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$true, HelpMessage = "The ID of the user session to send the message to.")]
     [ValidateNotNullOrEmpty()]
     [string]$UserSessionId,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$true, HelpMessage = "The body text of the message to send.")]
     [ValidateNotNullOrEmpty()]
     [string]$MessageBody,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$true, HelpMessage = "The title of the message to send.")]
     [ValidateNotNullOrEmpty()]
     [string]$MessageTitle
 )
 
+# Set Error Action to Stop
+$ErrorActionPreference = "Stop"
+
 # Splatting parameters for better readability
 $parameters = @{
     HostPoolName      = $HostPoolName
-    ResourceGroup = $ResourceGroup
+    ResourceGroupName = $ResourceGroup
     SessionHostName   = $SessionHostName
     UserSessionId     = $UserSessionId
     MessageBody       = $MessageBody
     MessageTitle      = $MessageTitle
 }
 
-# Set Error Action to Stop
-$ErrorActionPreference = "Stop"
-
 try {
     # Send the message to the Azure Virtual Desktop user session and capture the result
     $result = Send-AzWvdUserSessionMessage @parameters
 
     # Output the result
-    Write-Output "Message sent to Azure Virtual Desktop user session successfully:"
+    Write-Host "✅ Message sent to Azure Virtual Desktop user session successfully:" -ForegroundColor Green
     Write-Output $result
 
-} catch [System.Exception] {
-
-    Write-Error "Failed to send the message to the Azure Virtual Desktop user session: $($_.Exception.Message)"
-
+} catch {
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
+    exit 1
 } finally {
-    # Cleanup code if needed
-    Write-Output "Script execution completed."
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

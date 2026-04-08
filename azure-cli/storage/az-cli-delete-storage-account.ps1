@@ -17,36 +17,41 @@
     Defines the access tier of the Azure Storage Account.
 
 .EXAMPLE
-    .\az-cli-create-storage-account.ps1 -AzStorageAccountName "MyStorageAccount" -AzResourceGroup "MyResourceGroup" -AzLocation "eastus" -AzStorageSku "Standard_LRS"
+    .\az-cli-delete-storage-account.ps1 -Name "MyStorageAccount" -ResourceGroup "MyResourceGroup"
+
+.NOTES
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: Azure CLI (https://docs.microsoft.com/en-us/cli/azure/install-azure-cli)
 
 .LINK
     https://learn.microsoft.com/en-us/cli/azure/storage/account
 
-.LINK
-    https://learn.microsoft.com/en-us/cli/azure/storage/account?view=azure-cli-latest
-
-.LINK
-    https://github.com/xoap-io/scripted-actions
-
 .COMPONENT
-    Azure CLI
+    Azure CLI Storage
 #>
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The name of the Azure Storage Account to delete")]
     [ValidateNotNullOrEmpty()]
     [string]$Name,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The name of the Azure Resource Group")]
     [ValidateNotNullOrEmpty()]
     [string]$ResourceGroup,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory = $false, HelpMessage = "One or more resource IDs (space-delimited)")]
     [ValidateNotNullOrEmpty()]
     [string]$Ids,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Do not prompt for confirmation")]
     [ValidateNotNullOrEmpty()]
     [bool]$Yes
 )
@@ -72,14 +77,11 @@ try {
     az storage account delete @parameters
 
     # Output the result
-    Write-Output "Azure Storage Account deleted successfully."
+    Write-Host "✅ Azure Storage Account deleted successfully." -ForegroundColor Green
 
 } catch {
-    # Log the error to the console
-    Write-Output "Error message $errorMessage"
-    Write-Error "Failed to delete the Azure Storage Account: $($_.Exception.Message)"
-
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
+    exit 1
 } finally {
-    # Cleanup code if needed
-    Write-Output "Script execution completed."
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

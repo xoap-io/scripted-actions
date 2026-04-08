@@ -85,24 +85,21 @@
     .\az-cli-manage-firewall-rules.ps1 -FirewallName "fw-hub" -ResourceGroup "rg-network" -Action "Delete" -RuleType "Application" -CollectionName "old-rules" -BackupRules -DryRun
 
 .NOTES
-    Author: XOAP.IO
-    Date: 2025-08-05
-.0
-    Requires: Azure CLI version 2.0 or later
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
 
-    Features:
-    - Support for Application, Network, and NAT rules
-    - Rule conflict detection and validation
-    - Backup and restore capabilities
-    - Dry run mode for testing
-    - Comprehensive reporting and logging
-    - Priority management and optimization
+    Author: XOAP.IO
+    Requires: Azure CLI (https://docs.microsoft.com/en-us/cli/azure/install-azure-cli)
 
 .LINK
     https://docs.microsoft.com/en-us/cli/azure/network/firewall
 
 .COMPONENT
-    Azure CLI Firewall Management
+    Azure CLI Security
 #>
 
 [CmdletBinding()]
@@ -781,7 +778,7 @@ function New-FirewallRule {
         }
     }
     catch {
-        Write-Error "❌ Failed to create $RuleType rule: $($_.Exception.Message)"
+        Write-Host "❌ Failed to create $RuleType rule: $($_.Exception.Message)" -ForegroundColor Red
 
         $global:OperationResults.Operations += @{
             Action = "Create"
@@ -868,7 +865,7 @@ function Remove-FirewallRule {
         }
     }
     catch {
-        Write-Error "❌ Failed to delete $RuleType rule: $($_.Exception.Message)"
+        Write-Host "❌ Failed to delete $RuleType rule: $($_.Exception.Message)" -ForegroundColor Red
         $global:OperationResults.Summary.FailedOperations++
 
         return @{
@@ -1068,9 +1065,9 @@ try {
     }
 }
 catch {
-    Write-Error "❌ Firewall rule management failed: $($_.Exception.Message)"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
 }
 finally {
-    Write-Host "`n🏁 Firewall rule management completed" -ForegroundColor Green
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

@@ -33,24 +33,35 @@
 .EXAMPLE
     .\az-cli-avd-workspace-create.ps1 -Name "MyWorkspace" -ResourceGroup "MyRG" -Location "westus2" -FriendlyName "My AVD Workspace" -Description "Production workspace"
 
+.NOTES
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: Azure CLI (https://docs.microsoft.com/en-us/cli/azure/install-azure-cli)
+
 .LINK
     https://learn.microsoft.com/en-us/cli/azure/desktopvirtualization/workspace
 
 .COMPONENT
-    Azure CLI
+    Azure CLI Virtual Desktop
 #>
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory)]
+    [Parameter(Mandatory, HelpMessage = "The name of the Azure Virtual Desktop workspace")]
     [ValidateNotNullOrEmpty()]
     [string]$Name,
 
-    [Parameter(Mandatory)]
+    [Parameter(Mandatory, HelpMessage = "The name of the Azure Resource Group")]
     [ValidateNotNullOrEmpty()]
     [string]$ResourceGroup,
 
-    [Parameter(Mandatory)]
+    [Parameter(Mandatory, HelpMessage = "The Azure region for the workspace")]
     [ValidateSet(
         'eastus', 'eastus2', 'southcentralus', 'westus2',
         'westus3', 'australiaeast', 'southeastasia', 'northeurope',
@@ -62,19 +73,19 @@ param(
     )]
     [string]$Location,
 
-    [Parameter()]
+    [Parameter(HelpMessage = "Optional application group references (space-separated ARM paths)")]
     [ValidateNotNullOrEmpty()]
     [string[]]$ApplicationGroupReferences,
 
-    [Parameter()]
+    [Parameter(HelpMessage = "Optional description of the workspace")]
     [ValidateNotNullOrEmpty()]
     [string]$Description,
 
-    [Parameter()]
+    [Parameter(HelpMessage = "Optional friendly name of the workspace")]
     [ValidateNotNullOrEmpty()]
     [string]$FriendlyName,
 
-    [Parameter()]
+    [Parameter(HelpMessage = "Optional tags in the format 'key1=value1 key2=value2'")]
     [ValidateNotNullOrEmpty()]
     [string]$Tags
 )
@@ -144,6 +155,8 @@ try {
 
     return $workspace
 } catch {
-    Write-Error "Failed to create Azure Virtual Desktop workspace: $_"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
+} finally {
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

@@ -1,7 +1,61 @@
+<#
+.SYNOPSIS
+    Releases an AWS Elastic IP address.
+
+.DESCRIPTION
+    This script releases an Elastic IP address and returns it to the pool of available addresses.
+    Once released, the IP address may be allocated to another AWS customer.
+    Uses aws ec2 release-address to perform the operation.
+
+.PARAMETER AllocationId
+    The allocation ID of the Elastic IP address to release. Must be in the format 'eipalloc-xxxxxxxxx'.
+
+.PARAMETER Profile
+    The AWS CLI profile to use for the operation.
+
+.PARAMETER Region
+    The AWS region where the Elastic IP is allocated.
+
+.PARAMETER Force
+    Skip the confirmation prompt and release the Elastic IP immediately.
+
+.EXAMPLE
+    .\aws-cli-release-elastic-ip.ps1 -AllocationId eipalloc-12345678
+
+.EXAMPLE
+    .\aws-cli-release-elastic-ip.ps1 -AllocationId eipalloc-12345678 -Force
+
+.EXAMPLE
+    .\aws-cli-release-elastic-ip.ps1 -AllocationId eipalloc-12345678 -Profile myprofile -Region us-west-2
+
+.NOTES
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: AWS CLI v2 (https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
+
+    IMPORTANT NOTES:
+    - Releasing an Elastic IP that is associated with a running instance will cause connectivity issues
+    - The IP address will be returned to AWS and may be allocated to another customer
+    - This action cannot be undone
+    - You will no longer be charged for the Elastic IP after release
+
+.LINK
+    https://docs.aws.amazon.com/cli/latest/reference/ec2/release-address.html
+
+.COMPONENT
+    AWS CLI Network
+#>
+
 [CmdletBinding()]
 param (
     [Parameter(Mandatory = $true, HelpMessage = "The allocation ID of the Elastic IP to release")]
-    [ValidatePattern('^eipalloc-[a-zA-Z0-9]+$', ErrorMessage = "AllocationId must be a valid Elastic IP allocation ID (format: eipalloc-xxxxxxxxx)")]
+    [ValidatePattern('^eipalloc-[a-zA-Z0-9]+$')]
     [string]$AllocationId,
 
     [Parameter(Mandatory = $false, HelpMessage = "AWS CLI profile to use")]
@@ -13,52 +67,6 @@ param (
     [Parameter(Mandatory = $false, HelpMessage = "Skip confirmation prompt")]
     [switch]$Force
 )
-
-<#
-.SYNOPSIS
-Releases an AWS Elastic IP address.
-
-.DESCRIPTION
-This script releases an Elastic IP address and returns it to the pool of available addresses. Once released, the IP address may be allocated to another AWS customer.
-
-.PARAMETER AllocationId
-The allocation ID of the Elastic IP address to release. Must be in the format 'eipalloc-xxxxxxxxx'.
-
-.PARAMETER Profile
-The AWS CLI profile to use for the operation.
-
-.PARAMETER Region
-The AWS region where the Elastic IP is allocated.
-
-.PARAMETER Force
-Skip the confirmation prompt and release the Elastic IP immediately.
-
-.EXAMPLE
-.\aws-cli-release-elastic-ip.ps1 -AllocationId eipalloc-12345678
-
-Releases the specified Elastic IP with confirmation prompt.
-
-.EXAMPLE
-.\aws-cli-release-elastic-ip.ps1 -AllocationId eipalloc-12345678 -Force
-
-Releases the Elastic IP without confirmation prompt.
-
-.EXAMPLE
-.\aws-cli-release-elastic-ip.ps1 -AllocationId eipalloc-12345678 -Profile myprofile -Region us-west-2
-
-Releases the Elastic IP using a specific AWS profile and region.
-
-.NOTES
-Author: Your Name
-Date: 2024
-Requires: AWS CLI v2.16+ and appropriate IAM permissions
-
-IMPORTANT NOTES:
-- Releasing an Elastic IP that is associated with a running instance will cause connectivity issues
-- The IP address will be returned to AWS and may be allocated to another customer
-- This action cannot be undone
-- You will no longer be charged for the Elastic IP after release
-#>
 
 $ErrorActionPreference = 'Stop'
 
@@ -178,7 +186,7 @@ try {
         throw "Failed to release Elastic IP: $releaseResult"
     }
 
-    Write-Host "`nElastic IP released successfully!" -ForegroundColor Green
+    Write-Host "`n✅ Elastic IP released successfully!" -ForegroundColor Green
     Write-Host "  Released IP: $($address.PublicIp)" -ForegroundColor White
     Write-Host "  Allocation ID: $AllocationId" -ForegroundColor White
 
@@ -206,6 +214,8 @@ try {
     Write-Host "`nNOTE: This action cannot be undone. The IP address $($address.PublicIp) is no longer available to your account." -ForegroundColor Cyan
 
 } catch {
-    Write-Error "An error occurred: $($_.Exception.Message)"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
+} finally {
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

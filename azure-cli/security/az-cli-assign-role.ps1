@@ -61,24 +61,21 @@
     .\az-cli-assign-role.ps1 -Role "Virtual Machine Contributor" -Assignee "webapp-identity" -ResourceGroup "rg-compute" -WhatIf
 
 .NOTES
-    Author: XOAP.IO
-    Date: 2025-08-05
-.0
-    Requires: Azure CLI version 2.0 or later
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
 
-    RBAC Best Practices:
-    - Use least privilege principle
-    - Assign roles at appropriate scope
-    - Use groups instead of individual users
-    - Regularly review and audit assignments
-    - Use conditional access when needed
-    - Document role assignments
+    Author: XOAP.IO
+    Requires: Azure CLI (https://docs.microsoft.com/en-us/cli/azure/install-azure-cli)
 
 .LINK
     https://docs.microsoft.com/en-us/cli/azure/role/assignment
 
 .COMPONENT
-    Azure CLI RBAC Security
+    Azure CLI Security
 #>
 
 [CmdletBinding(SupportsShouldProcess)]
@@ -531,7 +528,7 @@ try {
     }
 }
 catch {
-    Write-Error "❌ Failed to assign role: $($_.Exception.Message)"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
 }
 finally {

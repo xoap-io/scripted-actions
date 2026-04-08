@@ -28,19 +28,34 @@
   .\ws2019-rds-optimization-restore.ps1 -RestoreLocalDrives -RestoreServerManager
 
 .NOTES
-  Script Name   : ws2019-rds-optimization-restore.ps1
-  Author        : Generated for RDS Optimization
-  Tested On     : Windows Server 2019 (Build 17763+)
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: PowerShell 5.1 or later
+
+    Script Name   : ws2019-rds-optimization-restore.ps1
+    Tested On     : Windows Server 2019 (Build 17763+)
+
+.LINK
+    https://learn.microsoft.com/en-us/windows-server/remote/remote-desktop-services/rds-roles
+
+.COMPONENT
+    Windows PowerShell Server Management
 #>
 
 [CmdletBinding()]
 param(
-    [string[]]$RestoreServices = @(),
-    [switch]$RestoreLocalDrives,
-    [switch]$RestoreServerManager,
-    [string[]]$RestoreScheduledTasks = @(),
-    [switch]$RestoreRDSSettings,
-    [switch]$DryRun = $false
+    [Parameter(HelpMessage = "List of services to restore to their original startup type.")][string[]]$RestoreServices = @(),
+    [Parameter(HelpMessage = "Restore visibility of local drives to users.")][switch]$RestoreLocalDrives,
+    [Parameter(HelpMessage = "Re-enable automatic startup of Server Manager.")][switch]$RestoreServerManager,
+    [Parameter(HelpMessage = "List of scheduled tasks to re-enable.")][string[]]$RestoreScheduledTasks = @(),
+    [Parameter(HelpMessage = "Restore RDS license server and profile configurations to defaults.")][switch]$RestoreRDSSettings,
+    [Parameter(HelpMessage = "Preview changes without applying them.")][switch]$DryRun = $false
 )
 
 $ErrorActionPreference = 'Stop'
@@ -313,13 +328,22 @@ function Start-Restoration {
 # EXECUTION
 # ===========================
 
-Write-Host "=================================================" -ForegroundColor Green
-Write-Host "Windows Server 2019 RDS Optimization Restoration" -ForegroundColor Green
-Write-Host "=================================================" -ForegroundColor Green
-Write-Host ""
+try {
+    Write-Host "=================================================" -ForegroundColor Green
+    Write-Host "Windows Server 2019 RDS Optimization Restoration" -ForegroundColor Green
+    Write-Host "=================================================" -ForegroundColor Green
+    Write-Host ""
 
-Start-Restoration
+    Start-Restoration
 
-Write-Host ""
-Write-Host "Restoration complete. Log saved to: $LogFile" -ForegroundColor Green
-Write-Host ""
+    Write-Host ""
+    Write-Host "Restoration complete. Log saved to: $LogFile" -ForegroundColor Green
+    Write-Host ""
+}
+catch {
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
+    exit 1
+}
+finally {
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
+}

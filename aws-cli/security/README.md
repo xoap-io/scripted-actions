@@ -1,116 +1,98 @@
-# AWS CLI - Security Scripts
+# Security Scripts
 
-This directory contains PowerShell scripts for managing AWS security services using the AWS CLI.
+PowerShell scripts for managing AWS EC2 security groups and network
+ACLs using the AWS CLI. Covers ingress and egress rule management,
+security group lifecycle, and network ACL entry management.
 
 ## Prerequisites
 
-- AWS CLI v2.16+ installed and configured
-- PowerShell 5.1 or later (PowerShell 7+ recommended)
-- AWS credentials configured with appropriate security permissions
-- IAM permissions for security services (IAM, Secrets Manager, KMS, etc.)
+- AWS CLI v2
+- Appropriate AWS credentials configured
 
 ## Available Scripts
 
-### IAM Management
-
-- **aws-cli-create-iam-role.ps1** - Creates IAM roles with trust policies
-- **aws-cli-create-iam-user.ps1** - Creates IAM users
-- **aws-cli-attach-iam-policy.ps1** - Attaches policies to roles or users
-- **aws-cli-list-iam-roles.ps1** - Lists IAM roles
-- **aws-cli-list-iam-users.ps1** - Lists IAM users
-
-### Secrets Manager
-
-- **aws-cli-create-secret.ps1** - Creates secrets in AWS Secrets Manager
-- **aws-cli-get-secret-value.ps1** - Retrieves secret values
-- **aws-cli-update-secret.ps1** - Updates existing secrets
-- **aws-cli-delete-secret.ps1** - Deletes secrets
-
-### AWS KMS (Key Management Service)
-
-- **aws-cli-create-kms-key.ps1** - Creates KMS customer master keys
-- **aws-cli-encrypt-data.ps1** - Encrypts data using KMS
-- **aws-cli-decrypt-data.ps1** - Decrypts data using KMS
-
-### Security Groups
-
-- **aws-cli-create-security-group.ps1** - Creates EC2 security groups
-- **aws-cli-add-security-group-rule.ps1** - Adds ingress/egress rules
-- **aws-cli-remove-security-group-rule.ps1** - Removes rules
+| Script | Description |
+| --- | --- |
+| `aws-cli-authorize-ec2-security-group.ps1` | Adds an ingress rule to a security group |
+| `aws-cli-authorize-security-group-egress.ps1` | Adds an egress rule to a security group |
+| `aws-cli-create-network-acl-entry.ps1` | Creates an entry (rule) in a network ACL |
+| `aws-cli-create-network-acl.ps1` | Creates a network ACL for a specified VPC |
+| `aws-cli-delete-ec2-security-group.ps1` | Deletes a security group |
+| `aws-cli-delete-network-acl-entry.ps1` | Deletes an entry from a network ACL |
+| `aws-cli-delete-network-acl.ps1` | Deletes a network ACL |
+| `aws-cli-describe-network-acls.ps1` | Lists and describes network ACLs |
+| `aws-cli-describe-security-groups.ps1` | Lists and describes security groups |
+| `aws-cli-revoke-security-group-egress.ps1` | Removes an egress rule from a security group |
+| `aws-cli-revoke-security-group-ingress.ps1` | Removes an ingress rule from a security group |
+| `wip_aws-cli-create-ec2-security-group.ps1` | Creates a security group and adds an initial ingress rule (work in progress) |
 
 ## Usage Examples
 
-### Create an IAM Role
+### Authorize an Ingress Rule
 
 ```powershell
-.\aws-cli-create-iam-role.ps1 `
-    -RoleName "EC2-S3-Access" `
-    -TrustPolicy "ec2-trust-policy.json" `
-    -Description "Allows EC2 instances to access S3"
+.\aws-cli-authorize-ec2-security-group.ps1 `
+    -AwsSecurityGroupId "sg-0a1b2c3d4e5f67890" `
+    -AwsSecurityGroupProtocol "tcp" `
+    -AwsSecurityGroupPort "443" `
+    -AwsSecurityGroupCidr "0.0.0.0/0"
 ```
 
-### Create a Secret
+### Authorize an Egress Rule
 
 ```powershell
-.\aws-cli-create-secret.ps1 `
-    -SecretName "prod/database/password" `
-    -SecretString "MySecurePassword123!" `
-    -Description "Production database password"
+.\aws-cli-authorize-security-group-egress.ps1 `
+    -GroupId "sg-0a1b2c3d4e5f67890" `
+    -Protocol "tcp" `
+    -Port "443" `
+    -Cidr "0.0.0.0/0"
 ```
 
-### Retrieve a Secret
+### Create a Network ACL
 
 ```powershell
-.\aws-cli-get-secret-value.ps1 -SecretId "prod/database/password"
+.\aws-cli-create-network-acl.ps1 -VpcId "vpc-0a1b2c3d4e5f67890"
 ```
 
-### Create a KMS Key
+### Add a Network ACL Entry
 
 ```powershell
-.\aws-cli-create-kms-key.ps1 `
-    -Description "Encryption key for S3 buckets" `
-    -KeyUsage ENCRYPT_DECRYPT
+.\aws-cli-create-network-acl-entry.ps1 `
+    -NetworkAclId "acl-0a1b2c3d4e5f67890" `
+    -RuleNumber 100 `
+    -Protocol "tcp" `
+    -RuleAction "allow" `
+    -Egress $false `
+    -CidrBlock "10.0.0.0/16"
 ```
 
-## Security Best Practices
+### Revoke an Ingress Rule
 
-- **IAM**:
+```powershell
+.\aws-cli-revoke-security-group-ingress.ps1 `
+    -GroupId "sg-0a1b2c3d4e5f67890" `
+    -Protocol "tcp" `
+    -Port "22" `
+    -Cidr "0.0.0.0/0"
+```
 
-  - Follow principle of least privilege
-  - Use roles instead of long-term credentials
-  - Enable MFA for privileged users
-  - Regularly rotate access keys
+### Create a Security Group with an Ingress Rule
 
-- **Secrets Management**:
+```powershell
+.\wip_aws-cli-create-ec2-security-group.ps1 `
+    -AwsSecurityGroupName "web-servers" `
+    -AwsSecurityGroupDescription "HTTP and HTTPS access" `
+    -AwsVpcId "vpc-0a1b2c3d4e5f67890" `
+    -Protocol "tcp" `
+    -Port "443" `
+    -Cidr "0.0.0.0/0"
+```
 
-  - Enable automatic rotation for secrets
-  - Use resource-based policies for access control
-  - Never hardcode secrets in scripts
-  - Use IAM policies to restrict secret access
+## Notes
 
-- **Encryption**:
-  - Use KMS for encryption at rest
-  - Enable encryption in transit (TLS/SSL)
-  - Regularly rotate encryption keys
-  - Use separate keys for different data classifications
-
-## Error Handling
-
-All scripts include:
-
-- IAM entity validation
-- Permission checks
-- Secret format validation
-- Comprehensive error messages
-- Audit logging recommendations
-
-## Related Documentation
-
-- [AWS IAM Documentation](https://docs.aws.amazon.com/iam/)
-- [AWS Secrets Manager Documentation](https://docs.aws.amazon.com/secretsmanager/)
-- [AWS KMS Documentation](https://docs.aws.amazon.com/kms/)
-- [AWS CLI Command Reference - IAM](https://awscli.amazonaws.com/v2/documentation/api/latest/reference/iam/index.html)
-
-## Support
-
-For issues or questions, please refer to the main repository documentation.
+- The `wip_` prefix on `wip_aws-cli-create-ec2-security-group.ps1`
+  indicates it is a work in progress and may not be production-ready.
+- Network ACL rules are evaluated in order from lowest to highest
+  rule number; the first matching rule is applied.
+- Security groups are stateful; network ACLs are stateless and require
+  explicit rules for both inbound and outbound traffic.

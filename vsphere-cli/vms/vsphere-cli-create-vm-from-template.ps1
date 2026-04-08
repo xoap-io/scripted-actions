@@ -53,58 +53,70 @@
     .\vsphere-cli-create-vm-from-template.ps1 -VCenterServer "vcenter.domain.com" -VMName "TestVM01" -TemplateName "Ubuntu22-Template" -DatastoreName "Datastore2" -ClusterName "Test-Cluster" -PortGroupName "VLAN200-Test" -CPUCount 2 -MemoryGB 4 -PowerOnAfterCreation
 
 .NOTES
-    Author: XOAP.io
-    Requires: VMware PowerCLI 13.x or later, vSphere 7.0 or later
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
 
+    Author: XOAP.IO
+    Requires: VMware PowerCLI (Install-Module -Name VMware.PowerCLI)
+
+.LINK
+    https://developer.vmware.com/docs/powercli/
+
+.COMPONENT
+    VMware vSphere PowerCLI
 #>
 
 [CmdletBinding()]
 param (
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The vCenter Server FQDN or IP address to connect to.")]
     [ValidateNotNullOrEmpty()]
     [string]$VCenterServer,
 
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The name for the new virtual machine.")]
     [ValidatePattern('^[a-zA-Z0-9][a-zA-Z0-9\-_\.]{0,62}[a-zA-Z0-9]$')]
     [string]$VMName,
 
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The name of the VM template to use for creation.")]
     [ValidateNotNullOrEmpty()]
     [string]$TemplateName,
 
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The datastore where the new VM will be created.")]
     [ValidateNotNullOrEmpty()]
     [string]$DatastoreName,
 
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The cluster where the new VM will be created.")]
     [ValidateNotNullOrEmpty()]
     [string]$ClusterName,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The resource pool for the new VM.")]
     [string]$ResourcePoolName,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The folder where the new VM will be placed.")]
     [string]$FolderName,
 
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The network port group to connect the VM to.")]
     [ValidateNotNullOrEmpty()]
     [string]$PortGroupName,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Number of CPU cores for the new VM (defaults to template settings).")]
     [ValidateRange(1, 128)]
     [int]$CPUCount,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Memory in GB for the new VM (defaults to template settings).")]
     [ValidateRange(1, 4096)]
     [int]$MemoryGB,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The OS customization specification name to apply.")]
     [string]$OSCustomizationSpec,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Power on the VM after creation.")]
     [switch]$PowerOnAfterCreation,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Wait for the VM creation task to complete.")]
     [switch]$WaitForCompletion
 )
 
@@ -383,10 +395,11 @@ try {
     Write-Host "`n=== VM Creation Completed Successfully ===" -ForegroundColor Green
 }
 catch {
-    Write-Error "Script execution failed: $($_.Exception.Message)"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
 }
 finally {
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
     # Disconnect from vCenter if connected
     if ($global:DefaultVIServers) {
         Write-Host "`nDisconnecting from vCenter..." -ForegroundColor Yellow

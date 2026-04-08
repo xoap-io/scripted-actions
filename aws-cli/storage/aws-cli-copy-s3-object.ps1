@@ -61,63 +61,74 @@
     .\aws-cli-copy-s3-object.ps1 -SourceS3Path "s3://bucket/data/" -DestinationS3Path "s3://bucket/archive/" -Recursive -StorageClass "GLACIER"
 
 .NOTES
-    Requires AWS CLI v2.16+ and appropriate IAM permissions for S3 operations.
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: AWS CLI v2 (https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
 
 .LINK
-    https://github.com/xoap-io/scripted-actions
+    https://docs.aws.amazon.com/cli/latest/reference/s3/cp.html
+
+.COMPONENT
+    AWS CLI Storage
 #>
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory)]
+    [Parameter(Mandatory = $true, HelpMessage = "Source S3 path (s3://bucket-name/object-key or s3://bucket-name/prefix/)")]
     [ValidatePattern('^s3://[a-z0-9][a-z0-9\-]*[a-z0-9]/.*$')]
     [string]$SourceS3Path,
 
-    [Parameter(Mandatory)]
+    [Parameter(Mandatory = $true, HelpMessage = "Destination S3 path (s3://bucket-name/object-key or s3://bucket-name/prefix/)")]
     [ValidatePattern('^s3://[a-z0-9][a-z0-9\-]*[a-z0-9]/.*$')]
     [string]$DestinationS3Path,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "Copy all objects under the specified prefix recursively")]
     [switch]$Recursive,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "Storage class for the copied objects")]
     [ValidateSet("STANDARD", "REDUCED_REDUNDANCY", "STANDARD_IA", "ONEZONE_IA", "INTELLIGENT_TIERING", "GLACIER", "DEEP_ARCHIVE", "GLACIER_IR")]
     [string]$StorageClass,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "Server-side encryption method (AES256, aws:kms)")]
     [ValidateSet("AES256", "aws:kms")]
     [string]$ServerSideEncryption,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "KMS key ID for encryption (when using aws:kms)")]
     [string]$KmsKeyId,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "How to handle metadata (COPY or REPLACE)")]
     [ValidateSet("COPY", "REPLACE")]
     [string]$MetadataDirective,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "Cache-Control header for copied objects")]
     [string]$CacheControl,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "Content-Type header for copied objects")]
     [string]$ContentType,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "Comma-separated list of patterns to exclude")]
     [string]$ExcludePatterns,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "Comma-separated list of patterns to include")]
     [string]$IncludePatterns,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "Show what would be copied without actually performing the operation")]
     [switch]$DryRun,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "The AWS region to use")]
     [ValidatePattern('^[a-z]{2}-[a-z]+-\d{1}$')]
     [string]$Region,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "The AWS CLI profile to use")]
     [string]$AwsProfile,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "Skip confirmation prompts")]
     [switch]$Force
 )
 
@@ -171,7 +182,7 @@ try {
     } else {
         # For single object, use head-object
         $sourceKey = $SourceS3Path -replace "^s3://$sourceBucket/", ""
-        $objectCheckResult = aws s3api head-object --bucket $sourceBucket --key $sourceKey @awsArgs 2>&1
+        aws s3api head-object --bucket $sourceBucket --key $sourceKey @awsArgs 2>&1 | Out-Null
         if ($LASTEXITCODE -ne 0) {
             throw "Source object does not exist: $SourceS3Path"
         }
@@ -333,6 +344,8 @@ try {
     Write-Host "`n✅ S3 copy operation completed!" -ForegroundColor Green
 
 } catch {
-    Write-Error "Failed to copy S3 objects: $($_.Exception.Message)"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
+} finally {
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

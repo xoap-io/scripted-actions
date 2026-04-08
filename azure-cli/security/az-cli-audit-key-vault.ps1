@@ -58,25 +58,21 @@
     .\az-cli-audit-key-vault.ps1 -AuditType "Quick" -CheckRBAC -ExportFindings -ReportPath "./audit-reports/"
 
 .NOTES
-    Author: XOAP.IO
-    Date: 2025-08-05
-.0
-    Requires: Azure CLI version 2.0 or later
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
 
-    Audit Coverage:
-    - Access policies and permissions
-    - Network security rules
-    - RBAC role assignments
-    - Secret/key/certificate inventory
-    - Security configuration validation
-    - Compliance checking
-    - Security recommendations
+    Author: XOAP.IO
+    Requires: Azure CLI (https://docs.microsoft.com/en-us/cli/azure/install-azure-cli)
 
 .LINK
     https://docs.microsoft.com/en-us/cli/azure/keyvault
 
 .COMPONENT
-    Azure CLI Key Vault Security Audit
+    Azure CLI Security
 #>
 
 [CmdletBinding()]
@@ -1043,9 +1039,9 @@ try {
 
 }
 catch {
-    Write-Error "❌ Key Vault audit failed: $($_.Exception.Message)"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
 }
 finally {
-    Write-Host "`n🏁 Key Vault security audit completed" -ForegroundColor Green
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

@@ -58,59 +58,70 @@
     .\aws-cli-sync-s3.ps1 -LocalPath "./docs" -S3Path "s3://docs-bucket" -Direction "Upload" -ExcludePatterns "*.tmp,*.log" -DryRun
 
 .NOTES
-    Requires AWS CLI v2.16+ and appropriate IAM permissions for S3 operations.
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: AWS CLI v2 (https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
 
 .LINK
-    https://github.com/xoap-io/scripted-actions
+    https://docs.aws.amazon.com/cli/latest/reference/s3/sync.html
+
+.COMPONENT
+    AWS CLI Storage
 #>
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory)]
+    [Parameter(Mandatory = $true, HelpMessage = "Local directory path to synchronize")]
     [string]$LocalPath,
 
-    [Parameter(Mandatory)]
+    [Parameter(Mandatory = $true, HelpMessage = "S3 bucket path (s3://bucket-name/prefix)")]
     [ValidatePattern('^s3://[a-z0-9][a-z0-9\-]*[a-z0-9](/.*)?$')]
     [string]$S3Path,
 
-    [Parameter(Mandatory)]
+    [Parameter(Mandatory = $true, HelpMessage = "Sync direction: Upload (local to S3), Download (S3 to local), or Bidirectional")]
     [ValidateSet("Upload", "Download", "Bidirectional")]
     [string]$Direction,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "Delete files that don't exist in the source")]
     [switch]$Delete,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "Show what would be done without actually performing the sync")]
     [switch]$DryRun,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "Comma-separated list of patterns to exclude")]
     [string]$ExcludePatterns,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "Comma-separated list of patterns to include")]
     [string]$IncludePatterns,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "S3 storage class for uploaded files")]
     [ValidateSet("STANDARD", "REDUCED_REDUNDANCY", "STANDARD_IA", "ONEZONE_IA", "INTELLIGENT_TIERING", "GLACIER", "DEEP_ARCHIVE", "GLACIER_IR")]
     [string]$StorageClass,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "Server-side encryption method (AES256, aws:kms)")]
     [ValidateSet("AES256", "aws:kms")]
     [string]$ServerSideEncryption,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "KMS key ID for encryption (when using aws:kms)")]
     [string]$KmsKeyId,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "The AWS region to use")]
     [ValidatePattern('^[a-z]{2}-[a-z]+-\d{1}$')]
     [string]$Region,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "The AWS CLI profile to use")]
     [string]$AwsProfile,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "Recursively sync subdirectories")]
     [switch]$Recursive,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "Skip confirmation prompts")]
     [switch]$Force
 )
 
@@ -352,6 +363,8 @@ try {
     Write-Host "`n✅ S3 synchronization operation completed!" -ForegroundColor Green
 
 } catch {
-    Write-Error "Failed to sync with S3: $($_.Exception.Message)"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
+} finally {
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

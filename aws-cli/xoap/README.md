@@ -1,39 +1,42 @@
-# AWS CLI - XOAP Operations Scripts
+# XOAP Scripts
 
-This directory contains PowerShell scripts for XOAP-specific AWS operations and bulk automation tasks.
+PowerShell scripts for integrating AWS resources with the XOAP
+platform. These scripts use AWS Systems Manager (SSM) to apply XOAP
+DSC policy configurations to EC2 instances.
 
 ## Prerequisites
 
-- AWS CLI v2.16+ installed and configured
-- PowerShell 5.1 or later (PowerShell 7+ recommended)
-- AWS credentials configured (`aws configure`)
-- Appropriate IAM permissions for multi-service operations
+- AWS CLI v2
+- Appropriate AWS credentials configured
+- EC2 instances must have the SSM Agent installed and the
+  AmazonSSMManagedInstanceCore IAM policy attached
+- A valid XOAP workspace and group configured in the XOAP platform
 
 ## Available Scripts
 
-These scripts are designed for XOAP platform automation and may perform operations across multiple AWS services.
+| Script | Description |
+| --- | --- |
+| `aws-cli-register-node.ps1` | Registers an EC2 instance with the XOAP platform by running a DSC policy configuration via AWS SSM |
 
-## Usage
+## Usage Examples
 
-Scripts in this directory are typically used for:
+### Register a Node with XOAP
 
-- Bulk operations across multiple AWS resources
-- XOAP platform-specific automation tasks
-- Cross-service orchestration
-- Custom integrations with XOAP workflows
+```powershell
+.\aws-cli-register-node.ps1 `
+    -AwsInstanceId "i-0a1b2c3d4e5f67890" `
+    -AwsSsmDocumentName "AWS-RunPowerShellScript" `
+    -AwsSsmDocumentComment "Register XOAP node" `
+    -XOAPWorkspaceId "ws-12345678" `
+    -XOAPGroupName "MyGroup"
+```
 
-## Important Notes
+## Notes
 
-- Review scripts carefully before execution
-- Test in non-production environments first
-- Ensure appropriate IAM permissions
-- Monitor AWS costs during bulk operations
-
-## Related Documentation
-
-- [Main Repository Documentation](../../Readme.md)
-- [AWS CLI Documentation](https://docs.aws.amazon.com/cli/)
-
-## Support
-
-For XOAP-specific questions, please contact XOAP support or refer to XOAP platform documentation.
+- The script sends an SSM `send-command` to the target instance,
+  which downloads and invokes the XOAP DSC policy from
+  `https://api.xoap.io/dsc/Policy/{WorkspaceId}/Download/{GroupName}`.
+- The EC2 instance must be in a running state and reachable by SSM
+  before executing this script.
+- Verify SSM connectivity with
+  `aws ssm describe-instance-information` before registering nodes.

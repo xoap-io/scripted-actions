@@ -1,46 +1,56 @@
 <#
 .SYNOPSIS
-    This script terminates an AWS Workspace.
+    Terminates an AWS WorkSpace.
 
 .DESCRIPTION
-    This script terminates an AWS Workspace.
-    The script uses the AWS CLI to terminate the specified AWS Workspace.
-    The script uses the following AWS CLI command:
-    aws workspaces terminate-workspaces --terminate-workspace-requests $AwsWorkspaceId
-    The script sets the ErrorActionPreference to SilentlyContinue to suppress error messages.
-    It does not return any output.
+    This script terminates an AWS WorkSpace using the AWS CLI.
+    Uses the following AWS CLI command:
+    aws workspaces terminate-workspaces
+
+.PARAMETER AwsWorkspaceId
+    The ID of the WorkSpace to terminate.
+
+.EXAMPLE
+    .\aws-cli-terminate-workspace.ps1 -AwsWorkspaceId "ws-12345678"
 
 .NOTES
     This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
     The use of the scripts does not require XOAP, but it will make your life easier.
-    You are allowed to pull the script from the repository and use it with XOAP or other solutions
-    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no liability for the function,
-    the use and the consequences of the use of this freely available script.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
     PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
 
-.COMPONENT
-    AWS CLI
+    Author: XOAP.IO
+    Requires: AWS CLI v2 (https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
 
 .LINK
-    https://github.com/xoap-io/scripted-actions
+    https://docs.aws.amazon.com/cli/latest/reference/workspaces/terminate-workspaces.html
 
-.PARAMETER AwsWorkspaceId
-    Defines the ID of the AWS Workspace.
-
+.COMPONENT
+    AWS CLI WorkSpaces
 #>
+
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory)]
+    [Parameter(Mandatory = $true, HelpMessage = "The ID of the WorkSpace to terminate")]
     [ValidatePattern('^ws-[a-zA-Z0-9]{8,}$')]
     [string]$AwsWorkspaceId
 )
 
 $ErrorActionPreference = 'Stop'
+
+if (-not (Get-Command aws -ErrorAction SilentlyContinue)) {
+    Write-Error 'AWS CLI is not installed or not in PATH.'
+    exit 127
+}
+
 try {
-    aws workspaces terminate-workspaces `
-        --terminate-workspace-requests $AwsWorkspaceId
-    Write-Host "Successfully terminated Workspace $AwsWorkspaceId."
+    aws workspaces terminate-workspaces --terminate-workspace-requests $AwsWorkspaceId
+    Write-Host "Successfully terminated Workspace $AwsWorkspaceId." -ForegroundColor Green
 } catch {
-    Write-Error "Failed to terminate Workspace: $_"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
+} finally {
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

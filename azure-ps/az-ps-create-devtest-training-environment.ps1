@@ -12,43 +12,189 @@
     - Precomputed resource IDs (no ARM [resourceId()] with $variables)
     - Subnet/NAT checks & DTL subnetOverrides(useInVmCreation) validation
     - Start/Stop actions via Invoke-AzResourceAction
+
+.PARAMETER LabName
+    Name of the Azure DevTest Lab to create.
+
+.PARAMETER ResourceGroupName
+    Name of the Azure Resource Group for the lab.
+
+.PARAMETER Location
+    Azure region where the lab resources will be deployed.
+
+.PARAMETER TrainingUserEmails
+    Array of email addresses for training users to be added to the lab.
+
+.PARAMETER InstructorEmails
+    Array of email addresses for instructors to be added to the lab.
+
+.PARAMETER StudentCount
+    Number of student VMs to create. Must be between 1 and 20.
+
+.PARAMETER IncludeTrainer
+    Whether to include a trainer VM in the lab.
+
+.PARAMETER UseJumphost
+    Whether to use a jumphost VM pattern.
+
+.PARAMETER JumphostSize
+    Azure VM size for the jumphost VM.
+
+.PARAMETER WindowsVMCount
+    Number of Windows VMs to create (legacy parameter).
+
+.PARAMETER LinuxVMCount
+    Number of Linux VMs to create (legacy parameter).
+
+.PARAMETER VMSize
+    Azure VM size for student VMs.
+
+.PARAMETER AllowPublicIP
+    Whether to allow public IP addresses for VMs.
+
+.PARAMETER AutoShutdownTime
+    Time (HHMM) for automatic VM shutdown (e.g., 1800 for 6PM).
+
+.PARAMETER AutoStartupTime
+    Time (HHMM) for automatic VM startup (e.g., 0800 for 8AM).
+
+.PARAMETER MaxVMsPerUser
+    Maximum number of VMs a single user can create.
+
+.PARAMETER MaxVMsPerLab
+    Maximum total number of VMs in the lab.
+
+.PARAMETER CostThreshold
+    Cost threshold in USD for budget alerts.
+
+.PARAMETER TimeZoneId
+    Time zone ID for scheduled operations (e.g., 'UTC', 'W. Europe Standard Time').
+
+.PARAMETER TrainingDuration
+    Duration of the training in days.
+
+.PARAMETER InstallCommonTools
+    Whether to install common development tools on VMs.
+
+.PARAMETER EnableVPNGateway
+    Whether to enable a VPN gateway for the lab network.
+
+.PARAMETER Action
+    Action to perform: Create, Delete, Start, Stop, or Status.
+
+.PARAMETER EnableDebugOutput
+    If specified, enables verbose debug output during script execution.
+
+.EXAMPLE
+    .\az-ps-create-devtest-training-environment.ps1 -LabName "MyLab" -ResourceGroupName "rg-training" -Location "West Europe" -StudentCount 10
+
+.NOTES
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: Az PowerShell module (Install-Module Az), Az.DevTestLabs
+
+.LINK
+    https://learn.microsoft.com/en-us/azure/devtest-labs/
+
+.COMPONENT
+    Azure PowerShell DevTest Labs
 #>
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory)][ValidatePattern('^[a-zA-Z0-9-]{3,50}$')][string]$LabName,
-    [Parameter(Mandatory)][ValidatePattern('^[a-zA-Z0-9-_.()]{1,90}$')][string]$ResourceGroupName,
-    [Parameter(Mandatory)]
+    [Parameter(Mandatory = $true, HelpMessage = "Name of the Azure DevTest Lab to create.")]
+    [ValidatePattern('^[a-zA-Z0-9-]{3,50}$')]
+    [string]$LabName,
+
+    [Parameter(Mandatory = $true, HelpMessage = "Name of the Azure Resource Group for the lab.")]
+    [ValidatePattern('^[a-zA-Z0-9-_.()]{1,90}$')]
+    [string]$ResourceGroupName,
+
+    [Parameter(Mandatory = $true, HelpMessage = "Azure region where the lab resources will be deployed.")]
     [ValidateSet('East US','East US 2','West US','West US 2','Central US','North Central US','South Central US','West Central US','Canada Central','Canada East','North Europe','West Europe','UK South','UK West','Germany West Central','Switzerland North','France Central','Australia East','Australia Southeast','Japan East','Japan West','Korea Central','South India','Central India','East Asia','Southeast Asia')]
     [string]$Location = 'Germany West Central',
 
+    [Parameter(Mandatory = $false, HelpMessage = "Array of email addresses for training users to be added to the lab.")]
     [string[]]$TrainingUserEmails = @(),
+
+    [Parameter(Mandatory = $false, HelpMessage = "Array of email addresses for instructors to be added to the lab.")]
     [string[]]$InstructorEmails = @(),
 
     # German training scenario parameters
-    [ValidateRange(1,20)][int]$StudentCount = 5,
+    [Parameter(Mandatory = $false, HelpMessage = "Number of student VMs to create. Must be between 1 and 20.")]
+    [ValidateRange(1,20)]
+    [int]$StudentCount = 5,
+
+    [Parameter(Mandatory = $false, HelpMessage = "Whether to include a trainer VM in the lab.")]
     [bool]$IncludeTrainer = $true,
+
+    [Parameter(Mandatory = $false, HelpMessage = "Whether to use a jumphost VM pattern.")]
     [bool]$UseJumphost = $true,
-    [ValidateSet('Standard_B2s', 'Standard_B2ms', 'Standard_D2s_v3', 'Standard_D4s_v3')][string]$JumphostSize = 'Standard_B2ms',
+
+    [Parameter(Mandatory = $false, HelpMessage = "Azure VM size for the jumphost VM.")]
+    [ValidateSet('Standard_B2s', 'Standard_B2ms', 'Standard_D2s_v3', 'Standard_D4s_v3')]
+    [string]$JumphostSize = 'Standard_B2ms',
 
     # Legacy parameters for compatibility
-    [ValidateRange(0,50)][int]$WindowsVMCount = 0,
-    [ValidateRange(0,50)][int]$LinuxVMCount = 0,
+    [Parameter(Mandatory = $false, HelpMessage = "Number of Windows VMs to create (legacy parameter).")]
+    [ValidateRange(0,50)]
+    [int]$WindowsVMCount = 0,
 
-    [ValidateSet('Standard_B1s', 'Standard_B2s', 'Standard_B2ms', 'Standard_D2s_v3', 'Standard_D4s_v3', 'Standard_E2s_v3')][string]$VMSize = 'Standard_B2s',
+    [Parameter(Mandatory = $false, HelpMessage = "Number of Linux VMs to create (legacy parameter).")]
+    [ValidateRange(0,50)]
+    [int]$LinuxVMCount = 0,
+
+    [Parameter(Mandatory = $false, HelpMessage = "Azure VM size for student VMs.")]
+    [ValidateSet('Standard_B1s', 'Standard_B2s', 'Standard_B2ms', 'Standard_D2s_v3', 'Standard_D4s_v3', 'Standard_E2s_v3')]
+    [string]$VMSize = 'Standard_B2s',
+
+    [Parameter(Mandatory = $false, HelpMessage = "Whether to allow public IP addresses for VMs.")]
     [bool]$AllowPublicIP = $true,
 
-    [ValidatePattern('^([01]?[0-9]|2[0-3])[0-5][0-9]$')][string]$AutoShutdownTime = '1800',
-    [ValidatePattern('^([01]?[0-9]|2[0-3])[0-5][0-9]$')][string]$AutoStartupTime  = '0800',
-    [ValidateRange(1,20)][int]$MaxVMsPerUser = 3,
-    [ValidateRange(5,100)][int]$MaxVMsPerLab = 50,
-    [ValidateRange(50,10000)][int]$CostThreshold = 500,
-    [string]$TimeZoneId = 'UTC',
-    [ValidateRange(1,90)][int]$TrainingDuration = 7,
-    [bool]$InstallCommonTools = $true,
-    [bool]$EnableVPNGateway = $false,
-    [ValidateSet('Create','Delete','Start','Stop','Status')][string]$Action = 'Create',
+    [Parameter(Mandatory = $false, HelpMessage = "Time (HHMM) for automatic VM shutdown (e.g., 1800 for 6PM).")]
+    [ValidatePattern('^([01]?[0-9]|2[0-3])[0-5][0-9]$')]
+    [string]$AutoShutdownTime = '1800',
 
+    [Parameter(Mandatory = $false, HelpMessage = "Time (HHMM) for automatic VM startup (e.g., 0800 for 8AM).")]
+    [ValidatePattern('^([01]?[0-9]|2[0-3])[0-5][0-9]$')]
+    [string]$AutoStartupTime  = '0800',
+
+    [Parameter(Mandatory = $false, HelpMessage = "Maximum number of VMs a single user can create.")]
+    [ValidateRange(1,20)]
+    [int]$MaxVMsPerUser = 3,
+
+    [Parameter(Mandatory = $false, HelpMessage = "Maximum total number of VMs in the lab.")]
+    [ValidateRange(5,100)]
+    [int]$MaxVMsPerLab = 50,
+
+    [Parameter(Mandatory = $false, HelpMessage = "Cost threshold in USD for budget alerts.")]
+    [ValidateRange(50,10000)]
+    [int]$CostThreshold = 500,
+
+    [Parameter(Mandatory = $false, HelpMessage = "Time zone ID for scheduled operations (e.g., 'UTC', 'W. Europe Standard Time').")]
+    [string]$TimeZoneId = 'UTC',
+
+    [Parameter(Mandatory = $false, HelpMessage = "Duration of the training in days.")]
+    [ValidateRange(1,90)]
+    [int]$TrainingDuration = 7,
+
+    [Parameter(Mandatory = $false, HelpMessage = "Whether to install common development tools on VMs.")]
+    [bool]$InstallCommonTools = $true,
+
+    [Parameter(Mandatory = $false, HelpMessage = "Whether to enable a VPN gateway for the lab network.")]
+    [bool]$EnableVPNGateway = $false,
+
+    [Parameter(Mandatory = $false, HelpMessage = "Action to perform: Create, Delete, Start, Stop, or Status.")]
+    [ValidateSet('Create','Delete','Start','Stop','Status')]
+    [string]$Action = 'Create',
+
+    [Parameter(Mandatory = $false, HelpMessage = "If specified, enables verbose debug output during script execution.")]
     [switch]$EnableDebugOutput
 )
 
@@ -817,6 +963,8 @@ function Set-TrainingVMsState {
 }
 
 # ---------- Main ----------
+try {
+
 Write-Host "[Information] Azure DevTest Labs Training Environment Manager" -ForegroundColor Cyan
 Write-Host "[STARTUP] Action: $Action" -ForegroundColor Gray
 
@@ -908,4 +1056,13 @@ switch ($Action) {
     }
 }
 
-Write-Host "Operation completed." -ForegroundColor Green
+Write-Host "✅ Operation completed." -ForegroundColor Green
+
+}
+catch {
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
+    exit 1
+}
+finally {
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
+}

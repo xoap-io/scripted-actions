@@ -4,6 +4,7 @@
 
 .DESCRIPTION
     This script creates a new Azure Storage Account with the specified parameters.
+    Uses the New-AzStorageAccount cmdlet from the Az.Storage module.
 
 .PARAMETER ResourceGroup
     The name of the Resource Group where the Storage Account will be created.
@@ -78,7 +79,7 @@
     Indicates if the Storage Account publishes the Internet endpoint.
 
 .PARAMETER EnableureActiveDirectoryDomainServicesForFile
-    Indicates if the Storage Account enables ure Active Directory Domain Services for file.
+    Indicates if the Storage Account enables Active Directory Domain Services for file.
 
 .PARAMETER ActiveDirectoryDomainName
     The name of the Active Directory domain.
@@ -94,9 +95,6 @@
 
 .PARAMETER RequireInfrastructureEncryption
     Indicates if the Storage Account requires infrastructure encryption.
-
-.PARAMETER SasExpirationPeriod
-    The SAS expiration period.
 
 .PARAMETER KeyExpirationPeriodInDay
     The key expiration period in days.
@@ -146,31 +144,35 @@
 .EXAMPLE
     .\New-AzStorageAccount.ps1 -ResourceGroup "MyResourceGroup" -Name "MyStorageAccount" -SkuName "Standard_LRS" -Location "eastus" -Kind "StorageV2"
 
-    This command creates a new ure Storage Account named 'MyStorageAccount' in the 'MyResourceGroup' Resource Group located in the 'eastus' region with the 'Standard_LRS' SKU and 'StorageV2' kind.
+.NOTES
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
 
-.LINK
-    https://learn.microsoft.com/en-us/powershell/module/az.storage
+    Author: XOAP.IO
+    Requires: Az PowerShell module (Install-Module Az), Az.Storage
 
 .LINK
     https://learn.microsoft.com/en-us/powershell/module/az.storage/new-azstorageaccount?view=azps-12.3.0
 
-.LINK
-    https://github.com/xoap-io/scripted-actions
-
 .COMPONENT
-    Azure PowerShell
+    Azure PowerShell Storage
 #>
+
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$true, HelpMessage = "The name of the Resource Group where the Storage Account will be created.")]
     [ValidateNotNullOrEmpty()]
     [string]$ResourceGroup,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$true, HelpMessage = "The name of the Storage Account.")]
     [ValidateNotNullOrEmpty()]
     [string]$Name,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$true, HelpMessage = "The SKU of the Storage Account.")]
     [ValidateNotNullOrEmpty()]
     [ValidateSet(
         'Standard_LRS',
@@ -184,7 +186,7 @@ param(
     )]
     [string]$SkuName,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$true, HelpMessage = "The Azure region where the Storage Account will be created.")]
     [ValidateNotNullOrEmpty()]
     [ValidateSet(
         'eastus', 'eastus2', 'southcentralus', 'westus2',
@@ -193,8 +195,8 @@ param(
         'southafricanorth', 'centralindia', 'eastasia', 'japaneast',
         'koreacentral', 'canadacentral', 'francecentral', 'germanywestcentral',
         'italynorth', 'norwayeast', 'polandcentral', 'switzerlandnorth',
-        'uaenorth', 'brilsouth', 'israelcentral', 'qatarcentral',
-        'asia', 'asiapacific', 'australia', 'bril',
+        'uaenorth', 'brazilsouth', 'israelcentral', 'qatarcentral',
+        'asia', 'asiapacific', 'australia', 'brazil',
         'canada', 'europe', 'france', 'germany',
         'global', 'india', 'japan', 'korea',
         'norway', 'singapore', 'southafrica', 'sweden',
@@ -203,11 +205,11 @@ param(
         'southafricawest', 'australiacentral', 'australiacentral2', 'australiasoutheast',
         'koreasouth', 'southindia', 'westindia', 'canadaeast',
         'francesouth', 'germanynorth', 'norwaywest', 'switzerlandwest',
-        'ukwest', 'uaecentral', 'brilsoutheast'
+        'ukwest', 'uaecentral', 'brazilsoutheast'
     )]
     [string]$Location,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The kind of the Storage Account.")]
     [ValidateNotNullOrEmpty()]
     [ValidateSet(
         'StorageV2',
@@ -215,20 +217,11 @@ param(
         'BlobStorage',
         'FileStorage',
         'BlockBlobStorage',
-        'Storage', 'StorageV2',
-        'StorageV2Blob',
-        'StorageV2File',
-        'StorageV2BlockBlob',
-        'StorageV2Storage',
-        'StorageV2StorageV2',
-        'StorageV2StorageV2Blob',
-        'StorageV2StorageV2File',
-        'StorageV2StorageV2BlockBlob',
-        'StorageV2StorageV2Storage'
+        'Storage'
     )]
     [string]$Kind,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The access tier of the Storage Account (Hot or Cool).")]
     [ValidateNotNullOrEmpty()]
     [ValidateSet(
         'Hot',
@@ -236,31 +229,31 @@ param(
     )]
     [string]$AccessTier,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The custom domain name of the Storage Account.")]
     [ValidateNotNullOrEmpty()]
     [string]$CustomDomainName,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "Indicates if the Storage Account uses a subdomain.")]
     [ValidateNotNullOrEmpty()]
     [bool]$UseSubDomain,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "A hashtable of tags to apply to the Storage Account.")]
     [ValidateNotNullOrEmpty()]
     [hashtable]$Tags,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "Indicates if the Storage Account enables HTTPS traffic only.")]
     [ValidateNotNullOrEmpty()]
     [bool]$EnableHttpsTrafficOnly,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "Indicates if the Storage Account assigns an identity.")]
     [ValidateNotNullOrEmpty()]
     [switch]$AssignIdentity,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The user-assigned identity ID of the Storage Account.")]
     [ValidateNotNullOrEmpty()]
     [string]$UserAssignedIdentityId,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The identity type of the Storage Account.")]
     [ValidateNotNullOrEmpty()]
     [ValidateSet(
         'SystemAssigned',
@@ -269,23 +262,23 @@ param(
     )]
     [string]$IdentityType,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The user-assigned identity ID of the Key Vault.")]
     [ValidateNotNullOrEmpty()]
     [string]$KeyVaultUserAssignedIdentityId,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The federated client ID of the Key Vault.")]
     [ValidateNotNullOrEmpty()]
     [string]$KeyVaultFederatedClientId,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The name of the encryption key.")]
     [ValidateNotNullOrEmpty()]
     [string]$KeyName,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The version of the encryption key.")]
     [ValidateNotNullOrEmpty()]
     [string]$KeyVersion,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The URI of the Key Vault.")]
     [ValidateNotNullOrEmpty()]
     [string]$KeyVaultUri,
 
@@ -294,43 +287,43 @@ param(
     #[ValidateNotNullOrEmpty()]
     #[PSNetworkRuleSet]$NetworkRuleSet,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "Indicates if the Storage Account enables SFTP.")]
     [ValidateNotNullOrEmpty()]
     [bool]$EnableSftp,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "Indicates if the Storage Account enables local user.")]
     [ValidateNotNullOrEmpty()]
     [bool]$EnableLocalUser,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "Indicates if the Storage Account enables hierarchical namespace.")]
     [ValidateNotNullOrEmpty()]
     [bool]$EnableHierarchicalNamespace,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "Indicates if the Storage Account enables large file share.")]
     [ValidateNotNullOrEmpty()]
     [switch]$EnableLargeFileShare,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "Indicates if the Storage Account publishes the Microsoft endpoint.")]
     [ValidateNotNullOrEmpty()]
     [bool]$PublishMicrosoftEndpoint,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "Indicates if the Storage Account publishes the Internet endpoint.")]
     [ValidateNotNullOrEmpty()]
     [bool]$PublishInternetEndpoint,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "Indicates if the Storage Account enables Active Directory Domain Services for file.")]
     [ValidateNotNullOrEmpty()]
     [bool]$EnableureActiveDirectoryDomainServicesForFile,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The name of the Active Directory domain.")]
     [ValidateNotNullOrEmpty()]
     [string]$ActiveDirectoryDomainName,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The GUID of the Active Directory domain.")]
     [ValidateNotNullOrEmpty()]
     [string]$ActiveDirectoryDomainGuid,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The encryption key type for table storage.")]
     [ValidateNotNullOrEmpty()]
     [ValidateSet(
         'Service',
@@ -338,7 +331,7 @@ param(
     )]
     [string]$EncryptionKeyTypeForTable,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The encryption key type for queue storage.")]
     [ValidateNotNullOrEmpty()]
     [ValidateSet(
         'Service',
@@ -346,7 +339,7 @@ param(
     )]
     [string]$EncryptionKeyTypeForQueue,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "Indicates if the Storage Account requires infrastructure encryption.")]
     [ValidateNotNullOrEmpty()]
     [switch]$RequireInfrastructureEncryption,
 
@@ -355,15 +348,15 @@ param(
     #[ValidateNotNullOrEmpty()]
     #[timespan]$SasExpirationPeriod,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The key expiration period in days.")]
     [ValidateNotNullOrEmpty()]
     [int]$KeyExpirationPeriodInDay,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "Indicates if the Storage Account allows blob public access.")]
     [ValidateNotNullOrEmpty()]
     [bool]$AllowBlobPublicAccess,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The minimum TLS version for the Storage Account.")]
     [ValidateNotNullOrEmpty()]
     [ValidateSet(
         'TLS1_0',
@@ -372,19 +365,19 @@ param(
     )]
     [string]$MinimumTlsVersion,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "Indicates if the Storage Account allows shared key access.")]
     [ValidateNotNullOrEmpty()]
     [bool]$AllowSharedKeyAccess,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "Indicates if the Storage Account enables NFS V3.")]
     [ValidateNotNullOrEmpty()]
     [bool]$EnableNfsV3,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "Indicates if the Storage Account allows cross-tenant replication.")]
     [ValidateNotNullOrEmpty()]
     [bool]$AllowCrossTenantReplication,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The default share permission for Azure Files.")]
     [ValidateNotNullOrEmpty()]
     [ValidateSet(
         'None',
@@ -394,11 +387,11 @@ param(
     )]
     [string]$DefaultSharePermission,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The edge zone for the Storage Account.")]
     [ValidateNotNullOrEmpty()]
     [string]$EdgeZone,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The public network access setting for the Storage Account.")]
     [ValidateNotNullOrEmpty()]
     [ValidateSet(
         'Disabled',
@@ -406,19 +399,19 @@ param(
     )]
     [string]$PublicNetworkAccess,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "Indicates if the Storage Account enables account-level immutability.")]
     [ValidateNotNullOrEmpty()]
     [switch]$EnableAccountLevelImmutability,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The immutability period in days.")]
     [ValidateNotNullOrEmpty()]
     [int]$ImmutabilityPeriod,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The immutability policy state.")]
     [ValidateNotNullOrEmpty()]
     [string]$ImmutabilityPolicyState,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The allowed copy scope for the Storage Account.")]
     [ValidateNotNullOrEmpty()]
     [ValidateSet(
         'PrivateLink',
@@ -426,7 +419,7 @@ param(
     )]
     [string]$AllowedCopyScope,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The DNS endpoint type for the Storage Account.")]
     [ValidateNotNullOrEmpty()]
     [ValidateSet(
         'Standard',
@@ -434,7 +427,7 @@ param(
     )]
     [string]$DnsEndpointType,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The routing choice for the Storage Account.")]
     [ValidateNotNullOrEmpty()]
     [ValidateSet(
         'MicrosoftRouting',
@@ -443,18 +436,24 @@ param(
     [string]$RoutingChoice
 )
 
-# Set Error Action to Silently Continue
+# Set Error Action to Stop
 $ErrorActionPreference = "Stop"
 
 try {
     # Splatting parameters for better readability
     $parameters = @{
-        ResourceGroup = $ResourceGroup
-        Name = $Name
-        SkuName = $SkuName
-        Location = $Location
-        Kind = $Kind
-        AccessTier = $AccessTier
+        ResourceGroupName = $ResourceGroup
+        Name              = $Name
+        SkuName           = $SkuName
+        Location          = $Location
+    }
+
+    if ($Kind) {
+        $parameters['Kind'] = $Kind
+    }
+
+    if ($AccessTier) {
+        $parameters['AccessTier'] = $AccessTier
     }
 
     if ($CustomDomainName) {
@@ -466,7 +465,7 @@ try {
     }
 
     if ($Tags) {
-        $parameters['Tag'], $Tags
+        $parameters['Tag'] = $Tags
     }
 
     if ($EnableHttpsTrafficOnly) {
@@ -621,18 +620,16 @@ try {
         $parameters['RoutingChoice'] = $RoutingChoice
     }
 
-    # Create the virtual network and capture the result
+    # Create the storage account and capture the result
     $result = New-AzStorageAccount @parameters
 
     # Output the result
-    Write-Output "Storage account created successfully:"
+    Write-Host "✅ Storage account created successfully:" -ForegroundColor Green
     Write-Output $result
 
-} catch [System.Exception] {
-    # Write the error to the console
-    Write-Error "Failed to create the Storage account: $($_.Exception.Message)"
-
+} catch {
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
+    exit 1
 } finally {
-    # Cleanup code if needed
-    Write-Output "Script execution completed."
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

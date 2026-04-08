@@ -64,60 +64,71 @@
     .\aws-cli-list-volumes.ps1 -TagKey "Environment" -TagValue "Production" -ShowTags
 
 .NOTES
-    Requires AWS CLI v2.16+ and appropriate IAM permissions for EC2 operations.
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: AWS CLI v2 (https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
 
 .LINK
-    https://github.com/xoap-io/scripted-actions
+    https://docs.aws.amazon.com/cli/latest/reference/ec2/describe-volumes.html
+
+.COMPONENT
+    AWS CLI Storage
 #>
 
 [CmdletBinding()]
 param(
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "Comma-separated list of specific volume IDs to describe")]
     [string]$VolumeIds,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "Filter volumes by state (creating, available, in-use, deleting, deleted, error)")]
     [ValidateSet("creating", "available", "in-use", "deleting", "deleted", "error")]
     [string]$State,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "Filter volumes by type (gp2, gp3, io1, io2, st1, sc1, standard)")]
     [ValidateSet("gp2", "gp3", "io1", "io2", "st1", "sc1", "standard")]
     [string]$VolumeType,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "Filter volumes by size in GiB")]
     [ValidateRange(1, 65536)]
     [int]$Size,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "Filter volumes by availability zone")]
     [string]$AvailabilityZone,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "Filter volumes attached to a specific instance")]
     [ValidatePattern('^i-[a-f0-9]{8,17}$')]
     [string]$InstanceId,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "Filter by encryption status (true/false)")]
     [bool]$Encrypted,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "Filter volumes that have a specific tag key")]
     [string]$TagKey,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "Filter volumes by tag key=value pair (use with TagKey)")]
     [string]$TagValue,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "The AWS region to use")]
     [ValidatePattern('^[a-z]{2}-[a-z]+-\d{1}$')]
     [string]$Region,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "The AWS CLI profile to use")]
     [string]$AwsProfile,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "Output format: table, json, csv (default: table)")]
     [ValidateSet("table", "json", "csv")]
     [string]$OutputFormat = "table",
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "Include tags in the output")]
     [switch]$ShowTags,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "Include attachment information in the output")]
     [switch]$ShowAttachments
 )
 
@@ -349,6 +360,8 @@ try {
     Write-Host "`n✅ Volume listing completed successfully!" -ForegroundColor Green
 
 } catch {
-    Write-Error "Failed to list volumes: $($_.Exception.Message)"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
+} finally {
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

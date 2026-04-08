@@ -1,7 +1,61 @@
+<#
+.SYNOPSIS
+    Deletes an AWS VPC peering connection.
+
+.DESCRIPTION
+    This script deletes a VPC peering connection. The connection can be deleted by either the requester or accepter.
+    Once deleted, traffic can no longer flow between the VPCs through this connection.
+    Uses aws ec2 delete-vpc-peering-connection to perform the operation.
+
+.PARAMETER VpcPeeringConnectionId
+    The ID of the VPC peering connection to delete. Must be in the format 'pcx-xxxxxxxxx'.
+
+.PARAMETER Profile
+    The AWS CLI profile to use for the operation.
+
+.PARAMETER Region
+    The AWS region where the VPC peering connection is located.
+
+.PARAMETER Force
+    Skip the confirmation prompt and delete the peering connection immediately.
+
+.EXAMPLE
+    .\aws-cli-delete-vpc-peering-connection.ps1 -VpcPeeringConnectionId pcx-12345678
+
+.EXAMPLE
+    .\aws-cli-delete-vpc-peering-connection.ps1 -VpcPeeringConnectionId pcx-12345678 -Force
+
+.EXAMPLE
+    .\aws-cli-delete-vpc-peering-connection.ps1 -VpcPeeringConnectionId pcx-12345678 -Profile myprofile -Region us-west-2
+
+.NOTES
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: AWS CLI v2 (https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
+
+    IMPORTANT NOTES:
+    - Deleting a peering connection immediately stops traffic flow between VPCs
+    - Route table entries pointing to the peering connection become inactive
+    - Consider removing related routes and security group rules
+    - This action cannot be undone
+
+.LINK
+    https://docs.aws.amazon.com/cli/latest/reference/ec2/delete-vpc-peering-connection.html
+
+.COMPONENT
+    AWS CLI Network
+#>
+
 [CmdletBinding()]
 param (
     [Parameter(Mandatory = $true, HelpMessage = "The ID of the VPC peering connection to delete")]
-    [ValidatePattern('^pcx-[a-zA-Z0-9]+$', ErrorMessage = "VpcPeeringConnectionId must be a valid VPC peering connection ID (format: pcx-xxxxxxxxx)")]
+    [ValidatePattern('^pcx-[a-zA-Z0-9]+$')]
     [string]$VpcPeeringConnectionId,
 
     [Parameter(Mandatory = $false, HelpMessage = "AWS CLI profile to use")]
@@ -13,52 +67,6 @@ param (
     [Parameter(Mandatory = $false, HelpMessage = "Skip confirmation prompt")]
     [switch]$Force
 )
-
-<#
-.SYNOPSIS
-Deletes an AWS VPC peering connection.
-
-.DESCRIPTION
-This script deletes a VPC peering connection. The connection can be deleted by either the requester or accepter. Once deleted, traffic can no longer flow between the VPCs through this connection.
-
-.PARAMETER VpcPeeringConnectionId
-The ID of the VPC peering connection to delete. Must be in the format 'pcx-xxxxxxxxx'.
-
-.PARAMETER Profile
-The AWS CLI profile to use for the operation.
-
-.PARAMETER Region
-The AWS region where the VPC peering connection is located.
-
-.PARAMETER Force
-Skip the confirmation prompt and delete the peering connection immediately.
-
-.EXAMPLE
-.\aws-cli-delete-vpc-peering-connection.ps1 -VpcPeeringConnectionId pcx-12345678
-
-Deletes the specified VPC peering connection with confirmation prompt.
-
-.EXAMPLE
-.\aws-cli-delete-vpc-peering-connection.ps1 -VpcPeeringConnectionId pcx-12345678 -Force
-
-Deletes the peering connection without confirmation prompt.
-
-.EXAMPLE
-.\aws-cli-delete-vpc-peering-connection.ps1 -VpcPeeringConnectionId pcx-12345678 -Profile myprofile -Region us-west-2
-
-Deletes the peering connection using a specific AWS profile and region.
-
-.NOTES
-Author: Your Name
-Date: 2024
-Requires: AWS CLI v2.16+ and appropriate IAM permissions
-
-IMPORTANT NOTES:
-- Deleting a peering connection immediately stops traffic flow between VPCs
-- Route table entries pointing to the peering connection become inactive
-- Consider removing related routes and security group rules
-- This action cannot be undone
-#>
 
 $ErrorActionPreference = 'Stop'
 
@@ -168,7 +176,7 @@ try {
 
     $deleteInfo = $deleteResult | ConvertFrom-Json
 
-    Write-Host "`nVPC peering connection deletion initiated successfully!" -ForegroundColor Green
+    Write-Host "`n✅ VPC peering connection deletion initiated successfully!" -ForegroundColor Green
     Write-Host "  Connection ID: $($deleteInfo.VpcPeeringConnection.VpcPeeringConnectionId)" -ForegroundColor White
     Write-Host "  Status: $($deleteInfo.VpcPeeringConnection.Status.Code)" -ForegroundColor White
 
@@ -192,6 +200,8 @@ try {
     Write-Host "`nNOTE: The peering connection will be deleted immediately, but route table cleanup may be needed." -ForegroundColor Cyan
 
 } catch {
-    Write-Error "An error occurred: $($_.Exception.Message)"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
+} finally {
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

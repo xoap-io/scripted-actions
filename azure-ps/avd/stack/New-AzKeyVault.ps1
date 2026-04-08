@@ -4,6 +4,7 @@
 
 .DESCRIPTION
     This script creates a new Azure Key Vault with the specified parameters.
+    Uses the New-AzKeyVault cmdlet from the Az.KeyVault module.
 
 .PARAMETER Name
     The name of the Key Vault.
@@ -38,7 +39,7 @@
 .PARAMETER Sku
     The SKU of the Key Vault.
 
-.PARAMETER Tag
+.PARAMETER Tags
     A hashtable of tags to apply to the Key Vault.
 
 .PARAMETER NetworkRuleSet
@@ -47,30 +48,35 @@
 .EXAMPLE
     .\New-AzKeyVault.ps1 -Name "MyKeyVault" -ResourceGroup "MyResourceGroup" -Location "eastus" -Sku "Standard"
 
-.LINK
-    https://learn.microsoft.com/en-us/powershell/module/az.keyvault
+.NOTES
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: Az PowerShell module (Install-Module Az), Az.KeyVault
 
 .LINK
     https://learn.microsoft.com/en-us/powershell/module/az.keyvault/new-azkeyvault?view=azps-12.3.0
 
-.LINK
-    https://github.com/scripted-actions
-
 .COMPONENT
-    Azure PowerShell
+    Azure PowerShell Key Vault
 #>
 
 [CmdletBinding()]
 param (
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$true, HelpMessage = "The name of the Key Vault.")]
     [ValidateNotNullOrEmpty()]
     [string]$Name,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$true, HelpMessage = "The name of the Azure Resource Group.")]
     [ValidateNotNullOrEmpty()]
     [string]$ResourceGroup,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$true, HelpMessage = "The Azure region where the Key Vault will be created.")]
     [ValidateNotNullOrEmpty()]
     [ValidateSet(
         'eastus', 'eastus2', 'southcentralus', 'westus2',
@@ -93,31 +99,31 @@ param (
     )]
     [string]$Location,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "Allow Azure VMs to retrieve certificates stored as secrets.")]
     [ValidateNotNullOrEmpty()]
     [switch]$EnabledForDeployment,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "Allow Azure Resource Manager to retrieve secrets from the vault.")]
     [ValidateNotNullOrEmpty()]
     [switch]$EnabledForTemplateDeployment,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "Allow Azure Disk Encryption to retrieve secrets and unwrap keys.")]
     [ValidateNotNullOrEmpty()]
     [switch]$EnabledForDiskEncryption,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "Enable protection against purge for this key vault.")]
     [ValidateNotNullOrEmpty()]
     [switch]$EnablePurgeProtection,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "Disable RBAC authorization for this key vault.")]
     [ValidateNotNullOrEmpty()]
     [switch]$DisableRbacAuthorization,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "Number of days items are retained for soft delete (7-90).")]
     [ValidateRange(7, 90)]
     [int]$SoftDeleteRetentionInDays,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "Public network access setting (Enabled or Disabled).")]
     [ValidateNotNullOrEmpty()]
     [ValidateSet(
         'Enabled',
@@ -125,7 +131,7 @@ param (
     )]
     [string]$PublicNetworkAccess,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$true, HelpMessage = "The SKU of the Key Vault (Standard or Premium).")]
     [ValidateNotNullOrEmpty()]
     [ValidateSet(
         'Standard',
@@ -133,11 +139,11 @@ param (
     )]
     [string]$Sku,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "A hashtable of tags to apply to the Key Vault.")]
     [ValidateNotNullOrEmpty()]
     [hashtable]$Tags,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The network rule set for the Key Vault.")]
     [ValidateNotNullOrEmpty()]
     [string]$NetworkRuleSet
 )
@@ -149,54 +155,58 @@ try {
     # Splatting parameters
     $params = @{
         Name = $Name
-        ResourceGroup = $ResourceGroup
+        ResourceGroupName = $ResourceGroup
         Location = $Location
     }
 
-        if ($EnabledForDeployment) {
-        $params['EnabledForDeployment'], $true
+    if ($EnabledForDeployment) {
+        $params['EnabledForDeployment'] = $true
     }
 
     if ($EnabledForTemplateDeployment) {
-        $params['EnabledForTemplateDeployment'], $true
+        $params['EnabledForTemplateDeployment'] = $true
     }
 
     if ($EnabledForDiskEncryption) {
-        $params['EnabledForDiskEncryption'], $true
+        $params['EnabledForDiskEncryption'] = $true
     }
 
     if ($EnablePurgeProtection) {
-        $params['EnablePurgeProtection'], $true
+        $params['EnablePurgeProtection'] = $true
     }
 
     if ($DisableRbacAuthorization) {
-        $params['DisableRbacAuthorization'], $true
+        $params['DisableRbacAuthorization'] = $true
     }
 
     if ($Sku) {
-        $params['Sku'], $Sku
+        $params['Sku'] = $Sku
     }
 
     if ($SoftDeleteRetentionInDays) {
-        $params['SoftDeleteRetentionInDays'], $SoftDeleteRetentionInDays
+        $params['SoftDeleteRetentionInDays'] = $SoftDeleteRetentionInDays
     }
 
     if ($PublicNetworkAccess) {
-        $params['PublicNetworkAccess'], $PublicNetworkAccess
+        $params['PublicNetworkAccess'] = $PublicNetworkAccess
     }
 
-    if ($Tag) {
-        $params['Tag'], $Tag
+    if ($Tags) {
+        $params['Tag'] = $Tags
     }
 
     if ($NetworkRuleSet) {
-        $params['NetworkRuleSet'], $NetworkRuleSet
+        $params['NetworkRuleSet'] = $NetworkRuleSet
     }
 
     # Create the Key Vault
     New-AzKeyVault @params
-    Write-Output "Key Vault '$Name' created successfully in resource group '$ResourceGroup' at location '$Location'."
+    Write-Host "✅ Key Vault '$Name' created successfully in resource group '$ResourceGroup' at location '$Location'." -ForegroundColor Green
 }
 catch {
-    Write-Error "An error occurred while creating the Key Vault: $_"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
+    exit 1
+}
+finally {
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

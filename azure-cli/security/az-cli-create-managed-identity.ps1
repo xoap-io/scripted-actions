@@ -58,24 +58,21 @@
     .\az-cli-create-managed-identity.ps1 -Name "aks-identity" -ResourceGroup "rg-aks" -Location "northeurope" -AssociateWithResources -ResourceNames "aks-cluster" -ResourceTypes "Microsoft.ContainerService/managedClusters"
 
 .NOTES
-    Author: XOAP.IO
-    Date: 2025-08-05
-.0
-    Requires: Azure CLI version 2.0 or later
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
 
-    Managed Identity Best Practices:
-    - Use User-Assigned for multiple resources
-    - Use System-Assigned for single resources
-    - Apply least privilege principles
-    - Use appropriate scoping for role assignments
-    - Monitor identity usage and access patterns
-    - Rotate credentials regularly
+    Author: XOAP.IO
+    Requires: Azure CLI (https://docs.microsoft.com/en-us/cli/azure/install-azure-cli)
 
 .LINK
     https://docs.microsoft.com/en-us/cli/azure/identity
 
 .COMPONENT
-    Azure CLI Managed Identity
+    Azure CLI Security
 #>
 
 [CmdletBinding()]
@@ -752,7 +749,7 @@ try {
     }
 }
 catch {
-    Write-Error "❌ Failed to create managed identity: $($_.Exception.Message)"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
 }
 finally {

@@ -1,209 +1,131 @@
-# Azure CLI - Virtual Machine Scripts
+# Virtual Machine Scripts
 
-This directory contains PowerShell scripts for managing Azure Virtual Machines using Azure CLI.
+PowerShell scripts for managing Azure Virtual Machines, VM Scale Sets, Azure
+Compute Gallery resources, and VM extensions using Azure CLI.
+
+Scripts prefixed with `wip_` are works in progress and should not be used in
+production without review.
 
 ## Prerequisites
 
-- Azure CLI 2.50+ installed
-- PowerShell 5.1 or later (PowerShell 7+ recommended)
-- Azure subscription with appropriate permissions
-- Azure CLI logged in (`az login`)
-- Virtual Machine Contributor role or equivalent
+- Azure CLI (https://docs.microsoft.com/en-us/cli/azure/install-azure-cli)
+- Active Azure subscription and logged-in CLI session (`az login`)
 
 ## Available Scripts
 
-### VM Management
-
-- **az-cli-create-windows-vm.ps1** - Create Windows virtual machines
-- **az-cli-create-linux-vm.ps1** - Create Linux virtual machines
-- **az-cli-start-vm.ps1** - Start stopped VMs
-- **az-cli-stop-vm.ps1** - Stop running VMs (deallocate)
-- **az-cli-restart-vm.ps1** - Restart VMs
-- **az-cli-delete-vm.ps1** - Delete VMs
-
-### VM Scale Sets
-
-- **az-cli-create-vm-scale-set.ps1** - Create VM Scale Sets for auto-scaling
-- **az-cli-scale-vmss.ps1** - Scale VM Scale Sets up or down
-- **az-cli-update-vmss.ps1** - Update Scale Set configuration
-
-### Image Management
-
-- **az-cli-create-image-gallery.ps1** - Create Azure Compute Gallery
-- **az-cli-create-image-definition.ps1** - Create image definitions
-- **az-cli-create-image-version.ps1** - Create image versions
-- **az-cli-capture-vm-image.ps1** - Capture custom VM images
-
-### VM Extensions
-
-- Install and manage VM extensions
-- Custom script extensions
-- Diagnostic extensions
-- Monitoring agents
+| Script | Description |
+| --- | --- |
+| `az-cli-create-image-definition.ps1` | Create an image definition in an Azure Compute Gallery |
+| `az-cli-create-image-gallery.ps1` | Create an Azure Compute Gallery (Shared Image Gallery) |
+| `az-cli-create-image-version.ps1` | Create a new image version in a Compute Gallery from an existing VM |
+| `az-cli-create-vm-scale-set.ps1` | Create a Virtual Machine Scale Set with configurable orchestration mode and image |
+| `az-cli-create-windows-vm.ps1` | Create a Windows Virtual Machine with networking, public IP, and NSG |
+| `az-cli-delete-image-builder-windows.ps1` | Delete an Azure Image Builder template and associated resources for Windows |
+| `az-cli-enable-EntraID-login-linux-vm.ps1` | Enable Entra ID (Azure AD) SSH login on a Linux VM via the AADSSHLoginForLinux extension |
+| `az-cli-install-webserver-vm.ps1` | Install a web server on a VM via run-command and open the required ports |
+| `az-cli-share-image-gallery.ps1` | Share an Azure Compute Gallery with a user by assigning the Reader role |
+| `wip_az-cli-create-image-builder-linux.ps1` | (WIP) Create an Azure Image Builder template for Linux |
+| `wip_az-cli-create-image-builder-windows.ps1` | (WIP) Create an Azure Image Builder template for Windows |
+| `wip_az-cli-create-linux-vm.ps1` | (WIP) Create a Linux Virtual Machine |
+| `wip_az-cli-create-specialized-vm.ps1` | (WIP) Create a specialized VM from a managed image |
+| `wip_az-cli-delete-image-builder-linux.ps1` | (WIP) Delete an Azure Image Builder template and associated resources for Linux |
 
 ## Usage Examples
 
 ### Create a Windows VM
 
 ```powershell
-# Create resource group
-az group create --name myResourceGroup --location eastus
-
-# Create Windows VM
-az vm create `
-    --resource-group myResourceGroup `
-    --name myWindowsVM `
-    --image Win2022Datacenter `
-    --admin-username azureuser `
-    --admin-password 'P@ssw0rd1234!' `
-    --size Standard_D2s_v3 `
-    --nsg-rule RDP `
-    --public-ip-sku Standard
+.\az-cli-create-windows-vm.ps1 `
+    -Name "vm-web-prod-01" `
+    -UserName "azureuser" `
+    -Password "P@ssw0rd1234!" `
+    -ResourceGroup "rg-vms" `
+    -Location "eastus" `
+    -Image "Win2022Datacenter" `
+    -Size "Standard_D2s_v3"
 ```
 
-### Create a Linux VM
+### Create an Azure Compute Gallery
 
 ```powershell
-# Create Linux VM with SSH key
-az vm create `
-    --resource-group myResourceGroup `
-    --name myLinuxVM `
-    --image UbuntuLTS `
-    --admin-username azureuser `
-    --ssh-key-values ~/.ssh/id_rsa.pub `
-    --size Standard_B2s `
-    --nsg-rule SSH
+.\az-cli-create-image-gallery.ps1 `
+    -AzResourceGroup "rg-images" `
+    -AzLocation "eastus" `
+    -AzGalleryName "myImageGallery"
 ```
 
-### Create VM Scale Set
+### Create an Image Definition
 
 ```powershell
-# Create VMSS
-az vmss create `
-    --resource-group myResourceGroup `
-    --name myScaleSet `
-    --image UbuntuLTS `
-    --upgrade-policy-mode automatic `
-    --admin-username azureuser `
-    --ssh-key-values ~/.ssh/id_rsa.pub `
-    --instance-count 3 `
-    --vm-sku Standard_B2s `
-    --load-balancer myLoadBalancer
+.\az-cli-create-image-definition.ps1 `
+    -ImageDefinition "win2022-base" `
+    -GalleryName "myImageGallery" `
+    -ResourceGroup "rg-images" `
+    -Publisher "MyOrg" `
+    -Offer "WindowsServer" `
+    -Sku "2022-Datacenter" `
+    -OsType "Windows"
 ```
 
-### Create Azure Compute Gallery and Image
+### Create an Image Version
 
 ```powershell
-# Create gallery
-az sig create `
-    --resource-group myResourceGroup `
-    --gallery-name myGallery
-
-# Create image definition
-az sig image-definition create `
-    --resource-group myResourceGroup `
-    --gallery-name myGallery `
-    --gallery-image-definition myImageDef `
-    --publisher myPublisher `
-    --offer myOffer `
-    --sku mySku `
-    --os-type Windows `
-    --os-state Generalized
-
-# Create image version from VM
-az sig image-version create `
-    --resource-group myResourceGroup `
-    --gallery-name myGallery `
-    --gallery-image-definition myImageDef `
-    --gallery-image-version 1.0.0 `
-    --managed-image /subscriptions/{sub-id}/resourceGroups/{rg}/providers/Microsoft.Compute/images/myImage
+.\az-cli-create-image-version.ps1 `
+    -AzResourceGroup "rg-images" `
+    -AzGallery "myImageGallery" `
+    -AzImageDefinition "win2022-base" `
+    -AzGalleryImageVersion "1.0.0" `
+    -AzTargetRegions "eastus" `
+    -AzReplicaCount 1 `
+    -AzSubscriptionId "00000000-0000-0000-0000-000000000000" `
+    -AzVmName "vm-source"
 ```
 
-## Azure VM Best Practices
+### Create a VM Scale Set
 
-- **Cost Optimization**:
+```powershell
+.\az-cli-create-vm-scale-set.ps1 `
+    -AzResourceGroup "rg-vms" `
+    -AzScaleSetName "vmss-web" `
+    -AzOrchestrationMode "Flexible" `
+    -AzSkuImage "UbuntuLTS" `
+    -AzScaleSetInstanceCount 3 `
+    -AzAdminUserName "azureuser"
+```
 
-  - Use B-series for burstable workloads
-  - Leverage Azure Reserved Instances
-  - Stop/deallocate VMs when not in use
-  - Use Spot VMs for non-critical workloads
-  - Right-size based on actual usage
+### Enable Entra ID Login on a Linux VM
 
-- **Security**:
+```powershell
+.\az-cli-enable-EntraID-login-linux-vm.ps1 `
+    -AzResourceGroup "rg-vms" `
+    -AzExtensionName "Microsoft.Azure.ActiveDirectory" `
+    -AzVmName "vm-linux-prod-01"
+```
 
-  - Use managed identities for authentication
-  - Enable Azure Disk Encryption
-  - Use Azure Bastion for secure access
-  - Implement Just-In-Time VM access
-  - Keep VMs patched and updated
-  - Use network security groups properly
+### Install a Web Server on a VM
 
-- **High Availability**:
+```powershell
+.\az-cli-install-webserver-vm.ps1 `
+    -AzResourceGroup "rg-vms" `
+    -AzVmName "vm-web-prod-01" `
+    -Script "Install-WindowsFeature -name Web-Server -IncludeManagementTools" `
+    -AzOpenPorts "80"
+```
 
-  - Deploy across availability zones
-  - Use availability sets for fault domains
-  - Implement VM Scale Sets for auto-scaling
-  - Use managed disks for better reliability
-  - Implement proper backup strategies
+### Share an Image Gallery
 
-- **Performance**:
-  - Use Premium SSD for production workloads
-  - Enable Accelerated Networking
-  - Use proximity placement groups for low latency
-  - Choose appropriate VM sizes
-  - Monitor performance metrics
+```powershell
+.\az-cli-share-image-gallery.ps1 `
+    -AzResourceGroup "rg-images" `
+    -AzGalleryName "myImageGallery" `
+    -EmailAddress "user@example.com"
+```
 
-## VM Sizing Guidelines
+## Notes
 
-### General Purpose (B, D, DC, E series)
-
-- Balanced CPU-to-memory ratio
-- Web servers, development, small databases
-
-### Compute Optimized (F series)
-
-- High CPU-to-memory ratio
-- Medium traffic web servers, batch processes
-
-### Memory Optimized (E, M series)
-
-- High memory-to-CPU ratio
-- Large databases, in-memory analytics
-
-### Storage Optimized (L series)
-
-- High disk throughput and IO
-- Big Data, SQL, NoSQL databases
-
-### GPU (N series)
-
-- Graphics rendering, AI/ML workloads
-- Video editing, 3D visualization
-
-## Disk Types
-
-- **Ultra Disk**: Highest performance, sub-millisecond latency
-- **Premium SSD**: Production workloads, consistent performance
-- **Standard SSD**: Cost-effective SSD option
-- **Standard HDD**: Lowest cost, infrequent access
-
-## Error Handling
-
-Scripts include:
-
-- Resource name validation
-- Quota checks
-- Image availability verification
-- Network configuration validation
-- Comprehensive error messages
-
-## Related Documentation
-
-- [Azure Virtual Machines Documentation](https://docs.microsoft.com/azure/virtual-machines/)
-- [Azure CLI VM Commands](https://docs.microsoft.com/cli/azure/vm)
-- [VM Sizes Documentation](https://docs.microsoft.com/azure/virtual-machines/sizes)
-- [Azure Compute Gallery](https://docs.microsoft.com/azure/virtual-machines/shared-image-galleries)
-
-## Support
-
-For issues or questions, please refer to the main repository documentation.
+- `az-cli-delete-image-builder-windows.ps1` removes the image template,
+  role assignment, role definition, managed identity, and resource group.
+  Run with caution.
+- Image version creation can take several minutes depending on source VM
+  size and target region replication count.
+- Scripts prefixed with `wip_` are incomplete; review before using them.

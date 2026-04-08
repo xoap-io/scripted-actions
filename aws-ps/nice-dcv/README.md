@@ -1,106 +1,106 @@
-# AWS PowerShell - NICE DCV Scripts
+# NICE DCV Scripts
 
-This directory contains PowerShell scripts for managing NICE DCV (Desktop Cloud Visualization) servers using AWS Tools for PowerShell.
+PowerShell scripts for deploying, configuring, and managing NICE DCV
+(Desktop Cloud Visualization) servers on AWS EC2 using AWS Tools for
+PowerShell.
 
 ## Prerequisites
 
-- AWS Tools for PowerShell installed (`Install-Module -Name AWS.Tools.EC2`)
-- PowerShell 5.1 or later (PowerShell 7+ recommended)
-- AWS credentials configured (`Set-AWSCredential` or AWS credential file)
-- NICE DCV server installed on target EC2 instances
-- Appropriate IAM permissions for EC2 and related operations
-
-## About NICE DCV
-
-NICE DCV is a high-performance remote display protocol that enables users to securely connect to remote desktops and application streaming. It's optimized for:
-
-- 3D applications and graphics workloads
-- CAD/CAM applications
-- Video editing and rendering
-- Scientific visualization
-- Virtual workstations
+- AWS Tools for PowerShell:
+  - `Install-Module -Name AWS.Tools.EC2`
+  - `Install-Module -Name AWS.Tools.SimpleSystemsManagement`
+- EC2 instances must have the SSM Agent installed and an instance
+  profile with `AmazonSSMManagedInstanceCore` permissions for scripts
+  that use SSM
+- Appropriate AWS credentials configured
 
 ## Available Scripts
 
-Scripts in this directory help automate:
-
-- DCV server deployment on EC2
-- DCV session management
-- License configuration
-- Performance optimization
-- Security configuration
+| Script | Description |
+| --- | --- |
+| `nice-dcv-authorize-dcv-ports.ps1` | Adds TCP and UDP DCV port rules to an existing EC2 security group |
+| `nice-dcv-create-ami-windows.ps1` | Creates an AMI from a Windows EC2 instance with NICE DCV installed |
+| `nice-dcv-create-security-group.ps1` | Creates a new EC2 security group pre-configured with DCV port 8443 rules |
+| `nice-dcv-create-user.ps1` | Creates a DCV user on a Linux EC2 instance via SSM |
+| `nice-dcv-delete-instance-windows.ps1` | Terminates a Windows EC2 instance running NICE DCV |
+| `nice-dcv-describe-sessions.ps1` | Lists active DCV sessions on an instance via SSM |
+| `nice-dcv-get-connection-info.ps1` | Retrieves and displays the public IP and DCV URL for an instance |
+| `nice-dcv-install-linux.ps1` | Remotely installs NICE DCV on a Linux EC2 instance via SSM |
+| `nice-dcv-install-windows.ps1` | Remotely installs NICE DCV on a Windows EC2 instance via SSM |
+| `nice-dcv-quickstart.ps1` | Launches an EC2 instance, authorizes DCV ports, and waits for it to be running |
+| `nice-dcv-reboot-instance-windows.ps1` | Reboots a Windows EC2 instance running NICE DCV |
+| `nice-dcv-start-instance-windows.ps1` | Starts a stopped Windows EC2 instance running NICE DCV |
+| `nice-dcv-stop-instance-windows.ps1` | Stops a running Windows EC2 instance running NICE DCV |
+| `nice-dcv-terminate-session.ps1` | Terminates a DCV session by session ID via SSM |
+| `nice-dcv-uninstall-windows.ps1` | Uninstalls NICE DCV from a Windows EC2 instance via SSM |
+| `nice-dcv-update-windows.ps1` | Updates NICE DCV to the latest version on a Windows EC2 instance via SSM |
 
 ## Usage Examples
 
-### Typical Workflow
+### NICE DCV Quickstart
 
 ```powershell
-# Set AWS credentials
-Set-AWSCredential -ProfileName myprofile -Region us-east-1
-
-# Deploy DCV server
-.\dcv-deploy-server.ps1 -InstanceType g4dn.xlarge
+.\nice-dcv-quickstart.ps1 `
+    -AmiId ami-0abcdef1234567890 `
+    -InstanceType g4dn.xlarge `
+    -KeyPairName my-key-pair `
+    -SecurityGroupId sg-0abcdef1234567890 `
+    -SubnetId subnet-0abcdef1234567890 `
+    -DcvPort 8443
 ```
 
-## NICE DCV Best Practices
+### Create Security Group for DCV
 
-- **Instance Selection**:
+```powershell
+.\nice-dcv-create-security-group.ps1 `
+    -GroupName "nice-dcv-sg" `
+    -Description "Security group for NICE DCV access" `
+    -VpcId vpc-0abcdef1234567890
+```
 
-  - Use GPU instances (G4, G5) for graphics-intensive workloads
-  - T3/M5 instances for general-purpose applications
-  - Consider network performance requirements
+### Install NICE DCV on Linux via SSM
 
-- **Security**:
+```powershell
+.\nice-dcv-install-linux.ps1 -InstanceId i-0abcdef1234567890
+```
 
-  - Use QUIC protocol for better performance (UDP port 8443)
-  - Enable TLS/SSL certificates
-  - Restrict security group access to known IPs
-  - Use IAM roles for EC2 instances
+### Install NICE DCV on Windows via SSM
 
-- **Performance**:
+```powershell
+.\nice-dcv-install-windows.ps1 -InstanceId i-0abcdef1234567890
+```
 
-  - Enable GPU sharing when appropriate
-  - Configure appropriate video codec (H.264, H.265, VP9)
-  - Adjust quality settings based on network conditions
-  - Use Amazon FSx for shared storage
+### Get DCV Connection URL
 
-- **Licensing**:
-  - Use Extended licensing for production workloads
-  - Monitor license usage
-  - Use RMS (Rights Management Service) when available
+```powershell
+.\nice-dcv-get-connection-info.ps1 `
+    -InstanceId i-0abcdef1234567890 `
+    -DcvPort 8443 `
+    -UserName dcvuser
+```
 
-## Common Configuration
+### Terminate a DCV Session
 
-### Required Ports
+```powershell
+.\nice-dcv-terminate-session.ps1 `
+    -InstanceId i-0abcdef1234567890 `
+    -SessionId session-1234
+```
 
-- **TCP 8443**: HTTPS connection (DCV web client)
-- **UDP 8443**: QUIC protocol (recommended)
-- **TCP 22**: SSH access (for administration)
+### Create an AMI from a Configured DCV Instance
 
-### Environment Variables
+```powershell
+.\nice-dcv-create-ami-windows.ps1 `
+    -InstanceId i-0abcdef1234567890 `
+    -AmiName "nice-dcv-windows-2025-04"
+```
 
-- `DCV_SESSION_ID`: Session identifier
-- `DCV_GL_DISPLAY`: OpenGL display configuration
+## Notes
 
-## Error Handling
-
-Scripts include:
-
-- Instance state validation
-- DCV service availability checks
-- License validation
-- Network connectivity tests
-- Comprehensive error messages
-
-## Related Documentation
-
-- [NICE DCV Documentation](https://docs.aws.amazon.com/dcv/)
-- [NICE DCV Administrator Guide](https://docs.aws.amazon.com/dcv/latest/adminguide/)
-- [AWS Graphics Workstations](https://aws.amazon.com/graphics-workstations/)
-- [AWS Tools for PowerShell](https://docs.aws.amazon.com/powershell/)
-
-## Support
-
-For issues or questions, please refer to the main repository documentation.
-
-For NICE DCV specific issues, consult the [NICE DCV forum](https://forums.nice-dcv.com/).
+- DCV uses port 8443 for both TCP (HTTPS web client) and UDP (QUIC
+  protocol). Scripts that open ports authorize both protocols.
+- Scripts that interact with the DCV server (install, create-user,
+  describe-sessions, terminate-session, uninstall, update) use AWS
+  Systems Manager and require the instance to have SSM Agent running.
+- GPU instance types (G4, G5 families) are recommended for
+  graphics-intensive workloads.

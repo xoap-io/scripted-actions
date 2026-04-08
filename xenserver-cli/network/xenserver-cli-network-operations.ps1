@@ -49,49 +49,61 @@
     .\xenserver-cli-network-operations.ps1 -Server "xenserver.local" -Operation "CreateBond" -NetworkName "bond0" -PIFUUIDs @("uuid1","uuid2") -BondMode "active-backup"
 
 .NOTES
-    Author: XOAP.io
-    Requires: XenServerPSModule (PowerShell SDK)
-    Version: 2.0
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: XenServerPSModule (Citrix XenServer SDK)
+
+.LINK
+    https://docs.xenserver.com/en-us/xenserver/current-release/networking.html
+
+.COMPONENT
+    Citrix XenServer PowerShell
 #>
 
 [CmdletBinding()]
 param (
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The XenServer pool coordinator hostname or IP address.")]
     [string]$Server,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Username for authentication (default: root).")]
     [string]$Username = "root",
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Password for authentication.")]
     [string]$Password,
 
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "Network operation: CreateNetwork, CreateVLAN, CreateBond, List, Destroy.")]
     [ValidateSet("CreateNetwork", "CreateVLAN", "CreateBond", "List", "Destroy")]
     [string]$Operation,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The name of the network.")]
     [string]$NetworkName,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The UUID of the network.")]
     [ValidatePattern('^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$')]
     [string]$NetworkUUID,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "VLAN tag number (1-4094).")]
     [ValidateRange(1, 4094)]
     [int]$VLANTag,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Physical interface UUID for VLAN creation.")]
     [ValidatePattern('^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$')]
     [string]$PIFUUID,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Array of PIF UUIDs for bond creation.")]
     [string[]]$PIFUUIDs,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Bond mode: active-backup, lacp, balance-slb.")]
     [ValidateSet("active-backup", "lacp", "balance-slb")]
     [string]$BondMode = "active-backup",
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Optional description for the network.")]
     [string]$NetworkDescription = ""
 )
 
@@ -183,7 +195,7 @@ try {
     Write-Host "`n✓ Operation completed successfully" -ForegroundColor Green
 }
 catch {
-    Write-Error "Script failed: $_"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
 }
 finally {
@@ -191,4 +203,5 @@ finally {
     if ($session) {
         Get-XenSession | Disconnect-XenServer
     }
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

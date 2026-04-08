@@ -70,71 +70,82 @@
     .\aws-cli-list-snapshots.ps1 -TagKey "Environment" -TagValue "Production" -OutputFormat "json"
 
 .NOTES
-    Requires AWS CLI v2.16+ and appropriate IAM permissions for EC2 operations.
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: AWS CLI v2 (https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
 
 .LINK
-    https://github.com/xoap-io/scripted-actions
+    https://docs.aws.amazon.com/cli/latest/reference/ec2/describe-snapshots.html
+
+.COMPONENT
+    AWS CLI Storage
 #>
 
 [CmdletBinding()]
 param(
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "Comma-separated list of specific snapshot IDs to describe")]
     [string]$SnapshotIds,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "Comma-separated list of owner IDs (self, amazon, or account IDs)")]
     [string]$OwnerIds = "self",
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "Filter snapshots by state (pending, completed, error)")]
     [ValidateSet("pending", "completed", "error")]
     [string]$State,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "Filter snapshots created from a specific volume")]
     [ValidatePattern('^vol-[a-f0-9]{8,17}$')]
     [string]$VolumeId,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "Filter snapshots by original volume size in GiB")]
     [ValidateRange(1, 65536)]
     [int]$VolumeSize,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "Filter snapshots by description (partial match)")]
     [string]$Description,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "Filter snapshots that have a specific tag key")]
     [string]$TagKey,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "Filter snapshots by tag key=value pair (use with TagKey)")]
     [string]$TagValue,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "Filter snapshots started after this date (YYYY-MM-DD format)")]
     [ValidatePattern('^\d{4}-\d{2}-\d{2}$')]
     [string]$StartTimeAfter,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "Filter snapshots started before this date (YYYY-MM-DD format)")]
     [ValidatePattern('^\d{4}-\d{2}-\d{2}$')]
     [string]$StartTimeBefore,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "Filter by encryption status (true/false)")]
     [bool]$Encrypted,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "The AWS region to use")]
     [ValidatePattern('^[a-z]{2}-[a-z]+-\d{1}$')]
     [string]$Region,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "The AWS CLI profile to use")]
     [string]$AwsProfile,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "Output format: table, json, csv (default: table)")]
     [ValidateSet("table", "json", "csv")]
     [string]$OutputFormat = "table",
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "Include tags in the output")]
     [switch]$ShowTags,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "Sort results by: StartTime, VolumeSize, Progress (default: StartTime)")]
     [ValidateSet("StartTime", "VolumeSize", "Progress")]
     [string]$SortBy = "StartTime",
 
-    [Parameter()]
+    [Parameter(Mandatory = $false, HelpMessage = "Sort order: asc, desc (default: desc)")]
     [ValidateSet("asc", "desc")]
     [string]$SortOrder = "desc"
 )
@@ -408,6 +419,8 @@ try {
     Write-Host "`n✅ Snapshot listing completed successfully!" -ForegroundColor Green
 
 } catch {
-    Write-Error "Failed to list snapshots: $($_.Exception.Message)"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
+} finally {
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

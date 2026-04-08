@@ -61,67 +61,75 @@
     .\aws-cli-create-vpc-endpoint.ps1 -VpcId "vpc-12345678" -ServiceName "com.amazonaws.us-east-1.s3" -VpcEndpointType "Gateway" -RouteTableId "rtb-12345678" -PolicyDocument "s3-policy.json"
 
 .NOTES
-    Author: XOAP
-    Date: 2025-08-06
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
 
-    Requires: AWS CLI v2.16+
+    Author: XOAP.IO
+    Requires: AWS CLI v2 (https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
 
 .LINK
-    https://github.com/xoap-io/scripted-actions
+    https://docs.aws.amazon.com/cli/latest/reference/ec2/create-vpc-endpoint.html
+
+.COMPONENT
+    AWS CLI Network
 #>
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The ID of the VPC where the endpoint will be created")]
     [ValidatePattern('^vpc-[a-zA-Z0-9]{8,}$')]
     [string]$VpcId,
 
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The name of the AWS service for the endpoint")]
     [ValidatePattern('^com\.amazonaws\.[a-z0-9\-]+\.[a-zA-Z0-9\-\.]+$')]
     [string]$ServiceName,
 
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The type of VPC endpoint (Gateway, Interface, GatewayLoadBalancer)")]
     [ValidateSet("Gateway", "Interface", "GatewayLoadBalancer")]
     [string]$VpcEndpointType,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The IDs of subnets for interface endpoints")]
     [ValidatePattern('^subnet-[a-zA-Z0-9]{8,}$')]
     [string[]]$SubnetId,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The IDs of route tables for gateway endpoints")]
     [ValidatePattern('^rtb-[a-zA-Z0-9]{8,}$')]
     [string[]]$RouteTableId,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The IDs of security groups for interface endpoints")]
     [ValidatePattern('^sg-[a-zA-Z0-9]{8,}$')]
     [string[]]$SecurityGroupId,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Custom policy document for the endpoint (JSON string or file path)")]
     [string]$PolicyDocument,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Enable private DNS for interface endpoints")]
     [bool]$PrivateDnsEnabled = $true,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The IP address type for DNS records (ipv4, dualstack, ipv6)")]
     [ValidateSet("ipv4", "dualstack", "ipv6")]
     [string]$DnsRecordIpType,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "DNS options for the endpoint (JSON string)")]
     [string]$DnsOptions,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Tags to apply to the endpoint (JSON string)")]
     [string]$TagSpecifications,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Unique client token for idempotency")]
     [string]$ClientToken,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Perform a dry run to validate parameters without creating the endpoint")]
     [switch]$DryRun,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "AWS region")]
     [string]$Region,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "AWS CLI profile to use")]
     [string]$Profile
 )
 
@@ -463,8 +471,8 @@ try {
     }
 
 } catch {
-    Write-Error "Failed to create VPC endpoint: $($_.Exception.Message)"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
 } finally {
-    Write-Output "Script execution completed."
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

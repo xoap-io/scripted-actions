@@ -118,109 +118,112 @@
     Create a preemptible development VM with no external IP and startup script.
 
 .NOTES
-    Prerequisites:
-    - Google Cloud PowerShell module must be installed: Install-Module GoogleCloud
-    - User must be authenticated: Connect-GcpAccount
-    - User must have compute.instances.create permission in the target project
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
 
-    Author: XOAP
-    Date: 2025-08-06
-    Version: 2.0
+    Author: XOAP.IO
     Requires: GoogleCloud PowerShell Module
 
 .LINK
     https://cloud.google.com/powershell/docs/reference/GoogleCloudBeta/1.0.0.0/Add-GceInstance
+
+.COMPONENT
+    Google Cloud PowerShell Compute Engine
 #>
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The Google Cloud project ID in which the VM will be created.")]
     [ValidateNotNullOrEmpty()]
     [ValidatePattern('^[a-z][a-z0-9\-]{4,28}[a-z0-9]$')]
     [string]$Project,
 
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The zone where the virtual machine will be deployed. Examples: us-central1-a, europe-west1-b.")]
     [ValidateNotNullOrEmpty()]
     [ValidatePattern('^[a-z]+-[a-z0-9]+-[a-z]$')]
     [string]$Zone,
 
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The name of the VM instance. Must follow GCP naming conventions (1-63 chars, lowercase letters, digits, hyphens).")]
     [ValidateNotNullOrEmpty()]
     [ValidatePattern('^[a-z][a-z0-9\-]{0,61}[a-z0-9]$')]
     [string]$Name,
 
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The machine type for the virtual machine. Examples: e2-micro, n1-standard-1, c2-standard-4.")]
     [ValidateNotNullOrEmpty()]
     [string]$MachineType,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The image family to use for the boot disk. Examples: debian-11, ubuntu-2004-lts, windows-2019.")]
     [ValidateNotNullOrEmpty()]
     [string]$ImageFamily,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The project where the image is stored. Examples: debian-cloud, ubuntu-os-cloud, windows-cloud.")]
     [ValidateNotNullOrEmpty()]
     [string]$ImageProject,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The size of the boot disk in GB. Must be at least 10 GB.")]
     [ValidateRange(10, 65536)]
     [int]$DiskSizeGb,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The type of boot disk to create. Valid values: pd-standard, pd-ssd, pd-balanced.")]
     [ValidateSet("pd-standard", "pd-ssd", "pd-balanced")]
     [string]$DiskType = "pd-balanced",
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Enables IP forwarding for the VM instance. Useful for VPN gateways or NAT instances.")]
     [switch]$CanIpForward,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "A description for the VM instance.")]
     [string]$Description,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Custom boot disk configuration object. Alternative to ImageFamily/ImageProject.")]
     [PSObject]$BootDisk,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Custom boot disk image object. Alternative to ImageFamily/ImageProject.")]
     [PSObject]$BootDiskImage,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Additional disks to attach to the VM instance.")]
     [PSObject[]]$ExtraDisk,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "All disk configurations for the VM instance.")]
     [PSObject[]]$Disk,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Metadata key-value pairs for the VM instance.")]
     [hashtable]$Metadata,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The network to attach the VM to. Defaults to 'default'.")]
     [string]$Network = "default",
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The region for the VM instance (derived from zone if not specified).")]
     [string]$Region,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The subnetwork to use for the VM.")]
     [string]$Subnetwork,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Disables external IP assignment for the VM instance.")]
     [switch]$NoExternalIp,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Creates a preemptible instance that can be stopped by Google Cloud with 30 seconds notice.")]
     [switch]$Preemptible,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Enables automatic restart for the VM instance on host maintenance. Must be false for preemptible instances.")]
     [bool]$AutomaticRestart = $true,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Terminates the VM instance during host maintenance instead of migrating.")]
     [switch]$TerminateOnMaintenance,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Service account configuration for the VM instance.")]
     [PSObject[]]$ServiceAccount,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Network tags for the VM instance. Used for firewall rules and routing.")]
     [string[]]$Tag,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Labels for the VM instance as key-value pairs for organization.")]
     [hashtable]$Label,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Static external IP address for the VM instance.")]
     [string]$Address
 )
 
@@ -457,9 +460,9 @@ try {
     }
 }
 catch {
-    Write-Error "❌ Failed to create Google Cloud VM instance: $($_.Exception.Message)"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
 }
 finally {
-    Write-Output "Script execution completed."
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

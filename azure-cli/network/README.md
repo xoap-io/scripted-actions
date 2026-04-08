@@ -1,178 +1,122 @@
-# Azure CLI - Network Scripts
+# Network Scripts
 
-This directory contains PowerShell scripts for managing Azure networking resources using Azure CLI.
+PowerShell scripts for managing Azure networking resources using Azure CLI.
 
 ## Prerequisites
 
-- Azure CLI 2.50+ installed
-- PowerShell 5.1 or later (PowerShell 7+ recommended)
-- Azure subscription with appropriate permissions
-- Azure CLI logged in (`az login`)
-- Network Contributor role or equivalent
+- Azure CLI (https://docs.microsoft.com/en-us/cli/azure/install-azure-cli)
+- Active Azure subscription and logged-in CLI session (`az login`)
 
 ## Available Scripts
 
-### Virtual Network Management
-
-Scripts for managing Azure Virtual Networks (VNets):
-
-- VNet creation and configuration
-- Subnet management
-- VNet peering
-- Address space management
-
-### Network Security
-
-- Network Security Groups (NSGs)
-- Application Security Groups (ASGs)
-- Security rules configuration
-- DDoS Protection
-
-### Load Balancing
-
-- Azure Load Balancer configuration
-- Application Gateway setup
-- Traffic Manager profiles
-- Frontend IP configuration
-
-### VPN and ExpressRoute
-
-- VPN Gateway deployment
-- Site-to-Site VPN configuration
-- Point-to-Site VPN setup
-- ExpressRoute circuit management
-
-### DNS and Private Link
-
-- Azure DNS zones
-- Private DNS configuration
-- Private Link services
-- Private endpoints
-
-### Network Monitoring
-
-- Network Watcher
-- Flow logs
-- Connection monitoring
-- Traffic analytics
+| Script | Description |
+| --- | --- |
+| `az-cli-add-nsg-rule.ps1` | Add a security rule to an existing Network Security Group |
+| `az-cli-add-route.ps1` | Add a route to an existing route table |
+| `az-cli-associate-nsg-subnet.ps1` | Associate or disassociate an NSG with a VNet subnet |
+| `az-cli-associate-route-table.ps1` | Associate a route table with a subnet |
+| `az-cli-bulk-network-operations.ps1` | Perform bulk create, delete, configure, or list operations on network resources |
+| `az-cli-create-application-gateway.ps1` | Create an Application Gateway with backend pools, listeners, and optional WAF |
+| `az-cli-create-bastion-host.ps1` | Create an Azure Bastion host for secure RDP/SSH without public IP exposure |
+| `az-cli-create-load-balancer.ps1` | Create a public or internal Load Balancer |
+| `az-cli-create-local-network-gateway.ps1` | Create a local network gateway for site-to-site VPN |
+| `az-cli-create-network-security-group.ps1` | Create a Network Security Group |
+| `az-cli-create-network-watcher.ps1` | Create a Network Watcher instance in a region |
+| `az-cli-create-public-ip.ps1` | Create a public IP address |
+| `az-cli-create-route-table.ps1` | Create a route table |
+| `az-cli-create-subnet.ps1` | Create a subnet within an existing virtual network |
+| `az-cli-create-virtual-network.ps1` | Create a virtual network with a subnet, optional DDoS protection, and encryption |
+| `az-cli-create-vnet-peering.ps1` | Create a VNet peering between two virtual networks |
+| `az-cli-create-vpn-connection.ps1` | Create a VPN connection between gateways |
+| `az-cli-create-vpn-gateway.ps1` | Create a VPN Gateway with optional BGP, active-active, and point-to-site support |
+| `az-cli-delete-network-security-group.ps1` | Delete a Network Security Group |
+| `az-cli-delete-route-table.ps1` | Delete a route table |
+| `az-cli-delete-subnet.ps1` | Delete a subnet from a virtual network |
+| `az-cli-delete-vnet-peering.ps1` | Delete a VNet peering |
+| `az-cli-list-network-resources.ps1` | List network resources in a subscription or resource group |
+| `az-cli-monitor-network-resources.ps1` | Monitor network resource health and metrics |
+| `az-cli-test-network-connectivity.ps1` | Test network connectivity using Azure Network Watcher |
 
 ## Usage Examples
 
 ### Create a Virtual Network
 
 ```powershell
-# Login to Azure
-az login
-
-# Create resource group
-az group create --name myResourceGroup --location eastus
-
-# Create VNet
-az network vnet create `
-    --resource-group myResourceGroup `
-    --name myVNet `
-    --address-prefix 10.0.0.0/16 `
-    --subnet-name mySubnet `
-    --subnet-prefix 10.0.1.0/24
+.\az-cli-create-virtual-network.ps1 `
+    -Name "prod-vnet" `
+    -ResourceGroup "rg-network" `
+    -AddressPrefixes "10.0.0.0/16" `
+    -Location "eastus" `
+    -SubnetName "default" `
+    -SubnetPrefixes "10.0.1.0/24"
 ```
 
-### Create Network Security Group
+### Create a Network Security Group
 
 ```powershell
-# Create NSG
-az network nsg create `
-    --resource-group myResourceGroup `
-    --name myNSG
-
-# Add security rule
-az network nsg rule create `
-    --resource-group myResourceGroup `
-    --nsg-name myNSG `
-    --name AllowHTTPS `
-    --priority 100 `
-    --direction Inbound `
-    --access Allow `
-    --protocol Tcp `
-    --destination-port-ranges 443
+.\az-cli-create-network-security-group.ps1 `
+    -Name "web-nsg" `
+    -ResourceGroup "rg-network" `
+    -Location "eastus" `
+    -Tags "environment=production tier=web"
 ```
 
-### Configure VNet Peering
+### Add an NSG Rule
 
 ```powershell
-# Peer VNet1 to VNet2
-az network vnet peering create `
-    --resource-group myResourceGroup `
-    --name VNet1-to-VNet2 `
-    --vnet-name VNet1 `
-    --remote-vnet VNet2 `
-    --allow-vnet-access
+.\az-cli-add-nsg-rule.ps1 `
+    -NSGName "web-nsg" `
+    -ResourceGroup "rg-network" `
+    -RuleName "AllowHTTPS" `
+    -Priority 100 `
+    -Direction "Inbound" `
+    -Access "Allow" `
+    -Protocol "Tcp" `
+    -SourceAddressPrefix "*" `
+    -DestinationPortRange "443"
 ```
 
-## Azure Networking Best Practices
+### Create a VPN Gateway
 
-- **Architecture**:
-
-  - Use hub-and-spoke topology for multiple VNets
-  - Implement network segmentation
-  - Plan IP addressing carefully
-  - Use Azure Bastion for secure RDP/SSH
-
-- **Security**:
-
-  - Implement NSGs at subnet level
-  - Use Azure Firewall for centralized control
-  - Enable DDoS Protection Standard for critical workloads
-  - Use Private Link for Azure services
-
-- **Performance**:
-
-  - Use proximity placement groups for low latency
-  - Enable Accelerated Networking
-  - Use appropriate SKUs for gateways and load balancers
-  - Monitor network performance metrics
-
-- **Cost Management**:
-  - Minimize cross-region traffic
-  - Use Azure Firewall instead of multiple NVAs
-  - Right-size VPN/ExpressRoute circuits
-  - Review bandwidth pricing
-
-## Common Networking Patterns
-
-### Hub-and-Spoke Topology
-
-```
-Hub VNet (10.0.0.0/16)
-├── AzureFirewallSubnet (10.0.1.0/24)
-├── GatewaySubnet (10.0.2.0/27)
-└── Management Subnet (10.0.3.0/24)
-
-Spoke VNet 1 (10.1.0.0/16) ← Peered to Hub
-Spoke VNet 2 (10.2.0.0/16) ← Peered to Hub
+```powershell
+.\az-cli-create-vpn-gateway.ps1 `
+    -GatewayName "prod-vpn-gw" `
+    -ResourceGroup "rg-network" `
+    -Location "eastus" `
+    -VNetName "prod-vnet" `
+    -GatewaySubnetName "GatewaySubnet" `
+    -PublicIPName "vpn-gw-pip" `
+    -SKU "VpnGw2"
 ```
 
-### Network Security Layers
+### Create an Azure Bastion Host
 
-1. Azure Firewall / NVA (perimeter)
-2. Network Security Groups (subnet level)
-3. Application Security Groups (workload level)
+```powershell
+.\az-cli-create-bastion-host.ps1 `
+    -Name "prod-bastion" `
+    -ResourceGroup "rg-network" `
+    -VNetName "prod-vnet" `
+    -Location "eastus" `
+    -PublicIPAddress "bastion-pip"
+```
 
-## Error Handling
+### Perform Bulk Network Operations
 
-Scripts include:
+```powershell
+.\az-cli-bulk-network-operations.ps1 `
+    -Operation "Create" `
+    -ResourceType "PublicIP" `
+    -ResourceGroup "rg-bulk" `
+    -Location "East US" `
+    -NamePrefix "bulk-pip" `
+    -Count 5
+```
 
-- Resource name validation
-- CIDR block validation
-- Quota checks
-- Dependency verification
-- Comprehensive error messages
+## Notes
 
-## Related Documentation
-
-- [Azure Virtual Network Documentation](https://docs.microsoft.com/azure/virtual-network/)
-- [Azure CLI Network Commands](https://docs.microsoft.com/cli/azure/network)
-- [Azure Network Security Best Practices](https://docs.microsoft.com/azure/security/fundamentals/network-best-practices)
-
-## Support
-
-For issues or questions, please refer to the main repository documentation.
+- The `-DryRun` switch is available on bulk and monitoring scripts to preview
+  changes without executing them.
+- Use `-Tags` in `key1=value1 key2=value2` format across all scripts.
+- VPN Gateway creation can take 20-45 minutes to complete.
+- Azure Bastion Standard SKU is required for tunneling and IP-based
+  connections.

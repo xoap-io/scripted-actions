@@ -61,60 +61,72 @@
     .\xenserver-cli-create-vm-from-template.ps1 -Server "xenserver.local" -TemplateUUID "12345678-1234-1234-1234-123456789012" -VMName "DBServer" -CPUCount 8 -MemoryGB 16 -StorageRepository "SSD-Storage"
 
 .NOTES
-    Author: XOAP.io
-    Requires: XenServerPSModule (PowerShell SDK)
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
 
+    Author: XOAP.IO
+    Requires: XenServerPSModule (Citrix XenServer SDK)
+
+.LINK
+    https://docs.xenserver.com/en-us/xenserver/current-release/vms.html
+
+.COMPONENT
+    Citrix XenServer PowerShell
 #>
 
 [CmdletBinding()]
 param (
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The XenServer pool coordinator hostname or IP address.")]
     [string]$Server,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Username for authentication (default: root).")]
     [string]$Username = "root",
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Password for authentication.")]
     [string]$Password,
 
-    [Parameter(Mandatory = $false, ParameterSetName = "ByName")]
+    [Parameter(Mandatory = $false, ParameterSetName = "ByName", HelpMessage = "The name of the template to use.")]
     [string]$TemplateName,
 
-    [Parameter(Mandatory = $false, ParameterSetName = "ByUUID")]
+    [Parameter(Mandatory = $false, ParameterSetName = "ByUUID", HelpMessage = "The UUID of the template to use.")]
     [ValidatePattern('^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$')]
     [string]$TemplateUUID,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The name for the new VM.")]
     [string]$VMName,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Number of VMs to create from the template (default: 1).")]
     [ValidateRange(1, 100)]
     [int]$VMCount = 1,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Prefix for automatically named VMs when creating multiple (used with VMCount > 1).")]
     [string]$VMNamePrefix = "VM",
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Starting number for VM naming (default: 1).")]
     [int]$StartNumbering = 1,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Number of vCPUs to assign (if different from template default).")]
     [ValidateRange(1, 128)]
     [int]$CPUCount,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Amount of memory in GB (if different from template default).")]
     [ValidateRange(1, 1024)]
     [int]$MemoryGB,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Storage repository name for the VM disks (uses template default if not specified).")]
     [string]$StorageRepository,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Network name to connect the VM to (uses template default if not specified).")]
     [string]$NetworkName,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Optional description for the VM.")]
     [string]$VMDescription = "",
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Start the VM after creation.")]
     [switch]$StartVM
 )
 
@@ -333,7 +345,7 @@ try {
     }
 }
 catch {
-    Write-Error "Script failed: $_"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
 }
 finally {
@@ -341,4 +353,5 @@ finally {
     if ($session) {
         Get-XenSession | Disconnect-XenServer
     }
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

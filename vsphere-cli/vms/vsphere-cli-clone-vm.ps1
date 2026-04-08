@@ -78,81 +78,93 @@
     .\vsphere-cli-clone-vm.ps1 -VCenterServer "vcenter.domain.com" -SourceVM "Template-Ubuntu" -NewVMNames @("Web01","Web02","Web03") -DatastoreName "Datastore2" -ClusterName "Production" -CPUCount 4 -MemoryGB 8 -PowerOnAfterClone
 
 .NOTES
-    Author: XOAP.io
-    Requires: VMware PowerCLI 13.x or later, vSphere 7.0 or later
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
 
+    Author: XOAP.IO
+    Requires: VMware PowerCLI (Install-Module -Name VMware.PowerCLI)
+
+.LINK
+    https://developer.vmware.com/docs/powercli/
+
+.COMPONENT
+    VMware vSphere PowerCLI
 #>
 
 [CmdletBinding()]
 param (
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The vCenter Server FQDN or IP address to connect to.")]
     [ValidateNotNullOrEmpty()]
     [string]$VCenterServer,
 
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The name of the source VM or template to clone from.")]
     [ValidateNotNullOrEmpty()]
     [string]$SourceVM,
 
-    [Parameter(Mandatory = $false, ParameterSetName = "SingleClone")]
+    [Parameter(Mandatory = $false, ParameterSetName = "SingleClone", HelpMessage = "The name for the new cloned VM.")]
     [ValidatePattern('^[a-zA-Z0-9][a-zA-Z0-9\-_\.]{0,62}[a-zA-Z0-9]$')]
     [string]$NewVMName,
 
-    [Parameter(Mandatory = $false, ParameterSetName = "MultipleClones")]
+    [Parameter(Mandatory = $false, ParameterSetName = "MultipleClones", HelpMessage = "Array of names for multiple VM clones.")]
     [ValidateNotNullOrEmpty()]
     [string[]]$NewVMNames,
 
-    [Parameter(Mandatory = $false, ParameterSetName = "BulkClone")]
+    [Parameter(Mandatory = $false, ParameterSetName = "BulkClone", HelpMessage = "Number of clones to create with auto-generated names (1-50).")]
     [ValidateRange(1, 50)]
     [int]$CloneCount,
 
-    [Parameter(Mandatory = $false, ParameterSetName = "BulkClone")]
+    [Parameter(Mandatory = $false, ParameterSetName = "BulkClone", HelpMessage = "Prefix for auto-generated VM names (used with CloneCount).")]
     [ValidateNotNullOrEmpty()]
     [string]$NamePrefix = "VM",
 
-    [Parameter(Mandatory = $false, ParameterSetName = "BulkClone")]
+    [Parameter(Mandatory = $false, ParameterSetName = "BulkClone", HelpMessage = "Suffix for auto-generated VM names (used with CloneCount).")]
     [string]$NameSuffix,
 
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The datastore where the cloned VM(s) will be created.")]
     [ValidateNotNullOrEmpty()]
     [string]$DatastoreName,
 
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The cluster where the cloned VM(s) will be created.")]
     [ValidateNotNullOrEmpty()]
     [string]$ClusterName,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The resource pool for the cloned VM(s).")]
     [string]$ResourcePoolName,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "The folder where the cloned VM(s) will be placed.")]
     [string]$FolderName,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Create linked clones instead of full clones (requires snapshot).")]
     [switch]$LinkedClone,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Snapshot name to use for linked clone.")]
     [string]$SnapshotName,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Power on the VM(s) after cloning.")]
     [switch]$PowerOnAfterClone,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Number of CPU cores for the cloned VM(s) (overrides source).")]
     [ValidateRange(1, 128)]
     [int]$CPUCount,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Memory in GB for the cloned VM(s) (overrides source).")]
     [ValidateRange(1, 4096)]
     [int]$MemoryGB,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Network port group to connect the cloned VM(s) to.")]
     [string]$NetworkName,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "OS customization specification to apply.")]
     [string]$OSCustomizationSpec,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Wait for clone operations to complete.")]
     [switch]$WaitForCompletion,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Force the operation without confirmation prompts.")]
     [switch]$Force
 )
 
@@ -593,10 +605,11 @@ try {
     Write-Host "`n=== Clone Operation Completed ===" -ForegroundColor Green
 }
 catch {
-    Write-Error "Script execution failed: $($_.Exception.Message)"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
 }
 finally {
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
     # Disconnect from vCenter if connected
     if ($global:DefaultVIServers) {
         Write-Host "`nDisconnecting from vCenter..." -ForegroundColor Yellow

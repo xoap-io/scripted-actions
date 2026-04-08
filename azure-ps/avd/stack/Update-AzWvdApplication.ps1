@@ -4,6 +4,7 @@
 
 .DESCRIPTION
     This script updates the properties of an Azure Virtual Desktop Application.
+    Uses the Update-AzWvdApplication cmdlet from the Az.DesktopVirtualization module.
 
 .PARAMETER GroupName
     The name of the application group.
@@ -47,41 +48,46 @@
 .PARAMETER ShowInPortal
     Specifies whether to show the application in the portal.
 
-.PARAMETER Tag
+.PARAMETER Tags
     A hashtable of tags to assign to the application.
 
 .EXAMPLE
     PS C:\> .\Update-AzWvdApplication.ps1 -GroupName "MyAppGroup" -Name "MyApplication" -ResourceGroup "MyResourceGroup" -Description "Updated Description"
 
-.LINK
-    https://learn.microsoft.com/en-us/powershell/module/az.DesktopVirtualization
+.NOTES
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: Az PowerShell module (Install-Module Az), Az.DesktopVirtualization
 
 .LINK
     https://learn.microsoft.com/en-us/powershell/module/az.desktopvirtualization/update-azwvdapplication?view=azps-12.2.0
 
-.LINK
-    https://github.com/xoap-io/scripted-actions
-
 .COMPONENT
-    Azure PowerShell
+    Azure PowerShell Virtual Desktop
 
 #>
 
 [CmdletBinding()]
 param (
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$true, HelpMessage = "The name of the application group.")]
     [ValidateNotNullOrEmpty()]
     [string]$GroupName,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$true, HelpMessage = "The name of the application to update.")]
     [ValidateNotNullOrEmpty()]
     [string]$Name,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$true, HelpMessage = "The name of the resource group.")]
     [ValidateNotNullOrEmpty()]
     [string]$ResourceGroup,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The type of the application.")]
     [ValidateNotNullOrEmpty()]
     [ValidateSet(
         "InBuilt",
@@ -89,127 +95,125 @@ param (
     )]
     [string]$ApplicationType,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The command line argument for the application.")]
     [ValidateNotNullOrEmpty()]
     [string]$CommandLineArgument,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The command line setting (Allow, DoNotAllow, or Require).")]
     [ValidateNotNullOrEmpty()]
     [ValidateSet(
         "Allow",
         "DoNotAllow",
         "Require"
     )]
-    [CommandLineSetting]$CommandLineSetting,
+    [string]$CommandLineSetting,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The description of the application.")]
     [ValidateNotNullOrEmpty()]
     [string]$Description,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The file path of the application executable.")]
     [ValidateNotNullOrEmpty()]
     [string]$FilePath,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The friendly display name of the application.")]
     [ValidateNotNullOrEmpty()]
     [string]$FriendlyName,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The icon index within the icon file.")]
     [ValidateNotNullOrEmpty()]
     [int]$IconIndex,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The path to the application icon file.")]
     [ValidateNotNullOrEmpty()]
     [string]$IconPath,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The MSIX package application ID.")]
     [ValidateNotNullOrEmpty()]
     [string]$MsixPackageApplicationId,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The MSIX package family name.")]
     [ValidateNotNullOrEmpty()]
     [string]$MsixPackageFamilyName,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "Specifies whether to show the application in the portal.")]
     [ValidateNotNullOrEmpty()]
     [switch]$ShowInPortal,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "A hashtable of tags to assign to the application.")]
     [ValidateNotNullOrEmpty()]
     [hashtable]$Tags
 )
+
+# Set Error Action to Stop
+$ErrorActionPreference = "Stop"
 
 # Splatting parameters for better readability
 $parameters = @{
     GroupName         = $GroupName
     Name              = $Name
-    ResourceGroup = $ResourceGroup
+    ResourceGroupName = $ResourceGroup
 }
 
 if ($ApplicationType) {
-    $parameters['ApplicationType'], $ApplicationType
+    $parameters['ApplicationType'] = $ApplicationType
 }
 
 if ($CommandLineArgument) {
-    $parameters['CommandLineArgument'], $CommandLineArgument
+    $parameters['CommandLineArgument'] = $CommandLineArgument
 }
 
 if ($CommandLineSetting) {
-    $parameters['CommandLineSetting'], $CommandLineSetting
+    $parameters['CommandLineSetting'] = $CommandLineSetting
 }
 
 if ($Description) {
-    $parameters['Description'], $Description
+    $parameters['Description'] = $Description
 }
 
 if ($FilePath) {
-    $parameters['FilePath'], $FilePath
+    $parameters['FilePath'] = $FilePath
 }
 
 if ($FriendlyName) {
-    $parameters['FriendlyName'], $FriendlyName
+    $parameters['FriendlyName'] = $FriendlyName
 }
 
 if ($IconIndex) {
-    $parameters['IconIndex'], $IconIndex
+    $parameters['IconIndex'] = $IconIndex
 }
 
 if ($IconPath) {
-    $parameters['IconPath'], $IconPath
+    $parameters['IconPath'] = $IconPath
 }
 
 if ($MsixPackageApplicationId) {
-    $parameters['MsixPackageApplicationId'], $MsixPackageApplicationId
+    $parameters['MsixPackageApplicationId'] = $MsixPackageApplicationId
 }
 
 if ($MsixPackageFamilyName) {
-    $parameters['MsixPackageFamilyName'], $MsixPackageFamilyName
+    $parameters['MsixPackageFamilyName'] = $MsixPackageFamilyName
 }
 
 if ($ShowInPortal) {
-    $parameters['ShowInPortal'], $ShowInPortal
+    $parameters['ShowInPortal'] = $ShowInPortal
 }
 
 if ($Tags) {
-    $parameters['Tag'], $Tags
+    $parameters['Tag'] = $Tags
 }
-
-# Set Error Action to Stop
-$ErrorActionPreference = "Stop"
 
 try {
     # Update the Azure Virtual Desktop Application and capture the result
     $result = Update-AzWvdApplication @parameters
 
     # Output the result
-    Write-Output "Azure Virtual Desktop Application updated successfully:"
+    Write-Host "✅ Azure Virtual Desktop Application updated successfully:" -ForegroundColor Green
     Write-Output $result
 
-} catch [System.Exception] {
-
-    Write-Error "Failed to update the Azure Virtual Desktop Application: $($_.Exception.Message)"
-
+} catch {
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
+    exit 1
 } finally {
-    # Cleanup code if needed
-    Write-Output "Script execution completed."
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

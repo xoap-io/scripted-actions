@@ -56,44 +56,47 @@
     Delete VMs and all associated resources including snapshots and static IPs.
 
 .NOTES
-    Prerequisites:
-    - Google Cloud CLI (gcloud) must be installed and authenticated
-    - User must have compute.instances.delete permission in the target project
-    - This is a DESTRUCTIVE operation - use with caution!
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
 
-    Author: XOAP
-    Date: 2025-08-06
-    Version: 2.0
+    Author: XOAP.IO
     Requires: Google Cloud SDK
+
+.COMPONENT
+    Google Cloud CLI Compute Engine
 #>
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The Google Cloud project ID from which to delete VM instances.")]
     [ValidateNotNullOrEmpty()]
     [ValidatePattern('^[a-z][a-z0-9\-]{4,28}[a-z0-9]$')]
     [string]$Project,
 
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, HelpMessage = "The zone(s) where the virtual machines are located. Can be a single zone or comma-separated list.")]
     [ValidateNotNullOrEmpty()]
     [string]$Zone,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Delete attached disks along with the VM instances.")]
     [bool]$DeleteDisks = $true,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Delete snapshots associated with the VM instances.")]
     [bool]$DeleteSnapshots = $false,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Delete static IP addresses associated with the VM instances.")]
     [bool]$DeleteStaticIPs = $false,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Optional filter to apply when listing instances. Uses gcloud compute instances list filter syntax.")]
     [string]$Filter,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Skip confirmation prompts and proceed with deletion immediately.")]
     [switch]$Force,
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, HelpMessage = "Show what would be deleted without actually performing the deletion.")]
     [switch]$WhatIf
 )
 
@@ -447,9 +450,9 @@ try {
     }
 }
 catch {
-    Write-Error "Failed to complete VM deletion process: $($_.Exception.Message)"
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
 }
 finally {
-    Write-Output "Script execution completed."
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }

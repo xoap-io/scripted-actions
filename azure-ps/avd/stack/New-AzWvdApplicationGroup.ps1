@@ -74,55 +74,60 @@ The name of the application group.
 .EXAMPLE
     PS C:\> .\New-AzWvdApplicationGroup.ps1 -Name "MyAppGroup" -ResourceGroup "MyResourceGroup" -ApplicationGroupType "RemoteApp" -HostPoolArmPath "/subscriptions/xxxx/resourceGroups/xxxx/providers/Microsoft.DesktopVirtualization/hostPools/xxxx"
 
-.LINK
-    https://learn.microsoft.com/en-us/powershell/module/az.DesktopVirtualization
+.NOTES
+    This PowerShell script was developed and optimized for the usage with the XOAP Scripted Actions module.
+    The use of the scripts does not require XOAP, but it will make your life easier.
+    You are allowed to pull the script from the repository and use it with XOAP or other solutions.
+    The terms of use for the XOAP platform do not apply to this script. In particular, RIS AG assumes no
+    liability for the function, the use and the consequences of the use of this freely available script.
+    PowerShell is a product of Microsoft Corporation. XOAP is a product of RIS AG. © RIS AG
+
+    Author: XOAP.IO
+    Requires: Az PowerShell module (Install-Module Az), Az.DesktopVirtualization
 
 .LINK
     https://learn.microsoft.com/en-us/powershell/module/az.desktopvirtualization/new-azwvdapplicationgroup?view=azps-12.3.0
 
-.LINK
-    https://github.com/xoap-io/scripted-actions
-
 .COMPONENT
-    Azure PowerShell
+    Azure PowerShell Virtual Desktop
 #>
 
 [CmdletBinding()]
 param (
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$true, HelpMessage = "The name of the application group.")]
     [ValidateNotNullOrEmpty()]
     [string]$Name,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$true, HelpMessage = "The name of the resource group.")]
     [ValidateNotNullOrEmpty()]
     [string]$ResourceGroup,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$true, HelpMessage = "The type of the application group (RemoteApp or Desktop).")]
     [ValidateNotNullOrEmpty()]
     [ValidateSet('RemoteApp', 'Desktop')]
     [string]$ApplicationGroupType,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$true, HelpMessage = "The ARM path of the host pool.")]
     [ValidateNotNullOrEmpty()]
     [string]$HostPoolArmPath,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "Description of the application group.")]
     [ValidateNotNullOrEmpty()]
     [string]$Description,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "Friendly display name of the application group.")]
     [ValidateNotNullOrEmpty()]
     [string]$FriendlyName,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The identity type of the application group.")]
     [ValidateNotNullOrEmpty()]
     [string]$IdentityType,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The kind of the application group.")]
     [ValidateNotNullOrEmpty()]
     [string]$Kind,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$true, HelpMessage = "The Azure region where the application group will be created.")]
     [ValidateNotNullOrEmpty()]
     [ValidateSet(
         'eastus', 'eastus2', 'southcentralus', 'westus2',
@@ -145,55 +150,55 @@ param (
     )]
     [string]$Location,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The managed by property of the application group.")]
     [ValidateNotNullOrEmpty()]
     [string]$ManagedBy,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The plan name of the application group.")]
     [ValidateNotNullOrEmpty()]
     [string]$PlanName,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The plan product of the application group.")]
     [ValidateNotNullOrEmpty()]
     [string]$PlanProduct,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The plan promotion code of the application group.")]
     [ValidateNotNullOrEmpty()]
     [string]$PlanPromotionCode,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The plan publisher of the application group.")]
     [ValidateNotNullOrEmpty()]
     [string]$PlanPublisher,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The plan version of the application group.")]
     [ValidateNotNullOrEmpty()]
     [string]$PlanVersion,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "Show this application group in the feed.")]
     [ValidateNotNullOrEmpty()]
     [switch]$ShowInFeed,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The SKU capacity.")]
     [ValidateNotNullOrEmpty()]
     [int]$SkuCapacity,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The SKU family.")]
     [ValidateNotNullOrEmpty()]
     [string]$SkuFamily,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The SKU name.")]
     [ValidateNotNullOrEmpty()]
     [string]$SkuName,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The SKU size.")]
     [ValidateNotNullOrEmpty()]
     [string]$SkuSize,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "The SKU tier.")]
     [ValidateNotNullOrEmpty()]
     [string]$SkuTier,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false, HelpMessage = "A hashtable of tags to apply to the application group.")]
     [ValidateNotNullOrEmpty()]
     [hashtable]$Tags
 )
@@ -201,82 +206,78 @@ param (
 # Splatting parameters for better readability
 $parameters = @{
     Name = $Name
-    ResourceGroup = $ResourceGroup
+    ResourceGroupName = $ResourceGroup
     ApplicationGroupType = $ApplicationGroupType
     HostPoolArmPath = $HostPoolArmPath
     Location = $Location
 }
 
-if ($SubscriptionId) {
-    $parameters['SubscriptionId'], $BgpCommunity
-}
-
 if ($Description) {
-    $parameters['Description'], $Description
+    $parameters['Description'] = $Description
 }
 
 if ($FriendlyName) {
-    $parameters['FriendlyName'], $FriendlyName
+    $parameters['FriendlyName'] = $FriendlyName
 }
 
 if ($IdentityType) {
-    $parameters['IdentityType'], $IdentityType
+    $parameters['IdentityType'] = $IdentityType
 }
 
 if ($Kind) {
-    $parameters['Kind'], $Kind
+    $parameters['Kind'] = $Kind
 }
 
 if ($ManagedBy) {
-    $parameters['ManagedBy'], $ManagedBy
+    $parameters['ManagedBy'] = $ManagedBy
 }
 
 if ($PlanName) {
-    $parameters['PlanName'], $PlanName
+    $parameters['PlanName'] = $PlanName
 }
 
 if ($PlanProduct) {
-    $parameters['PlanProduct'], $PlanProduct
+    $parameters['PlanProduct'] = $PlanProduct
 }
 
 if ($PlanPromotionCode) {
-    $parameters['PlanPromotionCode'], $PlanPromotionCode
+    $parameters['PlanPromotionCode'] = $PlanPromotionCode
 }
 
 if ($PlanPublisher) {
-    $parameters['PlanPublisher'], $PlanPublisher
+    $parameters['PlanPublisher'] = $PlanPublisher
 }
 
 if ($PlanVersion) {
-    $parameters['PlanVersion'], $PlanVersion
+    $parameters['PlanVersion'] = $PlanVersion
 }
 
 if ($ShowInFeed) {
-    $parameters['ShowInFeed'], $ShowInFeed
+    $parameters['ShowInFeed'] = $ShowInFeed
 }
 
 if ($SkuCapacity) {
-    $parameters['SkuCapacity'], $SkuCapacity
+    $parameters['SkuCapacity'] = $SkuCapacity
 }
 
 if ($SkuFamily) {
-    $parameters['SkuFamily'], $SkuFamily
+    $parameters['SkuFamily'] = $SkuFamily
 }
 
 if ($SkuName) {
-    $parameters['SkuName'], $SkuName
+    $parameters['SkuName'] = $SkuName
 }
 
 if ($SkuSize) {
-    $parameters['SkuSize'], $SkuSize
+    $parameters['SkuSize'] = $SkuSize
 }
 
 if ($SkuTier) {
-    $parameters['SkuTier'], $SkuTier
+    $parameters['SkuTier'] = $SkuTier
 }
 
 if ($Tags) {
-    $parameters['Tag'], $Tags
+    $parameters['Tag'] = $Tags
 }
 
 # Set Error Action to Stop
@@ -287,14 +288,12 @@ try {
     $result = New-AzWvdApplicationGroup @parameters
 
     # Output the result
-    Write-Output "Application group created successfully:"
+    Write-Host "✅ Application group created successfully:" -ForegroundColor Green
     Write-Output $result
 
-} catch [System.Exception] {
-
-    Write-Error "Failed to create the application group: $($_.Exception.Message)"
-
+} catch {
+    Write-Host "`n❌ Script failed: $($_.Exception.Message)" -ForegroundColor Red
+    exit 1
 } finally {
-    # Cleanup code if needed
-    Write-Output "Script execution completed."
+    Write-Host "`n🏁 Script execution completed" -ForegroundColor Green
 }
