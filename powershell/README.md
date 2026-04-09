@@ -1,6 +1,7 @@
 # PowerShell - RDS Deployment and Optimization Scripts
 
-This directory contains PowerShell scripts for deploying and optimizing Remote Desktop Services (RDS) environments on Windows Server.
+This directory contains PowerShell scripts for deploying and optimizing
+Remote Desktop Services (RDS) environments on Windows Server.
 
 ## Prerequisites
 
@@ -9,6 +10,12 @@ This directory contains PowerShell scripts for deploying and optimizing Remote D
 - Administrator privileges
 - Remote Desktop Services role available
 - Active Directory (for production deployments)
+
+## Subdirectories
+
+| Directory         | Description                                                                                            |
+| ----------------- | ------------------------------------------------------------------------------------------------------ |
+| `windows-server/` | Windows Server management scripts: local users, Windows Update, WinRM configuration, and CIS hardening |
 
 ## Available Scripts
 
@@ -81,27 +88,27 @@ Checkpoint-Computer -Description "Before RDS Optimization"
    - RemoteApp management
    - High availability (HA) possible
 
-2. **Session Hosts**
+1. **Session Hosts**
 
    - User sessions
    - Application execution
    - Resource consumption
    - Scale-out for capacity
 
-3. **Web Access**
+1. **Web Access**
 
    - Web-based access portal
    - RemoteApp publishing
    - User-friendly interface
 
-4. **Gateway**
+1. **Gateway**
 
    - External access via HTTPS
    - SSL/TLS encryption
    - RDP over HTTPS
    - Firewall traversal
 
-5. **Licensing**
+1. **Licensing**
    - RDS CAL management
    - Per-user or per-device licensing
    - Grace period tracking

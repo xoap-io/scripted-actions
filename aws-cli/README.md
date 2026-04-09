@@ -23,16 +23,17 @@ aws configure sso
 
 ## Directory Structure
 
-| Folder                               | Description                 | Service Focus                                      |
-| ------------------------------------ | --------------------------- | -------------------------------------------------- |
-| [`ec2/`](./ec2/)                     | EC2 instance management     | Virtual machines, key pairs, security groups       |
-| [`network/`](./network/)             | VPC and networking          | VPCs, subnets, internet gateways, route tables     |
-| [`organizations/`](./organizations/) | AWS Organizations           | Account management, organizational units, policies |
-| [`rds/`](./rds/)                     | RDS database management     | Database instances, snapshots, backups             |
-| [`security/`](./security/)           | Security and access control | Security groups, NACLs, IAM policies               |
-| [`storage/`](./storage/)             | S3 and storage services     | Buckets, objects, lifecycle policies               |
-| [`workspaces/`](./workspaces/)       | Amazon WorkSpaces           | Virtual desktops, bundles, directories             |
-| [`xoap/`](./xoap/)                   | XOAP-specific integrations  | Custom automation workflows                        |
+| Folder                               | Description                 | Service Focus                                         |
+| ------------------------------------ | --------------------------- | ----------------------------------------------------- |
+| [`ec2/`](./ec2/)                     | EC2 instance management     | Virtual machines, key pairs, security groups          |
+| [`monitoring/`](./monitoring/)       | Monitoring and cost         | CloudWatch alarms, dashboards, budgets, Cost Explorer |
+| [`network/`](./network/)             | VPC and networking          | VPCs, subnets, internet gateways, route tables        |
+| [`organizations/`](./organizations/) | AWS Organizations           | Account management, organizational units, policies    |
+| [`rds/`](./rds/)                     | RDS database management     | Database instances, snapshots, backups                |
+| [`security/`](./security/)           | Security and access control | Security groups, NACLs, IAM, KMS, GuardDuty           |
+| [`storage/`](./storage/)             | S3 and storage services     | Buckets, objects, lifecycle policies                  |
+| [`workspaces/`](./workspaces/)       | Amazon WorkSpaces           | Virtual desktops, bundles, directories                |
+| [`xoap/`](./xoap/)                   | XOAP-specific integrations  | Custom automation workflows                           |
 
 ## Common Usage Patterns
 

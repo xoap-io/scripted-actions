@@ -49,27 +49,27 @@
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true, HelpMessage = "The name of the Azure Resource Group")]
+    [Parameter(Mandatory = $false, HelpMessage = "The name of the Azure Resource Group")]
     [ValidateNotNullOrEmpty()]
     [string]$AzResourceGroup = 'myResourceGroup',
 
-    [Parameter(Mandatory = $true, HelpMessage = "The name of the Azure VM Scale Set")]
+    [Parameter(Mandatory = $false, HelpMessage = "The name of the Azure VM Scale Set")]
     [ValidateNotNullOrEmpty()]
     [string]$AzScaleSetName = 'myScaleSet',
 
-    [Parameter(Mandatory = $true, HelpMessage = "The orchestration mode of the Scale Set")]
+    [Parameter(Mandatory = $false, HelpMessage = "The orchestration mode of the Scale Set")]
     [ValidateSet("Flexible", "Uniform")]
     [string]$AzOrchestrationMode = 'Flexible',
 
-    [Parameter(Mandatory = $true, HelpMessage = "The SKU image for the Scale Set")]
+    [Parameter(Mandatory = $false, HelpMessage = "The SKU image for the Scale Set")]
     [ValidateNotNullOrEmpty()]
     [string]$AzSkuImage = 'UbuntuLTS',
 
-    [Parameter(Mandatory = $true, HelpMessage = "The instance count for the Scale Set")]
+    [Parameter(Mandatory = $false, HelpMessage = "The instance count for the Scale Set")]
     [ValidateNotNullOrEmpty()]
     [int]$AzScaleSetInstanceCount = 2,
 
-    [Parameter(Mandatory = $true, HelpMessage = "The admin username for the Scale Set VMs")]
+    [Parameter(Mandatory = $false, HelpMessage = "The admin username for the Scale Set VMs")]
     [ValidateNotNullOrEmpty()]
     [string]$AzAdminUserName = 'azureuser'
 )

@@ -53,27 +53,27 @@
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true, HelpMessage = "The name of the Azure Resource Group")]
+    [Parameter(Mandatory = $false, HelpMessage = "The name of the Azure Resource Group")]
     [ValidateNotNullOrEmpty()]
     [string]$AzResourceGroup = "MyResourceGroup",
 
-    [Parameter(Mandatory = $true, HelpMessage = "The name of the Azure Image Builder")]
+    [Parameter(Mandatory = $false, HelpMessage = "The name of the Azure Image Builder")]
     [ValidateNotNullOrEmpty()]
     [string]$AzImageBuildName = "MyImageBuild",
 
-    [Parameter(Mandatory = $true, HelpMessage = "The name of the Azure Role Assignee")]
+    [Parameter(Mandatory = $false, HelpMessage = "The name of the Azure Role Assignee")]
     [ValidateNotNullOrEmpty()]
     [string]$AzAssignee = "MyAssignee",
 
-    [Parameter(Mandatory = $true, HelpMessage = "The name of the Azure Role Definition")]
+    [Parameter(Mandatory = $false, HelpMessage = "The name of the Azure Role Definition")]
     [ValidateNotNullOrEmpty()]
     [string]$AzRoleDefinitionName = "MyRoleDefinition",
 
-    [Parameter(Mandatory = $true, HelpMessage = "The ID of the Azure Subscription")]
+    [Parameter(Mandatory = $false, HelpMessage = "The ID of the Azure Subscription")]
     [ValidateNotNullOrEmpty()]
     [string]$AzSubscriptionID = "00000000-0000-0000-0000-000000000000",
 
-    [Parameter(Mandatory = $true, HelpMessage = "The ID of the Azure Resource")]
+    [Parameter(Mandatory = $false, HelpMessage = "The ID of the Azure Resource")]
     [ValidateNotNullOrEmpty()]
     [string]$AzResourceId = "00000000-0000-0000-0000-000000000000"
 )

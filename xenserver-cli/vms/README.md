@@ -12,11 +12,13 @@ XCP-ng virtual machines using XenServerPSModule.
 
 ## Available Scripts
 
-| Script | Description |
-| --- | --- |
+| Script                                      | Description                                                                                                              |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
 | `xenserver-cli-create-vm-from-template.ps1` | Provisions new VMs from an existing template with configurable CPU, memory, storage, and network; supports bulk creation |
-| `xenserver-cli-power-vm-operations.ps1` | Performs start, stop, shutdown, reboot, suspend, resume, pause, and unpause operations on single or multiple VMs |
-| `xenserver-cli-vm-clone.ps1` | Clones a VM using fast storage-level disk clone; supports single and batch cloning with automatic naming |
+| `xenserver-cli-power-vm-operations.ps1`     | Performs start, stop, shutdown, reboot, suspend, resume, pause, and unpause operations on single or multiple VMs         |
+| `xenserver-cli-vm-clone.ps1`                | Clones a VM using fast storage-level disk clone; supports single and batch cloning with automatic naming                 |
+| `xenserver-cli-snapshot-vm.ps1`             | Creates, reverts, lists, and deletes VM snapshots using New-XenVMSnapshot and Invoke-XenVM                               |
+| `xenserver-cli-migrate-vm.ps1`              | Live migrates a running VM to another host in the same pool using Invoke-XenVM Pool_migrate                              |
 
 ## Usage Examples
 
@@ -87,4 +89,50 @@ XCP-ng virtual machines using XenServerPSModule.
     -VMName "Template-Win" `
     -NamePrefix "TestVM" `
     -Count 5
+```
+
+### Snapshot VM
+
+```powershell
+# Create a snapshot (auto-named)
+.\xenserver-cli-snapshot-vm.ps1 `
+    -XenServer "xenserver.local" `
+    -Credential (Get-Credential) `
+    -VmName "WebServer01" `
+    -Action Create `
+    -SnapshotName "pre-patching-2026"
+
+# List snapshots for a VM
+.\xenserver-cli-snapshot-vm.ps1 `
+    -XenServer "xenserver.local" `
+    -Credential (Get-Credential) `
+    -VmName "WebServer01" `
+    -Action List
+
+# Revert to a snapshot
+.\xenserver-cli-snapshot-vm.ps1 `
+    -XenServer "xenserver.local" `
+    -Credential (Get-Credential) `
+    -VmName "WebServer01" `
+    -Action Revert `
+    -SnapshotName "pre-patching-2026"
+```
+
+### Migrate VM
+
+```powershell
+# Live migrate a VM to another host
+.\xenserver-cli-migrate-vm.ps1 `
+    -XenServer "xenserver.local" `
+    -Credential (Get-Credential) `
+    -VmName "WebServer01" `
+    -DestinationHost "xenhost02.local"
+
+# Force migrate a VM with local storage
+.\xenserver-cli-migrate-vm.ps1 `
+    -XenServer "xenserver.local" `
+    -Credential (Get-Credential) `
+    -VmName "DBServer" `
+    -DestinationHost "xenhost03.local" `
+    -Force
 ```

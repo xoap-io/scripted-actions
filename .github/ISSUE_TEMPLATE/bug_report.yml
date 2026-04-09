@@ -1,0 +1,72 @@
+name: Bug report
+description: Report a problem with an existing script.
+labels: [bug]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug. Please fill in as much
+        detail as possible so we can reproduce and fix it quickly.
+  - type: input
+    id: script
+    attributes:
+      label: Script name
+      description: >
+        The name of the script file (e.g.
+        `aws-cli/ec2/aws-cli-create-ec2-instance.ps1`).
+      placeholder: "provider/service/script-name.ps1"
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Problem description
+      description: >
+        What did you expect to happen, and what actually happened?
+    validations:
+      required: true
+  - type: textarea
+    id: error
+    attributes:
+      label: Error message / output
+      description: >
+        Paste the full error message or relevant terminal output here.
+        Obfuscate any sensitive values (tokens, IDs, secrets).
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: How to reproduce
+      description: >
+        Minimal command or parameter combination that triggers the issue.
+      render: powershell
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: Operating system
+      placeholder: "e.g. macOS 14, Windows Server 2022, Ubuntu 22.04"
+    validations:
+      required: true
+  - type: input
+    id: ps_version
+    attributes:
+      label: PowerShell version
+      description: Output of `$PSVersionTable.PSVersion`
+      placeholder: "e.g. 7.4.1"
+    validations:
+      required: true
+  - type: input
+    id: tool_version
+    attributes:
+      label: CLI / module version
+      description: >
+        Version of the relevant tool (Azure CLI, AWS CLI, gcloud, etc.) or
+        PowerShell module used by the script.
+      placeholder: "e.g. Azure CLI 2.59.0 / Az 11.4.0"
+    validations:
+      required: false

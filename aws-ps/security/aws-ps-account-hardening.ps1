@@ -90,7 +90,7 @@
 [CmdletBinding()]
 param(
   [Parameter(HelpMessage = "AWS account alias to set (alphanumeric and dashes).")][ValidatePattern('^[a-zA-Z0-9-]+$')][string]$AccountAlias = "cis-hardened-account",
-  [Parameter(Mandatory = $true, HelpMessage = "The primary AWS region for multi-region services like CloudTrail (e.g. eu-central-1).")][ValidatePattern('^[a-z]{2}-[a-z]+-[0-9]$')][string]$HomeRegion = "eu-central-1",
+  [Parameter(Mandatory = $false, HelpMessage = "The primary AWS region for multi-region services like CloudTrail (e.g. eu-central-1).")][ValidatePattern('^[a-z]{2}-[a-z]+-[0-9]$')][string]$HomeRegion = "eu-central-1",
   [Parameter(HelpMessage = "List of AWS regions to apply hardening steps to.")][ValidateScript({
     foreach ($region in $_) {
       if ($region -notmatch '^[a-z]{2}-[a-z]+-[0-9]$') {
@@ -1150,7 +1150,7 @@ function New-SupportRole {
       return
     }
   } catch {
-    # Role doesn't exist, continue with creation
+    Write-Verbose "Role does not exist, proceeding with creation."
   }
 
   $trustPolicy = @{

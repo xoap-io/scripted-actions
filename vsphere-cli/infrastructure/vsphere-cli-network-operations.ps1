@@ -239,7 +239,7 @@ function New-NetworkPortGroup {
         }
 
         # Create the port group
-        $portGroup = New-VirtualPortGroup -VirtualSwitch $vswitch -Name $PortGroupName -VLanId $VLANID
+        $null = New-VirtualPortGroup -VirtualSwitch $vswitch -Name $PortGroupName -VLanId $VLANID
 
         Write-Host "    ✓ Port group created successfully" -ForegroundColor Green
         return @{
@@ -362,7 +362,7 @@ function New-StandardVirtualSwitch {
             }
         }
 
-        $vswitch = New-VirtualSwitch @switchParams
+        $null = New-VirtualSwitch @switchParams
 
         Write-Host "    ✓ Standard virtual switch created successfully" -ForegroundColor Green
         return @{

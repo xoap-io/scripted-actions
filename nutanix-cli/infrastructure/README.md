@@ -14,12 +14,14 @@ via the Nutanix PowerShell SDK and REST API.
 
 ## Available Scripts
 
-| Script | Description |
-| --- | --- |
-| `nutanix-cli-cluster-operations.ps1` | Cluster health monitoring, capacity planning, and maintenance operations via Prism Central or Element |
-| `nutanix-cli-host-operations.ps1` | Host health monitoring, maintenance mode toggling, and hardware/performance reporting |
-| `nutanix-cli-network-operations.ps1` | Network creation, VLAN management, IP pool configuration, and usage monitoring |
-| `nutanix-cli-protection-domains.ps1` | Protection domain creation, VM assignment, backup schedules, and replication management |
+| Script                               | Description                                                                                                                |
+| ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
+| `nutanix-cli-cluster-operations.ps1` | Cluster health monitoring, capacity planning, and maintenance operations via Prism Central or Element                      |
+| `nutanix-cli-host-operations.ps1`    | Host health monitoring, maintenance mode toggling, and hardware/performance reporting                                      |
+| `nutanix-cli-network-operations.ps1` | Network creation, VLAN management, IP pool configuration, and usage monitoring                                             |
+| `nutanix-cli-protection-domains.ps1` | Protection domain creation, VM assignment, backup schedules, and replication management                                    |
+| `nutanix-cli-alerts.ps1`             | List and manage Nutanix cluster alerts via the Prism Central REST API v3; supports severity filtering and bulk acknowledge |
+| `nutanix-cli-prism-events.ps1`       | Query the Prism Central events log via the REST API v3; supports severity filtering and export to CSV or JSON              |
 
 ## Usage Examples
 
@@ -96,6 +98,48 @@ via the Nutanix PowerShell SDK and REST API.
     -IPPoolEnd "192.168.200.100" `
     -Gateway "192.168.200.1" `
     -SubnetMask "255.255.255.0"
+```
+
+### Alerts
+
+```powershell
+$pass = Read-Host -AsSecureString "Password"
+
+# List all alerts as a table
+.\nutanix-cli-alerts.ps1 `
+    -PrismCentralHost "pc.domain.com" `
+    -Username "admin" `
+    -Password $pass
+
+# List critical alerts as JSON and acknowledge them
+.\nutanix-cli-alerts.ps1 `
+    -PrismCentralHost "pc.domain.com" `
+    -Username "admin" `
+    -Password $pass `
+    -Severity Critical `
+    -AcknowledgeAll `
+    -OutputFormat JSON
+```
+
+### Prism Events
+
+```powershell
+$pass = Read-Host -AsSecureString "Password"
+
+# Retrieve last 100 events as a table
+.\nutanix-cli-prism-events.ps1 `
+    -PrismCentralHost "pc.domain.com" `
+    -Username "admin" `
+    -Password $pass `
+    -Count 100
+
+# Export critical events to CSV
+.\nutanix-cli-prism-events.ps1 `
+    -PrismCentralHost "pc.domain.com" `
+    -Username "admin" `
+    -Password $pass `
+    -SeverityLevel Critical `
+    -OutputFormat CSV
 ```
 
 ### Protection Domains

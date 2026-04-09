@@ -13,8 +13,8 @@ environments using AWS Tools for PowerShell.
 
 ## Available Scripts
 
-| Script | Description |
-| --- | --- |
+| Script                     | Description                                                                                                       |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------- |
 | `appstream-quickstart.ps1` | Deploys a complete AppStream 2.0 environment including VPC, subnets, NAT gateway, IAM roles, and an image builder |
 
 ## Usage Examples

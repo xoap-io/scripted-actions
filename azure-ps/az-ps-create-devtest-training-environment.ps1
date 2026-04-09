@@ -116,7 +116,7 @@ param(
     [ValidatePattern('^[a-zA-Z0-9-_.()]{1,90}$')]
     [string]$ResourceGroupName,
 
-    [Parameter(Mandatory = $true, HelpMessage = "Azure region where the lab resources will be deployed.")]
+    [Parameter(Mandatory = $false, HelpMessage = "Azure region where the lab resources will be deployed.")]
     [ValidateSet('East US','East US 2','West US','West US 2','Central US','North Central US','South Central US','West Central US','Canada Central','Canada East','North Europe','West Europe','UK South','UK West','Germany West Central','Switzerland North','France Central','Australia East','Australia Southeast','Japan East','Japan West','Korea Central','South India','Central India','East Asia','Southeast Asia')]
     [string]$Location = 'Germany West Central',
 
@@ -256,8 +256,7 @@ function New-TrainingDevTestLab {
     Write-Host "Creating DevTest Lab '$LabName'..." -ForegroundColor Cyan
 
     # Create the lab using ARM template approach since New-AzDtlLab may not be available
-    $labTemplate = @{
-        '$schema' = 'https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#'
+    $null = @{
         contentVersion = '1.0.0.0'
         parameters = @{
             labName = @{
@@ -295,7 +294,7 @@ function New-TrainingDevTestLab {
                     }
                 }
             }
-        )
+        }
     }
 
     # Deploy the lab
@@ -383,12 +382,11 @@ function New-TrainingVMFormulas {
 
     Write-Host "Creating VM formulas for training..." -ForegroundColor Cyan
 
-    # Common artifacts for training VMs
-    $commonWindowsArtifacts = @()
-    $commonLinuxArtifacts = @()
+    # Common artifacts for training VMs (populated conditionally below)
+    $null = @()  # artifacts placeholder
 
     if ($InstallCommonTools) {
-        $commonWindowsArtifacts = @(
+        $null = @(
             @{
                 artifactId = '/subscriptions/{subscription-id}/resourceGroups/{resource-group}/providers/Microsoft.DevTestLab/labs/{lab-name}/artifactSources/public repo/artifacts/windows-chrome'
             },
@@ -400,7 +398,7 @@ function New-TrainingVMFormulas {
             }
         )
 
-        $commonLinuxArtifacts = @(
+        $null = @(
             @{
                 artifactId = '/subscriptions/{subscription-id}/resourceGroups/{resource-group}/providers/Microsoft.DevTestLab/labs/{lab-name}/artifactSources/public repo/artifacts/linux-apt-package'
                 parameters = @(
@@ -416,7 +414,7 @@ function New-TrainingVMFormulas {
     # Create Windows VM formula
     if ($WindowsVMCount -gt 0) {
         Write-Host "Creating Windows VM formula..." -ForegroundColor Yellow
-        $windowsFormula = @{
+        $null = @{
             location = $Location
             properties = @{
                 description = $labVnetResource.Properties.description
@@ -479,6 +477,8 @@ function Resolve-LabVirtualNetwork {
                 if ($ok) { return [pscustomobject]@{ Name=$first.Name; SubnetName='default' } }
             }
         }
+    } catch {
+        Write-Verbose "[Resolver] Manual enablement failed: $($_.Exception.Message)"
     }
 
     # Create Linux VM formula
@@ -692,17 +692,7 @@ function New-GermanTrainingVMSets {
                                 inboundNatRules = @()
                             }
                         }
-                    } else {
-                        @{
-                            publicIpAddress = 'New'
-                            publicIpAddressInboundDnatRules = @(
-                                @{
-                                    transportProtocol = 'tcp'
-                                    backendPort = 3389
-                                }
-                            )
-                        }
-                    }
+                    )
                 }
             }
 

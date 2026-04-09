@@ -12,11 +12,40 @@ XCP-ng storage repositories using XenServerPSModule.
 
 ## Available Scripts
 
-| Script | Description |
-| --- | --- |
-| `xenserver-cli-sr-operations.ps1` | Creates, destroys, scans, lists, and probes storage repositories; supports NFS, iSCSI, HBA (Fibre Channel), local VHD, EXT, and ISO SR types |
+| Script                                  | Description                                                                                                                                  |
+| --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `xenserver-cli-sr-operations.ps1`       | Creates, destroys, scans, lists, and probes storage repositories; supports NFS, iSCSI, HBA (Fibre Channel), local VHD, EXT, and ISO SR types |
+| `xenserver-cli-snapshot-operations.ps1` | Lists, creates, and deletes VDI (virtual disk image) snapshots within a storage repository                                                   |
 
 ## Usage Examples
+
+### VDI Snapshot Operations
+
+```powershell
+# List all VDIs and snapshots in an SR
+.\xenserver-cli-snapshot-operations.ps1 `
+    -XenServer "xenserver.local" `
+    -Credential (Get-Credential) `
+    -SrName "NFS-Storage" `
+    -Action List
+
+# Create a VDI snapshot
+.\xenserver-cli-snapshot-operations.ps1 `
+    -XenServer "xenserver.local" `
+    -Credential (Get-Credential) `
+    -SrName "NFS-Storage" `
+    -Action Snapshot `
+    -VdiName "WebServer-disk" `
+    -SnapshotName "pre-upgrade"
+
+# Delete a VDI snapshot
+.\xenserver-cli-snapshot-operations.ps1 `
+    -XenServer "xenserver.local" `
+    -Credential (Get-Credential) `
+    -SrName "NFS-Storage" `
+    -Action Delete `
+    -SnapshotName "pre-upgrade"
+```
 
 ### Storage Repository Operations
 

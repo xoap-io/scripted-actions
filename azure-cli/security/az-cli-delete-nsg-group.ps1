@@ -530,11 +530,11 @@ function Remove-NSGResource {
         Write-Host "🗑️ Deleting NSG '$($NSG.name)'..." -ForegroundColor Yellow
 
         # Start deletion with timeout
+        $nsgNameForJob = $NSG.name
         $job = Start-Job -ScriptBlock {
-            param($ResourceGroup, $NSGName)
-            az network nsg delete --resource-group $ResourceGroup --name $NSGName --yes --output none 2>&1
+            az network nsg delete --resource-group $using:ResourceGroup --name $using:nsgNameForJob --yes --output none 2>&1
             return $LASTEXITCODE
-        } -ArgumentList $ResourceGroup, $NSG.name
+        }
 
         # Wait for completion with timeout
         $completed = Wait-Job -Job $job -Timeout $Timeout
@@ -825,7 +825,7 @@ try {
 
     # Generate report if requested
     if ($OutputReport) {
-        $reportFile = New-DeletionReport -ReportPath $ReportPath
+        New-DeletionReport -ReportPath $ReportPath | Out-Null
     }
 
     # Show final summary

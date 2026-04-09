@@ -114,7 +114,7 @@ try {
 
     # Display current NSG association
     if ($subnetInfo.networkSecurityGroup) {
-        $currentNSG = $subnetInfo.networkSecurityGroup.id -split '/')[-1]
+        $currentNSG = ($subnetInfo.networkSecurityGroup.id -split '/')[-1]
         Write-Host "Current NSG: $currentNSG" -ForegroundColor Cyan
     } else {
         Write-Host "Current NSG: None" -ForegroundColor Cyan
@@ -205,7 +205,7 @@ try {
             Write-Host "  Address Prefix: $($updatedSubnetInfo.addressPrefix)" -ForegroundColor White
 
             if ($updatedSubnetInfo.networkSecurityGroup) {
-                Write-Host "  Network Security Group: $($updatedSubnetInfo.networkSecurityGroup.id -split '/')[-1]" -ForegroundColor Green
+                Write-Host "  Network Security Group: $(($updatedSubnetInfo.networkSecurityGroup.id -split '/')[-1])" -ForegroundColor Green
             } else {
                 Write-Host "  Network Security Group: None" -ForegroundColor White
             }

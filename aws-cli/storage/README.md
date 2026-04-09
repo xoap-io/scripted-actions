@@ -1,6 +1,7 @@
 # AWS CLI - Storage Scripts
 
-This directory contains PowerShell scripts for managing AWS storage services (S3, EBS, EFS) using the AWS CLI.
+This directory contains PowerShell scripts for managing AWS storage services
+(S3, EBS, EFS) using the AWS CLI.
 
 ## Prerequisites
 
@@ -15,7 +16,8 @@ This directory contains PowerShell scripts for managing AWS storage services (S3
 
 #### Bucket Management
 
-- **aws-cli-create-s3-bucket.ps1** - Creates S3 buckets with optional configuration
+- **aws-cli-create-s3-bucket.ps1** - Creates S3 buckets with optional
+  configuration
 - **aws-cli-delete-s3-bucket.ps1** - Deletes S3 buckets
 - **aws-cli-list-s3-buckets.ps1** - Lists all S3 buckets in account
 - **aws-cli-enable-s3-versioning.ps1** - Enables versioning on buckets
@@ -45,6 +47,21 @@ This directory contains PowerShell scripts for managing AWS storage services (S3
 ### Amazon EFS (Elastic File System)
 
 - **aws-cli-create-efs.ps1** - Creates EFS file systems
+
+### S3 Lifecycle and Replication
+
+- **aws-cli-set-s3-lifecycle-policy.ps1** - Applies a lifecycle policy that
+  transitions objects through Standard-IA and Glacier before expiration
+- **aws-cli-enable-s3-replication.ps1** - Enables cross-region replication from
+  a source bucket to a destination bucket; enables versioning automatically
+
+### AWS Backup
+
+- **aws-cli-create-backup-plan.ps1** - Creates an AWS Backup plan with a
+  configurable schedule, retention period, and vault; outputs BackupPlanId
+  and Arn
+- **aws-cli-restore-from-backup.ps1** - Starts an AWS Backup restore job from a
+  recovery point ARN; outputs RestoreJobId
 
 ## Usage Examples
 

@@ -16,24 +16,24 @@ PowerShell.
 
 ## Available Scripts
 
-| Script | Description |
-| --- | --- |
-| `nice-dcv-authorize-dcv-ports.ps1` | Adds TCP and UDP DCV port rules to an existing EC2 security group |
-| `nice-dcv-create-ami-windows.ps1` | Creates an AMI from a Windows EC2 instance with NICE DCV installed |
-| `nice-dcv-create-security-group.ps1` | Creates a new EC2 security group pre-configured with DCV port 8443 rules |
-| `nice-dcv-create-user.ps1` | Creates a DCV user on a Linux EC2 instance via SSM |
-| `nice-dcv-delete-instance-windows.ps1` | Terminates a Windows EC2 instance running NICE DCV |
-| `nice-dcv-describe-sessions.ps1` | Lists active DCV sessions on an instance via SSM |
-| `nice-dcv-get-connection-info.ps1` | Retrieves and displays the public IP and DCV URL for an instance |
-| `nice-dcv-install-linux.ps1` | Remotely installs NICE DCV on a Linux EC2 instance via SSM |
-| `nice-dcv-install-windows.ps1` | Remotely installs NICE DCV on a Windows EC2 instance via SSM |
-| `nice-dcv-quickstart.ps1` | Launches an EC2 instance, authorizes DCV ports, and waits for it to be running |
-| `nice-dcv-reboot-instance-windows.ps1` | Reboots a Windows EC2 instance running NICE DCV |
-| `nice-dcv-start-instance-windows.ps1` | Starts a stopped Windows EC2 instance running NICE DCV |
-| `nice-dcv-stop-instance-windows.ps1` | Stops a running Windows EC2 instance running NICE DCV |
-| `nice-dcv-terminate-session.ps1` | Terminates a DCV session by session ID via SSM |
-| `nice-dcv-uninstall-windows.ps1` | Uninstalls NICE DCV from a Windows EC2 instance via SSM |
-| `nice-dcv-update-windows.ps1` | Updates NICE DCV to the latest version on a Windows EC2 instance via SSM |
+| Script                                 | Description                                                                    |
+| -------------------------------------- | ------------------------------------------------------------------------------ |
+| `nice-dcv-authorize-dcv-ports.ps1`     | Adds TCP and UDP DCV port rules to an existing EC2 security group              |
+| `nice-dcv-create-ami-windows.ps1`      | Creates an AMI from a Windows EC2 instance with NICE DCV installed             |
+| `nice-dcv-create-security-group.ps1`   | Creates a new EC2 security group pre-configured with DCV port 8443 rules       |
+| `nice-dcv-create-user.ps1`             | Creates a DCV user on a Linux EC2 instance via SSM                             |
+| `nice-dcv-delete-instance-windows.ps1` | Terminates a Windows EC2 instance running NICE DCV                             |
+| `nice-dcv-describe-sessions.ps1`       | Lists active DCV sessions on an instance via SSM                               |
+| `nice-dcv-get-connection-info.ps1`     | Retrieves and displays the public IP and DCV URL for an instance               |
+| `nice-dcv-install-linux.ps1`           | Remotely installs NICE DCV on a Linux EC2 instance via SSM                     |
+| `nice-dcv-install-windows.ps1`         | Remotely installs NICE DCV on a Windows EC2 instance via SSM                   |
+| `nice-dcv-quickstart.ps1`              | Launches an EC2 instance, authorizes DCV ports, and waits for it to be running |
+| `nice-dcv-reboot-instance-windows.ps1` | Reboots a Windows EC2 instance running NICE DCV                                |
+| `nice-dcv-start-instance-windows.ps1`  | Starts a stopped Windows EC2 instance running NICE DCV                         |
+| `nice-dcv-stop-instance-windows.ps1`   | Stops a running Windows EC2 instance running NICE DCV                          |
+| `nice-dcv-terminate-session.ps1`       | Terminates a DCV session by session ID via SSM                                 |
+| `nice-dcv-uninstall-windows.ps1`       | Uninstalls NICE DCV from a Windows EC2 instance via SSM                        |
+| `nice-dcv-update-windows.ps1`          | Updates NICE DCV to the latest version on a Windows EC2 instance via SSM       |
 
 ## Usage Examples
 

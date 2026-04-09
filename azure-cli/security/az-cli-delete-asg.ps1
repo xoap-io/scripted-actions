@@ -285,7 +285,7 @@ function Get-ASGUsage {
         }
 
         # Get all NSGs in the resource group (and potentially other resource groups)
-        $subscription = az account show --query "id" --output tsv
+        $null = az account show --query "id" --output tsv
         $allNSGs = az network nsg list --output json | ConvertFrom-Json
 
         foreach ($nsg in $allNSGs) {
@@ -513,7 +513,7 @@ function Remove-ASGFromRules {
                     switch ($UpdateMode) {
                         'Disable' {
                             # Disable the rule by setting access to Deny
-                            $result = az network nsg rule update --resource-group $nsgResourceGroup --nsg-name $nsgName --name $rule.name --access "Deny" --output json 2>$null | ConvertFrom-Json
+                            $null = az network nsg rule update --resource-group $nsgResourceGroup --nsg-name $nsgName --name $rule.name --access "Deny" --output json 2>$null
 
                             if ($LASTEXITCODE -eq 0) {
                                 Write-Host "     ✅ Rule disabled" -ForegroundColor Green
@@ -941,7 +941,7 @@ try {
 
         # Remove from NSG rules if requested and has usage
         if ($RemoveFromRules -and $usage.HasUsage) {
-            $ruleModifications = Remove-ASGFromRules -ASG $asg -Usage $usage -UpdateMode $UpdateRulesMode -DryRun $DryRun
+            Remove-ASGFromRules -ASG $asg -Usage $usage -UpdateMode $UpdateRulesMode -DryRun $DryRun | Out-Null
         }
 
         # Skip if has usage and not removing from rules and not forced
@@ -961,7 +961,7 @@ try {
 
     # Generate report if requested
     if ($OutputReport) {
-        $reportFile = New-DeletionReport -ReportPath $ReportPath
+        New-DeletionReport -ReportPath $ReportPath | Out-Null
     }
 
     # Show final summary

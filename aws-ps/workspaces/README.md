@@ -17,34 +17,34 @@ WorkSpaces using AWS Tools for PowerShell.
 
 ## Available Scripts
 
-| Script | Description |
-| --- | --- |
-| `aws-ps-create-workspace.ps1` | Creates a WorkSpace for a user given a bundle ID and directory ID |
-| `aws-ps-reboot-workspace.ps1` | Reboots a single WorkSpace by ID |
-| `aws-ps-workspaces-bulk-create.ps1` | Creates multiple WorkSpaces from a CSV file or array of hashtables |
-| `aws-ps-workspaces-bulk-delete.ps1` | Terminates multiple WorkSpaces from a CSV file, ID list, or filter criteria |
-| `aws-ps-workspaces-create-user.ps1` | Creates a user in a WorkSpaces directory |
-| `aws-ps-workspaces-create-workspace.ps1` | Creates a WorkSpace with detailed configuration (compute type, storage, running mode, tags) |
-| `aws-ps-workspaces-delete-user.ps1` | Deletes a user from a WorkSpaces directory, checking for active WorkSpaces first |
-| `aws-ps-workspaces-delete-workspace.ps1` | Terminates one or more WorkSpaces, skipping already-terminated instances |
-| `aws-ps-workspaces-describe-bundle.ps1` | Retrieves and displays details of a specific WorkSpaces bundle |
-| `aws-ps-workspaces-describe-workspace.ps1` | Retrieves and displays detailed information about a specific WorkSpace |
-| `aws-ps-workspaces-get-workspace-connection-status.ps1` | Retrieves connection status for one or more WorkSpaces |
-| `aws-ps-workspaces-list-bundles.ps1` | Lists available WorkSpaces bundles, with optional filtering by owner or bundle ID |
-| `aws-ps-workspaces-list-directories.ps1` | Lists registered WorkSpaces directories, with optional filtering by directory ID |
-| `aws-ps-workspaces-list-tags.ps1` | Lists all tags associated with a WorkSpace |
-| `aws-ps-workspaces-list-users.ps1` | Lists users in a WorkSpaces directory |
-| `aws-ps-workspaces-list-workspace-usage.ps1` | Retrieves usage information for WorkSpaces with optional date and user filters |
-| `aws-ps-workspaces-list-workspaces.ps1` | Lists WorkSpaces with optional filtering by directory, user, state, or bundle |
-| `aws-ps-workspaces-migrate-workspace.ps1` | Migrates a WorkSpace to a different bundle |
-| `aws-ps-workspaces-modify-workspace-properties.ps1` | Modifies compute type, volume sizes, or running mode for a WorkSpace |
-| `aws-ps-workspaces-reboot-workspace.ps1` | Reboots one or more WorkSpaces, skipping those not in a rebootable state |
-| `aws-ps-workspaces-reset-user-password.ps1` | Resets the password for a user in a WorkSpaces directory |
-| `aws-ps-workspaces-start-workspace.ps1` | Starts one or more stopped WorkSpaces |
-| `aws-ps-workspaces-stop-workspace.ps1` | Stops one or more running WorkSpaces |
-| `aws-ps-workspaces-tag-workspace.ps1` | Adds key-value tags to one or more WorkSpaces |
-| `aws-ps-workspaces-untag-workspace.ps1` | Removes tags from one or more WorkSpaces by tag key |
-| `workspace-quickstart1.ps1` | Deploys a complete WorkSpaces environment including VPC, Simple AD directory, user, and WorkSpace |
+| Script                                                  | Description                                                                                       |
+| ------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `aws-ps-create-workspace.ps1`                           | Creates a WorkSpace for a user given a bundle ID and directory ID                                 |
+| `aws-ps-reboot-workspace.ps1`                           | Reboots a single WorkSpace by ID                                                                  |
+| `aws-ps-workspaces-bulk-create.ps1`                     | Creates multiple WorkSpaces from a CSV file or array of hashtables                                |
+| `aws-ps-workspaces-bulk-delete.ps1`                     | Terminates multiple WorkSpaces from a CSV file, ID list, or filter criteria                       |
+| `aws-ps-workspaces-create-user.ps1`                     | Creates a user in a WorkSpaces directory                                                          |
+| `aws-ps-workspaces-create-workspace.ps1`                | Creates a WorkSpace with detailed configuration (compute type, storage, running mode, tags)       |
+| `aws-ps-workspaces-delete-user.ps1`                     | Deletes a user from a WorkSpaces directory, checking for active WorkSpaces first                  |
+| `aws-ps-workspaces-delete-workspace.ps1`                | Terminates one or more WorkSpaces, skipping already-terminated instances                          |
+| `aws-ps-workspaces-describe-bundle.ps1`                 | Retrieves and displays details of a specific WorkSpaces bundle                                    |
+| `aws-ps-workspaces-describe-workspace.ps1`              | Retrieves and displays detailed information about a specific WorkSpace                            |
+| `aws-ps-workspaces-get-workspace-connection-status.ps1` | Retrieves connection status for one or more WorkSpaces                                            |
+| `aws-ps-workspaces-list-bundles.ps1`                    | Lists available WorkSpaces bundles, with optional filtering by owner or bundle ID                 |
+| `aws-ps-workspaces-list-directories.ps1`                | Lists registered WorkSpaces directories, with optional filtering by directory ID                  |
+| `aws-ps-workspaces-list-tags.ps1`                       | Lists all tags associated with a WorkSpace                                                        |
+| `aws-ps-workspaces-list-users.ps1`                      | Lists users in a WorkSpaces directory                                                             |
+| `aws-ps-workspaces-list-workspace-usage.ps1`            | Retrieves usage information for WorkSpaces with optional date and user filters                    |
+| `aws-ps-workspaces-list-workspaces.ps1`                 | Lists WorkSpaces with optional filtering by directory, user, state, or bundle                     |
+| `aws-ps-workspaces-migrate-workspace.ps1`               | Migrates a WorkSpace to a different bundle                                                        |
+| `aws-ps-workspaces-modify-workspace-properties.ps1`     | Modifies compute type, volume sizes, or running mode for a WorkSpace                              |
+| `aws-ps-workspaces-reboot-workspace.ps1`                | Reboots one or more WorkSpaces, skipping those not in a rebootable state                          |
+| `aws-ps-workspaces-reset-user-password.ps1`             | Resets the password for a user in a WorkSpaces directory                                          |
+| `aws-ps-workspaces-start-workspace.ps1`                 | Starts one or more stopped WorkSpaces                                                             |
+| `aws-ps-workspaces-stop-workspace.ps1`                  | Stops one or more running WorkSpaces                                                              |
+| `aws-ps-workspaces-tag-workspace.ps1`                   | Adds key-value tags to one or more WorkSpaces                                                     |
+| `aws-ps-workspaces-untag-workspace.ps1`                 | Removes tags from one or more WorkSpaces by tag key                                               |
+| `workspace-quickstart1.ps1`                             | Deploys a complete WorkSpaces environment including VPC, Simple AD directory, user, and WorkSpace |
 
 ## Usage Examples
 

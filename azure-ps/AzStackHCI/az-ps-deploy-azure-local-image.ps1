@@ -226,7 +226,7 @@ try {
                 Test-NetConnection -ComputerName $VmName -Port 5985 -InformationLevel Quiet | Out-Null
                 if ($?) { return $true }
             }
-            catch {}
+            catch { Write-Verbose "WinRM not yet available, retrying..." }
         } while ($sw.Elapsed.TotalSeconds -lt $TimeoutSec)
         throw "VM $VmName did not open WinRM (5985) within $TimeoutSec seconds."
     }
@@ -247,10 +247,10 @@ try {
 
     # Storage container/path for VMs
     try {
-        $sp = Get-AzStackHCIVMStoragePath -ResourceGroupName $ResourceGroupName -Name $StoragePathName -ErrorAction Stop
+        $null = Get-AzStackHCIVMStoragePath -ResourceGroupName $ResourceGroupName -Name $StoragePathName -ErrorAction Stop
     }
     catch {
-        $sp = New-AzStackHCIVMStoragePath `
+        $null = New-AzStackHCIVMStoragePath `
             -ResourceGroupName $ResourceGroupName `
             -CustomLocation $CustomLocationId `
             -Location $Location `
@@ -289,7 +289,7 @@ try {
         -SubnetId $ln.Subnets[0].Id
 
     # 4) VM (Gen2)
-    $vm = New-AzStackHCIVMVirtualMachine `
+    $null = New-AzStackHCIVMVirtualMachine `
         -ResourceGroupName $ResourceGroupName `
         -CustomLocation $CustomLocationId `
         -Location $Location `

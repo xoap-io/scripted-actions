@@ -15,14 +15,18 @@ configuration profiles.
 
 ## Scripts
 
-| Script | Description |
-|---|---|
-| [`msgraph-get-intune-managed-devices.ps1`](./msgraph-get-intune-managed-devices.ps1) | List and filter managed devices |
-| [`msgraph-get-intune-device-compliance.ps1`](./msgraph-get-intune-device-compliance.ps1) | Get device compliance status and policies |
-| [`msgraph-sync-intune-device.ps1`](./msgraph-sync-intune-device.ps1) | Trigger a sync on one or more managed devices |
-| [`msgraph-get-intune-apps.ps1`](./msgraph-get-intune-apps.ps1) | List managed and published Intune apps |
-| [`msgraph-assign-intune-app.ps1`](./msgraph-assign-intune-app.ps1) | Assign an Intune app to a group |
-| [`msgraph-get-intune-config-policies.ps1`](./msgraph-get-intune-config-policies.ps1) | List device configuration profiles and policies |
+| Script                                                                                         | Description                                     |
+| ---------------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| [`msgraph-get-intune-managed-devices.ps1`](./msgraph-get-intune-managed-devices.ps1)           | List and filter managed devices                 |
+| [`msgraph-get-intune-device-compliance.ps1`](./msgraph-get-intune-device-compliance.ps1)       | Get device compliance status and policies       |
+| [`msgraph-sync-intune-device.ps1`](./msgraph-sync-intune-device.ps1)                           | Trigger a sync on one or more managed devices   |
+| [`msgraph-get-intune-apps.ps1`](./msgraph-get-intune-apps.ps1)                                 | List managed and published Intune apps          |
+| [`msgraph-assign-intune-app.ps1`](./msgraph-assign-intune-app.ps1)                             | Assign an Intune app to a group                 |
+| [`msgraph-get-intune-config-policies.ps1`](./msgraph-get-intune-config-policies.ps1)           | List device configuration profiles and policies |
+| [`msgraph-create-intune-compliance-policy.ps1`](./msgraph-create-intune-compliance-policy.ps1) | Create a device compliance policy               |
+| [`msgraph-retire-intune-device.ps1`](./msgraph-retire-intune-device.ps1)                       | Retire or wipe a managed Intune device          |
+| [`msgraph-get-intune-enrollment-status.ps1`](./msgraph-get-intune-enrollment-status.ps1)       | Report on device enrollment status by platform  |
+| [`msgraph-assign-intune-config-policy.ps1`](./msgraph-assign-intune-config-policy.ps1)         | Assign a Settings Catalog policy to a group     |
 
 ## Quick Start
 

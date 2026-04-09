@@ -109,9 +109,8 @@ param(
   [array]$VnetLinks
 )
 
-$ErrorActionPreference = 'Stop'
-
 begin {
+  $ErrorActionPreference = 'Stop'
   Write-Verbose "Starting DNS Security Policy deployment: $Name"
 
   # --- Helper: Ensure modules ---

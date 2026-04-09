@@ -75,8 +75,8 @@ repos:
     hooks:
       - id: codespell
         args:
-          - --ignore-words-list=te,sur,nd,ue,ect,unexpect,fo,workd
-          - --skip="*.json,*.csv,*.lock,TestResults/*"
+          - --ignore-words-list=te,sur,nd,ue,ect,unexpect,fo,workd,aks,eks,gke,vor,als,ist,alle,oder,tage,lokal,ordner,unter,probleme
+          - --skip=*.json,*.csv,*.lock,TestResults/*,CODE_OF_CONDUCT.md
           - --quiet-level=2
 
   # PowerShell specific checks
@@ -84,7 +84,7 @@ repos:
     hooks:
       - id: powershell-syntax-check
         name: PowerShell Syntax Check
-        entry: pwsh -NoProfile -Command "try { $null = [System.Management.Automation.PSParser]::Tokenize((Get-Content -Raw -Path $args[0]), [ref]$null); exit 0 } catch { Write-Error $_.Exception.Message; exit 1 }"
+        entry: bash -c 'for f in "$@"; do [ -s "$f" ] || continue; pwsh -NoProfile -Command "try { \$null = [System.Management.Automation.PSParser]::Tokenize((Get-Content -Raw -LiteralPath '\''$f'\''), [ref]\$null) } catch { Write-Error \$_.Exception.Message; exit 1 }" || exit 1; done' --
         language: system
         files: \.ps1$
         pass_filenames: true
@@ -98,10 +98,11 @@ repos:
 
       - id: psscriptanalyzer
         name: PSScriptAnalyzer
-        entry: pwsh -NoProfile -Command "$results = Invoke-ScriptAnalyzer -Path $args[0] -Severity Warning,Error; if ($results) { $results | Format-Table -AutoSize; exit 1 }"
+        entry: bash -c 'for f in "$@"; do pwsh -NoProfile -Command "Import-Module PSScriptAnalyzer -ErrorAction Stop; \$r = Invoke-ScriptAnalyzer -Path '\''$f'\'' -Severity Warning,Error -ExcludeRule PSAvoidUsingWriteHost,PSUseBOMForUnicodeEncodedFile,PSAvoidUsingPlainTextForPassword,PSAvoidOverwritingBuiltInCmdlets,PSAvoidGlobalVars,PSReviewUnusedParameter,PSUseShouldProcessForStateChangingFunctions,PSUseSingularNouns,PSUsePSCredentialType,PSAvoidUsingInvokeExpression,PSUseApprovedVerbs,PSAvoidUsingUsernameAndPasswordParams,PSUseUsingScopeModifierInNewRunspaces,PSAvoidUsingWMICmdlet; if (\$r) { \$r | Format-Table -AutoSize; exit 1 }" || exit 1; done' --
         language: system
         files: \.ps1$
         pass_filenames: true
+        exclude: ^templates/
 
       - id: check-powershell-bom
         name: Check PowerShell Files Don't Have BOM

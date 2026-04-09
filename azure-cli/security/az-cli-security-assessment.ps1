@@ -554,7 +554,7 @@ try {
     }
 
     # Check Security Center
-    $securityCenterAvailable = Test-SecurityCenter
+    $null = Test-SecurityCenter
 
     # Get subscription info
     $subscriptionInfo = Get-SubscriptionInfo

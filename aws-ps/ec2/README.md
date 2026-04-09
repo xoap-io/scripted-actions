@@ -11,6 +11,14 @@ This directory contains PowerShell scripts for managing Amazon EC2 instances usi
 
 ## Available Scripts
 
+| Script                                 | Description                                                                                                                                         |
+| -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `aws-ps-create-ec2-instance.ps1`       | Creates an EC2 instance using `New-EC2Instance` with AMI, instance type, key pair, security group, and subnet                                       |
+| `aws-ps-create-ami.ps1`                | Creates an AMI from a running or stopped EC2 instance using `New-EC2Image`; supports NoReboot and WaitForAvailable polling                          |
+| `aws-ps-create-launch-template.ps1`    | Creates an EC2 launch template using `New-EC2LaunchTemplate` with AMI, instance type, networking, and optional UserData                             |
+| `aws-ps-create-auto-scaling-group.ps1` | Creates an EC2 Auto Scaling group using `New-ASAutoScalingGroup` with launch template, capacity bounds, VPC subnets, and health check configuration |
+| `aws-ps-create-cloudwatch-alarm.ps1`   | Creates a CloudWatch metric alarm using `Write-CWMetricAlarm` with configurable statistic, threshold, period, and optional SNS actions              |
+
 ### Instance Management
 
 Scripts for creating, managing, and terminating EC2 instances using native PowerShell cmdlets such as:
@@ -31,12 +39,13 @@ Scripts for creating, managing, and terminating EC2 instances using native Power
 
 - EBS volume management
 - Snapshot operations
-- AMI creation and management
+- AMI creation and management (`aws-ps-create-ami.ps1`)
 
 ### Advanced Features
 
-- Launch templates
-- Auto Scaling groups
+- Launch templates (`aws-ps-create-launch-template.ps1`)
+- Auto Scaling groups (`aws-ps-create-auto-scaling-group.ps1`)
+- CloudWatch alarms (`aws-ps-create-cloudwatch-alarm.ps1`)
 - Instance metadata service configuration
 
 ## Usage Examples

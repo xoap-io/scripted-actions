@@ -43,15 +43,15 @@
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true, HelpMessage = "The name of the Azure Resource Group")]
+    [Parameter(Mandatory = $false, HelpMessage = "The name of the Azure Resource Group")]
     [ValidateNotNullOrEmpty()]
     [string]$AzResourceGroup = "myResourceGroup",
 
-    [Parameter(Mandatory = $true, HelpMessage = "The name of the Azure VM extension publisher")]
+    [Parameter(Mandatory = $false, HelpMessage = "The name of the Azure VM extension publisher")]
     [ValidateNotNullOrEmpty()]
     [string]$AzExtensionName = "Microsoft.Azure.ActiveDirectory",
 
-    [Parameter(Mandatory = $true, HelpMessage = "The name of the Azure Virtual Machine")]
+    [Parameter(Mandatory = $false, HelpMessage = "The name of the Azure Virtual Machine")]
     [ValidateNotNullOrEmpty()]
     [string]$AzVmName = "myVmName"
 )

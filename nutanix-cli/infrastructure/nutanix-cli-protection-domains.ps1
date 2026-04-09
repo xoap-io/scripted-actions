@@ -314,7 +314,7 @@ function Get-ProtectionDomainList {
                 ProtectionDomainUUID = $pd.uuid
                 VMCount = $vmCount
                 ScheduleCount = $scheduleCount
-                ReplicationEnabled = $pd.replicationLinks -ne $null -and $pd.replicationLinks.Count -gt 0
+                ReplicationEnabled = $null -ne $pd.replicationLinks -and $pd.replicationLinks.Count -gt 0
                 Active = $pd.active
                 LastSnapshotTime = if ($pd.replicationLinks -and $pd.replicationLinks[0].snapshotSchedules) {
                     # Get the most recent snapshot time
@@ -670,7 +670,7 @@ function New-ProtectionDomainSchedule {
         # Note: The exact API for creating schedules may vary based on SDK version
         # This is a conceptual implementation
 
-        $scheduleSpec = @{
+        $null = @{
             type = $ScheduleType.ToLower()
             intervalInSecs = $IntervalMinutes * 60
             retentionPolicy = @{

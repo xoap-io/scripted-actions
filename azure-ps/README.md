@@ -36,15 +36,19 @@ Connect-AzAccount -Identity
 
 ### Standalone Scripts
 
-| Script                                    | Description             | Use Case                         |
-| ----------------------------------------- | ----------------------- | -------------------------------- |
-| `az-ps-create-linux-vm.ps1`               | Linux VM creation       | Deploy Ubuntu/CentOS VMs         |
-| `az-ps-create-vm-scale-set.ps1`           | VM Scale Set deployment | Auto-scaling VM groups           |
-| `az-ps-delete-running-vms.ps1`            | Bulk VM cleanup         | Cost management, testing cleanup |
-| `az-ps-image-builder-windows-cleanup.ps1` | Image Builder cleanup   | Remove temporary resources       |
-| `az-ps-install-nginx-linux-vm.ps1`        | NGINX web server setup  | Web server automation            |
-| `az-ps-install-webserver-windows.ps1`     | IIS web server setup    | Windows web server deployment    |
-| `Create-NewWindowsVm.ps1`                 | Windows VM creation     | Standard Windows VM deployment   |
+| Script                                    | Description              | Use Case                                 |
+| ----------------------------------------- | ------------------------ | ---------------------------------------- |
+| `az-ps-create-linux-vm.ps1`               | Linux VM creation        | Deploy Ubuntu/CentOS VMs                 |
+| `az-ps-start-vm.ps1`                      | Start an Azure VM        | Power on deallocated VMs                 |
+| `az-ps-stop-vm.ps1`                       | Stop and deallocate a VM | Cost management, maintenance             |
+| `az-ps-create-vm-snapshot.ps1`            | OS disk snapshot         | Pre-change backup of VM OS disk          |
+| `az-ps-enable-backup.ps1`                 | Enable Azure Backup      | Protect VMs with Recovery Services vault |
+| `az-ps-create-vm-scale-set.ps1`           | VM Scale Set deployment  | Auto-scaling VM groups                   |
+| `az-ps-delete-running-vms.ps1`            | Bulk VM cleanup          | Cost management, testing cleanup         |
+| `az-ps-image-builder-windows-cleanup.ps1` | Image Builder cleanup    | Remove temporary resources               |
+| `az-ps-install-nginx-linux-vm.ps1`        | NGINX web server setup   | Web server automation                    |
+| `az-ps-install-webserver-windows.ps1`     | IIS web server setup     | Windows web server deployment            |
+| `Create-NewWindowsVm.ps1`                 | Windows VM creation      | Standard Windows VM deployment           |
 
 ### Work-in-Progress Scripts
 

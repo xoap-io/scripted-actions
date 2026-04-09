@@ -63,7 +63,7 @@
 
 [CmdletBinding()]
 param (
-    [Parameter(Mandatory=$true, HelpMessage = "The Azure region where the VM will be deployed.")]
+    [Parameter(Mandatory=$false, HelpMessage = "The Azure region where the VM will be deployed.")]
     [ValidateNotNullOrEmpty()]
     [ValidateSet(
         'eastus', 'eastus2', 'southcentralus', 'westus2',
@@ -86,39 +86,39 @@ param (
     )]
     [string]$Location,
 
-    [Parameter(Mandatory=$true, HelpMessage = "The image ID to use for the VM.")]
+    [Parameter(Mandatory=$false, HelpMessage = "The image ID to use for the VM.")]
     [ValidateNotNullOrEmpty()]
     [string]$ImageID,
 
-    [Parameter(Mandatory=$true, HelpMessage = "The size of the Virtual Machine (e.g., 'Standard_D2s_v3').")]
+    [Parameter(Mandatory=$false, HelpMessage = "The size of the Virtual Machine (e.g., 'Standard_D2s_v3').")]
     [ValidateNotNullOrEmpty()]
     [string]$VMSize,
 
-    [Parameter(Mandatory=$true, HelpMessage = "Size of the OS disk in GB.")]
+    [Parameter(Mandatory=$false, HelpMessage = "Size of the OS disk in GB.")]
     [ValidateNotNullOrEmpty()]
     [int]$DiskSize = 128,
 
-    [Parameter(Mandatory=$true, HelpMessage = "Username for the VM admin account.")]
+    [Parameter(Mandatory=$false, HelpMessage = "Username for the VM admin account.")]
     [ValidateNotNullOrEmpty()]
     [string]$UserName,
 
-    [Parameter(Mandatory=$true, HelpMessage = "Password for the VM admin account as a SecureString.")]
+    [Parameter(Mandatory=$false, HelpMessage = "Password for the VM admin account as a SecureString.")]
     [ValidateNotNullOrEmpty()]
     [SecureString]$Password,
 
-    [Parameter(Mandatory=$true, HelpMessage = "The name of the virtual network.")]
+    [Parameter(Mandatory=$false, HelpMessage = "The name of the virtual network.")]
     [ValidateNotNullOrEmpty()]
     [string]$VirtualNetworkName,
 
-    [Parameter(Mandatory=$true, HelpMessage = "The name of the subnet.")]
+    [Parameter(Mandatory=$false, HelpMessage = "The name of the subnet.")]
     [ValidateNotNullOrEmpty()]
     [string]$SubnetName,
 
-    [Parameter(Mandatory=$true, HelpMessage = "The resource group containing the network resources.")]
+    [Parameter(Mandatory=$false, HelpMessage = "The resource group containing the network resources.")]
     [ValidateNotNullOrEmpty()]
     [string]$NetResourceGroup,
 
-    [Parameter(Mandatory=$true, HelpMessage = "The resource group where the VM will be created.")]
+    [Parameter(Mandatory=$false, HelpMessage = "The resource group where the VM will be created.")]
     [ValidateNotNullOrEmpty()]
     [string]$ResourceGroup,
 
@@ -146,8 +146,7 @@ try {
     exit
 }
 
-$SecurePassword = ConvertTo-SecureString -String $Password -AsPlainText -Force
-$Credential = New-Object System.Management.Automation.PSCredential ($UserName, $SecurePassword)
+$Credential = New-Object System.Management.Automation.PSCredential ($UserName, $Password)
 
 # Create the VM configuration
 try {

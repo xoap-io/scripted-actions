@@ -307,7 +307,7 @@ function Get-NetworkList {
                     @{
                         Gateway = $network.ipConfig.defaultGateway
                         SubnetMask = $network.ipConfig.subnetMask
-                        DHCPEnabled = $network.ipConfig.dhcpServerAddress -ne $null
+                        DHCPEnabled = $null -ne $network.ipConfig.dhcpServerAddress
                         DNSServers = $network.ipConfig.dnsServerIpList -join ", "
                         Pool = if ($network.ipConfig.pool) {
                             "$($network.ipConfig.pool.startIpAddress) - $($network.ipConfig.pool.endIpAddress)"
@@ -572,10 +572,10 @@ function Get-NetworkStatus {
             VMsConnected = $vmsUsingNetwork.Count
             VMNames = ($vmsUsingNetwork | Select-Object -ExpandProperty vmName) -join ", "
             IPConfiguration = @{
-                HasIPConfig = $Network.ipConfig -ne $null
+                HasIPConfig = $null -ne $Network.ipConfig
                 Gateway = if ($Network.ipConfig) { $Network.ipConfig.defaultGateway } else { "Not configured" }
                 SubnetMask = if ($Network.ipConfig) { $Network.ipConfig.subnetMask } else { "Not configured" }
-                DHCPEnabled = if ($Network.ipConfig) { $Network.ipConfig.dhcpServerAddress -ne $null } else { $false }
+                DHCPEnabled = if ($Network.ipConfig) { $null -ne $Network.ipConfig.dhcpServerAddress } else { $false }
                 DNSServers = if ($Network.ipConfig -and $Network.ipConfig.dnsServerIpList) {
                     $Network.ipConfig.dnsServerIpList -join ", "
                 } else { "Not configured" }

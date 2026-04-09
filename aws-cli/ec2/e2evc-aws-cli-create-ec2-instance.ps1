@@ -49,26 +49,26 @@
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true, HelpMessage = "The ID of the Amazon Machine Image (AMI).")]
+    [Parameter(Mandatory = $false, HelpMessage = "The ID of the Amazon Machine Image (AMI).")]
     [ValidatePattern('^ami-[a-zA-Z0-9]{8,}$')]
     [string]$AmiId,
 
-    [Parameter(Mandatory = $true, HelpMessage = "The number of instances to launch.")]
+    [Parameter(Mandatory = $false, HelpMessage = "The number of instances to launch.")]
     [int]$InstanceCount = 1,
 
-    [Parameter(Mandatory = $true, HelpMessage = "The type of instance to launch.")]
+    [Parameter(Mandatory = $false, HelpMessage = "The type of instance to launch.")]
     [ValidateSet('t2.micro','t2.small','t2.medium','t3.micro','t3.small','t3.medium','t3.large','m5.large','m5.xlarge','m5.2xlarge','m5.4xlarge','c5.large','c5.xlarge','c5.2xlarge','c5.4xlarge','r5.large','r5.xlarge','r5.2xlarge','r5.4xlarge','c6g.medium','c6g.large','c6g.xlarge','c6g.2xlarge','c6g.4xlarge','m6i.large','m6i.xlarge','m6i.2xlarge','m6i.4xlarge','r6i.large','r6i.xlarge','r6i.2xlarge','r6i.4xlarge')]
     [string]$InstanceType,
 
-    [Parameter(Mandatory = $true, HelpMessage = "The name of the key pair.")]
+    [Parameter(Mandatory = $false, HelpMessage = "The name of the key pair.")]
     [ValidatePattern('^[a-zA-Z0-9-_]{1,255}$')]
     [string]$KeyPairName,
 
-    [Parameter(Mandatory = $true, HelpMessage = "The ID of the security group.")]
+    [Parameter(Mandatory = $false, HelpMessage = "The ID of the security group.")]
     [ValidatePattern('^sg-[a-zA-Z0-9]{8,}$')]
     [string]$SecurityGroupId,
 
-    [Parameter(Mandatory = $true, HelpMessage = "The ID of the subnet.")]
+    [Parameter(Mandatory = $false, HelpMessage = "The ID of the subnet.")]
     [ValidatePattern('^subnet-[a-zA-Z0-9]{8,}$')]
     [string]$SubnetId
 )

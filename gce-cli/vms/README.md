@@ -13,9 +13,14 @@ using the gcloud CLI.
 
 ## Available Scripts
 
-| Script | Description |
-| --- | --- |
-| `gce-cli-create-vm.ps1` | Create a new Compute Engine VM instance |
+| Script                           | Description                                                      |
+| -------------------------------- | ---------------------------------------------------------------- |
+| `gce-cli-create-vm.ps1`          | Create a new Compute Engine VM instance                          |
+| `gce-cli-start-vm.ps1`           | Start a stopped VM instance                                      |
+| `gce-cli-stop-vm.ps1`            | Stop a running VM instance                                       |
+| `gce-cli-list-vms.ps1`           | List VM instances with optional status and format filters        |
+| `gce-cli-delete-vm.ps1`          | Delete a VM instance with optional confirmation and disk cleanup |
+| `gce-cli-create-vm-snapshot.ps1` | Snapshot a VM persistent disk (boot or attached)                 |
 
 ## Usage Examples
 
@@ -46,4 +51,81 @@ Create a preemptible VM with tags and labels:
   -Preemptible `
   -Tags "web-server,https-server" `
   -Labels "env=prod,team=backend"
+```
+
+### Start and Stop VM Instances
+
+```powershell
+.\gce-cli-stop-vm.ps1 -InstanceName "web-server-01"
+```
+
+```powershell
+.\gce-cli-start-vm.ps1 `
+  -ProjectId "my-project-123" `
+  -Zone "us-central1-a" `
+  -InstanceName "web-server-01"
+```
+
+### List VM Instances
+
+```powershell
+.\gce-cli-list-vms.ps1 -Status Running -OutputFormat Table
+```
+
+List all instances in a specific zone as JSON:
+
+```powershell
+.\gce-cli-list-vms.ps1 `
+  -ProjectId "my-project-123" `
+  -Zone "us-central1-a" `
+  -Status Running `
+  -OutputFormat JSON
+```
+
+### Delete a VM Instance
+
+```powershell
+.\gce-cli-delete-vm.ps1 `
+  -Zone "us-central1-a" `
+  -InstanceName "web-server-01"
+```
+
+Delete with attached disks and skip confirmation:
+
+```powershell
+.\gce-cli-delete-vm.ps1 `
+  -ProjectId "my-project-123" `
+  -Zone "us-central1-a" `
+  -InstanceName "web-server-01" `
+  -Force `
+  -DeleteDisks
+```
+
+Preview what would be deleted:
+
+```powershell
+.\gce-cli-delete-vm.ps1 `
+  -Zone "us-central1-a" `
+  -InstanceName "web-server-01" `
+  -WhatIf
+```
+
+### Create a VM Disk Snapshot
+
+```powershell
+.\gce-cli-create-vm-snapshot.ps1 `
+  -Zone "us-central1-a" `
+  -InstanceName "web-server-01"
+```
+
+Snapshot a named data disk with custom name and storage location:
+
+```powershell
+.\gce-cli-create-vm-snapshot.ps1 `
+  -ProjectId "my-project-123" `
+  -Zone "us-central1-a" `
+  -InstanceName "web-server-01" `
+  -DiskName "data-disk-01" `
+  -SnapshotName "data-backup-20260408" `
+  -StorageLocation "eu"
 ```

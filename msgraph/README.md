@@ -33,23 +33,23 @@ authentication code is included in the scripts themselves.
 Different scripts require different Microsoft Graph API permissions. Refer
 to each script's `.NOTES` section for the specific permissions needed.
 
-| Permission | Type | Description |
-| --- | --- | --- |
-| `User.Read.All` | Application | Read all users |
-| `Group.ReadWrite.All` | Application | Read and write all groups |
-| `GroupMember.ReadWrite.All` | Application | Read and write group memberships |
-| `DeviceManagementManagedDevices.ReadWrite.All` | Application | Read and write Intune devices |
-| `DeviceManagementApps.ReadWrite.All` | Application | Read and write Intune apps |
-| `DeviceManagementConfiguration.ReadWrite.All` | Application | Read and write Intune config policies |
-| `Policy.Read.All` | Application | Read conditional access policies |
+| Permission                                     | Type        | Description                           |
+| ---------------------------------------------- | ----------- | ------------------------------------- |
+| `User.Read.All`                                | Application | Read all users                        |
+| `Group.ReadWrite.All`                          | Application | Read and write all groups             |
+| `GroupMember.ReadWrite.All`                    | Application | Read and write group memberships      |
+| `DeviceManagementManagedDevices.ReadWrite.All` | Application | Read and write Intune devices         |
+| `DeviceManagementApps.ReadWrite.All`           | Application | Read and write Intune apps            |
+| `DeviceManagementConfiguration.ReadWrite.All`  | Application | Read and write Intune config policies |
+| `Policy.Read.All`                              | Application | Read conditional access policies      |
 
 ## Directory Structure
 
-| Folder / Script | Description | Service Focus |
-| --- | --- | --- |
-| [`entra/`](./entra/) | Entra ID management | Users, groups, conditional access |
-| [`intune/`](./intune/) | Microsoft Intune management | Devices, apps, compliance, policies |
-| [`msgraph-check-cis-benchmark.ps1`](./msgraph-check-cis-benchmark.ps1) | CIS Benchmark check and remediation | Entra ID + Intune |
+| Folder / Script                                                        | Description                         | Service Focus                       |
+| ---------------------------------------------------------------------- | ----------------------------------- | ----------------------------------- |
+| [`entra/`](./entra/)                                                   | Entra ID management                 | Users, groups, conditional access   |
+| [`intune/`](./intune/)                                                 | Microsoft Intune management         | Devices, apps, compliance, policies |
+| [`msgraph-check-cis-benchmark.ps1`](./msgraph-check-cis-benchmark.ps1) | CIS Benchmark check and remediation | Entra ID + Intune                   |
 
 ## Common Usage Patterns
 

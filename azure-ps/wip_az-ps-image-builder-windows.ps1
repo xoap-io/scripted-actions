@@ -60,19 +60,19 @@
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true, HelpMessage = "Defines the name of the Azure Resource Group.")]
+    [Parameter(Mandatory = $false, HelpMessage = "Defines the name of the Azure Resource Group.")]
     [ValidateNotNullOrEmpty()]
     [string]$AzResourceGroup = "myResourceGroup",
 
-    [Parameter(Mandatory = $true, HelpMessage = "Defines the location for the resource group.")]
+    [Parameter(Mandatory = $false, HelpMessage = "Defines the location for the resource group.")]
     [ValidateNotNullOrEmpty()]
     [string]$AzLocation = "westus2",
 
-    [Parameter(Mandatory = $true, HelpMessage = "Defines the name of the Azure VM.")]
+    [Parameter(Mandatory = $false, HelpMessage = "Defines the name of the Azure VM.")]
     [ValidateNotNullOrEmpty()]
     [string]$AzVmName = "myWinVM01",
 
-    [Parameter(Mandatory = $true, HelpMessage = "Defines the size of the Azure VM.")]
+    [Parameter(Mandatory = $false, HelpMessage = "Defines the size of the Azure VM.")]
     [ValidateSet(
         'Standard_D2s_v3', 'Standard_D4s_v3', 'Standard_D8s_v3',
         'Standard_D2s_v5', 'Standard_D4s_v5', 'Standard_D8s_v5',

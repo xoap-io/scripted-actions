@@ -130,7 +130,7 @@ function CheckScheduleEntry ([string]$TimeRange) {
                 $parsedDay = Get-Date $TimeRange
             }
 
-            if ($parsedDay -ne $null) {
+            if ($null -ne $parsedDay) {
                 $rangeStart = $parsedDay
                 $rangeEnd = $parsedDay.AddHours(23).AddMinutes(59).AddSeconds(59)
             }
@@ -214,7 +214,7 @@ try {
                 continue
             }
 
-            if ($schedule -eq $null) {
+            if ($null -eq $schedule) {
                 Write-Output "[$($vm.Name)]: Failed to get tagged schedule for virtual machine. Skipping this VM."
                 continue
             }

@@ -40,7 +40,7 @@
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true, HelpMessage = "The name of the Azure Resource Group")]
+    [Parameter(Mandatory = $false, HelpMessage = "The name of the Azure Resource Group")]
     [ValidateNotNullOrEmpty()]
     [string]$AzResourceGroup = "myResourceGroup",
 
@@ -48,7 +48,7 @@ param(
     [ValidateSet('eastus', 'eastus2', 'northeurope', 'germanywestcentral', 'westcentralus', 'southcentralus', 'centralus', 'northcentralus', 'eastus2euap', 'westus3', 'southeastasia', 'eastasia', 'japaneast', 'japanwest', 'australiaeast', 'australiasoutheast', 'australiacentral', 'australiacentral2', 'centralindia', 'southindia', 'westindia', 'canadacentral', 'canadaeast', 'uksouth', 'ukwest', 'francecentral', 'francesouth', 'norwayeast', 'norwaywest', 'switzerlandnorth', 'switzerlandwest', 'germanynorth', 'germanywestcentral', 'uaenorth', 'uaecentral', 'southafricanorth', 'southafricawest', 'brazilsouth', 'brazilus', 'koreacentral', 'koreasouth')]
     [string]$AzLocation,
 
-    [Parameter(Mandatory = $true, HelpMessage = "The name of the Azure Image Gallery")]
+    [Parameter(Mandatory = $false, HelpMessage = "The name of the Azure Image Gallery")]
     [ValidateNotNullOrEmpty()]
     [string]$AzGalleryName = "myImageGallery"
 )

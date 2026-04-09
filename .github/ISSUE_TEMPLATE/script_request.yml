@@ -1,0 +1,81 @@
+name: New script request
+description: Propose a new automation script for this repository.
+labels: [enhancement]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting a new script! Please provide as much context as
+        possible so we can evaluate and implement it effectively.
+  - type: dropdown
+    id: provider
+    attributes:
+      label: Cloud provider / platform
+      options:
+        - AWS (CLI)
+        - AWS (PowerShell)
+        - Azure (CLI)
+        - Azure (PowerShell)
+        - Azure (Bicep)
+        - Google Cloud (CLI)
+        - Google Cloud (PowerShell)
+        - Microsoft 365 / Entra ID / Intune (Graph)
+        - Nutanix
+        - VMware vSphere
+        - Citrix XenServer
+        - Windows Server (PowerShell)
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: service
+    attributes:
+      label: Service / feature area
+      description: >
+        The specific service the script would target (e.g. EC2, AKS, Entra
+        Users, Intune Compliance).
+      placeholder: "e.g. Azure Kubernetes Service"
+    validations:
+      required: true
+  - type: input
+    id: proposed_name
+    attributes:
+      label: Proposed script name
+      description: >
+        Follow the naming convention
+        `{provider}-{interface}-{action}-{resource}.ps1`.
+      placeholder: "e.g. az-cli-create-aks-cluster.ps1"
+    validations:
+      required: false
+  - type: textarea
+    id: description
+    attributes:
+      label: What should the script do?
+      description: >
+        Describe the automation task: what it does, which API / CLI command it
+        wraps, and what problem it solves.
+    validations:
+      required: true
+  - type: textarea
+    id: parameters
+    attributes:
+      label: Key parameters
+      description: >
+        List the main parameters the script should accept (name, type, whether
+        mandatory).
+      placeholder: |
+        - ResourceGroupName (string, mandatory)
+        - ClusterName (string, mandatory)
+        - NodeCount (int, optional, default 3)
+    validations:
+      required: false
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: >
+        Links to official docs, related scripts in this repo, or any other
+        context that would help implementation.
+    validations:
+      required: false

@@ -1,6 +1,7 @@
 # vSphere CLI - VM Management Scripts
 
-This directory contains PowerShell scripts for managing VMware vSphere virtual machines using PowerCLI.
+This directory contains PowerShell scripts for managing VMware vSphere virtual
+machines using PowerCLI.
 
 ## Prerequisites
 
@@ -12,7 +13,11 @@ This directory contains PowerShell scripts for managing VMware vSphere virtual m
 
 ## Available Scripts
 
-Scripts for managing vSphere virtual machines:
+| Script                               | Description                                                                                                                   |
+| ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| `vsphere-cli-clone-vm.ps1`           | Clone VMs or templates with support for full clones, linked clones, and bulk operations                                       |
+| `vsphere-cli-manage-vm-tags.ps1`     | Assign, remove, or list vSphere tag assignments on VMs using `New-TagAssignment`, `Remove-TagAssignment`, `Get-TagAssignment` |
+| `vsphere-cli-bulk-vm-operations.ps1` | Perform bulk power (Start, Stop, Suspend, Restart) or snapshot operations on VMs matching a name pattern or tag               |
 
 ### VM Lifecycle
 
@@ -37,6 +42,58 @@ Scripts for managing vSphere virtual machines:
 - Bulk configuration changes
 
 ## Usage Examples
+
+### Manage VM Tags
+
+```powershell
+$cred = Get-Credential
+
+# List all tags on a VM
+.\vsphere-cli-manage-vm-tags.ps1 `
+    -Server "vcenter.domain.com" `
+    -Credential $cred `
+    -VmName "WebServer01" `
+    -Action List
+
+# Assign a tag
+.\vsphere-cli-manage-vm-tags.ps1 `
+    -Server "vcenter.domain.com" `
+    -Credential $cred `
+    -VmName "WebServer01" `
+    -Action Assign `
+    -TagName "Production" `
+    -CategoryName "Environment"
+
+# Remove a tag
+.\vsphere-cli-manage-vm-tags.ps1 `
+    -Server "vcenter.domain.com" `
+    -Credential $cred `
+    -VmName "WebServer01" `
+    -Action Remove `
+    -TagName "Production"
+```
+
+### Bulk VM Operations
+
+```powershell
+$cred = Get-Credential
+
+# Stop all Dev VMs without confirmation
+.\vsphere-cli-bulk-vm-operations.ps1 `
+    -Server "vcenter.domain.com" `
+    -Credential $cred `
+    -VmNamePattern "Dev-*" `
+    -Action Stop `
+    -Force
+
+# Snapshot all VMs with a specific tag
+.\vsphere-cli-bulk-vm-operations.ps1 `
+    -Server "vcenter.domain.com" `
+    -Credential $cred `
+    -TagName "PrePatch" `
+    -Action Snapshot `
+    -SnapshotName "PrePatch-20260408"
+```
 
 ### Connect to vCenter
 

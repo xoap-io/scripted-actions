@@ -46,7 +46,7 @@ param(
 $ErrorActionPreference = 'Stop'
 
 try {
-    $assoc = Register-EC2Address -InstanceId $InstanceId -AllocationId $AllocationId
+    $null = Register-EC2Address -InstanceId $InstanceId -AllocationId $AllocationId
     Write-Host "Associated Elastic IP ($AllocationId) with instance $InstanceId." -ForegroundColor Green
 }
 catch {

@@ -12,11 +12,35 @@ containers via the Nutanix PowerShell SDK.
 
 ## Available Scripts
 
-| Script | Description |
-| --- | --- |
-| `nutanix-cli-storage-containers.ps1` | Creates, modifies, monitors, and optimizes storage containers with support for compression, deduplication, erasure coding, and capacity quotas |
+| Script                                | Description                                                                                                                                    |
+| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `nutanix-cli-storage-containers.ps1`  | Creates, modifies, monitors, and optimizes storage containers with support for compression, deduplication, erasure coding, and capacity quotas |
+| `nutanix-cli-create-volume-group.ps1` | Creates a Nutanix volume group using the Prism Central REST API v3 (POST /volume_groups); supports shared access and flash mode                |
 
 ## Usage Examples
+
+### Create Volume Group
+
+```powershell
+$pass = Read-Host -AsSecureString "Password"
+
+# Create a basic volume group
+.\nutanix-cli-create-volume-group.ps1 `
+    -PrismCentralHost "pc.domain.com" `
+    -Username "admin" `
+    -Password $pass `
+    -VolumeGroupName "ProdVG01"
+
+# Create a shared, flash-mode volume group
+.\nutanix-cli-create-volume-group.ps1 `
+    -PrismCentralHost "pc.domain.com" `
+    -Username "admin" `
+    -Password $pass `
+    -VolumeGroupName "SharedVG" `
+    -Description "Shared storage for app cluster" `
+    -SharedAccess `
+    -FlashMode
+```
 
 ### Storage Container Operations
 

@@ -102,12 +102,12 @@ try {
         $member = Invoke-MgGraphRequest -Uri "https://graph.microsoft.com/v1.0/users/$MemberUserPrincipalName`?`$select=id,displayName,userPrincipalName" -Method GET
         $resolvedId = $member.id
         $memberLabel = "$($member.displayName) ($($member.userPrincipalName))"
-        $odataType = "#microsoft.graph.user"
+        $null = "#microsoft.graph.user"  # type fixed for user lookup path
     }
     else {
         $resolvedId = $MemberObjectId
-        $memberLabel = "$MemberType: $MemberObjectId"
-        $odataType = if ($MemberType -eq 'Device') { "#microsoft.graph.device" } else { "#microsoft.graph.user" }
+        $memberLabel = "$($MemberType): $MemberObjectId"
+        $null = if ($MemberType -eq 'Device') { "#microsoft.graph.device" } else { "#microsoft.graph.user" }
     }
 
     Write-Host "✅ Member resolved: $memberLabel" -ForegroundColor Green
@@ -115,7 +115,7 @@ try {
     # Check if already a member
     Write-Host "🔍 Checking existing membership..." -ForegroundColor Cyan
     try {
-        $existing = Invoke-MgGraphRequest -Uri "https://graph.microsoft.com/v1.0/groups/$GroupId/members/$resolvedId" -Method GET
+        $null = Invoke-MgGraphRequest -Uri "https://graph.microsoft.com/v1.0/groups/$GroupId/members/$resolvedId" -Method GET
         Write-Host "ℹ️  '$memberLabel' is already a member of '$($group.displayName)'." -ForegroundColor Yellow
         exit 0
     }

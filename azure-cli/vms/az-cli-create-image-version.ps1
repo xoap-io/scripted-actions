@@ -69,35 +69,35 @@
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true, HelpMessage = "The name of the Azure Resource Group")]
+    [Parameter(Mandatory = $false, HelpMessage = "The name of the Azure Resource Group")]
     [ValidateNotNullOrEmpty()]
     [string]$AzResourceGroup = "MyResourceGroup",
 
-    [Parameter(Mandatory = $true, HelpMessage = "The name of the Azure Gallery")]
+    [Parameter(Mandatory = $false, HelpMessage = "The name of the Azure Gallery")]
     [ValidateNotNullOrEmpty()]
     [string]$AzGallery = "MyGallery",
 
-    [Parameter(Mandatory = $true, HelpMessage = "The name of the Azure Image Definition")]
+    [Parameter(Mandatory = $false, HelpMessage = "The name of the Azure Image Definition")]
     [ValidateNotNullOrEmpty()]
     [string]$AzImageDefinition = "MyImageDefinition",
 
-    [Parameter(Mandatory = $true, HelpMessage = "The version of the Azure Gallery Image")]
+    [Parameter(Mandatory = $false, HelpMessage = "The version of the Azure Gallery Image")]
     [ValidateNotNullOrEmpty()]
     [string]$AzGalleryImageVersion = "1.0.0",
 
-    [Parameter(Mandatory = $true, HelpMessage = "The target regions for the Azure Gallery Image")]
+    [Parameter(Mandatory = $false, HelpMessage = "The target regions for the Azure Gallery Image")]
     [ValidateNotNullOrEmpty()]
     [string]$AzTargetRegions = "westus",
 
-    [Parameter(Mandatory = $true, HelpMessage = "The replica count of the Azure Gallery Image")]
+    [Parameter(Mandatory = $false, HelpMessage = "The replica count of the Azure Gallery Image")]
     [ValidateNotNullOrEmpty()]
     [int]$AzReplicaCount = 1,
 
-    [Parameter(Mandatory = $true, HelpMessage = "The ID of the Azure Subscription")]
+    [Parameter(Mandatory = $false, HelpMessage = "The ID of the Azure Subscription")]
     [ValidateNotNullOrEmpty()]
     [string]$AzSubscriptionId = "00000000-0000-0000-0000-000000000000",
 
-    [Parameter(Mandatory = $true, HelpMessage = "The name of the Azure VM to use as the source image")]
+    [Parameter(Mandatory = $false, HelpMessage = "The name of the Azure VM to use as the source image")]
     [ValidateNotNullOrEmpty()]
     [string]$AzVmName = "MyVm",
 

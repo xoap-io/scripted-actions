@@ -12,11 +12,47 @@ XCP-ng host infrastructure using XenServerPSModule.
 
 ## Available Scripts
 
-| Script | Description |
-| --- | --- |
-| `xenserver-cli-host-operations.ps1` | Manages XenServer host operations: enable/disable maintenance mode, evacuate VMs, reboot, shutdown, and health check |
+| Script                               | Description                                                                                                          |
+| ------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
+| `xenserver-cli-host-operations.ps1`  | Manages XenServer host operations: enable/disable maintenance mode, evacuate VMs, reboot, shutdown, and health check |
+| `xenserver-cli-pool-operations.ps1`  | Manages XenServer pool operations: get pool info, join a new host, or eject a host from the pool                     |
+| `xenserver-cli-patch-management.ps1` | Lists and applies patches/updates to XenServer hosts using Get-XenPoolPatch and Invoke-XenHost                       |
 
 ## Usage Examples
+
+### Pool Operations
+
+```powershell
+# Get pool information
+.\xenserver-cli-pool-operations.ps1 `
+    -XenServer "xenserver.local" `
+    -Credential (Get-Credential) `
+    -Action Get
+
+# Eject a host from the pool
+.\xenserver-cli-pool-operations.ps1 `
+    -XenServer "xenserver.local" `
+    -Credential (Get-Credential) `
+    -Action Eject `
+    -HostToEject "xenhost03.local"
+```
+
+### Patch Management
+
+```powershell
+# List available patches
+.\xenserver-cli-patch-management.ps1 `
+    -XenServer "xenserver.local" `
+    -Credential (Get-Credential) `
+    -Action List
+
+# Apply all available patches
+.\xenserver-cli-patch-management.ps1 `
+    -XenServer "xenserver.local" `
+    -Credential (Get-Credential) `
+    -Action Apply `
+    -ApplyAll
+```
 
 ### Host Operations
 

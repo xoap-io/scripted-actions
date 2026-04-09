@@ -265,8 +265,8 @@ function Get-TargetHosts {
         }
 
         Write-Host "Found $($hosts.Count) host(s) for processing:" -ForegroundColor Green
-        foreach ($host in $hosts) {
-            Write-Host "  - $($host.name) [$($host.uuid)] - $($host.hypervisorAddress)" -ForegroundColor White
+        foreach ($hostObj in $hosts) {
+            Write-Host "  - $($hostObj.name) [$($hostObj.uuid)] - $($hostObj.hypervisorAddress)" -ForegroundColor White
         }
 
         return $hosts
@@ -279,13 +279,13 @@ function Get-TargetHosts {
 
 # Function to get host health information
 function Get-HostHealth {
-    param($Host)
+    param($hostObj)
 
     try {
-        Write-Host "  Analyzing host health: $($Host.name)" -ForegroundColor Cyan
+        Write-Host "  Analyzing host health: $($hostObj.name)" -ForegroundColor Cyan
 
         # Get host stats
-        $hostStats = Get-NTNXHostStats -HostUuid $Host.uuid
+        $hostStats = Get-NTNXHostStats -HostUuid $hostObj.uuid
 
         # Calculate health metrics
         $cpuUsage = if ($hostStats.statsSpecificEntries.cpuUsagePpm) {
@@ -300,12 +300,12 @@ function Get-HostHealth {
         $healthStatus = "Healthy"
         $healthIssues = @()
 
-        if ($Host.state -ne "NORMAL") {
+        if ($hostObj.state -ne "NORMAL") {
             $healthStatus = "Critical"
-            $healthIssues += "Host state is $($Host.state)"
+            $healthIssues += "Host state is $($hostObj.state)"
         }
 
-        if ($Host.inMaintenanceMode) {
+        if ($hostObj.inMaintenanceMode) {
             if ($healthStatus -eq "Healthy") { $healthStatus = "Warning" }
             $healthIssues += "Host is in maintenance mode"
         }
@@ -336,25 +336,25 @@ function Get-HostHealth {
         )
 
         return @{
-            HostName = $Host.name
-            HostUUID = $Host.uuid
-            HostIP = $Host.hypervisorAddress
+            HostName = $hostObj.name
+            HostUUID = $hostObj.uuid
+            HostIP = $hostObj.hypervisorAddress
             HealthStatus = $healthStatus
             HealthIssues = $healthIssues
-            State = $Host.state
-            InMaintenanceMode = $Host.inMaintenanceMode
+            State = $hostObj.state
+            InMaintenanceMode = $hostObj.inMaintenanceMode
             CPUUsagePercent = $cpuUsage
             MemoryUsagePercent = $memoryUsage
-            HypervisorType = $Host.hypervisorType
-            HypervisorVersion = $Host.hypervisorFullName
+            HypervisorType = $hostObj.hypervisorType
+            HypervisorVersion = $hostObj.hypervisorFullName
             LastUpdated = Get-Date
         }
     }
     catch {
         Write-Warning "    Failed to analyze host health: $($_.Exception.Message)"
         return @{
-            HostName = $Host.name
-            HostUUID = $Host.uuid
+            HostName = $hostObj.name
+            HostUUID = $hostObj.uuid
             HealthStatus = "Unknown"
             HealthIssues = @("Failed to retrieve health data")
             Error = $_.Exception.Message
@@ -365,30 +365,30 @@ function Get-HostHealth {
 
 # Function to get detailed host status
 function Get-HostStatus {
-    param($Host, $IncludeVMs, $IncludeHardware, $IncludePerformance)
+    param($hostObj, $IncludeVMs, $IncludeHardware, $IncludePerformance)
 
     try {
-        Write-Host "  Getting host status: $($Host.name)" -ForegroundColor Cyan
+        Write-Host "  Getting host status: $($hostObj.name)" -ForegroundColor Cyan
 
         $status = @{
-            HostName = $Host.name
-            HostUUID = $Host.uuid
-            HostIP = $Host.hypervisorAddress
-            ManagementIP = $Host.managementServerIp
-            State = $Host.state
-            InMaintenanceMode = $Host.inMaintenanceMode
-            HypervisorType = $Host.hypervisorType
-            HypervisorVersion = $Host.hypervisorFullName
-            ClusterUUID = $Host.clusterUuid
-            CPUCores = $Host.numCpuCores
-            CPUSockets = $Host.numCpuSockets
-            MemoryCapacityGB = [math]::Round($Host.memoryCapacityBytes / 1GB, 2)
+            HostName = $hostObj.name
+            HostUUID = $hostObj.uuid
+            HostIP = $hostObj.hypervisorAddress
+            ManagementIP = $hostObj.managementServerIp
+            State = $hostObj.state
+            InMaintenanceMode = $hostObj.inMaintenanceMode
+            HypervisorType = $hostObj.hypervisorType
+            HypervisorVersion = $hostObj.hypervisorFullName
+            ClusterUUID = $hostObj.clusterUuid
+            CPUCores = $hostObj.numCpuCores
+            CPUSockets = $hostObj.numCpuSockets
+            MemoryCapacityGB = [math]::Round($hostObj.memoryCapacityBytes / 1GB, 2)
             LastUpdated = Get-Date
         }
 
         # Include VM information
         if ($IncludeVMs) {
-            $vms = Get-NTNXVM | Where-Object { $_.hostUuid -eq $Host.uuid }
+            $vms = Get-NTNXVM | Where-Object { $_.hostUuid -eq $hostObj.uuid }
             $poweredOnVMs = $vms | Where-Object { $_.powerState -eq "ON" }
 
             $status.VMInfo = @{
@@ -404,23 +404,23 @@ function Get-HostStatus {
         # Include hardware information
         if ($IncludeHardware) {
             $status.HardwareInfo = @{
-                Model = $Host.modelName
-                SerialNumber = $Host.serialNumber
-                BlockSerial = $Host.blockSerial
-                Position = $Host.position
-                CPUModel = $Host.cpuModel
-                CPUFrequencyHz = $Host.cpuFrequencyHz
-                HypervisorType = $Host.hypervisorType
-                HypervisorVersion = $Host.hypervisorFullName
-                BMCVersion = if ($Host.bmcVersion) { $Host.bmcVersion } else { "Not Available" }
-                BIOSVersion = if ($Host.biosVersion) { $Host.biosVersion } else { "Not Available" }
+                Model = $hostObj.modelName
+                SerialNumber = $hostObj.serialNumber
+                BlockSerial = $hostObj.blockSerial
+                Position = $hostObj.position
+                CPUModel = $hostObj.cpuModel
+                CPUFrequencyHz = $hostObj.cpuFrequencyHz
+                HypervisorType = $hostObj.hypervisorType
+                HypervisorVersion = $hostObj.hypervisorFullName
+                BMCVersion = if ($hostObj.bmcVersion) { $hostObj.bmcVersion } else { "Not Available" }
+                BIOSVersion = if ($hostObj.biosVersion) { $hostObj.biosVersion } else { "Not Available" }
             }
         }
 
         # Include performance information
         if ($IncludePerformance) {
             try {
-                $hostStats = Get-NTNXHostStats -HostUuid $Host.uuid
+                $hostStats = Get-NTNXHostStats -HostUuid $hostObj.uuid
 
                 $status.PerformanceInfo = @{
                     CPUUsagePercent = if ($hostStats.statsSpecificEntries.cpuUsagePpm) {
@@ -449,8 +449,8 @@ function Get-HostStatus {
     catch {
         Write-Warning "    Failed to get host status: $($_.Exception.Message)"
         return @{
-            HostName = $Host.name
-            HostUUID = $Host.uuid
+            HostName = $hostObj.name
+            HostUUID = $hostObj.uuid
             Error = $_.Exception.Message
             LastUpdated = Get-Date
         }
@@ -459,19 +459,19 @@ function Get-HostStatus {
 
 # Function to manage host maintenance mode
 function Set-HostMaintenanceMode {
-    param($Host, $MaintenanceMode, $Force)
+    param($hostObj, $MaintenanceMode, $Force)
 
     try {
-        Write-Host "  Managing maintenance mode for host: $($Host.name)" -ForegroundColor Cyan
+        Write-Host "  Managing maintenance mode for host: $($hostObj.name)" -ForegroundColor Cyan
 
-        $currentMode = if ($Host.inMaintenanceMode) { "Enabled" } else { "Disabled" }
+        $currentMode = if ($hostObj.inMaintenanceMode) { "Enabled" } else { "Disabled" }
         Write-Host "    Current maintenance mode: $currentMode" -ForegroundColor White
 
         if ($currentMode -eq $MaintenanceMode) {
             Write-Host "    Host is already in the requested maintenance mode" -ForegroundColor Yellow
             return @{
-                HostName = $Host.name
-                HostUUID = $Host.uuid
+                HostName = $hostObj.name
+                HostUUID = $hostObj.uuid
                 Operation = "Maintenance Mode"
                 Status = "No Change Required"
                 CurrentMode = $currentMode
@@ -482,7 +482,7 @@ function Set-HostMaintenanceMode {
 
         # Check for VMs if entering maintenance mode
         if ($MaintenanceMode -eq "Enable") {
-            $poweredOnVMs = Get-NTNXVM | Where-Object { $_.hostUuid -eq $Host.uuid -and $_.powerState -eq "ON" }
+            $poweredOnVMs = Get-NTNXVM | Where-Object { $_.hostUuid -eq $hostObj.uuid -and $_.powerState -eq "ON" }
             if ($poweredOnVMs.Count -gt 0 -and -not $Force) {
                 Write-Warning "    Host has $($poweredOnVMs.Count) powered-on VMs. Use -Force to proceed with maintenance mode."
                 Write-Host "    Powered-on VMs:" -ForegroundColor Yellow
@@ -490,8 +490,8 @@ function Set-HostMaintenanceMode {
                     Write-Host "      - $($vm.vmName)" -ForegroundColor Yellow
                 }
                 return @{
-                    HostName = $Host.name
-                    HostUUID = $Host.uuid
+                    HostName = $hostObj.name
+                    HostUUID = $hostObj.uuid
                     Operation = "Maintenance Mode"
                     Status = "Blocked"
                     Reason = "Host has powered-on VMs"
@@ -503,12 +503,12 @@ function Set-HostMaintenanceMode {
 
         # Confirm operation
         if (-not $Force) {
-            $confirmation = Read-Host "Are you sure you want to $MaintenanceMode maintenance mode for host '$($Host.name)'? (y/N)"
+            $confirmation = Read-Host "Are you sure you want to $MaintenanceMode maintenance mode for host '$($hostObj.name)'? (y/N)"
             if ($confirmation -ne 'y' -and $confirmation -ne 'Y') {
                 Write-Host "    Operation cancelled by user" -ForegroundColor Yellow
                 return @{
-                    HostName = $Host.name
-                    HostUUID = $Host.uuid
+                    HostName = $hostObj.name
+                    HostUUID = $hostObj.uuid
                     Operation = "Maintenance Mode"
                     Status = "Cancelled"
                     LastUpdated = Get-Date
@@ -520,19 +520,19 @@ function Set-HostMaintenanceMode {
         switch ($MaintenanceMode) {
             "Enable" {
                 Write-Host "    Entering maintenance mode..." -ForegroundColor Yellow
-                $result = Set-NTNXHostMaintenanceMode -HostUuid $Host.uuid -InMaintenanceMode $true
+                $null = Set-NTNXHostMaintenanceMode -HostUuid $hostObj.uuid -InMaintenanceMode $true
                 Write-Host "    ✓ Host entered maintenance mode successfully" -ForegroundColor Green
             }
             "Disable" {
                 Write-Host "    Exiting maintenance mode..." -ForegroundColor Yellow
-                $result = Set-NTNXHostMaintenanceMode -HostUuid $Host.uuid -InMaintenanceMode $false
+                $null = Set-NTNXHostMaintenanceMode -HostUuid $hostObj.uuid -InMaintenanceMode $false
                 Write-Host "    ✓ Host exited maintenance mode successfully" -ForegroundColor Green
             }
         }
 
         return @{
-            HostName = $Host.name
-            HostUUID = $Host.uuid
+            HostName = $hostObj.name
+            HostUUID = $hostObj.uuid
             Operation = "Maintenance Mode"
             Status = "Success"
             PreviousMode = $currentMode
@@ -543,8 +543,8 @@ function Set-HostMaintenanceMode {
     catch {
         Write-Error "    Failed to manage maintenance mode: $($_.Exception.Message)"
         return @{
-            HostName = $Host.name
-            HostUUID = $Host.uuid
+            HostName = $hostObj.name
+            HostUUID = $hostObj.uuid
             Operation = "Maintenance Mode"
             Status = "Failed"
             Error = $_.Exception.Message
@@ -555,19 +555,19 @@ function Set-HostMaintenanceMode {
 
 # Function to monitor host performance
 function Monitor-HostPerformance {
-    param($Host, $AlertThresholds, $CPUThreshold, $MemoryThreshold)
+    param($hostObj, $AlertThresholds, $CPUThreshold, $MemoryThreshold)
 
     try {
-        Write-Host "  Monitoring host performance: $($Host.name)" -ForegroundColor Cyan
+        Write-Host "  Monitoring host performance: $($hostObj.name)" -ForegroundColor Cyan
 
         # Get performance stats
-        $stats = Get-NTNXHostStats -HostUuid $Host.uuid
+        $stats = Get-NTNXHostStats -HostUuid $hostObj.uuid
 
         # Calculate performance metrics
         $metrics = @{
-            HostName = $Host.name
-            HostUUID = $Host.uuid
-            HostIP = $Host.hypervisorAddress
+            HostName = $hostObj.name
+            HostUUID = $hostObj.uuid
+            HostIP = $hostObj.hypervisorAddress
             CPUUsagePercent = if ($stats.statsSpecificEntries.cpuUsagePpm) {
                 [math]::Round($stats.statsSpecificEntries.cpuUsagePpm / 10000, 2)
             } else { 0 }
@@ -578,8 +578,8 @@ function Monitor-HostPerformance {
             IOPSWrite = if ($stats.statsSpecificEntries.writeIOPS) { $stats.statsSpecificEntries.writeIOPS } else { 0 }
             ThroughputReadMBps = if ($stats.statsSpecificEntries.readThroughputMBps) { $stats.statsSpecificEntries.readThroughputMBps } else { 0 }
             ThroughputWriteMBps = if ($stats.statsSpecificEntries.writeThroughputMBps) { $stats.statsSpecificEntries.writeThroughputMBps } else { 0 }
-            State = $Host.state
-            InMaintenanceMode = $Host.inMaintenanceMode
+            State = $hostObj.state
+            InMaintenanceMode = $hostObj.inMaintenanceMode
             Timestamp = Get-Date
         }
 
@@ -597,8 +597,8 @@ function Monitor-HostPerformance {
                 Write-Host "    ⚠ ALERT: $($alerts[-1])" -ForegroundColor Red
             }
 
-            if ($Host.state -ne "NORMAL") {
-                $alerts += "Host state is $($Host.state)"
+            if ($hostObj.state -ne "NORMAL") {
+                $alerts += "Host state is $($hostObj.state)"
                 Write-Host "    ⚠ ALERT: $($alerts[-1])" -ForegroundColor Red
             }
 
@@ -613,8 +613,8 @@ function Monitor-HostPerformance {
     catch {
         Write-Warning "    Failed to monitor host performance: $($_.Exception.Message)"
         return @{
-            HostName = $Host.name
-            HostUUID = $Host.uuid
+            HostName = $hostObj.name
+            HostUUID = $hostObj.uuid
             Error = $_.Exception.Message
             Timestamp = Get-Date
         }
@@ -623,30 +623,30 @@ function Monitor-HostPerformance {
 
 # Function to get host hardware information
 function Get-HostHardware {
-    param($Host)
+    param($hostObj)
 
     try {
-        Write-Host "  Getting hardware information: $($Host.name)" -ForegroundColor Cyan
+        Write-Host "  Getting hardware information: $($hostObj.name)" -ForegroundColor Cyan
 
         $hardware = @{
-            HostName = $Host.name
-            HostUUID = $Host.uuid
-            HostIP = $Host.hypervisorAddress
-            Model = $Host.modelName
-            SerialNumber = $Host.serialNumber
-            BlockSerial = $Host.blockSerial
-            Position = $Host.position
-            CPUModel = $Host.cpuModel
-            CPUCores = $Host.numCpuCores
-            CPUSockets = $Host.numCpuSockets
-            CPUFrequencyHz = $Host.cpuFrequencyHz
-            MemoryCapacityGB = [math]::Round($Host.memoryCapacityBytes / 1GB, 2)
-            HypervisorType = $Host.hypervisorType
-            HypervisorVersion = $Host.hypervisorFullName
-            BMCVersion = if ($Host.bmcVersion) { $Host.bmcVersion } else { "Not Available" }
-            BIOSVersion = if ($Host.biosVersion) { $Host.biosVersion } else { "Not Available" }
-            LastBootTime = if ($Host.bootTimeUsecs) {
-                [DateTimeOffset]::FromUnixTimeMilliseconds($Host.bootTimeUsecs / 1000).DateTime
+            HostName = $hostObj.name
+            HostUUID = $hostObj.uuid
+            HostIP = $hostObj.hypervisorAddress
+            Model = $hostObj.modelName
+            SerialNumber = $hostObj.serialNumber
+            BlockSerial = $hostObj.blockSerial
+            Position = $hostObj.position
+            CPUModel = $hostObj.cpuModel
+            CPUCores = $hostObj.numCpuCores
+            CPUSockets = $hostObj.numCpuSockets
+            CPUFrequencyHz = $hostObj.cpuFrequencyHz
+            MemoryCapacityGB = [math]::Round($hostObj.memoryCapacityBytes / 1GB, 2)
+            HypervisorType = $hostObj.hypervisorType
+            HypervisorVersion = $hostObj.hypervisorFullName
+            BMCVersion = if ($hostObj.bmcVersion) { $hostObj.bmcVersion } else { "Not Available" }
+            BIOSVersion = if ($hostObj.biosVersion) { $hostObj.biosVersion } else { "Not Available" }
+            LastBootTime = if ($hostObj.bootTimeUsecs) {
+                [DateTimeOffset]::FromUnixTimeMilliseconds($hostObj.bootTimeUsecs / 1000).DateTime
             } else { "Not Available" }
             LastUpdated = Get-Date
         }
@@ -658,8 +658,8 @@ function Get-HostHardware {
     catch {
         Write-Warning "    Failed to get hardware information: $($_.Exception.Message)"
         return @{
-            HostName = $Host.name
-            HostUUID = $Host.uuid
+            HostName = $hostObj.name
+            HostUUID = $hostObj.uuid
             Error = $_.Exception.Message
             LastUpdated = Get-Date
         }
@@ -668,16 +668,16 @@ function Get-HostHardware {
 
 # Function to get host VMs
 function Get-HostVMs {
-    param($Host)
+    param($hostObj)
 
     try {
-        Write-Host "  Getting VMs for host: $($Host.name)" -ForegroundColor Cyan
+        Write-Host "  Getting VMs for host: $($hostObj.name)" -ForegroundColor Cyan
 
-        $vms = Get-NTNXVM | Where-Object { $_.hostUuid -eq $Host.uuid }
+        $vms = Get-NTNXVM | Where-Object { $_.hostUuid -eq $hostObj.uuid }
 
         $vmInfo = @{
-            HostName = $Host.name
-            HostUUID = $Host.uuid
+            HostName = $hostObj.name
+            HostUUID = $hostObj.uuid
             TotalVMs = $vms.Count
             PoweredOnVMs = ($vms | Where-Object { $_.powerState -eq "ON" }).Count
             PoweredOffVMs = ($vms | Where-Object { $_.powerState -eq "OFF" }).Count
@@ -694,8 +694,8 @@ function Get-HostVMs {
     catch {
         Write-Warning "    Failed to get VM information: $($_.Exception.Message)"
         return @{
-            HostName = $Host.name
-            HostUUID = $Host.uuid
+            HostName = $hostObj.name
+            HostUUID = $hostObj.uuid
             Error = $_.Exception.Message
             LastUpdated = Get-Date
         }
@@ -839,41 +839,41 @@ try {
     # Perform operations
     $results = @()
 
-    foreach ($host in $targetHosts) {
+    foreach ($hostObj in $targetHosts) {
         switch ($Operation) {
             "Health" {
-                $result = Get-HostHealth -Host $host
+                $result = Get-HostHealth -Host $hostObj
                 $results += $result
             }
             "Status" {
-                $result = Get-HostStatus -Host $host -IncludeVMs:$IncludeVMs -IncludeHardware:$IncludeHardware -IncludePerformance:$IncludePerformance
+                $result = Get-HostStatus -Host $hostObj -IncludeVMs:$IncludeVMs -IncludeHardware:$IncludeHardware -IncludePerformance:$IncludePerformance
                 $results += $result
             }
             "Report" {
-                $result = Get-HostStatus -Host $host -IncludeVMs:$IncludeVMs -IncludeHardware:$IncludeHardware -IncludePerformance:$IncludePerformance
+                $result = Get-HostStatus -Host $hostObj -IncludeVMs:$IncludeVMs -IncludeHardware:$IncludeHardware -IncludePerformance:$IncludePerformance
                 $results += $result
             }
             "Maintenance" {
                 if (-not $MaintenanceMode) {
                     throw "MaintenanceMode parameter is required for Maintenance operation"
                 }
-                $result = Set-HostMaintenanceMode -Host $host -MaintenanceMode $MaintenanceMode -Force:$Force
+                $result = Set-HostMaintenanceMode -Host $hostObj -MaintenanceMode $MaintenanceMode -Force:$Force
                 $results += $result
             }
             "Performance" {
-                $result = Monitor-HostPerformance -Host $host -AlertThresholds:$AlertThresholds -CPUThreshold $CPUThreshold -MemoryThreshold $MemoryThreshold
+                $result = Monitor-HostPerformance -Host $hostObj -AlertThresholds:$AlertThresholds -CPUThreshold $CPUThreshold -MemoryThreshold $MemoryThreshold
                 $results += $result
             }
             "Monitor" {
-                $result = Monitor-HostPerformance -Host $host -AlertThresholds:$AlertThresholds -CPUThreshold $CPUThreshold -MemoryThreshold $MemoryThreshold
+                $result = Monitor-HostPerformance -Host $hostObj -AlertThresholds:$AlertThresholds -CPUThreshold $CPUThreshold -MemoryThreshold $MemoryThreshold
                 $results += $result
             }
             "Hardware" {
-                $result = Get-HostHardware -Host $host
+                $result = Get-HostHardware -Host $hostObj
                 $results += $result
             }
             "VMs" {
-                $result = Get-HostVMs -Host $host
+                $result = Get-HostVMs -Host $hostObj
                 $results += $result
             }
         }
