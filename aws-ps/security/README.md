@@ -19,10 +19,14 @@ remediation using AWS Tools for PowerShell and the AWS CLI.
 
 ## Available Scripts
 
-| Script | Description |
-| --- | --- |
-| `aws-ps-account-hardening.ps1` | Applies CIS AWS Foundations v3.0.0-aligned hardening: CloudTrail, GuardDuty, Security Hub, AWS Config, IAM password policy, VPC Flow Logs, EBS encryption, CloudWatch alarms, and SNS alerts |
-| `aws-ps-account-unhardening.ps1` | Reverts hardening actions selectively via switches; intended for lab or teardown scenarios |
+| Script                           | Description                                                                                                                                                                                  |
+| -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `aws-ps-account-hardening.ps1`   | Applies CIS AWS Foundations v3.0.0-aligned hardening: CloudTrail, GuardDuty, Security Hub, AWS Config, IAM password policy, VPC Flow Logs, EBS encryption, CloudWatch alarms, and SNS alerts |
+| `aws-ps-account-unhardening.ps1` | Reverts hardening actions selectively via switches; intended for lab or teardown scenarios                                                                                                   |
+| `aws-ps-create-iam-role.ps1`     | Creates an IAM role with a trust policy using `New-IAMRole`; supports tags, custom path, and max session duration                                                                            |
+| `aws-ps-create-iam-policy.ps1`   | Creates a managed IAM policy using `New-IAMPolicy`; optionally attaches it to a role (`Register-IAMRolePolicy`) or user (`Register-IAMUserPolicy`)                                           |
+| `aws-ps-enable-guardduty.ps1`    | Enables GuardDuty in a region using `New-GDDetector`; checks for existing detectors and supports S3 logs, Kubernetes audit logs, and malware protection                                      |
+| `aws-ps-manage-kms-keys.ps1`     | Manages KMS keys with actions: Create (`New-KMSKey`), Describe, List, EnableRotation, DisableRotation, and CreateAlias                                                                       |
 
 ## Usage Examples
 

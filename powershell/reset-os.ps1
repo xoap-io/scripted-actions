@@ -72,7 +72,7 @@ function Ensure-WinRE {
   $info = (reagentc.exe /info) 2>&1 | Out-String
   if ($info -notmatch 'Windows RE status:\s+Enabled') {
     Write-Host "Enabling Windows RE..."
-    $out = (reagentc.exe /enable) 2>&1
+    $null = (reagentc.exe /enable) 2>&1
     Start-Sleep -Seconds 2
     $info = (reagentc.exe /info) 2>&1 | Out-String
     if ($info -notmatch 'Windows RE status:\s+Enabled') {

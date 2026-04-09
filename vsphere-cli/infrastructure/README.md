@@ -1,6 +1,7 @@
 # vSphere CLI - Infrastructure Management Scripts
 
-This directory contains PowerShell scripts for managing VMware vSphere infrastructure using PowerCLI.
+This directory contains PowerShell scripts for managing VMware vSphere
+infrastructure using PowerCLI.
 
 ## Prerequisites
 
@@ -12,6 +13,10 @@ This directory contains PowerShell scripts for managing VMware vSphere infrastru
 - Network connectivity to vCenter/ESXi
 
 ## Available Scripts
+
+| Script                            | Description                                                                                                                                      |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `vsphere-cli-manage-clusters.ps1` | Create, configure, get, or remove a vSphere cluster with DRS and HA settings using `New-Cluster`, `Set-Cluster`, `Remove-Cluster`, `Get-Cluster` |
 
 Scripts for managing vSphere infrastructure components:
 
@@ -39,6 +44,40 @@ Scripts for managing vSphere infrastructure components:
 
 ## Usage Examples
 
+### Manage Clusters
+
+```powershell
+$cred = Get-Credential
+
+# Get cluster details
+.\vsphere-cli-manage-clusters.ps1 `
+    -Server "vcenter.domain.com" `
+    -Credential $cred `
+    -DatacenterName "Production" `
+    -ClusterName "ProdCluster01" `
+    -Action Get
+
+# Create a new cluster with DRS and HA
+.\vsphere-cli-manage-clusters.ps1 `
+    -Server "vcenter.domain.com" `
+    -Credential $cred `
+    -DatacenterName "Production" `
+    -ClusterName "ProdCluster01" `
+    -Action Create `
+    -EnableDrs `
+    -EnableHA `
+    -HaFailoverLevel 2
+
+# Configure DRS automation level on existing cluster
+.\vsphere-cli-manage-clusters.ps1 `
+    -Server "vcenter.domain.com" `
+    -Credential $cred `
+    -DatacenterName "Production" `
+    -ClusterName "ProdCluster01" `
+    -Action Configure `
+    -DrsAutomationLevel PartiallyAutomated
+```
+
 ### Connect to vCenter
 
 ```powershell
@@ -49,7 +88,8 @@ Install-Module -Name VMware.PowerCLI -Scope CurrentUser
 Set-PowerCLIConfiguration -InvalidCertificateAction Ignore -Confirm:$false
 
 # Connect to vCenter
-Connect-VIServer -Server vcenter.domain.com -User administrator@vsphere.local -Password 'P@ssw0rd'
+Connect-VIServer -Server vcenter.domain.com `
+    -User administrator@vsphere.local -Password 'P@ssw0rd'
 ```
 
 ### Create Datacenter and Cluster
@@ -59,7 +99,8 @@ Connect-VIServer -Server vcenter.domain.com -User administrator@vsphere.local -P
 $datacenter = New-Datacenter -Location (Get-Folder -NoRecursion) -Name "Production"
 
 # Create cluster
-$cluster = New-Cluster -Location $datacenter -Name "Production-Cluster" -HAEnabled -DrsEnabled
+$cluster = New-Cluster -Location $datacenter -Name "Production-Cluster" `
+    -HAEnabled -DrsEnabled
 ```
 
 ### Add ESXi Host to Cluster

@@ -12,8 +12,8 @@ XCP-ng networking using XenServerPSModule.
 
 ## Available Scripts
 
-| Script | Description |
-| --- | --- |
+| Script                                 | Description                                                                                          |
+| -------------------------------------- | ---------------------------------------------------------------------------------------------------- |
 | `xenserver-cli-network-operations.ps1` | Creates and manages virtual networks, VLANs, and NIC bonds; supports listing and destroying networks |
 
 ## Usage Examples

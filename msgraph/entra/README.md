@@ -15,14 +15,19 @@ Graph API, including users, groups, conditional access policies, and directory o
 
 ## Scripts
 
-| Script | Description |
-|---|---|
-| [`msgraph-get-entra-users.ps1`](./msgraph-get-entra-users.ps1) | List and filter Entra ID users |
-| [`msgraph-disable-entra-user.ps1`](./msgraph-disable-entra-user.ps1) | Enable or disable a user account |
-| [`msgraph-get-entra-groups.ps1`](./msgraph-get-entra-groups.ps1) | List and filter Entra ID groups |
-| [`msgraph-create-entra-group.ps1`](./msgraph-create-entra-group.ps1) | Create a new security or M365 group |
-| [`msgraph-add-entra-group-member.ps1`](./msgraph-add-entra-group-member.ps1) | Add a user or device to a group |
-| [`msgraph-get-conditional-access-policies.ps1`](./msgraph-get-conditional-access-policies.ps1) | List conditional access policies |
+| Script                                                                                         | Description                            |
+| ---------------------------------------------------------------------------------------------- | -------------------------------------- |
+| [`msgraph-get-entra-users.ps1`](./msgraph-get-entra-users.ps1)                                 | List and filter Entra ID users         |
+| [`msgraph-disable-entra-user.ps1`](./msgraph-disable-entra-user.ps1)                           | Enable or disable a user account       |
+| [`msgraph-get-entra-groups.ps1`](./msgraph-get-entra-groups.ps1)                               | List and filter Entra ID groups        |
+| [`msgraph-create-entra-group.ps1`](./msgraph-create-entra-group.ps1)                           | Create a new security or M365 group    |
+| [`msgraph-add-entra-group-member.ps1`](./msgraph-add-entra-group-member.ps1)                   | Add a user or device to a group        |
+| [`msgraph-get-conditional-access-policies.ps1`](./msgraph-get-conditional-access-policies.ps1) | List conditional access policies       |
+| [`msgraph-create-entra-user.ps1`](./msgraph-create-entra-user.ps1)                             | Create a new Entra ID user account     |
+| [`msgraph-update-entra-user.ps1`](./msgraph-update-entra-user.ps1)                             | Update properties of an existing user  |
+| [`msgraph-assign-entra-role.ps1`](./msgraph-assign-entra-role.ps1)                             | Assign a directory role to a user      |
+| [`msgraph-get-entra-sign-in-logs.ps1`](./msgraph-get-entra-sign-in-logs.ps1)                   | Retrieve sign-in audit logs            |
+| [`msgraph-remove-entra-group-member.ps1`](./msgraph-remove-entra-group-member.ps1)             | Remove a member from an Entra ID group |
 
 ## Quick Start
 

@@ -53,11 +53,11 @@
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true, HelpMessage = "Defines the name of the Azure Resource Group.")]
+    [Parameter(Mandatory = $false, HelpMessage = "Defines the name of the Azure Resource Group.")]
     [ValidateNotNullOrEmpty()]
     [string]$AzResourceGroup = "myResourceGroup",
 
-    [Parameter(Mandatory = $true, HelpMessage = "Defines the name of the Azure VM.")]
+    [Parameter(Mandatory = $false, HelpMessage = "Defines the name of the Azure VM.")]
     [ValidateNotNullOrEmpty()]
     [string]$AzVmName = "myVm",
 

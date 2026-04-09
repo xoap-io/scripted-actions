@@ -52,19 +52,19 @@
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true, HelpMessage = "The name of the Azure Resource Group")]
+    [Parameter(Mandatory = $false, HelpMessage = "The name of the Azure Resource Group")]
     [ValidateNotNullOrEmpty()]
     [string]$AzResourceGroup = "myResourceGroup",
 
-    [Parameter(Mandatory = $true, HelpMessage = "The name of the Azure Virtual Machine")]
+    [Parameter(Mandatory = $false, HelpMessage = "The name of the Azure Virtual Machine")]
     [ValidateNotNullOrEmpty()]
     [string]$AzVmName = "myVmName",
 
-    [Parameter(Mandatory = $true, HelpMessage = "The PowerShell script to run on the Azure VM")]
+    [Parameter(Mandatory = $false, HelpMessage = "The PowerShell script to run on the Azure VM")]
     [ValidateNotNullOrEmpty()]
     [string]$Script = "Install-WindowsFeature -name Web-Server -IncludeManagementTools",
 
-    [Parameter(Mandatory = $true, HelpMessage = "The ports to open on the Azure VM")]
+    [Parameter(Mandatory = $false, HelpMessage = "The ports to open on the Azure VM")]
     [ValidateNotNullOrEmpty()]
     [string]$AzOpenPorts = '80'
 )

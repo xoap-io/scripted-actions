@@ -1,2 +1,0 @@
-@ssokolic
-@xoap_io

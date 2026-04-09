@@ -172,7 +172,7 @@ if (-not $SkipGateway) {
 }
 
 foreach ($item in $featurePlan) {
-    Invoke-Command -ComputerName $item.Server -ScriptBlock {
+    Invoke-Command -ComputerName $item.Server -ArgumentList (,$item.Features) -ScriptBlock {
         param($Features)
         Import-Module ServerManager
         foreach ($f in $Features) {
@@ -310,7 +310,7 @@ $deploymentExists = $false
 try {
     $deployment = Get-RDServer -ConnectionBroker $BrokerAndWeb -ErrorAction Stop
     if ($deployment) { $deploymentExists = $true }
-} catch { }
+} catch { Write-Verbose "Deployment not yet initialized." }
 
 if (-not $deploymentExists) {
     Write-Host "Creating new RD Session deployment..." -ForegroundColor Yellow
@@ -372,7 +372,7 @@ $collectionExists = $false
 try {
     $col = Get-RDSessionCollection -ConnectionBroker $BrokerAndWeb -CollectionName $CollectionName -ErrorAction Stop
     if ($col) { $collectionExists = $true }
-} catch {}
+} catch { Write-Verbose "Collection does not exist yet." }
 
 if (-not $collectionExists) {
     New-RDSessionCollection `
@@ -393,7 +393,7 @@ if (-not $collectionExists) {
     Write-Host "Collection '$CollectionName' already exists." -ForegroundColor DarkGreen
     try {
         Add-RDSessionHost -CollectionName $CollectionName -SessionHost $SessionHost -ConnectionBroker $BrokerAndWeb -ErrorAction SilentlyContinue
-    } catch {}
+    } catch { Write-Verbose "Session host already in collection or could not be added." }
 }
 
 # -------------------------

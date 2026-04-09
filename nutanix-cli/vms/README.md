@@ -12,11 +12,13 @@ machines via the Nutanix PowerShell SDK.
 
 ## Available Scripts
 
-| Script | Description |
-| --- | --- |
-| `nutanix-cli-create-vm.ps1` | Creates new AHV VMs from scratch or by cloning from an existing VM or image; supports bulk creation |
-| `nutanix-cli-vm-power-operations.ps1` | Performs start, stop, reboot, and suspend operations on single or multiple VMs, with optional snapshot creation |
-| `nutanix-cli-windows-updates.ps1` | Scans and installs Windows updates on AHV-hosted Windows VMs via PowerShell remoting, with pre-update snapshot support |
+| Script                                | Description                                                                                                             |
+| ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `nutanix-cli-create-vm.ps1`           | Creates new AHV VMs from scratch or by cloning from an existing VM or image; supports bulk creation                     |
+| `nutanix-cli-vm-power-operations.ps1` | Performs start, stop, reboot, and suspend operations on single or multiple VMs, with optional snapshot creation         |
+| `nutanix-cli-windows-updates.ps1`     | Scans and installs Windows updates on AHV-hosted Windows VMs via PowerShell remoting, with pre-update snapshot support  |
+| `nutanix-cli-clone-vm.ps1`            | Clones an existing Nutanix VM using the Prism Central REST API v3 (POST /vms/{uuid}/clone); supports up to 10 clones    |
+| `nutanix-cli-snapshot-vm.ps1`         | Creates a VM snapshot using the Prism Central REST API v3 (POST /vm_snapshots); auto-generates snapshot name if omitted |
 
 ## Usage Examples
 
@@ -61,6 +63,50 @@ machines via the Nutanix PowerShell SDK.
     -Operation "Stop" `
     -GracefulShutdown `
     -Force
+```
+
+### Clone VM
+
+```powershell
+$pass = Read-Host -AsSecureString "Password"
+
+# Clone a VM once
+.\nutanix-cli-clone-vm.ps1 `
+    -PrismCentralHost "pc.domain.com" `
+    -Username "admin" `
+    -Password $pass `
+    -SourceVmName "TemplateVM" `
+    -CloneName "AppServer"
+
+# Clone a VM three times
+.\nutanix-cli-clone-vm.ps1 `
+    -PrismCentralHost "pc.domain.com" `
+    -Username "admin" `
+    -Password $pass `
+    -SourceVmName "BaseVM" `
+    -CloneName "WebNode" `
+    -NumClones 3
+```
+
+### Snapshot VM
+
+```powershell
+$pass = Read-Host -AsSecureString "Password"
+
+# Create a snapshot with auto-generated name
+.\nutanix-cli-snapshot-vm.ps1 `
+    -PrismCentralHost "pc.domain.com" `
+    -Username "admin" `
+    -Password $pass `
+    -VmName "WebServer01"
+
+# Create a named snapshot
+.\nutanix-cli-snapshot-vm.ps1 `
+    -PrismCentralHost "pc.domain.com" `
+    -Username "admin" `
+    -Password $pass `
+    -VmName "AppServer" `
+    -SnapshotName "AppServer-PrePatch-20260408"
 ```
 
 ### Windows Updates

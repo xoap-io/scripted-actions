@@ -1,6 +1,7 @@
 # vSphere CLI - Monitoring Scripts
 
-This directory contains PowerShell scripts for monitoring VMware vSphere infrastructure using PowerCLI.
+This directory contains PowerShell scripts for monitoring VMware vSphere
+infrastructure using PowerCLI.
 
 ## Prerequisites
 
@@ -11,6 +12,11 @@ This directory contains PowerShell scripts for monitoring VMware vSphere infrast
 - Read permissions at minimum
 
 ## Available Scripts
+
+| Script                               | Description                                                                                                                                       |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `vsphere-cli-get-cluster-health.ps1` | Report cluster health including host state, CPU/memory usage, datastore capacity, and VM count using `Get-Cluster`, `Get-VMHost`, `Get-Datastore` |
+| `vsphere-cli-create-alarm.ps1`       | Create a vCenter alarm definition using `New-AlarmDefinition`; supports metric-based triggers with warning and critical thresholds                |
 
 Scripts for monitoring vSphere environments:
 
@@ -44,6 +50,48 @@ Scripts for monitoring vSphere environments:
 
 ## Usage Examples
 
+### Cluster Health Report
+
+```powershell
+$cred = Get-Credential
+
+# Report all clusters
+.\vsphere-cli-get-cluster-health.ps1 `
+    -Server "vcenter.domain.com" `
+    -Credential $cred
+
+# Report a specific cluster as JSON
+.\vsphere-cli-get-cluster-health.ps1 `
+    -Server "vcenter.domain.com" `
+    -Credential $cred `
+    -ClusterName "Production" `
+    -OutputFormat JSON
+```
+
+### Create Alarm
+
+```powershell
+$cred = Get-Credential
+
+# VM CPU usage alarm
+.\vsphere-cli-create-alarm.ps1 `
+    -Server "vcenter.domain.com" `
+    -Credential $cred `
+    -AlarmName "High CPU Alert" `
+    -Entity VirtualMachine `
+    -MetricId "cpu.usage.average" `
+    -WarningThreshold 70 `
+    -CriticalThreshold 90
+
+# Basic host alarm definition
+.\vsphere-cli-create-alarm.ps1 `
+    -Server "vcenter.domain.com" `
+    -Credential $cred `
+    -AlarmName "Host Disconnected" `
+    -Description "Alert when a host disconnects" `
+    -Entity HostSystem
+```
+
 ### Connect and Basic Monitoring
 
 ```powershell
@@ -56,7 +104,8 @@ Get-VM | Get-Stat -Stat cpu.usage.average, mem.usage.average -Realtime
 # Get host performance
 Get-VMHost | Select-Object Name,
     @{N="CPU Usage %"; E={[math]::Round($_.CpuUsageMhz / $_.CpuTotalMhz * 100, 2)}},
-    @{N="Memory Usage %"; E={[math]::Round($_.MemoryUsageGB / $_.MemoryTotalGB * 100, 2)}}
+    @{N="Memory Usage %"; E={[math]::Round(
+        $_.MemoryUsageGB / $_.MemoryTotalGB * 100, 2)}}
 ```
 
 ### Advanced Performance Monitoring

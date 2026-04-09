@@ -18,6 +18,13 @@ This directory contains PowerShell scripts for XOAP-specific operations across m
 - **aws-ps-terminate-vms.ps1** - Terminate AWS EC2 instances (PowerShell)
 - **az-ps-terminate-vms.ps1** - Terminate Azure VMs
 - **gce-ps-stop-vms.ps1** - Stop Google Cloud VMs
+- **gce-cli-stop-vms.ps1** - Bulk stop all running GCE instances in a
+  project using `gcloud compute instances stop`; supports zone filtering,
+  WhatIf, confirmation prompt, post-verification, and timestamped logging
+- **nutanix-cli-stop-vms.ps1** - Bulk stop all running Nutanix VMs via
+  Prism Central v3 REST API (ACPI shutdown with power_off fallback);
+  supports cluster filtering, WhatIf, confirmation prompt,
+  post-verification, and timestamped logging
 
 ### Azure Image Management
 

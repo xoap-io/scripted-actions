@@ -114,7 +114,7 @@ $Parameters = @{
 
 if ($Tags) {
     $Tag = $Tags.GetEnumerator() | ForEach-Object { "$($_.Key)=$($_.Value)" } -join '-'
-    $parameters['Tag', $Tag
+    $parameters['Tag'] = $Tag
 }
 
 # Add your code here...

@@ -147,7 +147,7 @@ try {
             $pif = Get-XenPIF -Uuid $PIFUUID
 
             # Create VLAN
-            $vlan = New-XenVLAN -Network $network -PIF $pif -Tag $VLANTag
+            $null = New-XenVLAN -Network $network -PIF $pif -Tag $VLANTag
             Write-Host "✓ VLAN created successfully" -ForegroundColor Green
         }
 
@@ -167,7 +167,7 @@ try {
             }
 
             # Create bond
-            $bond = New-XenBond -Network $network -PIFs $pifs -Mode $BondMode
+            $null = New-XenBond -Network $network -PIFs $pifs -Mode $BondMode
             Write-Host "✓ Bond created successfully (Mode: $BondMode)" -ForegroundColor Green
         }
 

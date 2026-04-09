@@ -15,15 +15,19 @@ parameter validation and error handling.
 
 ## Directory Structure
 
-| Directory | Description |
-| --- | --- |
-| `vms/` | VM instance management scripts |
+| Directory | Description                    |
+| --------- | ------------------------------ |
+| `vms/`    | VM instance management scripts |
 
 ## Available Scripts
 
-| Script | Description |
-| --- | --- |
-| `vms/gce-ps-create-vm.ps1` | Create a new Compute Engine VM instance using `Add-GceInstance` |
+| Script                     | Description                                                                           |
+| -------------------------- | ------------------------------------------------------------------------------------- |
+| `vms/gce-ps-create-vm.ps1` | Create a new Compute Engine VM instance using `Add-GceInstance`                       |
+| `vms/gce-ps-start-vm.ps1`  | Start a stopped Compute Engine VM instance using `Start-GceInstance`                  |
+| `vms/gce-ps-stop-vm.ps1`   | Stop a running Compute Engine VM instance using `Stop-GceInstance`                    |
+| `vms/gce-ps-list-vms.ps1`  | List Compute Engine VM instances with optional status filter and Table or JSON output |
+| `vms/gce-ps-delete-vm.ps1` | Delete a Compute Engine VM instance using `Remove-GceInstance`                        |
 
 ## Usage Examples
 

@@ -1,0 +1,53 @@
+name: PowerShell Lint
+on:
+  pull_request:
+    branches: [dev, master]
+    paths:
+      - "**/*.ps1"
+jobs:
+  psscriptanalyzer:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install PSScriptAnalyzer
+        shell: pwsh
+        run: |
+          Install-Module PSScriptAnalyzer -Force -Scope CurrentUser -ErrorAction Stop
+      - name: Run PSScriptAnalyzer
+        shell: pwsh
+        run: |
+          $files = Get-ChildItem -Recurse -Filter *.ps1 |
+            Where-Object { $_.FullName -notlike '*/templates/*' }
+          $results = $files | ForEach-Object {
+            Invoke-ScriptAnalyzer -Path $_.FullName -Severity Warning, Error
+          }
+          if ($results) {
+            $results | Format-Table -AutoSize
+            Write-Host "❌ PSScriptAnalyzer found $($results.Count) issue(s)." `
+              -ForegroundColor Red
+            exit 1
+          }
+          Write-Host "✅ PSScriptAnalyzer passed — no warnings or errors." `
+            -ForegroundColor Green
+      - name: Validate PowerShell syntax
+        shell: pwsh
+        run: |
+          $errors = @()
+          Get-ChildItem -Recurse -Filter *.ps1 |
+            Where-Object { $_.FullName -notlike '*/templates/*' } |
+            ForEach-Object {
+              $null = [System.Management.Automation.PSParser]::Tokenize(
+                (Get-Content $_.FullName -Raw), [ref]$parseErrors
+              )
+              if ($parseErrors) {
+                $errors += "$($_.Name): $($parseErrors[0].Message)"
+              }
+            }
+          if ($errors) {
+            $errors | ForEach-Object { Write-Host "❌ $_" -ForegroundColor Red }
+            exit 1
+          }
+          Write-Host "✅ Syntax check passed for all .ps1 files." `
+            -ForegroundColor Green

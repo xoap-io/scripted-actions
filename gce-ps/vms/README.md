@@ -13,11 +13,60 @@ using the `GoogleCloud` PowerShell module.
 
 ## Available Scripts
 
-| Script | Description |
-| --- | --- |
-| `gce-ps-create-vm.ps1` | Create a new Compute Engine VM instance using `Add-GceInstance` |
+| Script                 | Description                                                                                                   |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `gce-ps-create-vm.ps1` | Create a new Compute Engine VM instance using `Add-GceInstance`                                               |
+| `gce-ps-start-vm.ps1`  | Start a stopped Compute Engine VM instance using `Start-GceInstance`                                          |
+| `gce-ps-stop-vm.ps1`   | Stop a running Compute Engine VM instance using `Stop-GceInstance`                                            |
+| `gce-ps-list-vms.ps1`  | List Compute Engine VM instances with optional status filter and Table or JSON output using `Get-GceInstance` |
+| `gce-ps-delete-vm.ps1` | Delete a Compute Engine VM instance using `Remove-GceInstance`, with typed YES confirmation                   |
 
 ## Usage Examples
+
+### Start VM Instance
+
+```powershell
+.\gce-ps-start-vm.ps1 `
+  -ProjectId "my-project-123" `
+  -Zone "us-central1-a" `
+  -InstanceName "web-server-01"
+```
+
+### Stop VM Instance
+
+```powershell
+.\gce-ps-stop-vm.ps1 `
+  -ProjectId "my-project-123" `
+  -Zone "us-central1-a" `
+  -InstanceName "web-server-01" `
+  -Force
+```
+
+### List VM Instances
+
+```powershell
+# List all running instances across all zones
+.\gce-ps-list-vms.ps1 `
+  -ProjectId "my-project-123" `
+  -Status Running `
+  -OutputFormat Table
+
+# List all instances in a specific zone as JSON
+.\gce-ps-list-vms.ps1 `
+  -ProjectId "my-project-123" `
+  -Zone "us-central1-a" `
+  -OutputFormat JSON
+```
+
+### Delete VM Instance
+
+```powershell
+.\gce-ps-delete-vm.ps1 `
+  -ProjectId "my-project-123" `
+  -Zone "us-central1-a" `
+  -InstanceName "old-server-01" `
+  -Force
+```
 
 ### Create VM Instance
 

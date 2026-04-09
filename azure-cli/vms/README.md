@@ -13,22 +13,26 @@ production without review.
 
 ## Available Scripts
 
-| Script | Description |
-| --- | --- |
-| `az-cli-create-image-definition.ps1` | Create an image definition in an Azure Compute Gallery |
-| `az-cli-create-image-gallery.ps1` | Create an Azure Compute Gallery (Shared Image Gallery) |
-| `az-cli-create-image-version.ps1` | Create a new image version in a Compute Gallery from an existing VM |
-| `az-cli-create-vm-scale-set.ps1` | Create a Virtual Machine Scale Set with configurable orchestration mode and image |
-| `az-cli-create-windows-vm.ps1` | Create a Windows Virtual Machine with networking, public IP, and NSG |
-| `az-cli-delete-image-builder-windows.ps1` | Delete an Azure Image Builder template and associated resources for Windows |
-| `az-cli-enable-EntraID-login-linux-vm.ps1` | Enable Entra ID (Azure AD) SSH login on a Linux VM via the AADSSHLoginForLinux extension |
-| `az-cli-install-webserver-vm.ps1` | Install a web server on a VM via run-command and open the required ports |
-| `az-cli-share-image-gallery.ps1` | Share an Azure Compute Gallery with a user by assigning the Reader role |
-| `wip_az-cli-create-image-builder-linux.ps1` | (WIP) Create an Azure Image Builder template for Linux |
-| `wip_az-cli-create-image-builder-windows.ps1` | (WIP) Create an Azure Image Builder template for Windows |
-| `wip_az-cli-create-linux-vm.ps1` | (WIP) Create a Linux Virtual Machine |
-| `wip_az-cli-create-specialized-vm.ps1` | (WIP) Create a specialized VM from a managed image |
-| `wip_az-cli-delete-image-builder-linux.ps1` | (WIP) Delete an Azure Image Builder template and associated resources for Linux |
+| Script                                        | Description                                                                                |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `az-cli-create-image-definition.ps1`          | Create an image definition in an Azure Compute Gallery                                     |
+| `az-cli-create-image-gallery.ps1`             | Create an Azure Compute Gallery (Shared Image Gallery)                                     |
+| `az-cli-create-image-version.ps1`             | Create a new image version in a Compute Gallery from an existing VM                        |
+| `az-cli-create-linux-vm.ps1`                  | Create a Linux Virtual Machine with SSH key authentication and optional VNet placement     |
+| `az-cli-create-vm-scale-set.ps1`              | Create a Virtual Machine Scale Set with configurable orchestration mode and image          |
+| `az-cli-create-vm-snapshot.ps1`               | Create a snapshot of a VM's OS disk using az snapshot create                               |
+| `az-cli-create-windows-vm.ps1`                | Create a Windows Virtual Machine with networking, public IP, and NSG                       |
+| `az-cli-delete-image-builder-windows.ps1`     | Delete an Azure Image Builder template and associated resources for Windows                |
+| `az-cli-enable-EntraID-login-linux-vm.ps1`    | Enable Entra ID (Azure AD) SSH login on a Linux VM via the AADSSHLoginForLinux extension   |
+| `az-cli-install-webserver-vm.ps1`             | Install a web server on a VM via run-command and open the required ports                   |
+| `az-cli-share-image-gallery.ps1`              | Share an Azure Compute Gallery with a user by assigning the Reader role                    |
+| `az-cli-start-vm.ps1`                         | Start an Azure Virtual Machine and display the resulting power state                       |
+| `az-cli-stop-vm.ps1`                          | Stop and deallocate an Azure VM (stops billing), or power off without deallocating         |
+| `wip_az-cli-create-image-builder-linux.ps1`   | (WIP) Create an Azure Image Builder template for Linux                                     |
+| `wip_az-cli-create-image-builder-windows.ps1` | (WIP) Create an Azure Image Builder template for Windows                                   |
+| `wip_az-cli-create-linux-vm.ps1`              | (WIP) Original work-in-progress Linux VM script (superseded by az-cli-create-linux-vm.ps1) |
+| `wip_az-cli-create-specialized-vm.ps1`        | (WIP) Create a specialized VM from a managed image                                         |
+| `wip_az-cli-delete-image-builder-linux.ps1`   | (WIP) Delete an Azure Image Builder template and associated resources for Linux            |
 
 ## Usage Examples
 
@@ -121,6 +125,47 @@ production without review.
     -EmailAddress "user@example.com"
 ```
 
+### Start a VM
+
+```powershell
+.\az-cli-start-vm.ps1 `
+    -ResourceGroupName "rg-vms" `
+    -VmName "vm-web-prod-01"
+```
+
+### Stop and Deallocate a VM
+
+```powershell
+.\az-cli-stop-vm.ps1 `
+    -ResourceGroupName "rg-vms" `
+    -VmName "vm-web-prod-01" `
+    -Force
+```
+
+### Create a VM OS Disk Snapshot
+
+```powershell
+.\az-cli-create-vm-snapshot.ps1 `
+    -ResourceGroupName "rg-vms" `
+    -VmName "vm-web-prod-01" `
+    -SnapshotName "snap-vm-web-prod-01-20260408" `
+    -Sku "Standard_LRS"
+```
+
+### Create a Linux VM
+
+```powershell
+.\az-cli-create-linux-vm.ps1 `
+    -ResourceGroupName "rg-vms" `
+    -VmName "vm-linux-prod-01" `
+    -Location "eastus" `
+    -Image "Ubuntu2204" `
+    -VmSize "Standard_D2s_v3" `
+    -AdminUsername "azureuser" `
+    -SshPublicKeyPath "~/.ssh/id_rsa.pub" `
+    -PublicIp
+```
+
 ## Notes
 
 - `az-cli-delete-image-builder-windows.ps1` removes the image template,
@@ -129,3 +174,7 @@ production without review.
 - Image version creation can take several minutes depending on source VM
   size and target region replication count.
 - Scripts prefixed with `wip_` are incomplete; review before using them.
+- Use `az-cli-stop-vm.ps1` with `-SkipDeallocate` to power off without
+  stopping billing (e.g. for maintenance that preserves the IP allocation).
+- VM snapshots are billed based on the SKU and snapshot size even when not
+  attached to a disk.

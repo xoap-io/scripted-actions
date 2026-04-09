@@ -166,10 +166,10 @@ try {
             }
 
             # Get a host for SR creation
-            $host = Get-XenHost | Select-Object -First 1
+            $hostObj = Get-XenHost | Select-Object -First 1
 
             # Create SR
-            $sr = New-XenSR -XenHost $host -NameLabel $SRName -Type $SRType -DeviceConfig $deviceConfig -Shared $Shared.IsPresent
+            $sr = New-XenSR -XenHost $hostObj -NameLabel $SRName -Type $SRType -DeviceConfig $deviceConfig -Shared $Shared.IsPresent
             Write-Host "✓ SR created successfully: $SRName (UUID: $($sr.uuid))" -ForegroundColor Green
         }
 

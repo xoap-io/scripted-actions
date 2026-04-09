@@ -69,15 +69,15 @@
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true, HelpMessage = "The name of the Azure Resource Group")]
+    [Parameter(Mandatory = $false, HelpMessage = "The name of the Azure Resource Group")]
     [ValidateNotNullOrEmpty()]
     [string]$AzResourceGroup = "myResourceGroup",
 
-    [Parameter(Mandatory = $true, HelpMessage = "The name of the Azure Image Gallery")]
+    [Parameter(Mandatory = $false, HelpMessage = "The name of the Azure Image Gallery")]
     [ValidateNotNullOrEmpty()]
     [string]$AzGalleryName = "myGallery",
 
-    [Parameter(Mandatory = $true, HelpMessage = "The email address of the user to assign the Reader role")]
+    [Parameter(Mandatory = $false, HelpMessage = "The email address of the user to assign the Reader role")]
     [ValidateNotNullOrEmpty()]
     [string]$EmailAddress = "hello@xoap.io"
 )

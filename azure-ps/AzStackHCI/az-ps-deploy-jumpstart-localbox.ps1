@@ -89,11 +89,11 @@
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true, HelpMessage = "Azure region where LocalBox resources will be deployed.")]
+    [Parameter(Mandatory = $false, HelpMessage = "Azure region where LocalBox resources will be deployed.")]
     [ValidateSet('East US', 'East US 2', 'West US', 'West US 2', 'West US 3', 'Central US', 'North Central US', 'South Central US', 'West Central US', 'Canada Central', 'Canada East', 'Brazil South', 'North Europe', 'West Europe', 'UK South', 'UK West', 'France Central', 'Germany West Central', 'Switzerland North', 'Norway East', 'Sweden Central', 'Australia East', 'Australia Southeast', 'East Asia', 'Southeast Asia', 'Japan East', 'Japan West', 'Korea Central', 'Korea South', 'Central India', 'South India', 'West India', 'UAE North', 'South Africa North')]
     [string]$Location = "West Europe",
 
-    [Parameter(Mandatory = $true, HelpMessage = "Name of the Azure resource group to create or use for the LocalBox deployment.")]
+    [Parameter(Mandatory = $false, HelpMessage = "Name of the Azure resource group to create or use for the LocalBox deployment.")]
     [ValidatePattern('^[a-zA-Z0-9\-_\.]{1,90}$')]
     [string]$ResourceGroup = "rg-localbox",
 

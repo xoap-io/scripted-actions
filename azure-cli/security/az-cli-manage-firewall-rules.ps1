@@ -1050,7 +1050,7 @@ try {
 
     # Export configuration if requested
     if ($ExportConfig) {
-        $exportPath = Export-FirewallConfig -ResourceGroup $ResourceGroup -FirewallName $FirewallName
+        Export-FirewallConfig -ResourceGroup $ResourceGroup -FirewallName $FirewallName | Out-Null
     }
 
     # Show operation summary

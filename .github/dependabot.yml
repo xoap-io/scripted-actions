@@ -9,11 +9,3 @@ updates:
     labels:
       - github-actions
       - dependencies
-  - package-ecosystem: terraform
-    directory: /
-    target-branch: dev
-    schedule:
-      interval: daily
-    labels:
-      - terraform
-      - dependencies

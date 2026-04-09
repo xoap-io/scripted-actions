@@ -55,11 +55,11 @@
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true, HelpMessage = "Defines the name of the Azure Resource Group.")]
+    [Parameter(Mandatory = $false, HelpMessage = "Defines the name of the Azure Resource Group.")]
     [ValidateNotNullOrEmpty()]
     [string]$AzResourceGroup = "myResourceGroup",
 
-    [Parameter(Mandatory = $true, HelpMessage = "Defines the name of the Azure Image Builder Template.")]
+    [Parameter(Mandatory = $false, HelpMessage = "Defines the name of the Azure Image Builder Template.")]
     [ValidateNotNullOrEmpty()]
     [string]$AzImageTemplateName = "myImageTemplate",
 

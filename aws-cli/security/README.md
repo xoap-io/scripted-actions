@@ -11,20 +11,25 @@ security group lifecycle, and network ACL entry management.
 
 ## Available Scripts
 
-| Script | Description |
-| --- | --- |
-| `aws-cli-authorize-ec2-security-group.ps1` | Adds an ingress rule to a security group |
-| `aws-cli-authorize-security-group-egress.ps1` | Adds an egress rule to a security group |
-| `aws-cli-create-network-acl-entry.ps1` | Creates an entry (rule) in a network ACL |
-| `aws-cli-create-network-acl.ps1` | Creates a network ACL for a specified VPC |
-| `aws-cli-delete-ec2-security-group.ps1` | Deletes a security group |
-| `aws-cli-delete-network-acl-entry.ps1` | Deletes an entry from a network ACL |
-| `aws-cli-delete-network-acl.ps1` | Deletes a network ACL |
-| `aws-cli-describe-network-acls.ps1` | Lists and describes network ACLs |
-| `aws-cli-describe-security-groups.ps1` | Lists and describes security groups |
-| `aws-cli-revoke-security-group-egress.ps1` | Removes an egress rule from a security group |
-| `aws-cli-revoke-security-group-ingress.ps1` | Removes an ingress rule from a security group |
-| `wip_aws-cli-create-ec2-security-group.ps1` | Creates a security group and adds an initial ingress rule (work in progress) |
+| Script                                        | Description                                                                      |
+| --------------------------------------------- | -------------------------------------------------------------------------------- |
+| `aws-cli-authorize-ec2-security-group.ps1`    | Adds an ingress rule to a security group                                         |
+| `aws-cli-authorize-security-group-egress.ps1` | Adds an egress rule to a security group                                          |
+| `aws-cli-create-iam-policy.ps1`               | Creates a managed IAM policy and optionally attaches it to a role or user        |
+| `aws-cli-create-iam-role.ps1`                 | Creates an IAM role with a trust policy document                                 |
+| `aws-cli-create-kms-key.ps1`                  | Creates a KMS key with optional alias and automatic rotation                     |
+| `aws-cli-create-network-acl-entry.ps1`        | Creates an entry (rule) in a network ACL                                         |
+| `aws-cli-create-network-acl.ps1`              | Creates a network ACL for a specified VPC                                        |
+| `aws-cli-delete-ec2-security-group.ps1`       | Deletes a security group                                                         |
+| `aws-cli-delete-network-acl-entry.ps1`        | Deletes an entry from a network ACL                                              |
+| `aws-cli-delete-network-acl.ps1`              | Deletes a network ACL                                                            |
+| `aws-cli-describe-network-acls.ps1`           | Lists and describes network ACLs                                                 |
+| `aws-cli-describe-security-groups.ps1`        | Lists and describes security groups                                              |
+| `aws-cli-enable-guardduty.ps1`                | Enables AWS GuardDuty in a region with optional S3, EKS, and malware protections |
+| `aws-cli-revoke-security-group-egress.ps1`    | Removes an egress rule from a security group                                     |
+| `aws-cli-revoke-security-group-ingress.ps1`   | Removes an ingress rule from a security group                                    |
+| `aws-cli-rotate-secrets-manager-secret.ps1`   | Rotates an AWS Secrets Manager secret and configures a rotation schedule         |
+| `wip_aws-cli-create-ec2-security-group.ps1`   | Creates a security group and adds an initial ingress rule (work in progress)     |
 
 ## Usage Examples
 
@@ -86,6 +91,58 @@ security group lifecycle, and network ACL entry management.
     -Protocol "tcp" `
     -Port "443" `
     -Cidr "0.0.0.0/0"
+```
+
+### Create an IAM Role
+
+```powershell
+.\aws-cli-create-iam-role.ps1 `
+    -RoleName "MyLambdaRole" `
+    -TrustPolicy '{"Version":"2012-10-17","Statement":[{"Effect":"Allow",
+        "Principal":{"Service":"lambda.amazonaws.com"},
+        "Action":"sts:AssumeRole"}]}' `
+    -Description "Execution role for Lambda functions" `
+    -Tags "Env=prod,Team=platform"
+```
+
+### Create an IAM Policy
+
+```powershell
+.\aws-cli-create-iam-policy.ps1 `
+    -PolicyName "MyS3ReadPolicy" `
+    -PolicyDocument '{"Version":"2012-10-17","Statement":[{"Effect":"Allow",
+        "Action":["s3:GetObject","s3:ListBucket"],"Resource":"*"}]}' `
+    -AttachToRole "MyLambdaRole"
+```
+
+### Create a KMS Key
+
+```powershell
+.\aws-cli-create-kms-key.ps1 `
+    -Region "us-east-1" `
+    -Description "Encryption key for application secrets" `
+    -Alias "alias/app-secrets" `
+    -EnableRotation
+```
+
+### Enable GuardDuty
+
+```powershell
+.\aws-cli-enable-guardduty.ps1 `
+    -Region "us-east-1" `
+    -FindingPublishingFrequency "ONE_HOUR" `
+    -EnableS3Protection `
+    -EnableEksProtection
+```
+
+### Rotate a Secrets Manager Secret
+
+```powershell
+.\aws-cli-rotate-secrets-manager-secret.ps1 `
+    -Region "us-east-1" `
+    -SecretId "prod/myapp/dbpassword" `
+    -RotationDays 30 `
+    -RotateImmediately
 ```
 
 ## Notes

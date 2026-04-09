@@ -1,6 +1,7 @@
 # AWS CLI - EC2 Scripts
 
-This directory contains PowerShell scripts for managing Amazon EC2 (Elastic Compute Cloud) instances and related resources using the AWS CLI.
+This directory contains PowerShell scripts for managing Amazon EC2 (Elastic
+Compute Cloud) instances and related resources using the AWS CLI.
 
 ## Prerequisites
 
@@ -13,10 +14,12 @@ This directory contains PowerShell scripts for managing Amazon EC2 (Elastic Comp
 
 ### Instance Management
 
-- **aws-cli-create-ec2-instance.ps1** - Creates EC2 instances with specified configuration
+- **aws-cli-create-ec2-instance.ps1** - Creates EC2 instances with specified
+  configuration
 - **aws-cli-describe-instances.ps1** - Lists and describes EC2 instances
 - **aws-cli-get-instance-status.ps1** - Retrieves instance status information
-- **aws-cli-get-instance-console-output.ps1** - Retrieves console output from instances
+- **aws-cli-get-instance-console-output.ps1** - Retrieves console output from
+  instances
 - **aws-cli-modify-instance-type.ps1** - Changes instance type
 - **aws-cli-reboot-instances.ps1** - Reboots running instances
 - **aws-cli-start-instances.ps1** - Starts stopped instances
@@ -25,14 +28,16 @@ This directory contains PowerShell scripts for managing Amazon EC2 (Elastic Comp
 
 ### AMI and Snapshots
 
-- **aws-cli-create-ami-from-instance.ps1** - Creates Amazon Machine Images from instances
+- **aws-cli-create-ami-from-instance.ps1** - Creates Amazon Machine Images from
+  instances
 - **aws-cli-create-instance-snapshot.ps1** - Creates EBS volume snapshots
 - **aws-cli-deregister-ami.ps1** - Deregisters AMIs
 
 ### Networking
 
 - **aws-cli-allocate-elastic-ip.ps1** - Allocates Elastic IP addresses
-- **aws-cli-associate-disassociate-elastic-ip.ps1** - Associates/disassociates Elastic IPs
+- **aws-cli-associate-disassociate-elastic-ip.ps1** - Associates/disassociates
+  Elastic IPs
 - **aws-cli-create-security-group.ps1** - Creates security groups
 - **aws-cli-delete-security-group.ps1** - Deletes security groups
 
@@ -52,7 +57,26 @@ This directory contains PowerShell scripts for managing Amazon EC2 (Elastic Comp
 - **aws-cli-attach-instance-profile.ps1** - Attaches IAM instance profiles
 - **aws-cli-create-launch-template.ps1** - Creates launch templates
 - **aws-cli-create-placement-group.ps1** - Creates placement groups
-- **aws-cli-update-instance-metadata-options.ps1** - Updates instance metadata service options
+- **aws-cli-update-instance-metadata-options.ps1** - Updates instance metadata
+  service options
+
+### Auto Scaling
+
+- **aws-cli-create-auto-scaling-group.ps1** - Creates an Auto Scaling group with
+  a launch template, capacity settings, subnets, and health check configuration
+- **aws-cli-describe-auto-scaling-groups.ps1** - Lists and describes Auto
+  Scaling groups with instance lifecycle state counts
+
+### Monitoring
+
+- **aws-cli-create-cloudwatch-alarm.ps1** - Creates a CloudWatch metric alarm
+  with configurable statistic, threshold, evaluation periods, and SNS
+  notification
+
+### Load Balancing
+
+- **aws-cli-create-load-balancer-target-group.ps1** - Creates an ELBv2 target
+  group for Application, Network, or Gateway Load Balancers
 
 ## Usage Examples
 

@@ -34,11 +34,11 @@
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true, HelpMessage = "The name of the Azure Resource Group")]
+    [Parameter(Mandatory = $false, HelpMessage = "The name of the Azure Resource Group")]
     [ValidateNotNullOrEmpty()]
     [string]$ResourceGroup = 'myResourceGroup',
 
-    [Parameter(Mandatory = $true, HelpMessage = "The ports that were opened on the Azure VM")]
+    [Parameter(Mandatory = $false, HelpMessage = "The ports that were opened on the Azure VM")]
     [ValidateNotNullOrEmpty()]
     [string]$OpenPorts = '3389'
 )

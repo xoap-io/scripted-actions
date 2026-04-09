@@ -10,8 +10,8 @@ PowerShell scripts for XOAP platform-specific Azure operations using Azure CLI.
 
 ## Available Scripts
 
-| Script | Description |
-| --- | --- |
+| Script                     | Description                                                                                                            |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
 | `az-cli-register-node.ps1` | Register an Azure VM as a node in an XOAP Workspace by running the DSC bootstrap script via `az vm run-command invoke` |
 
 ## Usage Examples

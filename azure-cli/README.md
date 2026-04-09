@@ -30,6 +30,7 @@ az login --use-device-code
 | Folder                                     | Description                | Service Focus                           |
 | ------------------------------------------ | -------------------------- | --------------------------------------- |
 | [`avd/`](./avd/)                           | Azure Virtual Desktop      | Virtual desktop infrastructure          |
+| [`monitoring/`](./monitoring/)             | Azure Monitor              | Workspaces, alerts, diagnostics         |
 | [`network/`](./network/)                   | Virtual networking         | VNets, subnets, NSGs, load balancers    |
 | [`resource-manager/`](./resource-manager/) | Resource management        | Resource groups, templates, deployments |
 | [`security/`](./security/)                 | Security and identity      | Key Vault, managed identities, RBAC     |

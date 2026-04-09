@@ -15,13 +15,13 @@ LocalBox evaluation environment.
 
 ## Available Scripts
 
-| Script | Description |
-| --- | --- |
-| `az-ps-deploy-azure-local-host.ps1` | Deploy a Windows Server 2022 Azure VM with nested virtualization and Hyper-V for Azure Stack HCI testing |
-| `az-ps-remove-azure-local-host.ps1` | Remove the Azure VM and all related networking resources created by the deploy-azure-local-host script |
-| `az-ps-deploy-azure-local-image.ps1` | Create a generalized Azure Local VM image: provisions a VM on the HCI cluster, installs the XOAP agent, runs Sysprep, and registers the result as an Azure Local VM image |
-| `az-ps-deploy-jumpstart-localbox.ps1` | Deploy the Azure Arc Jumpstart LocalBox (formerly HCIBox) full evaluation environment via Bicep template; supports a `-DryRun` mode |
-| `az-ps-remove-jumpstart-localbox.ps1` | Remove the entire LocalBox resource group and all contained resources |
+| Script                                | Description                                                                                                                                                               |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `az-ps-deploy-azure-local-host.ps1`   | Deploy a Windows Server 2022 Azure VM with nested virtualization and Hyper-V for Azure Stack HCI testing                                                                  |
+| `az-ps-remove-azure-local-host.ps1`   | Remove the Azure VM and all related networking resources created by the deploy-azure-local-host script                                                                    |
+| `az-ps-deploy-azure-local-image.ps1`  | Create a generalized Azure Local VM image: provisions a VM on the HCI cluster, installs the XOAP agent, runs Sysprep, and registers the result as an Azure Local VM image |
+| `az-ps-deploy-jumpstart-localbox.ps1` | Deploy the Azure Arc Jumpstart LocalBox (formerly HCIBox) full evaluation environment via Bicep template; supports a `-DryRun` mode                                       |
+| `az-ps-remove-jumpstart-localbox.ps1` | Remove the entire LocalBox resource group and all contained resources                                                                                                     |
 
 ## Usage Examples
 

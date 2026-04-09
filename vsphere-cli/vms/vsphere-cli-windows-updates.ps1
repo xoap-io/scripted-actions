@@ -846,12 +846,12 @@ function Restart-VMAndWait {
                             $vmOnline = $true
                             Write-Host "    ✓ VM reboot completed successfully" -ForegroundColor Green
                         } catch {
-                            # Still waiting for PS remoting
+                            Write-Verbose "Still waiting for PS remoting..."
                         }
                     }
                 }
             } catch {
-                # Still waiting for VM
+                Write-Verbose "Still waiting for VM..."
             }
         }
 

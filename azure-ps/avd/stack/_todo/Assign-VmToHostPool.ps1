@@ -43,15 +43,15 @@
 
 [CmdletBinding()]
 param (
-    [Parameter(Mandatory=$true, HelpMessage = "The name of the AVD Host Pool.")]
+    [Parameter(Mandatory=$false, HelpMessage = "The name of the AVD Host Pool.")]
     [ValidateNotNullOrEmpty()]
     [string]$HostPoolName,
 
-    [Parameter(Mandatory=$true, HelpMessage = "The name of the Virtual Machine to assign.")]
+    [Parameter(Mandatory=$false, HelpMessage = "The name of the Virtual Machine to assign.")]
     [ValidateNotNullOrEmpty()]
     [string]$VmName,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$false)]
     [ValidateSet(
         'eastus', 'eastus2', 'southcentralus', 'westus2',
         'westus3', 'australiaeast', 'southeastasia', 'northeurope',
@@ -73,11 +73,11 @@ param (
     )]
     [string]$Location = "westeurope",
 
-    [Parameter(Mandatory=$true, HelpMessage = "The name of the resource group containing the VM and Host Pool.")]
+    [Parameter(Mandatory=$false, HelpMessage = "The name of the resource group containing the VM and Host Pool.")]
     [ValidateNotNullOrEmpty()]
     [string]$ResourceGroup
 
-    #[Parameter(Mandatory=$true)]
+    #[Parameter(Mandatory=$false)]
     #[securestring]$Password
 )
 
@@ -126,7 +126,7 @@ $ScriptBlock = {
     }
 
     # Uninstall existing packages if they are installed
-    function Uninstall-Package($productName) {
+    function Remove-RdPackage($productName) {
         try {
             $product = Get-WmiObject -Query "SELECT * FROM Win32_Product WHERE Name = '$productName'"
             if ($null -ne $product) {
@@ -155,7 +155,7 @@ $ScriptBlock = {
         }
     }
 
-    function Install-Package($installerPath, $arguments) {
+    function Add-RdPackage($installerPath, $arguments) {
         try {
             Write-Host "Installing package from $installerPath..."
             Start-Process -FilePath "msiexec.exe" -ArgumentList $arguments -Wait -Verbose
@@ -173,8 +173,8 @@ $ScriptBlock = {
         #Update-Module -Name Az -Force -Confirm
 
         # Uninstall existing installations if needed
-        Uninstall-Package -ProductName $agentProductName
-        Uninstall-Package -ProductName $bootLoaderProductName
+        Remove-RdPackage -ProductName $agentProductName
+        Remove-RdPackage -ProductName $bootLoaderProductName
 
         # Download installers
         Get-File -Url $agentUrl -OutputPath $agentInstallerPath
@@ -182,11 +182,11 @@ $ScriptBlock = {
 
         # Install VDA Agent
         $vdaAgentArgs = "/i `"$agentInstallerPath`" /quiet /norestart REGISTRATIONTOKEN=$RegistrationKeyToken"
-        Install-Package -InstallerPath $agentInstallerPath -Arguments $vdaAgentArgs
+        Add-RdPackage -InstallerPath $agentInstallerPath -Arguments $vdaAgentArgs
 
         # Install Boot Loader
         $bootLoaderArgs = "/i `"$bootLoaderInstallerPath`" /quiet /norestart"
-        Install-Package -InstallerPath $bootLoaderInstallerPath -Arguments $bootLoaderArgs
+        Add-RdPackage -InstallerPath $bootLoaderInstallerPath -Arguments $bootLoaderArgs
 
         $domainJoinSettings = @{
             Name                   = "joindomain"

@@ -79,7 +79,7 @@ try {
             Remove-AzVM -Name $vmName -ResourceGroupName $rgName -Force
             foreach ($nic in $nics) {
                 foreach ($ipconfig in $nic.IpConfigurations) {
-                    if ($ipconfig.PublicIpAddress -ne $null) {
+                    if ($null -ne $ipconfig.PublicIpAddress) {
                         $pip = Get-AzPublicIpAddress -ResourceGroupName $rgName -Name ($ipconfig.PublicIpAddress.Id.Split('/')[-1])
                         Write-Host "Deleting Public IP: $($pip.Name)" -ForegroundColor Yellow
                         Remove-AzPublicIpAddress -Name $pip.Name -ResourceGroupName $rgName -Force
@@ -87,10 +87,10 @@ try {
                     $privIp = $ipconfig.PrivateIpAddress
                     Write-Host "Found Private IP: $privIp (deleted with NIC)" -ForegroundColor Gray
                 }
-                if ($nic.NetworkSecurityGroup -ne $null) {
+                if ($null -ne $nic.NetworkSecurityGroup) {
                     $nsgId = $nic.NetworkSecurityGroup.Id
                     $nsgName = $nsgId.Split('/')[-1]
-                    $nsg = Get-AzNetworkSecurityGroup -ResourceGroupName $rgName -Name $nsgName
+                    $null = Get-AzNetworkSecurityGroup -ResourceGroupName $rgName -Name $nsgName
                     $nicCount = (Get-AzNetworkInterface | Where-Object { $_.NetworkSecurityGroup.Id -eq $nsgId }).Count
                     if ($nicCount -eq 1) {
                         Write-Host "Deleting NSG: $nsgName" -ForegroundColor Yellow
@@ -114,7 +114,7 @@ try {
             $deletedVMs += $vmName
         }
         catch {
-            Write-Warning "Error processing $vmName: $($_.Exception.Message)"
+            Write-Warning "Error processing $($vmName): $($_.Exception.Message)"
         }
     }
 

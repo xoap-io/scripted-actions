@@ -14,8 +14,8 @@ DSC policy configurations to EC2 instances.
 
 ## Available Scripts
 
-| Script | Description |
-| --- | --- |
+| Script                      | Description                                                                                        |
+| --------------------------- | -------------------------------------------------------------------------------------------------- |
 | `aws-cli-register-node.ps1` | Registers an EC2 instance with the XOAP platform by running a DSC policy configuration via AWS SSM |
 
 ## Usage Examples

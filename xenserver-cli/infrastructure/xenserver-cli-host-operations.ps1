@@ -92,37 +92,37 @@ if (-not (Get-Module -ListAvailable -Name XenServerPSModule)) {
 Import-Module XenServerPSModule -ErrorAction Stop
 
 function Invoke-HostOperation {
-    param([object]$Host, [string]$Op, [bool]$Evacuate, [bool]$ForceOp)
+    param([object]$hostObj, [string]$Op, [bool]$Evacuate, [bool]$ForceOp)
 
-    Write-Host "Performing $Op on host $($Host.name_label)..." -ForegroundColor Cyan
+    Write-Host "Performing $Op on host $($hostObj.name_label)..." -ForegroundColor Cyan
 
     try {
         switch ($Op) {
             "Enable" {
-                Set-XenHost -Host $Host -Enabled $true
+                Set-XenHost -Host $hostObj -Enabled $true
             }
             "Disable" {
-                Set-XenHost -Host $Host -Enabled $false
+                Set-XenHost -Host $hostObj -Enabled $false
             }
             "Evacuate" {
-                Invoke-XenHost -Host $Host -XenAction Evacuate
+                Invoke-XenHost -Host $hostObj -XenAction Evacuate
             }
             "Reboot" {
-                Invoke-XenHost -Host $Host -XenAction Reboot
+                Invoke-XenHost -Host $hostObj -XenAction Reboot
             }
             "Shutdown" {
-                Invoke-XenHost -Host $Host -XenAction Shutdown
+                Invoke-XenHost -Host $hostObj -XenAction Shutdown
             }
             "HealthCheck" {
                 # Display host details
                 Write-Host "`nHost Information:" -ForegroundColor Cyan
-                Write-Host "  Name: $($Host.name_label)"
-                Write-Host "  UUID: $($Host.uuid)"
-                Write-Host "  Enabled: $($Host.enabled)"
-                Write-Host "  Address: $($Host.address)"
-                Write-Host "  Memory Total: $([math]::Round($Host.memory_total / 1GB, 2)) GB"
-                Write-Host "  Memory Free: $([math]::Round($Host.memory_free / 1GB, 2)) GB"
-                Write-Host "  Software Version: $($Host.software_version['product_version'])"
+                Write-Host "  Name: $($hostObj.name_label)"
+                Write-Host "  UUID: $($hostObj.uuid)"
+                Write-Host "  Enabled: $($hostObj.enabled)"
+                Write-Host "  Address: $($hostObj.address)"
+                Write-Host "  Memory Total: $([math]::Round($hostObj.memory_total / 1GB, 2)) GB"
+                Write-Host "  Memory Free: $([math]::Round($hostObj.memory_free / 1GB, 2)) GB"
+                Write-Host "  Software Version: $($hostObj.software_version['product_version'])"
                 return $true
             }
         }

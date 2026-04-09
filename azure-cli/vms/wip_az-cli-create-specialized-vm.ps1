@@ -43,23 +43,23 @@
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true, HelpMessage = "The name of the Azure Resource Group")]
+    [Parameter(Mandatory = $false, HelpMessage = "The name of the Azure Resource Group")]
     [ValidateNotNullOrEmpty()]
     [string]$AzResourceGroup = 'myResourceGroup',
 
-    [Parameter(Mandatory = $true, HelpMessage = "The ports to open on the Azure VM")]
+    [Parameter(Mandatory = $false, HelpMessage = "The ports to open on the Azure VM")]
     [ValidateNotNullOrEmpty()]
     [string]$AzOpenPorts = '3389',
 
-    [Parameter(Mandatory = $true, HelpMessage = "The name of the Azure Virtual Machine")]
+    [Parameter(Mandatory = $false, HelpMessage = "The name of the Azure Virtual Machine")]
     [ValidateNotNullOrEmpty()]
     [string]$AzVmName = 'myVM2',
 
-    [Parameter(Mandatory = $true, HelpMessage = "The ID of the image to use for the VM")]
+    [Parameter(Mandatory = $false, HelpMessage = "The ID of the image to use for the VM")]
     [ValidateNotNullOrEmpty()]
     [string]$AzImageId,
 
-    [Parameter(Mandatory = $true, HelpMessage = "The Azure region for the resource group")]
+    [Parameter(Mandatory = $false, HelpMessage = "The Azure region for the resource group")]
     [ValidateNotNullOrEmpty()]
     [string]$AzLocation = 'eastus'
 )

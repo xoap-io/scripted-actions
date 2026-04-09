@@ -10,20 +10,23 @@ and governance using Azure CLI and Azure Resource Manager (ARM).
 
 ## Available Scripts
 
-| Script | Description |
-| --- | --- |
-| `az-cli-cost-analysis.ps1` | Analyze Azure resource costs and generate cost reports with optional CSV export |
-| `az-cli-create-resource-group.ps1` | Create a new Azure Resource Group with optional tags and managed-by settings |
-| `az-cli-delete-resource-group.ps1` | Delete an Azure Resource Group and all its resources |
-| `az-cli-deploy-template.ps1` | Deploy an ARM template to a resource group |
-| `az-cli-export-template.ps1` | Export an ARM template from an existing resource group or deployment |
-| `az-cli-list-resource-groups.ps1` | List resource groups in a subscription with optional filtering |
-| `az-cli-list-resources.ps1` | List resources in a subscription or resource group with filtering |
-| `az-cli-manage-locks.ps1` | Create, list, and delete Azure resource locks at group or resource scope |
-| `az-cli-manage-rbac.ps1` | Manage RBAC role assignments with support for bulk operations and reporting |
-| `az-cli-monitor-health.ps1` | Monitor resource health, metrics, and availability |
-| `az-cli-move-resources.ps1` | Move resources between resource groups or subscriptions |
-| `az-cli-tag-resources.ps1` | Apply or update tags on resources and resource groups |
+| Script                               | Description                                                                        |
+| ------------------------------------ | ---------------------------------------------------------------------------------- |
+| `az-cli-assign-policy.ps1`           | Assign a built-in or custom Azure Policy at subscription or resource group scope   |
+| `az-cli-cost-analysis.ps1`           | Analyze Azure resource costs and generate cost reports with optional CSV export    |
+| `az-cli-create-budget.ps1`           | Create a Cost Management budget with configurable amount and email alert threshold |
+| `az-cli-create-management-group.ps1` | Create an Azure Management Group with optional parent and description              |
+| `az-cli-create-resource-group.ps1`   | Create a new Azure Resource Group with optional tags and managed-by settings       |
+| `az-cli-delete-resource-group.ps1`   | Delete an Azure Resource Group and all its resources                               |
+| `az-cli-deploy-template.ps1`         | Deploy an ARM template to a resource group                                         |
+| `az-cli-export-template.ps1`         | Export an ARM template from an existing resource group or deployment               |
+| `az-cli-list-resource-groups.ps1`    | List resource groups in a subscription with optional filtering                     |
+| `az-cli-list-resources.ps1`          | List resources in a subscription or resource group with filtering                  |
+| `az-cli-manage-locks.ps1`            | Create, list, and delete Azure resource locks at group or resource scope           |
+| `az-cli-manage-rbac.ps1`             | Manage RBAC role assignments with support for bulk operations and reporting        |
+| `az-cli-monitor-health.ps1`          | Monitor resource health, metrics, and availability                                 |
+| `az-cli-move-resources.ps1`          | Move resources between resource groups or subscriptions                            |
+| `az-cli-tag-resources.ps1`           | Apply or update tags on resources and resource groups                              |
 
 ## Usage Examples
 
@@ -85,6 +88,35 @@ and governance using Azure CLI and Azure Resource Manager (ARM).
     -ExportReport "health-report.json"
 ```
 
+### Create a Budget
+
+```powershell
+.\az-cli-create-budget.ps1 `
+    -BudgetName "monthly-budget" `
+    -Amount 1000 `
+    -AlertThresholdPercent 80 `
+    -NotificationEmail "admin@example.com"
+```
+
+### Assign an Azure Policy
+
+```powershell
+.\az-cli-assign-policy.ps1 `
+    -PolicyName "Audit VMs without disaster recovery configured" `
+    -AssignmentName "audit-vm-dr" `
+    -ResourceGroupName "rg-production" `
+    -EnforcementMode "Default"
+```
+
+### Create a Management Group
+
+```powershell
+.\az-cli-create-management-group.ps1 `
+    -ManagementGroupId "mg-production" `
+    -DisplayName "Production" `
+    -ParentId "mg-root"
+```
+
 ## Notes
 
 - Use `az-cli-manage-locks.ps1` with `-LockType CannotDelete` on production
@@ -93,3 +125,6 @@ and governance using Azure CLI and Azure Resource Manager (ARM).
   file for managing multiple assignments at once.
 - Cost analysis requires the `Microsoft.Consumption` resource provider to be
   registered on the subscription.
+- Budget alerts may take up to 24 hours to trigger after the threshold is crossed.
+- Management Group creation requires the `Microsoft.Management` resource
+  provider to be registered and Tenant Root Group write permissions.
