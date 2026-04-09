@@ -294,7 +294,7 @@ function New-TrainingDevTestLab {
                     }
                 }
             }
-        )
+        }
     }
 
     # Deploy the lab
@@ -477,6 +477,8 @@ function Resolve-LabVirtualNetwork {
                 if ($ok) { return [pscustomobject]@{ Name=$first.Name; SubnetName='default' } }
             }
         }
+    } catch {
+        Write-Verbose "[Resolver] Manual enablement failed: $($_.Exception.Message)"
     }
 
     # Create Linux VM formula
@@ -690,17 +692,7 @@ function New-GermanTrainingVMSets {
                                 inboundNatRules = @()
                             }
                         }
-                    } else {
-                        @{
-                            publicIpAddress = 'New'
-                            publicIpAddressInboundDnatRules = @(
-                                @{
-                                    transportProtocol = 'tcp'
-                                    backendPort = 3389
-                                }
-                            )
-                        }
-                    }
+                    )
                 }
             }
 

@@ -115,7 +115,7 @@ try {
     }
 
     Write-Host "`n🔧 Applying updates..." -ForegroundColor Cyan
-    $body.Keys | ForEach-Object { Write-Host "   $_: $($body[$_])" -ForegroundColor White }
+    $body.Keys | ForEach-Object { Write-Host "   $($_): $($body[$_])" -ForegroundColor White }
 
     Invoke-MgGraphRequest -Uri "$GraphBase/users/$($user.id)" -Method PATCH -Body ($body | ConvertTo-Json -Depth 5) -ContentType "application/json"
 

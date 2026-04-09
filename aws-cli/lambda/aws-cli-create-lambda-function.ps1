@@ -119,7 +119,7 @@ param(
     [ValidateRange(1, 900)]
     [int]$Timeout = 3,
 
-    [Parameter(Mandatory = $false, HelpMessage = "Environment variables as JSON string. Example: '{\"Variables\":{\"KEY\":\"VALUE\"}}'.")]
+    [Parameter(Mandatory = $false, HelpMessage = "Environment variables as JSON string. Example: '{""Variables"":{""KEY"":""VALUE""}}'.")]
     [ValidateNotNullOrEmpty()]
     [string]$Environment,
 
