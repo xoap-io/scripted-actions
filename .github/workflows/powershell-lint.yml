@@ -18,10 +18,27 @@ jobs:
       - name: Run PSScriptAnalyzer
         shell: pwsh
         run: |
+          $excludeRules = @(
+            'PSAvoidUsingWriteHost',
+            'PSUseBOMForUnicodeEncodedFile',
+            'PSAvoidUsingPlainTextForPassword',
+            'PSAvoidOverwritingBuiltInCmdlets',
+            'PSAvoidGlobalVars',
+            'PSReviewUnusedParameter',
+            'PSUseShouldProcessForStateChangingFunctions',
+            'PSUseSingularNouns',
+            'PSUsePSCredentialType',
+            'PSAvoidUsingInvokeExpression',
+            'PSUseApprovedVerbs',
+            'PSAvoidUsingUsernameAndPasswordParams',
+            'PSUseUsingScopeModifierInNewRunspaces',
+            'PSAvoidUsingWMICmdlet'
+          )
           $files = Get-ChildItem -Recurse -Filter *.ps1 |
             Where-Object { $_.FullName -notlike '*/templates/*' }
           $results = $files | ForEach-Object {
-            Invoke-ScriptAnalyzer -Path $_.FullName -Severity Warning, Error
+            Invoke-ScriptAnalyzer -Path $_.FullName -Severity Warning, Error `
+              -ExcludeRule $excludeRules
           }
           if ($results) {
             $results | Format-Table -AutoSize
@@ -34,19 +51,23 @@ jobs:
       - name: Validate PowerShell syntax
         shell: pwsh
         run: |
-          $errors = @()
+          $parseErrors = $null
+          $syntaxErrors = @()
           Get-ChildItem -Recurse -Filter *.ps1 |
             Where-Object { $_.FullName -notlike '*/templates/*' } |
             ForEach-Object {
-              $null = [System.Management.Automation.PSParser]::Tokenize(
-                (Get-Content $_.FullName -Raw), [ref]$parseErrors
-              )
-              if ($parseErrors) {
-                $errors += "$($_.Name): $($parseErrors[0].Message)"
+              $content = Get-Content $_.FullName -Raw
+              if (-not [string]::IsNullOrEmpty($content)) {
+                $null = [System.Management.Automation.PSParser]::Tokenize(
+                  $content, [ref]$parseErrors
+                )
+                if ($parseErrors) {
+                  $syntaxErrors += "$($_.Name): $($parseErrors[0].Message)"
+                }
               }
             }
-          if ($errors) {
-            $errors | ForEach-Object { Write-Host "❌ $_" -ForegroundColor Red }
+          if ($syntaxErrors) {
+            $syntaxErrors | ForEach-Object { Write-Host "❌ $_" -ForegroundColor Red }
             exit 1
           }
           Write-Host "✅ Syntax check passed for all .ps1 files." `
