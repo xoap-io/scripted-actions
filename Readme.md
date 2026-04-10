@@ -88,14 +88,14 @@ This repository contains automation scripts organized by cloud provider and plat
 
 - **AWS** - Amazon Web Services automation (CLI & PowerShell)
   - [aws-cli/](aws-cli/) - AWS CLI-based scripts for EC2, EKS, Lambda,
-    monitoring, networking, organizations, RDS, security, storage, and
-    WorkSpaces
+    monitoring, network, organizations, RDS, security, storage, WorkSpaces,
+    and XOAP
   - [aws-ps/](aws-ps/) - AWS PowerShell module scripts for AppStream,
     EC2, NICE DCV, security, and WorkSpaces
 - **Azure** - Microsoft Azure automation (CLI, PowerShell & Bicep)
   - [azure-cli/](azure-cli/) - Azure CLI scripts for AKS, AVD, Functions,
-    monitoring, networking, resource management, security, SQL, storage,
-    and VMs
+    monitoring, network, resource-manager, security, SQL, storage, VMs,
+    and XOAP
   - [azure-ps/](azure-ps/) - Azure PowerShell scripts for AVD,
     Azure Stack HCI, and security
   - [bicep/](bicep/) - Azure Bicep IaC scripts for declarative VM,
