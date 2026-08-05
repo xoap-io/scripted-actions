@@ -36,7 +36,7 @@ Each provider directory is further organised by service area:
 - `aws-ps/` → `ec2/`, `appstream/`, `nice-dcv/`, `security/`, `workspaces/`
 - `azure-cli/` → `avd/`, `network/`, `resource-manager/`, `security/`,
   `storage/`, `vms/`, `monitoring/`, `xoap/`
-- `azure-ps/` → root scripts, `AzStackHCI/`, `avd/`, `security/`
+- `azure-ps/` → root scripts, `azure-local/`, `avd/`, `security/`
 - `bicep/` → `vms/`, `networking/`, `avd/`
 - `gce-cli/` → `vms/`, `network/`, `storage/`
 - `gce-ps/` → `vms/`
