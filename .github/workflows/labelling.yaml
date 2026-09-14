@@ -41,7 +41,7 @@ jobs:
           token: ${{ secrets.PAT || secrets.GITHUB_TOKEN }}
           fetch-depth: 0
       - name: Request review and assign
-        uses: necojackarc/auto-request-review@v0.13.0
+        uses: necojackarc/auto-request-review@v0.14.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           config: .github/reviewers.yml
